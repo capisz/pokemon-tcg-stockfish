@@ -16,3 +16,6 @@ artifacts/
 vendor/twinleaf/**/node_modules/
 .env
 !.env.example
+.worktrees/
+.cache/
+private-guides/
