@@ -1,40 +1,25 @@
-# Assignment 1 — Rules correctness and trustworthy search
+# Assignment 1: competitive rules and search
 
-Continue the Pokémon TCG engine project in `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Repository: https://github.com/capisz/pokemon-tcg-stockfish. Work from the actual local checkout and inspect Git status before editing; local work may be ahead of the remote. Preserve unrelated changes.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Work on `codex/competitive-rules` in its isolated worktree, or create an isolated worktree from the latest agreed integration commit. Inspect status and preserve unrelated edits.
 
-The objective is a reliable simulator and increasingly useful imperfect-information search for the five-deck research pool. This is a local M4 / 16 GB project with no paid services. Do not push, deploy, provision services, or expand the card pool unless the user has authorized that work. Do not replace the independent Twinleaf adapter with Kaggle competition assets.
+Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and the latest implementation status before editing. The shared foundation is commit `f6e9ac1`; newer integration commits may already contain completed work. Continue from current evidence rather than restarting.
 
-## Ownership and starting point
+## Ownership
 
-Own `packages/engine/`, its tests, and the rules/search sections of the research documentation. Coordinate changes to `decks/`, `formats/`, the pinned `vendor/twinleaf/` source, and `contracts/PROTOCOL.md` with the project lead. Record every necessary vendor change in the existing provenance/patch record. The Python training/evaluation agent owns `src/ptcg_lab/`; the analysis agent owns `web/` and guide processing. Do not edit their files concurrently.
+Own the TypeScript environment/search, vendor patches and provenance, deck/format manifests, catalogue/build scripts, and engine tests. The learning assignment owns Python transport/storage/training. The play assignment owns FastAPI, live sessions, guides/teaching, and React. The lead owns shared contracts and combined verification. Communicate contract changes before relying on them.
 
-Read `README.md`, `docs/ARCHITECTURE.md`, `contracts/PROTOCOL.md`, and `docs/IMPLEMENTATION_STATUS.md` if present. Then inspect `environment.ts`, `choices.ts`, `belief-state.ts`, and `search.ts` under `packages/engine/src/`.
+## Required behavior
 
-Current code contains five frozen 60-card engineering decks: Dragapult, Grimmsnarl, Mega Lucario, Raging Bolt, and Crustle. It implements seeded real rules, validated bounded legal choices, replay-based callback reconstruction, selected-view observations, stable public-position snapshots, flat rollouts, and experimental information-set UCB search. The deck pool is not a certified tournament metagame. Tests cover selected Crustle interactions, conservation, replay independence, and hidden-state search invariance; passing those does not certify every interaction.
+Register five exact competitive main lists, one training variant and one held-out variant per archetype. Preserve historical engineering decks separately. Main lists are the user's Lucario/Hariyama, Grimmsnarl/Froslass, and Bolt/Kangaskhan lists; Dragapult guide page 48; Crustle guide page 27. Counts and sources belong in immutable manifests. Verify exact printings, release dates, legal reprints, and Standard legality as of September 17, 2026. Vendor presence alone is insufficient certification.
 
-## Next work, in order
+Complete legal-choice handling, including staged multi-card/target choices, without silently dropping actions. Preserve seeded chance, callback reconstruction, conservation, and branch independence. Search may sample actions, but the environment must allow every legal action. Unsupported states must be explicit and excluded from trusted training.
 
-1. Establish a fresh baseline with the commands below. Record the current engine fingerprint and exact failures before changing code. Read existing fixtures so you extend coverage instead of rewriting working checks.
-2. Create an explicit card/interaction coverage matrix for this closed pool. Add the highest-impact missing fixtures first: damage versus counters, ability suppression/bypass, attack and evolution restrictions, search/discard/recovery choices, knockout/prize handling, retreat, failed draws, and long-game resource exhaustion. Include Crustle's non-ex counterplay. Fix demonstrated rules failures without silently broadening supported behavior.
-3. Audit every choice family against the legal rules and document selective enumeration. Never let a cap silently become a claim of exhaustive legal search. Unsupported prompts or state must return a reason, not invent a move, winner, or draw.
-4. Improve belief reconstruction's treatment of previously revealed information and known card order. The current sampler deliberately omits that history. Preserve legally known information or explicitly refuse the affected search; never inspect the real hidden hand, prizes, deck order, opponent deck identity, or original RNG future. Reconcile Python's displayed deck beliefs with the distribution actually sampled by search through an agreed interface.
-5. Benchmark flat rollouts and information-set search at equal compute against the frozen heuristic. Report terminal versus heuristic-cutoff samples, excluded continuations, coverage of legal candidates, latency, and matchup results. Promote a search choice only when the measurement supports it. The current leaf evaluator is untrained; deterministic sampling and a search tree alone do not establish stronger play or equilibrium behavior.
+Audit protective effects, Energy suppression/removal, counters versus damage, item lock, recovery, simultaneous checkup knockouts, bench expansion/shrinking, draw triggers, and genuine deck-out. Record every vendor fix with before/after hashes. Test observed issues before changing behavior: Meowth bench entry after ability use, Special Red Card shuffle, Gwynn choosing fewer than two, Hammer tails, and Spiky retaliation when damage is prevented.
 
-## Checks and commands
+Preserve legally known cards and order (including Ciphermaniac) or refuse affected searches. Sample legal unknown-list variants consistent with observations, without consulting the true opponent list or future random events. Exclude held-out exact lists from agent hypotheses. Every simulated player acts from its own information. Compare rollout and information-set search at equal budgets and connect the learned evaluator through the agreed interface.
 
-Run from the project directory:
+## Completion evidence
 
-```sh
-npm run engine:build
-npm run typecheck
-npm run test:engine
-.venv/bin/python -m ptcg_lab.cli doctor
-```
+Run engine build, TypeScript checking, focused interaction tests, then the full engine suite. Record complete games for every registered list, observed failures, coverage and eligibility status. Verify indistinguishable hidden states produce identical player inputs and fixed-seed search results. Do not label unsupported or unverified decks fully validated.
 
-The JSONL worker is `packages/engine/dist/worker.cjs`; its request methods and observation/search types are defined in `contracts/PROTOCOL.md`. Use fixed iterations and sampling seeds for deterministic search comparisons; separately measure wall-clock behavior. Check that equal observable positions with different true hidden allocations produce equal public search inputs and equal sampled results. Verify replayed and hypothetical branches never mutate their source and that every simulated actor acts from its own observation.
-
-If protocol changes are necessary, agree on them with the Python/API owner before changing payloads. Preserve schema compatibility or bump versions and reject incompatible historical artifacts explicitly.
-
-## Completion report
-
-Deliver the changed interaction matrix, focused fixes, exact commands/results, engine/deck fingerprints, equal-budget search evidence, and remaining unsupported cases. Link real local artifacts. Distinguish rules correctness, search execution, and demonstrated playing strength. Do not claim complete card coverage, calibrated winning probability, optimal play, or a public release from local tests.
+Deliver commits, exact commands/results, engine/list hashes, coverage matrix, search-budget evidence, and remaining gaps. Commits, pushes to `codex/` branches and draft PRs are authorized; merges and deployment remain user-controlled. No paid services, Kaggle-derived restricted assets, or raw private guides in Git.
