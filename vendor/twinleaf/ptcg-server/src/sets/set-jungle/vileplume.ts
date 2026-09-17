@@ -1,0 +1,116 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType, SpecialCondition, BoardEffect } from '../../game/store/card/card-types';
+import { CardTarget, ChoosePokemonPrompt, GameError, GameMessage, PlayerType, PokemonCardList, PowerType, SlotType, State, StateUtils, StoreLike } from '../../game';
+import { Effect } from '../../game/store/effects/effect';
+import { HealEffect } from '../../game/store/effects/game-effects';
+import { EndTurnEffect } from '../../game/store/effects/game-phase-effects';
+import { WAS_ATTACK_USED, WAS_POWER_USED, MULTIPLE_COIN_FLIPS_PROMPT } from '../../game/store/prefabs/prefabs';
+
+export class Vileplume extends PokemonCard {
+  public stage: Stage = Stage.STAGE_2;
+  public evolvesFrom = 'Gloom';
+  public cardType: CardType[] = [G];
+  public hp: number = 80;
+  public weakness = [{ type: R }];
+  public retreat = [C, C];
+
+  public powers = [{
+    name: 'Heal',
+    useWhenInPlay: true,
+    powerType: PowerType.POKEMON_POWER,
+    text: 'Once during your turn (before your attack), you may flip a coin. If heads, remove 1 damage counter from 1 of your Pokémon. This power can\'t be used if Vileplume is Asleep, Confused, or Paralyzed.'
+  }];
+
+  public attacks = [{
+    name: 'Petal Dance',
+    cost: [G, G, G],
+    damage: 40,
+    damageCalculation: 'x',
+    text: 'Flip 3 coins. This attack does 40 damage times the number of heads. Vileplume is now Confused (after doing damage).'
+  }];
+
+  public set: string = 'JU';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '15';
+  public name: string = 'Vileplume';
+  public fullName: string = 'Vileplume JU';
+
+  public readonly HEAL_MARKER = 'HEAL_MARKER';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (WAS_POWER_USED(effect, 0, this)) {
+      const player = effect.player;
+      const cardList = StateUtils.findCardList(state, this) as PokemonCardList;
+
+      if (cardList.specialConditions.includes(SpecialCondition.ASLEEP) ||
+        cardList.specialConditions.includes(SpecialCondition.CONFUSED) ||
+        cardList.specialConditions.includes(SpecialCondition.PARALYZED)) {
+        return state;
+      }
+
+      const blocked: CardTarget[] = [];
+      player.forEachPokemon(PlayerType.BOTTOM_PLAYER, (cardList, card, target) => {
+        if (cardList.damage === 0) {
+          blocked.push(target);
+        }
+      });
+
+      const hasPokeBenchWithDamage = player.bench.some(b => b.damage > 0);
+      const hasActiveWIthDamage = player.active.damage > 0;
+      const pokemonInPlayWithDamage = hasPokeBenchWithDamage || hasActiveWIthDamage;
+
+      if (player.marker.hasMarker(this.HEAL_MARKER)) {
+        throw new GameError(GameMessage.CANNOT_USE_POWER);
+      }
+
+      if (!pokemonInPlayWithDamage) {
+        throw new GameError(GameMessage.CANNOT_USE_POWER);
+      }
+
+      let targets: PokemonCardList[] = [];
+      return store.prompt(state, new ChoosePokemonPrompt(
+        player.id,
+        GameMessage.CHOOSE_POKEMON_TO_HEAL,
+        PlayerType.BOTTOM_PLAYER,
+        [SlotType.ACTIVE, SlotType.BENCH],
+        { min: 0, max: 1, allowCancel: false, blocked }
+      ), results => {
+        targets = results || [];
+        if (targets.length === 0) {
+          return state;
+        }
+        player.marker.addMarker(this.HEAL_MARKER, this);
+
+        targets.forEach(target => {
+          // Heal Pokemon
+          const healEffect = new HealEffect(player, target, 10);
+          store.reduceEffect(state, healEffect);
+        });
+
+        player.forEachPokemon(PlayerType.BOTTOM_PLAYER, cardList => {
+          if (cardList.getPokemonCard() === this) {
+            cardList.addBoardEffect(BoardEffect.ABILITY_USED);
+          }
+        });
+        return state;
+      });
+    }
+
+    if (effect instanceof EndTurnEffect && effect.player.marker.hasMarker(this.HEAL_MARKER, this)) {
+      effect.player.marker.removeMarker(this.HEAL_MARKER, this);
+    }
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      const player = effect.player;
+      state = MULTIPLE_COIN_FLIPS_PROMPT(store, state, player, 3, results => {
+        let heads: number = 0;
+        results.forEach(r => { heads += r ? 1 : 0; });
+        effect.damage = 40 * heads;
+      });
+      player.active.addSpecialCondition(SpecialCondition.CONFUSED);
+      return state;
+    }
+    return state;
+  }
+}

@@ -1,0 +1,44 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+import { StoreLike, State } from '../../../game';
+import { Effect } from '../../../game/store/effects/effect';
+import { WAS_ATTACK_USED } from '../../../game/store/prefabs/prefabs';
+import { DEFENDING_POKEMON_FLIPS_COIN_TO_ATTACK } from '../../../game/store/prefabs/effect-of-attack-prefabs';
+
+export class Lanturn extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom: string = 'Chinchou';
+  public cardType: CardType[] = [L];
+  public hp: number = 120;
+  public weakness = [{ type: F }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Blinding Beam',
+    cost: [L, C],
+    damage: 40,
+    text: 'During your opponent\'s next turn, if the Defending Pokémon tries to attack, your opponent flips a coin. If tails, that attack doesn\'t happen.'
+  },
+  {
+    name: 'Electro Ball',
+    cost: [L, L, C],
+    damage: 120,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '53';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Lanturn';
+  public fullName: string = 'Lanturn EVS';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    // Blinding Beam
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      return DEFENDING_POKEMON_FLIPS_COIN_TO_ATTACK(store, state, effect, this);
+    }
+
+    return state;
+  }
+}

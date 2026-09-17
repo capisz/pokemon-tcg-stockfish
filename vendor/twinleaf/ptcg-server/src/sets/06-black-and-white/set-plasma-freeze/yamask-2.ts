@@ -1,0 +1,29 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Yamask2 extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 60;
+  public weakness = [{ type: D }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Will-O-Wisp',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Ram',
+    cost: [P, C, C],
+    damage: 30,
+    text: ''
+  }];
+
+  public set: string = 'PLF';
+  public setNumber: string = '55';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Yamask';
+  public fullName: string = 'Yamask PLF 55';
+}

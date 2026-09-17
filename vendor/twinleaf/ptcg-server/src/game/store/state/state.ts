@@ -1,0 +1,69 @@
+import { Player } from './player';
+import { Prompt } from '../prompts/prompt';
+import { StateLog } from './state-log';
+import { Rules } from './rules';
+import { Attack, GameSettings, PokemonCard } from '../..';
+
+export enum GamePhase {
+  WAITING_FOR_PLAYERS,
+  SETUP,
+  PLAYER_TURN,
+  ATTACK,
+  AFTER_ATTACK,
+  CHOOSE_PRIZES,
+  BETWEEN_TURNS,
+  FINISHED,
+  DRAW = 8,
+}
+
+export enum GameWinner {
+  NONE = -1,
+  PLAYER_1 = 0,
+  PLAYER_2 = 1,
+  DRAW = 3
+}
+
+export class State {
+
+  public cardNames: string[] = [];
+
+  public logs: StateLog[] = [];
+
+  public rules: Rules = new Rules();
+
+  public prompts: Prompt<any>[] = [];
+
+  public phase: GamePhase = GamePhase.WAITING_FOR_PLAYERS;
+
+  public turn = 0;
+
+  public activePlayer: number = 0;
+
+  public winner: GameWinner = GameWinner.NONE;
+
+  public players: Player[] = [];
+
+  public skipOpponentTurn = false;
+
+  public lastAttack: Attack | null = null;
+
+  public playerLastAttack: { [playerId: number]: { attack: Attack, sourceCard: PokemonCard } } = {};
+
+  public isSuddenDeath?: boolean;
+
+  public benchSizeChangeHandled: boolean = false;
+
+  public gameSettings: GameSettings = new GameSettings();
+
+  /**
+   * Monotonic counter for Active ability-lock activation order
+   * (Emperor's Eyes vs Bide Barricade / Mischievous Lock "first in wins").
+   */
+  public abilityLockOrderCounter: number = 0;
+
+  /**
+   * When set, newly queued prompts are answered by this player while board
+   * perspective stays on the original prompt.playerId (see Prompt.perspectivePlayerId).
+   */
+  public promptControllerId?: number;
+}

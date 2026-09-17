@@ -1,0 +1,67 @@
+import { BaseEntity, Column, Entity, PrimaryGeneratedColumn, ManyToOne, Index } from 'typeorm';
+
+import { User } from './user';
+import { GameWinner } from '../../game';
+import { bigint } from '../transformers/bigint';
+import { blob } from '../transformers/blob';
+
+@Entity()
+export class Match extends BaseEntity {
+
+  @PrimaryGeneratedColumn()
+  public id!: number;
+
+  @ManyToOne(type => User)
+    player1: User = new User();
+
+  @ManyToOne(type => User)
+    player2: User = new User();
+
+  @Column()
+  public ranking1: number = 0;
+
+  @Column()
+  public rankingStake1: number = 0;
+
+  @Column()
+  public ranking2: number = 0;
+
+  @Column()
+  public rankingStake2: number = 0;
+
+  @Column()
+  public winner: GameWinner = GameWinner.NONE;
+
+  @Column({ type: 'bigint', transformer: [bigint] })
+  public created: number = Date.now();
+
+  @Column({ type: 'blob', transformer: [blob] })
+  public replayData: string = '';
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  public player1Archetype: string = '';
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  public player1Archetype2: string = '';
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  public player2Archetype: string = '';
+
+  @Column({ type: 'varchar', length: 50, nullable: true })
+  public player2Archetype2: string = '';
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  public player1DeckName: string = '';
+
+  @Column({ type: 'varchar', length: 100, nullable: true })
+  public player2DeckName: string = '';
+
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  public player1DeckId: number | null = null;
+
+  @Column({ type: 'int', nullable: true })
+  @Index()
+  public player2DeckId: number | null = null;
+
+}

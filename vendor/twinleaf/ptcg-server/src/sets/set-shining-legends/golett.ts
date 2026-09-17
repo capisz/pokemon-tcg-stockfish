@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../game/store/card/card-types';
+
+export class Golett extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 90;
+  public weakness = [{ type: D }];
+  public resistance = [{ type: F, value: -20 }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Mega Punch',
+    cost: [P, C, C],
+    damage: 60,
+    text: ''
+  }];
+
+  public set: string = 'SLG';
+  public setNumber: string = '43';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Golett';
+  public fullName: string = 'Golett SLG';
+}

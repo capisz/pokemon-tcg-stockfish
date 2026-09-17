@@ -1,0 +1,27 @@
+{
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+be0c29e9637ba8b3",
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ],
+    "engineBuildHash": "1a9f1fd58e9d2f64fa172fbf4395149fbbd80d6d01c274ab847d53bb8d53e1f1"
+  },
+  "workers": 2,
+  "modelParameters": 38532,
+  "elapsedSeconds": 4.9985487919984735,
+  "decisions": 342,
+  "decisionsPerSecond": 68.4198582891625,
+  "statuses": [
+    "finished",
+    "finished"
+  ],
+  "sampledPeakTotalRssBytes": 554385408,
+  "pythonPeakRssBytes": 253263872,
+  "workerPeakRssBytes": [
+    151863296,
+    149258240
+  ],
+  "limits": "RSS sampled every200ms for two games, including resident PyTorch/model; excludes browser, API, OS, and Ollama. Not a worst-case bound."
+}

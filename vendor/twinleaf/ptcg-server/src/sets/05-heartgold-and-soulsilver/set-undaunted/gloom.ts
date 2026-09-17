@@ -1,0 +1,82 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { GameMessage } from '../../../game/game-message';
+import { Stage, CardType, SpecialCondition } from '../../../game/store/card/card-types';
+import { StoreLike } from '../../../game/store/store-like';
+import { State } from '../../../game/store/state/state';
+import { Effect } from '../../../game/store/effects/effect';
+import { AttackEffect } from '../../../game/store/effects/game-effects';
+
+import { SelectPrompt } from '../../../game/store/prompts/select-prompt';
+import { AddSpecialConditionsEffect } from '../../../game/store/effects/attack-effects';
+import { WAS_ATTACK_USED, COIN_FLIP_PROMPT } from '../../../game/store/prefabs/prefabs';
+
+function* useMiraclePowder(next: Function, store: StoreLike, state: State,
+  effect: AttackEffect): IterableIterator<State> {
+  const player = effect.player;
+
+  let flip = false;
+  yield COIN_FLIP_PROMPT(store, state, player, result => {
+    flip = result;
+    next();
+  });
+
+  if (!flip) {
+    return state;
+  }
+
+  const options: { message: GameMessage, value: SpecialCondition }[] = [
+    { message: GameMessage.SPECIAL_CONDITION_PARALYZED, value: SpecialCondition.PARALYZED },
+    { message: GameMessage.SPECIAL_CONDITION_CONFUSED, value: SpecialCondition.CONFUSED },
+    { message: GameMessage.SPECIAL_CONDITION_ASLEEP, value: SpecialCondition.ASLEEP },
+    { message: GameMessage.SPECIAL_CONDITION_POISONED, value: SpecialCondition.POISONED },
+    { message: GameMessage.SPECIAL_CONDITION_BURNED, value: SpecialCondition.BURNED }
+  ];
+
+  return store.prompt(state, new SelectPrompt(
+    player.id,
+    GameMessage.CHOOSE_SPECIAL_CONDITION,
+    options.map(c => c.message),
+    { allowCancel: false }
+  ), choice => {
+    const option = options[choice];
+
+    if (option !== undefined) {
+      const specialConditionEffect = new AddSpecialConditionsEffect(effect, [option.value]);
+      store.reduceEffect(state, specialConditionEffect);
+    }
+  });
+}
+
+export class Gloom extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Oddish';
+  public cardType: CardType[] = [G];
+  public hp: number = 80;
+  public weakness = [{ type: P }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Miracle Powder',
+    cost: [G, C],
+    damage: 30,
+    text: 'Flip a coin. If heads, choose 1 Special Condition. ' +
+    'The Defending Pokemon is now affected by that Special Condition.'
+  }];
+
+  public set: string = 'UD';
+  public name: string = 'Gloom';
+  public fullName: string = 'Gloom UD';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '27';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      const generator = useMiraclePowder(() => generator.next(), store, state, effect);
+      return generator.next().value;
+    }
+
+    return state;
+  }
+
+}

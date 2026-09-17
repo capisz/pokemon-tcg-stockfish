@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Teddiursa extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [C];
+  public hp: number = 70;
+  public weakness = [{ type: F }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Scratch',
+    cost: [C],
+    damage: 10,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '126';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Teddiursa';
+  public fullName: string = 'Teddiursa EVS';
+}

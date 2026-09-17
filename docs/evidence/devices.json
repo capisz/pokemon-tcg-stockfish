@@ -1,0 +1,41 @@
+{
+  "python": "3.10.20",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "root": ".",
+  "data": "data",
+  "engineBuilt": true,
+  "optional": {
+    "torch": true,
+    "sklearn": true,
+    "pyarrow": true,
+    "mlflow": true,
+    "sentence_transformers": false
+  },
+  "limits": {
+    "simulationWorkers": 2,
+    "maxDecisions": 3000,
+    "maxDiskBytes": 2147483648
+  },
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+69a47ff0a07bc8db",
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ],
+    "engineBuildHash": "f041451c1ce733d2e0b3cb2f73977e3021bc75cc006dfb6c4232fc7e63c38f73"
+  },
+  "torchVersion": "2.14.0",
+  "mpsAvailable": true,
+  "deviceBenchmark": {
+    "cpu": {
+      "stepsPerSecond": 1387.5679046983726,
+      "parameters": 38532
+    },
+    "mps": {
+      "stepsPerSecond": 599.988756289234,
+      "parameters": 38532
+    }
+  },
+  "recommendedDevice": "cpu"
+}

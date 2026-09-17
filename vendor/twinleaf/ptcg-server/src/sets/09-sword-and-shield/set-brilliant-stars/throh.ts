@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Throh extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [F];
+  public hp: number = 120;
+  public weakness = [{ type: P }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Lunge Out',
+    cost: [C, C],
+    damage: 30,
+    text: ''
+  },
+  {
+    name: 'Seismic Toss',
+    cost: [F, F, C],
+    damage: 110,
+    text: ''
+  }];
+
+  public regulationMark = 'F';
+  public set: string = 'BRS';
+  public setNumber: string = '80';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Throh';
+  public fullName: string = 'Throh BRS 80';
+}

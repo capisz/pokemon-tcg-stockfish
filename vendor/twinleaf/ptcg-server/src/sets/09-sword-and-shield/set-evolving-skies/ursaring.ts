@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Ursaring extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Teddiursa';
+  public cardType: CardType[] = [C];
+  public hp: number = 140;
+  public weakness = [{ type: F }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Slash',
+    cost: [C],
+    damage: 40,
+    text: ''
+  },
+  {
+    name: 'Whap Down',
+    cost: [C, C, C],
+    damage: 110,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '127';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Ursaring';
+  public fullName: string = 'Ursaring EVS';
+}

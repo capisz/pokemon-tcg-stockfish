@@ -1,0 +1,44 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { CardType, Stage } from '../../game/store/card/card-types';
+import { Attack } from '../../game/store/card/pokemon-types';
+
+import { Effect } from '../../game/store/effects/effect';
+import { State } from '../../game/store/state/state';
+import { StoreLike } from '../../game/store/store-like';
+
+import { WAS_ATTACK_USED, COIN_FLIP_PROMPT } from '../../game/store/prefabs/prefabs';
+
+export class NidoranMale extends PokemonCard {
+  public name = 'Nidoran ♂';
+  public cardImage: string = 'assets/cardback.png';
+  public set = 'BS';
+  public setNumber = '55';
+  public fullName = 'Nidoran M BS';
+
+  public cardType: CardType[] = [G];
+  public stage = Stage.BASIC;
+  public hp = 40;
+  public weakness = [{ type: P }];
+  public retreat = [C];
+
+  public attacks: Attack[] = [
+    {
+      name: 'Horn Hazard',
+      cost: [G],
+      damage: 30,
+      text: 'Flip a coin. If tails, this attack does nothing.',
+    },
+  ];
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      return COIN_FLIP_PROMPT(store, state, effect.player, heads => {
+          if (!heads) {
+            effect.damage = 0;
+          }
+        },
+      );
+    }
+    return state;
+  }
+}

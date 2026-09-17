@@ -1,0 +1,747 @@
+{
+  "id": "3476e7f9eb9745c7bd489c25afa0cd13",
+  "type": "paired-evaluation",
+  "status": "completed",
+  "candidate": "heuristic",
+  "opponent": "random",
+  "models": {
+    "candidate": "heuristic",
+    "opponent": "random"
+  },
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+69a47ff0a07bc8db",
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ]
+  },
+  "deckHash": "6d3c8994158b2a4d8ba66f1b3357b4752b83482e9f29b90c62a22bcd0c2e865f",
+  "seedStart": 1000000000,
+  "summary": {
+    "pairs": 25,
+    "mean": 0.74,
+    "lower": 0.4683796968518761,
+    "upper": 1.0,
+    "method": "95% bounded-sample Hoeffding interval"
+  },
+  "matchups": {
+    "dragapult / dragapult": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "dragapult / raging-bolt": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "dragapult / grimmsnarl": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "dragapult / mega-lucario": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "dragapult / crustle": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "raging-bolt / dragapult": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "raging-bolt / raging-bolt": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "raging-bolt / grimmsnarl": {
+      "pairs": 1,
+      "mean": 0.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "raging-bolt / mega-lucario": {
+      "pairs": 1,
+      "mean": 0.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "raging-bolt / crustle": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "grimmsnarl / dragapult": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "grimmsnarl / raging-bolt": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "grimmsnarl / grimmsnarl": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "grimmsnarl / mega-lucario": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "grimmsnarl / crustle": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "mega-lucario / dragapult": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "mega-lucario / raging-bolt": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "mega-lucario / grimmsnarl": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "mega-lucario / mega-lucario": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "mega-lucario / crustle": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "crustle / dragapult": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "crustle / raging-bolt": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "crustle / grimmsnarl": {
+      "pairs": 1,
+      "mean": 1.0,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "crustle / mega-lucario": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    },
+    "crustle / crustle": {
+      "pairs": 1,
+      "mean": 0.5,
+      "lower": 0.0,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval"
+    }
+  },
+  "firstPlayerCounts": {
+    "dragapult / dragapult": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "dragapult / raging-bolt": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "dragapult / grimmsnarl": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "dragapult / mega-lucario": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "dragapult / crustle": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "raging-bolt / dragapult": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "raging-bolt / raging-bolt": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "raging-bolt / grimmsnarl": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "raging-bolt / mega-lucario": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "raging-bolt / crustle": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "grimmsnarl / dragapult": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "grimmsnarl / raging-bolt": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "grimmsnarl / grimmsnarl": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "grimmsnarl / mega-lucario": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "grimmsnarl / crustle": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "mega-lucario / dragapult": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "mega-lucario / raging-bolt": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "mega-lucario / grimmsnarl": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "mega-lucario / mega-lucario": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "mega-lucario / crustle": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "crustle / dragapult": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "crustle / raging-bolt": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "crustle / grimmsnarl": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "crustle / mega-lucario": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    },
+    "crustle / crustle": {
+      "candidateFirst": 1,
+      "opponentFirst": 1,
+      "unknown": 0
+    }
+  },
+  "pairs": [
+    {
+      "decks": [
+        "dragapult",
+        "dragapult"
+      ],
+      "seed": 1000000000,
+      "replays": [
+        "ae5800508111da767828",
+        "6af92b03f003662f0d04"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "dragapult",
+        "raging-bolt"
+      ],
+      "seed": 1000000001,
+      "replays": [
+        "fbb9ca44d9e412c6e827",
+        "8bc408c193be39936332"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "dragapult",
+        "grimmsnarl"
+      ],
+      "seed": 1000000002,
+      "replays": [
+        "846a1e4852b5aa2fa123",
+        "943db5b2992b94ed925f"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "dragapult",
+        "mega-lucario"
+      ],
+      "seed": 1000000003,
+      "replays": [
+        "a1f907bf1991ed2f21c7",
+        "f2772aa9a4556f3155c0"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "dragapult",
+        "crustle"
+      ],
+      "seed": 1000000004,
+      "replays": [
+        "0ba47857edf61d80a0ad",
+        "a8a55a9bf714041a5895"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "raging-bolt",
+        "dragapult"
+      ],
+      "seed": 1000000005,
+      "replays": [
+        "bfa0e3fdad66298d7779",
+        "0cf09ad6d2f1d8f579a1"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "raging-bolt",
+        "raging-bolt"
+      ],
+      "seed": 1000000006,
+      "replays": [
+        "fd842b098fd1fd03999d",
+        "d6a15a96aa2884b1031a"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "raging-bolt",
+        "grimmsnarl"
+      ],
+      "seed": 1000000007,
+      "replays": [
+        "d6ba4e9495f917a71d27",
+        "18073ddb414019e0fc08"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 0.0
+    },
+    {
+      "decks": [
+        "raging-bolt",
+        "mega-lucario"
+      ],
+      "seed": 1000000008,
+      "replays": [
+        "c4c94532bed60f9e526a",
+        "a80dc890326c3ba837c8"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.0
+    },
+    {
+      "decks": [
+        "raging-bolt",
+        "crustle"
+      ],
+      "seed": 1000000009,
+      "replays": [
+        "42cfaaa8bf101c5b7267",
+        "74c3200778de585de8df"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "grimmsnarl",
+        "dragapult"
+      ],
+      "seed": 1000000010,
+      "replays": [
+        "d93fdba22fd17aa48cdb",
+        "7b2edb48fe973d8fa6e3"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "grimmsnarl",
+        "raging-bolt"
+      ],
+      "seed": 1000000011,
+      "replays": [
+        "11bcae9fa4032a9f1b8c",
+        "a32b698e62084410a5e7"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "grimmsnarl",
+        "grimmsnarl"
+      ],
+      "seed": 1000000012,
+      "replays": [
+        "ed136f784df0954dcbfd",
+        "fb5420cce964accc2b5f"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "grimmsnarl",
+        "mega-lucario"
+      ],
+      "seed": 1000000013,
+      "replays": [
+        "03bdd80d7db2c29b100a",
+        "f5ea68e16ce96e703407"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "grimmsnarl",
+        "crustle"
+      ],
+      "seed": 1000000014,
+      "replays": [
+        "68026d45e1faf7f8026e",
+        "1fcc33eff4c9663f68c3"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "mega-lucario",
+        "dragapult"
+      ],
+      "seed": 1000000015,
+      "replays": [
+        "4a57468b3ee66ca15001",
+        "36f2a850a9c9f59d959c"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "mega-lucario",
+        "raging-bolt"
+      ],
+      "seed": 1000000016,
+      "replays": [
+        "0de6223d619fd69d20c9",
+        "57be9608bd2ed5b2ad16"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "mega-lucario",
+        "grimmsnarl"
+      ],
+      "seed": 1000000017,
+      "replays": [
+        "165da36326f02a4e7b57",
+        "fe1ceb079b1c259b2919"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "mega-lucario",
+        "mega-lucario"
+      ],
+      "seed": 1000000018,
+      "replays": [
+        "d97e320fe26c4ab6aa5d",
+        "bf7110b0f2848a86e5a4"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "mega-lucario",
+        "crustle"
+      ],
+      "seed": 1000000019,
+      "replays": [
+        "7e0f5af076ba5b17b323",
+        "8edfca28d2fcd9141733"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "crustle",
+        "dragapult"
+      ],
+      "seed": 1000000020,
+      "replays": [
+        "1f8e4b38c25d04ad03c7",
+        "df98844ed70c579561f5"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "crustle",
+        "raging-bolt"
+      ],
+      "seed": 1000000021,
+      "replays": [
+        "40616fee6bebae1dda54",
+        "386258514599926d8293"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "crustle",
+        "grimmsnarl"
+      ],
+      "seed": 1000000022,
+      "replays": [
+        "3ca72ca32b409fad3f2a",
+        "d3cf3dbbf7afe963955f"
+      ],
+      "firstPlayers": [
+        "opponentFirst",
+        "candidateFirst"
+      ],
+      "score": 1.0
+    },
+    {
+      "decks": [
+        "crustle",
+        "mega-lucario"
+      ],
+      "seed": 1000000023,
+      "replays": [
+        "6d72378129334e9b1ed1",
+        "1cc6fc6662eb1e8d2415"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 0.5
+    },
+    {
+      "decks": [
+        "crustle",
+        "crustle"
+      ],
+      "seed": 1000000024,
+      "replays": [
+        "f50a5293e10270f36f05",
+        "eda7bffa09d107d7113f"
+      ],
+      "firstPlayers": [
+        "candidateFirst",
+        "opponentFirst"
+      ],
+      "score": 0.5
+    }
+  ],
+  "excludedPairs": 0,
+  "promotionEligible": false,
+  "promoted": false,
+  "promotionNotes": [
+    "Overall improvement is statistically inconclusive or has fewer than 30 complete pairs.",
+    "Every matchup needs at least five complete seat-balanced pairs.",
+    "The initial learned champion must beat the strategy heuristic; no other opponent can satisfy the bootstrap gate."
+  ],
+  "limitations": [
+    "Scores measure only these frozen decklists, opponents and decision budgets.",
+    "Seats are balanced by construction; actual first-player choices are separately measured.",
+    "Incomplete seat pairs are excluded and block automatic promotion."
+  ]
+}

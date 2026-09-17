@@ -1,0 +1,57 @@
+{
+  "id": "77567ba6b7d6421b946778187c538393",
+  "configuration": {
+    "games": 25,
+    "seed": 17092026,
+    "maxDecisions": 800,
+    "policy": "heuristic",
+    "deckHash": "6d3c8994158b2a4d8ba66f1b3357b4752b83482e9f29b90c62a22bcd0c2e865f",
+    "decks": [
+      "dragapult",
+      "raging-bolt",
+      "grimmsnarl",
+      "mega-lucario",
+      "crustle"
+    ],
+    "engine": {
+      "ok": true,
+      "protocolVersion": 1,
+      "engineVersion": "twinleaf-adapter-0.1.0+69a47ff0a07bc8db",
+      "warnings": [
+        "Experimental rules adapter; learned strength is not established."
+      ]
+    }
+  },
+  "nextGame": 25,
+  "replayIds": [
+    "078bb07ab86ec906523b",
+    "46c85f16559f9bfd1750",
+    "88e8882a6e2c22ae7be2",
+    "a40524ef09665efb60bb",
+    "b31be1ed1d29437fc970",
+    "af3a78e7f9f9ef09610f",
+    "0703300abe938f9489e5",
+    "4be5de9f296a1e57dfb6",
+    "b7fca0fb8d52cdc45ee9",
+    "aea301b5393dee078d58",
+    "436c63b413d7df119962",
+    "edf008f90b87caf5c8b8",
+    "79bdc53b617fa5eaf83e",
+    "7a68c1fe6ada718908a6",
+    "dafa0d6e012c19dda6ed",
+    "f42dd68fb25e844582fd",
+    "b25b517d4de5fe438135",
+    "4f55198d668bae116514",
+    "7fbd1635a1f2c0aefdf4",
+    "73e9e3536f18cb8ed484",
+    "fa272e7008d8d04268ab",
+    "7dd5e603810ebe3e1541",
+    "805042fea833460fd1c2",
+    "a59c063fa493fe196697",
+    "15f487c6d49fd1067e29"
+  ],
+  "finished": 25,
+  "truncated": 0,
+  "errors": 0,
+  "status": "completed"
+}

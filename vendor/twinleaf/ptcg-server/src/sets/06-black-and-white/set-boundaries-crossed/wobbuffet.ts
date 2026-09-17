@@ -1,0 +1,23 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Wobbuffet extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 90;
+  public weakness = [{ type: P }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Headbutt Bounce',
+    cost: [P, P, C],
+    damage: 60,
+    text: ''
+  }];
+
+  public set: string = 'BCR';
+  public setNumber: string = '58';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Wobbuffet';
+  public fullName: string = 'Wobbuffet BCR';
+}

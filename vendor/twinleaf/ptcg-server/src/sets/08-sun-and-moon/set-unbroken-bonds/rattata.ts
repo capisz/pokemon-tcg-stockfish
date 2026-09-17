@@ -1,0 +1,23 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Rattata extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [C];
+  public hp: number = 30;
+  public weakness = [{ type: F }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Gnaw',
+    cost: [C],
+    damage: 30,
+    text: ''
+  }];
+
+  public set: string = 'UNB';
+  public setNumber: string = '143';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Rattata';
+  public fullName: string = 'Rattata UNB';
+}

@@ -1,0 +1,68 @@
+import { CardTag, CardType, Stage } from '../../../game/store/card/card-types';
+import { StoreLike } from '../../../game/store/store-like';
+import { State } from '../../../game/store/state/state';
+import { Effect } from '../../../game/store/effects/effect';
+import { GameMessage, PokemonCard } from '../../../game';
+import { CONFIRMATION_PROMPT, DISCARD_ALL_ENERGY_FROM_POKEMON, WAS_ATTACK_USED } from '../../../game/store/prefabs/prefabs';
+import { PREVENT_DAMAGE } from '../../../game/store/prefabs/effect-of-attack-prefabs';
+
+export class MegaManectricEx extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Electrike';
+  protected _tags = [CardTag.POKEMON_SV_MEGA, CardTag.POKEMON_ex];
+  public hp: number = 330;
+  public cardType: CardType[] = [L];
+  public weakness = [{ type: F }];
+  public retreat = [];
+
+  public attacks = [
+    {
+      name: 'Flash Ray',
+      cost: [L, L],
+      damage: 120,
+      text: "During your opponent's next turn, prevent all damage done to this Pokémon by attacks from Basic Pokémon.",
+    },
+    {
+      name: 'Riotous Blasting',
+      cost: [L, L, L],
+      damage: 200,
+      damageCalculation: '+',
+      text: 'You may discard all Energy from this Pokémon and have this attack do 130 more damage.',
+    },
+  ];
+
+  public set: string = 'MEG';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '50';
+  public name: string = 'Mega Manectric ex';
+  public fullName: string = 'Mega Manectric ex M1S';
+  public regulationMark: string = 'I';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    // Flash Ray
+    // Ref: set-delta-reign/ariados.ts (Covert Needle)
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      PREVENT_DAMAGE(store, state, effect, this, { sourceStage: Stage.BASIC });
+    }
+
+    // Riotous Blasting
+    if (WAS_ATTACK_USED(effect, 1, this)) {
+      const player = effect.player;
+
+      CONFIRMATION_PROMPT(
+        store,
+        state,
+        player,
+        (result) => {
+          if (result) {
+            effect.damage += 130;
+            DISCARD_ALL_ENERGY_FROM_POKEMON(store, state, effect, this);
+          }
+        },
+        GameMessage.WANT_TO_DISCARD_ENERGY,
+      );
+    }
+
+    return state;
+  }
+}

@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../game/store/card/card-types';
+
+export class Clefable extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Clefairy';
+  public cardType: CardType[] = [Y];
+  public hp: number = 120;
+  public weakness = [{ type: M }];
+  public resistance = [{ type: D, value: -20 }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Pound',
+    cost: [Y, C],
+    damage: 40,
+    text: ''
+  },
+  {
+    name: 'Moon Impact',
+    cost: [Y, Y, C],
+    damage: 90,
+    text: ''
+  }];
+
+  public set: string = 'HIF';
+  public setNumber: string = '40';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Clefable';
+  public fullName: string = 'Clefable HIF';
+}

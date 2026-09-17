@@ -1,0 +1,29 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Axew extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [N];
+  public hp: number = 60;
+  public weakness = [{ type: Y }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Brat Snack',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Dragon Claw',
+    cost: [F, M, C],
+    damage: 40,
+    text: ''
+  }];
+
+  public set: string = 'BKT';
+  public setNumber: string = '108';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Axew';
+  public fullName: string = 'Axew BKT';
+}

@@ -1,0 +1,118 @@
+{
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+be0c29e9637ba8b3",
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ],
+    "engineBuildHash": "1a9f1fd58e9d2f64fa172fbf4395149fbbd80d6d01c274ab847d53bb8d53e1f1"
+  },
+  "records": [
+    {
+      "replayId": "65e720328f0e25b0e18d",
+      "decisionIndex": 8,
+      "method": "rollout",
+      "budgetMs": 1000,
+      "iterations": 4,
+      "elapsedMs": 1034.047875,
+      "visitedCandidates": 4,
+      "legalCandidates": 5,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "4 of 4 completed samples used heuristic horizon/budget evaluation, not terminal outcomes.",
+        "Budget did not visit every legal candidate; unvisited moves have null scores."
+      ]
+    },
+    {
+      "replayId": "65e720328f0e25b0e18d",
+      "decisionIndex": 8,
+      "method": "ismcts",
+      "budgetMs": 1000,
+      "iterations": 3,
+      "elapsedMs": 1049.666,
+      "visitedCandidates": 3,
+      "legalCandidates": 5,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "3 of 3 completed samples used heuristic horizon/budget evaluation, not terminal outcomes.",
+        "Budget did not visit every legal candidate; unvisited moves have null scores."
+      ]
+    },
+    {
+      "replayId": "15f487c6d49fd1067e29",
+      "decisionIndex": 6,
+      "method": "rollout",
+      "budgetMs": 1000,
+      "iterations": 5,
+      "elapsedMs": 1000.9355839999998,
+      "visitedCandidates": 4,
+      "legalCandidates": 4,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "5 of 5 completed samples used heuristic horizon/budget evaluation, not terminal outcomes."
+      ]
+    },
+    {
+      "replayId": "15f487c6d49fd1067e29",
+      "decisionIndex": 6,
+      "method": "ismcts",
+      "budgetMs": 1000,
+      "iterations": 5,
+      "elapsedMs": 1017.1894160000006,
+      "visitedCandidates": 4,
+      "legalCandidates": 4,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "5 of 5 completed samples used heuristic horizon/budget evaluation, not terminal outcomes."
+      ]
+    },
+    {
+      "replayId": "a59c063fa493fe196697",
+      "decisionIndex": 3,
+      "method": "rollout",
+      "budgetMs": 1000,
+      "iterations": 5,
+      "elapsedMs": 1018.7831670000005,
+      "visitedCandidates": 4,
+      "legalCandidates": 4,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "5 of 5 completed samples used heuristic horizon/budget evaluation, not terminal outcomes."
+      ]
+    },
+    {
+      "replayId": "a59c063fa493fe196697",
+      "decisionIndex": 3,
+      "method": "ismcts",
+      "budgetMs": 1000,
+      "iterations": 5,
+      "elapsedMs": 1009.9569170000004,
+      "visitedCandidates": 4,
+      "legalCandidates": 4,
+      "status": "complete",
+      "warnings": [
+        "Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.",
+        "Beliefs cover only the five-deck manifest pool; previous hidden-card revelations and order knowledge are not modeled.",
+        "Determinized continuations can suffer strategy fusion; no optimal-play claim.",
+        "5 of 5 completed samples used heuristic horizon/budget evaluation, not terminal outcomes."
+      ]
+    }
+  ],
+  "interpretation": "Matched wall-clock budgets and seeds on identical player observations. Heuristic leaves, three positions only, no playing-strength or preferred-method conclusion."
+}

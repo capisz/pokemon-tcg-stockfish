@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Voltorb extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [L];
+  public hp: number = 60;
+  public weakness = [{ type: F }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Electro Ball',
+    cost: [L, L],
+    damage: 40,
+    text: ''
+  }];
+
+  public regulationMark = 'D';
+  public set: string = 'VIV';
+  public setNumber: string = '45';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Voltorb';
+  public fullName: string = 'Voltorb VIV';
+}

@@ -1,0 +1,43 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+import { StoreLike, State } from '../../../game';
+import { Effect } from '../../../game/store/effects/effect';
+import { WAS_ATTACK_USED } from '../../../game/store/prefabs/prefabs';
+import { BLOCK_RETREAT } from '../../../game/store/prefabs/effect-of-attack-prefabs';
+
+export class Yveltal extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [D];
+  public hp: number = 110;
+  public weakness = [{ type: L }];
+  public resistance = [{ type: F, value: -30 }];
+  public retreat = [];
+
+  public attacks = [{
+    name: 'Clutch',
+    cost: [D],
+    damage: 20,
+    text: 'During your opponent\'s next turn, the Defending Pokémon can\'t retreat.'
+  },
+  {
+    name: 'Dark Feather',
+    cost: [D, D, C],
+    damage: 110,
+    text: ''
+  }];
+
+  public regulationMark = 'I';
+  public set: string = 'MEG';
+  public setNumber: string = '88';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Yveltal';
+  public fullName: string = 'Yveltal M1L';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      return BLOCK_RETREAT(store, state, effect, this);
+    }
+    return state;
+  }
+}

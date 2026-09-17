@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Litleo extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [R];
+  public hp: number = 60;
+  public weakness = [{ type: W }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Live Coal',
+    cost: [C],
+    damage: 10,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '22';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Litleo';
+  public fullName: string = 'Litleo EVS';
+}

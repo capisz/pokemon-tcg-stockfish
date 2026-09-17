@@ -1,0 +1,25 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Shuppet extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 60;
+  public weakness = [{ type: D }];
+  public resistance = [{ type: F, value: -30 }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Tongue Slap',
+    cost: [P, P],
+    damage: 30,
+    text: ''
+  }];
+
+  public regulationMark = 'F';
+  public set: string = 'LOR';
+  public setNumber: string = '72';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Shuppet';
+  public fullName: string = 'Shuppet LOR 72';
+}

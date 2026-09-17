@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Sealeo extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Spheal';
+  public cardType: CardType[] = [W];
+  public hp: number = 100;
+  public weakness = [{ type: M }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Rollout',
+    cost: [W],
+    damage: 20,
+    text: ''
+  },
+  {
+    name: 'Ice Ball',
+    cost: [W, C, C, C],
+    damage: 90,
+    text: ''
+  }];
+
+  public set: string = 'CEC';
+  public setNumber: string = '51';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Sealeo';
+  public fullName: string = 'Sealeo CEC';
+}

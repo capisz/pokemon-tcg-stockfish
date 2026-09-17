@@ -1,0 +1,83 @@
+import {
+  ABILITY_USED,
+  ADD_CONFUSION_TO_PLAYER_ACTIVE,
+  ADD_MARKER,
+  ADD_POISON_TO_PLAYER_ACTIVE,
+  AFTER_ATTACK,
+  BLOCK_IF_ASLEEP_CONFUSED_PARALYZED,
+  COIN_FLIP_PROMPT,
+  HAS_MARKER,
+  REMOVE_MARKER_AT_END_OF_TURN,
+  WAS_POWER_USED,
+} from '../../game/store/prefabs/prefabs';
+import { CardType, CardTag, Stage } from '../../game/store/card/card-types';
+import { GameError } from '../../game/game-error';
+import { GameMessage } from '../../game/game-message';
+import { StateUtils } from '../../game/store/state-utils';
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Effect } from '../../game/store/effects/effect';
+import { Attack, PowerType, State, StoreLike } from '../../game';
+export class DarkGloom extends PokemonCard {
+  public stage = Stage.STAGE_1;
+  public evolvesFrom = 'Oddish';
+  protected _tags = [CardTag.DARK];
+  public cardType: CardType[] = [G];
+  public hp = 50;
+  public weakness = [{ type: R }];
+  public retreat = [C, C];
+
+  public powers = [
+    {
+      name: 'Pollen Stench',
+      powerType: PowerType.POKEMON_POWER,
+      useWhenInPlay: true,
+      text: "Once during your turn (before your attack), you may flip a coin. If heads, the Defending Pokémon is now Confused; if tails, your Active Pokémon is now Confused. This power can't be used if Dark Gloom is Asleep, Confused, or Paralyzed.",
+    },
+  ];
+
+  public attacks: Attack[] = [
+    {
+      name: 'Poisonpowder',
+      cost: [G, G],
+      damage: 10,
+      text: 'The Defending Pokémon is now Poisoned.',
+    },
+  ];
+
+  public set = 'TR';
+  public setNumber: string = '36';
+  public cardImage: string = 'assets/cardback.png';
+  public name = 'Dark Gloom';
+  public fullName = 'Dark Gloom TR';
+
+  public readonly POLLEN_STENCH_MARKER = 'POLLEN_STENCH_MARKER';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    if (WAS_POWER_USED(effect, 0, this)) {
+      const player = effect.player;
+      const opponent = StateUtils.getOpponent(state, player);
+
+      if (HAS_MARKER(this.POLLEN_STENCH_MARKER, player, this)) {
+        throw new GameError(GameMessage.POWER_ALREADY_USED);
+      }
+
+      BLOCK_IF_ASLEEP_CONFUSED_PARALYZED(player, this);
+      ADD_MARKER(this.POLLEN_STENCH_MARKER, player, this);
+      ABILITY_USED(player, this);
+
+      COIN_FLIP_PROMPT(store, state, player, (result) => {
+        if (result) {
+          ADD_CONFUSION_TO_PLAYER_ACTIVE(store, state, opponent, this);
+        } else {
+          ADD_CONFUSION_TO_PLAYER_ACTIVE(store, state, player, this);
+        }
+      });
+    }
+    REMOVE_MARKER_AT_END_OF_TURN(effect, this.POLLEN_STENCH_MARKER, this);
+
+    if (AFTER_ATTACK(effect, 0, this)) {
+      ADD_POISON_TO_PLAYER_ACTIVE(store, state, effect.opponent, this);
+    }
+    return state;
+  }
+}

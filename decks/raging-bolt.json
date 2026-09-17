@@ -1,0 +1,136 @@
+{
+  "id": "raging-bolt",
+  "name": "Raging Bolt ex / Teal Mask Ogerpon ex",
+  "archetype": "raging-bolt",
+  "formatDate": "2026-09-17",
+  "version": 1,
+  "source": "Authored engineering baseline; not a tournament list.",
+  "cards": [
+    {
+      "cardId": "TEF-123",
+      "name": "Raging Bolt ex",
+      "engineName": "Raging Bolt ex TEF",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "TWM-25",
+      "name": "Teal Mask Ogerpon ex",
+      "engineName": "Teal Mask Ogerpon ex TWM",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "SFA-38",
+      "name": "Fezandipiti ex",
+      "engineName": "Fezandipiti ex SFA",
+      "regulationMark": "H",
+      "count": 1
+    },
+    {
+      "cardId": "TWM-95",
+      "name": "Munkidori",
+      "engineName": "Munkidori TWM",
+      "regulationMark": "H",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "engineName": "Ultra Ball MEG",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-119",
+      "name": "Lillie's Determination",
+      "engineName": "Lillie's Determination M1L",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "SCR-133",
+      "name": "Crispin",
+      "engineName": "Crispin SCR",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-114",
+      "name": "Boss's Orders",
+      "engineName": "Boss's Orders MEG",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "SFA-61",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher SFA",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-130",
+      "name": "Switch",
+      "engineName": "Switch MEG",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-145",
+      "name": "Carmine",
+      "engineName": "Carmine TWM",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-115",
+      "name": "Energy Switch",
+      "engineName": "Energy Switch MEG",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-116",
+      "name": "Fighting Gong",
+      "engineName": "Fighting Gong M1L",
+      "regulationMark": "I",
+      "count": 2
+    },
+    {
+      "cardId": "SVE-1",
+      "name": "Grass Energy",
+      "engineName": "Grass Energy SVE",
+      "regulationMark": "ENERGY",
+      "count": 8
+    },
+    {
+      "cardId": "SVE-4",
+      "name": "Lightning Energy",
+      "engineName": "Lightning Energy SVE",
+      "regulationMark": "ENERGY",
+      "count": 4
+    },
+    {
+      "cardId": "SVE-6",
+      "name": "Fighting Energy",
+      "engineName": "Fighting Energy SVE",
+      "regulationMark": "ENERGY",
+      "count": 4
+    },
+    {
+      "cardId": "SVE-7",
+      "name": "Darkness Energy",
+      "engineName": "Darkness Energy SVE",
+      "regulationMark": "ENERGY",
+      "count": 2
+    }
+  ],
+  "validation": {
+    "status": "experimental",
+    "notes": [
+      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
+      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+    ]
+  }
+}

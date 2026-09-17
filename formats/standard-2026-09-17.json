@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-17",
+  "region": "International Standard",
+  "regulationMarks": ["H", "I", "J"],
+  "rotationSource": "https://www.pokemon.com/us/pokemon-news/2026-pokemon-tcg-standard-format-rotation-announcement",
+  "scope": "Closed allowlist for the five starter decks; not a complete Standard card database. Basic Energy is exempt from regulation-mark rotation. Exact MEG reprints are used instead of inferring arbitrary old-print legality.",
+  "sets": {
+    "TEF": {"released": "2024-03-22", "source": "https://press.pokemon.com/en-CA/MEDIA-ALERT-Pokemon-Trading-Card-Game-Scarlet-VioletTemporal-Forces-Ex"},
+    "TWM": {"released": "2024-05-24", "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"},
+    "SFA": {"released": "2024-08-02", "source": "https://www.pokemon.com/us/pokemon-tcg/scarlet-violet-shrouded-fable"},
+    "SCR": {"released": "2024-09-13", "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-stellar-crown-booster-bundle"},
+    "DRI": {"released": "2025-05-30", "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"},
+    "MEG": {"released": "2025-10-10", "note": "Conservative later EMEA release; North America released September 26, 2025. Both precede the frozen format by almost a year.", "source": "https://www.pokemon.com/uk/pokemon-news/see-new-cards-from-the-pokemon-tcg-mega-evolution-expansion"},
+    "SVE": {"released": "2023-03-31", "note": "Basic Energy only; no special Energy in this catalog."}
+  },
+  "review": "All included expansions substantially predate the freeze. This allowlist intentionally refuses unknown sets and different format dates; adding newly released cards needs a tournament-eligibility review. Full interaction certification remains separate from deck construction validation."
+}

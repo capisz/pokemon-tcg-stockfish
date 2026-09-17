@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Grovyle extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Treecko';
+  public cardType: CardType[] = [G];
+  public hp: number = 80;
+  public weakness = [{ type: R }];
+  public resistance = [{ type: W, value: -20 }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Pound',
+    cost: [C],
+    damage: 20,
+    text: ''
+  },
+  {
+    name: 'Cut',
+    cost: [G, C],
+    damage: 30,
+    text: ''
+  }];
+
+  public set: string = 'PLF';
+  public setNumber: string = '7';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Grovyle';
+  public fullName: string = 'Grovyle PLF';
+}

@@ -1,0 +1,23 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Mankey extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [F];
+  public hp: number = 50;
+  public weakness = [{ type: P }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Scratch',
+    cost: [F],
+    damage: 20,
+    text: ''
+  }];
+
+  public set: string = 'PLF';
+  public setNumber: string = '59';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Mankey';
+  public fullName: string = 'Mankey PLF';
+}

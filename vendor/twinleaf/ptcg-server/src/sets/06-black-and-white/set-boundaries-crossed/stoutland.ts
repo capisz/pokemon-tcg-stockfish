@@ -1,0 +1,70 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+import { GameError, GameMessage, PowerType, State, StateUtils, StoreLike } from '../../../game';
+import { Effect } from '../../../game/store/effects/effect';
+import { PlaySupporterEffect } from '../../../game/store/effects/play-card-effects';
+import { DealDamageEffect } from '../../../game/store/effects/attack-effects';
+import { IS_ABILITY_BLOCKED, WAS_ATTACK_USED, COIN_FLIP_PROMPT } from '../../../game/store/prefabs/prefabs';
+
+export class Stoutland extends PokemonCard {
+  public stage: Stage = Stage.STAGE_2;
+  public cardType: CardType[] = [C];
+  public hp: number = 140;
+  public weakness = [{ type: F }];
+  public retreat = [C, C, C];
+  public evolvesFrom = 'Herdier';
+
+  public powers = [{
+    name: 'Sentinel',
+    powerType: PowerType.ABILITY,
+    text: ' As long as this Pokémon is your Active Pokémon, your opponent can\'t play any Supporter cards from his or her hand.'
+  }];
+
+  public attacks = [{
+    name: 'Wild Tackle',
+    cost: [C, C, C],
+    damage: 90,
+    text: 'Flip a coin. If tails, this Pokémon does 20 damage to itself.'
+  }];
+
+  public set = 'BCR';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '122';
+  public name = 'Stoutland';
+  public fullName = 'Stoutland BCR';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (effect instanceof PlaySupporterEffect) {
+      const player = effect.player;
+      const opponent = StateUtils.getOpponent(state, player);
+
+      if (player.active.getPokemonCard() !== this && opponent.active.getPokemonCard() !== this) {
+        return state;
+      }
+
+      // Checking to see if ability is being blocked
+      if (IS_ABILITY_BLOCKED(store, state, player, this)) {
+        return state;
+      }
+
+      if (opponent.active.getPokemonCard() === this) {
+        throw new GameError(GameMessage.CANNOT_PLAY_THIS_CARD);
+      }
+    }
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      const player = effect.player;
+
+      return COIN_FLIP_PROMPT(store, state, player, result => {
+        if (!result) {
+          const dealDamage = new DealDamageEffect(effect, 10);
+          dealDamage.target = player.active;
+          return store.reduceEffect(state, dealDamage);
+        }
+      });
+    }
+
+    return state;
+  }
+}

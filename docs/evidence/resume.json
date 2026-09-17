@@ -1,0 +1,35 @@
+{
+  "id": "8d7d6d7b7a2c4258b25f6d7ee96f6581",
+  "configuration": {
+    "games": 2,
+    "seed": 82,
+    "maxDecisions": 500,
+    "policy": "heuristic",
+    "deckHash": "6d3c8994158b2a4d8ba66f1b3357b4752b83482e9f29b90c62a22bcd0c2e865f",
+    "decks": [
+      "dragapult",
+      "raging-bolt",
+      "grimmsnarl",
+      "mega-lucario",
+      "crustle"
+    ],
+    "engine": {
+      "ok": true,
+      "protocolVersion": 1,
+      "engineVersion": "twinleaf-adapter-0.1.0+be0c29e9637ba8b3",
+      "warnings": [
+        "Experimental rules adapter; learned strength is not established."
+      ],
+      "engineBuildHash": "1a9f1fd58e9d2f64fa172fbf4395149fbbd80d6d01c274ab847d53bb8d53e1f1"
+    }
+  },
+  "nextGame": 2,
+  "replayIds": [
+    "95c52a4591bc79533fb6",
+    "c1ce9ea3fc81366b370e"
+  ],
+  "finished": 2,
+  "truncated": 0,
+  "errors": 0,
+  "status": "completed"
+}

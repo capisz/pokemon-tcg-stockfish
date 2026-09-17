@@ -1,0 +1,29 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Bagon extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [N];
+  public hp: number = 70;
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Gnaw',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Headbutt',
+    cost: [R, W],
+    damage: 30,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '107';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Bagon';
+  public fullName: string = 'Bagon EVS';
+}

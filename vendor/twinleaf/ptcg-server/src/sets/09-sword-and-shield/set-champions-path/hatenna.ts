@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Hatenna extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 60;
+  public weakness = [{ type: D }];
+  public resistance = [{ type: F, value: -30 }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Stampede',
+    cost: [P],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Magical Shot',
+    cost: [P, C],
+    damage: 30,
+    text: ''
+  }];
+
+  public regulationMark = 'D';
+  public set: string = 'CPA';
+  public setNumber: string = '18';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Hatenna';
+  public fullName: string = 'Hatenna CPA';
+}

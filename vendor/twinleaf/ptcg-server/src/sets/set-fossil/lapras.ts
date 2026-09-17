@@ -1,0 +1,75 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType, SpecialCondition } from '../../game/store/card/card-types';
+import { StoreLike, State } from '../../game';
+import { Effect } from '../../game/store/effects/effect';
+
+import { CheckAttackCostEffect, CheckProvidedEnergyEffect } from '../../game/store/effects/check-effects';
+import { AddSpecialConditionsEffect } from '../../game/store/effects/attack-effects';
+import { WAS_ATTACK_USED, COIN_FLIP_PROMPT } from '../../game/store/prefabs/prefabs';
+
+export class Lapras extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [W];
+  public hp: number = 80;
+  public weakness = [{ type: L }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Water Gun',
+    cost: [W],
+    damage: 10,
+    text: 'Does 10 damage plus 10 more damage for each [W] Energy attached to Lapras but not used to pay for this attack\'s Energy cost. You can\'t add more than 20 damage in this way.'
+  }, {
+    name: 'Confuse Ray',
+    cost: [W, W],
+    damage: 10,
+    text: 'Flip a coin. If heads, the Defending Pokémon is now Confused.'
+  }];
+
+  public set: string = 'FO';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '10';
+  public name: string = 'Lapras';
+  public fullName: string = 'Lapras FO';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+
+      const player = effect.player;
+
+      // Check attack cost
+      const checkCost = new CheckAttackCostEffect(player, this.attacks[0]);
+      state = store.reduceEffect(state, checkCost);
+
+      // Check attached energy
+      const checkEnergy = new CheckProvidedEnergyEffect(player);
+      state = store.reduceEffect(state, checkEnergy);
+
+      // Filter for only Water Energy
+      const waterEnergy = checkEnergy.energyMap.filter(e =>
+        e.provides.includes(CardType.WATER));
+
+      // Get number of extra Water energy  
+      const extraWaterEnergy = waterEnergy.length - checkCost.cost.length;
+
+      // Apply damage boost based on extra Water energy
+      if (extraWaterEnergy == 1) effect.damage += 10;
+      if (extraWaterEnergy == 2) effect.damage += 20;
+
+    }
+
+    if (WAS_ATTACK_USED(effect, 1, this)) {
+      const player = effect.player;
+
+      return COIN_FLIP_PROMPT(store, state, player, result => {
+        if (result === true) {
+          const addSpecialCondition = new AddSpecialConditionsEffect(effect, [SpecialCondition.CONFUSED]);
+          store.reduceEffect(state, addSpecialCondition);
+        }
+      });
+      return state;
+    }
+    return state;
+  }
+}

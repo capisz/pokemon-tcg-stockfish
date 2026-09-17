@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Swirlix extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [Y];
+  public hp: number = 60;
+  public weakness = [{ type: M }];
+  public resistance = [{ type: D, value: -20 }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Tackle',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Fairy Wind',
+    cost: [Y, C],
+    damage: 20,
+    text: ''
+  }];
+
+  public set: string = 'XY';
+  public setNumber: string = '94';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Swirlix';
+  public fullName: string = 'Swirlix XY';
+}

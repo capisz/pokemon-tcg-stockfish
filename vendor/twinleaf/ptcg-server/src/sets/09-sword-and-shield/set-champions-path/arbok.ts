@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Arbok extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Ekans';
+  public cardType: CardType[] = [D];
+  public hp: number = 120;
+  public weakness = [{ type: F }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Sharp Fang',
+    cost: [C],
+    damage: 30,
+    text: ''
+  },
+  {
+    name: 'Tail Snap',
+    cost: [D, C],
+    damage: 70,
+    text: ''
+  }];
+
+  public regulationMark = 'D';
+  public set: string = 'CPA';
+  public setNumber: string = '34';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Arbok';
+  public fullName: string = 'Arbok CPA';
+}

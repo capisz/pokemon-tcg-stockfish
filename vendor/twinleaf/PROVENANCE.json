@@ -1,0 +1,16 @@
+{
+  "repository": "https://github.com/the-epsd/twinleafgg",
+  "commit": "b26ec9c1c5ea62849f2c248b17fec171aff108ca",
+  "download": "https://api.github.com/repos/the-epsd/twinleafgg/tarball/b26ec9c1c5ea62849f2c248b17fec171aff108ca",
+  "archiveSha256": "cd3fb758efbb4bc59fa9b33ce4f2243d3d53b2fb5bc731587021f533116f5699",
+  "retrieved": "2026-09-17",
+  "declaredLicense": "MIT (upstream README and package.json)",
+  "licenseNotice": "LICENSE.ryuu-play",
+  "upstreamFoundation": "https://github.com/keeshii/ryuu-play",
+  "notes": [
+    "Twinleaf snapshot declares MIT but contains no standalone license file. The original RyuuPlay notice is retained; Twinleaf provenance is explicitly recorded.",
+    "This is an independent local adaptation. No upstream contributions are proposed.",
+    "No Kaggle competition SDK, source, replays, trained weights, or card assets are included.",
+    "Only source code is vendored, not card illustrations or hosted services."
+  ]
+}

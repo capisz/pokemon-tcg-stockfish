@@ -1,0 +1,31 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Croconaw extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Totodile';
+  public cardType: CardType[] = [W];
+  public hp: number = 100;
+  public weakness = [{ type: L }];
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Wave Splash',
+    cost: [W],
+    damage: 30,
+    text: ''
+  },
+  {
+    name: 'Surf',
+    cost: [W, C, C],
+    damage: 60,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'FST';
+  public setNumber: string = '56';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Croconaw';
+  public fullName: string = 'Croconaw FST 56';
+}

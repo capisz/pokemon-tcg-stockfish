@@ -1,0 +1,47 @@
+[
+  {
+    "path": "ptcg-server/src/game/store/card/trainer-card.ts",
+    "originalSha256": "39db26fd1ef8e2dd3ecfc4ec8c9c1a7b77d543683b7fc2f757b25cbd8dc576b0",
+    "currentSha256": "ad33fee1ed6040ed0f69e9f604edeac49d8cf96a0f7872b14541d9abfd667d5a"
+  },
+  {
+    "path": "ptcg-server/src/game/store/prompts/order-cards-prompt.ts",
+    "originalSha256": "7bedec4e3bffd4f361cb014f44eff62ef784db9c15a6cb506720c5499a04c289",
+    "currentSha256": "823976380702c898c991310085ff468599a7b669a749f0b63c1416cba61351b4"
+  },
+  {
+    "path": "ptcg-server/src/game/store/prompts/shuffle-hand-prompt.ts",
+    "originalSha256": "5f790f67ceb3895297771b946ccfddae1cff69429fa4b302df903cfbbb2d8b0f",
+    "currentSha256": "29307b2aaaeed6f09ce58c391b9aa3e15fc18a671fe5cbf3f51088e602b73cdb"
+  },
+  {
+    "path": "ptcg-server/src/game/store/prompts/shuffle-prizes-prompt.ts",
+    "originalSha256": "d733f0fa70ee5d671e031a7cc9711b55ad1c5711e277c7c0d2b222ae7259ba72",
+    "currentSha256": "0a7341fc4312d2b0c2d6a510b3c7fd8299b8cc27f5ba2a1b2fe88cbf6ba3aeb0"
+  },
+  {
+    "path": "ptcg-server/src/game/store/prompts/shuffle-prompt.ts",
+    "originalSha256": "a80bbe7810f342a7bb5ff27fd349ec088576896eb0dfc209c244cb9d72e8332d",
+    "currentSha256": "3d70dbede43f51fadb082ed15edf60f46405d67a8d962689b038b57a9a282aa4"
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-destined-rivals/crustle.ts",
+    "originalSha256": "76dde2eb987e84dc23c8bc67798f618000cec1b513f2c32456951e92c0a4c138",
+    "currentSha256": "4d779201253464b36fd4f5bbef3a6156170b885c39243b03664324acc522a5e3"
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-shrouded-fable/nightly-stretcher.ts",
+    "originalSha256": "dd7745ff84048f17109944ff39a0bd16994705a0c9e379786db841c13dc13214",
+    "currentSha256": "8d041affb7d3e5924bfa9bae507ef2e937711fb5f58ee908daaba8240b48ba19"
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-stellar-crown/crispin.ts",
+    "originalSha256": "d332ab0a57afce8d789265b298fbc9697c39b7cc2fd038d03c407bc5154b815f",
+    "currentSha256": "2a39349a408796b4fa63b0766b47d33f6ec239f1fabcf4c2066797781cd5778c"
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-temporal-forces/hand-trimmer.ts",
+    "originalSha256": "eb7c37fa511e2d2586f666dbeb9124a2848e23eb742c608729a07cd659b1a96f",
+    "currentSha256": "1c0c2ffffe44280d7e65548697d610acca162a548025881649dad706778728c4"
+  }
+]

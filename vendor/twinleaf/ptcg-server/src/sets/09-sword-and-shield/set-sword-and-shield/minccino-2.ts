@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Minccino2 extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [C];
+  public hp: number = 60;
+  public weakness = [{ type: F }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Tail Whap',
+    cost: [C],
+    damage: 30,
+    text: ''
+  }];
+
+  public regulationMark = 'D';
+  public set: string = 'SSH';
+  public setNumber: string = '146';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Minccino';
+  public fullName: string = 'Minccino SSH 146';
+}

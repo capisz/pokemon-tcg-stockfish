@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Sandile extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [D];
+  public hp: number = 70;
+  public weakness = [{ type: F }];
+  public resistance = [{ type: P, value: -20 }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Ram',
+    cost: [C, C],
+    damage: 20,
+    text: ''
+  },
+  {
+    name: 'Darkness Fang',
+    cost: [D, D, C],
+    damage: 50,
+    text: ''
+  }];
+
+  public set: string = 'XY';
+  public setNumber: string = '69';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Sandile';
+  public fullName: string = 'Sandile XY';
+}

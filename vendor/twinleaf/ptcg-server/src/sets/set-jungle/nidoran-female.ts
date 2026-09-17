@@ -1,0 +1,113 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { CardType, Stage, SuperType } from '../../game/store/card/card-types';
+import { Attack } from '../../game/store/card/pokemon-types';
+
+import { AttackEffect } from '../../game/store/effects/game-effects';
+import { Effect } from '../../game/store/effects/effect';
+import { PlayPokemonFromDeckEffect } from '../../game/store/effects/play-card-effects';
+import { State } from '../../game/store/state/state';
+import { StoreLike } from '../../game/store/store-like';
+import { Card, ChooseCardsPrompt, GameMessage, PokemonCardList, ShuffleDeckPrompt } from '../../game';
+import { WAS_ATTACK_USED, MULTIPLE_COIN_FLIPS_PROMPT } from '../../game/store/prefabs/prefabs';
+
+function* useCallForFamilyNidoran(
+  next: Function,
+  store: StoreLike,
+  state: State,
+  effect: AttackEffect,
+): IterableIterator<State> {
+  const player = effect.player;
+  const slots: PokemonCardList[] = player.bench.filter((b) => b.cards.length === 0);
+  const max = Math.min(slots.length, 1);
+
+  // Only allow Nidoran M or Nidoran F
+  const allowedNames = ['Nidoran ♂', 'Nidoran ♀'];
+  const blocked: number[] = [];
+  player.deck.cards.forEach((card, idx) => {
+    if (
+      !(card instanceof PokemonCard) ||
+      card.stage !== Stage.BASIC ||
+      !allowedNames.includes(card.name)
+    ) {
+      blocked.push(idx);
+    }
+  });
+
+  let cards: Card[] = [];
+  yield store.prompt(
+    state,
+    new ChooseCardsPrompt(
+      player,
+      GameMessage.CHOOSE_CARD_TO_PUT_ONTO_BENCH,
+      player.deck,
+      { superType: SuperType.POKEMON, stage: Stage.BASIC },
+      { min: 0, max, allowCancel: false, blocked },
+    ),
+    (selected) => {
+      cards = selected || [];
+      next();
+    },
+  );
+
+  if (cards.length > slots.length) {
+    cards.length = slots.length;
+  }
+
+  cards.forEach((card, index) => {
+    store.reduceEffect(
+      state,
+      new PlayPokemonFromDeckEffect(player, card as PokemonCard, slots[index]),
+    );
+  });
+
+  return store.prompt(state, new ShuffleDeckPrompt(player.id), (order) => {
+    player.deck.applyOrder(order);
+  });
+}
+
+export class NidoranFemale extends PokemonCard {
+  public name = 'Nidoran ♀';
+  public cardImage: string = 'assets/cardback.png';
+  public set = 'JU';
+  public setNumber = '57';
+  public fullName = 'Nidoran F JU';
+
+  public cardType: CardType[] = [G];
+  public stage = Stage.BASIC;
+  public hp = 60;
+  public weakness = [{ type: P }];
+  public retreat = [C];
+
+  public attacks: Attack[] = [
+    {
+      name: 'Fury Swipes',
+      cost: [G],
+      damage: 10,
+      damageCalculation: 'x',
+      text: 'Flip 3 coins. This attack does 10 damage times the number of heads.',
+    },
+    {
+      name: 'Call for Family',
+      cost: [G, G],
+      damage: 0,
+      text: "Search your deck for a Basic Pokémon named Nidoran ♂ or Nidoran ♀ and put it onto your Bench. Shuffle your deck afterward. (You can't use this attack if your Bench is full.)",
+    },
+  ];
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      return MULTIPLE_COIN_FLIPS_PROMPT(store, state, effect.player, 3, results => {
+          const heads = results.filter((r) => !!r).length;
+          effect.damage = heads * 10;
+        },
+      );
+    }
+
+    if (WAS_ATTACK_USED(effect, 1, this)) {
+      const generator = useCallForFamilyNidoran(() => generator.next(), store, state, effect);
+      return generator.next().value;
+    }
+
+    return state;
+  }
+}

@@ -1,0 +1,72 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../game/store/card/card-types';
+import { StoreLike, State, PowerType } from '../../game';
+import { Effect } from '../../game/store/effects/effect';
+import { COIN_FLIP_PROMPT, IS_POKEBODY_BLOCKED, WAS_ATTACK_USED } from '../../game/store/prefabs/prefabs';
+import { CheckProvidedEnergyEffect, CheckRetreatCostEffect } from '../../game/store/effects/check-effects';
+import { DISCARD_AN_ENERGY_FROM_OPPONENTS_ACTIVE_POKEMON } from '../../game/store/prefabs/attack-effects';
+
+export class SamiyasBuizel extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [W];
+  public hp: number = 60;
+  public weakness = [{ type: L }];
+  public retreat = [C];
+
+  public powers = [{
+    name: 'Aqua Lift',
+    powerType: PowerType.POKEBODY,
+    text: 'If Samiya\'s Buizel has any [W] Energy attached to it, the Retreat Cost for Samiya\'s Buizel is 0.'
+  }];
+
+  public attacks = [{
+    name: 'Whirlpool',
+    cost: [W, C],
+    damage: 20,
+    text: 'Flip a coin. If heads, discard an Energy attached to the Defending Pokémon.'
+  }];
+
+  public set: string = 'PCGP';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '138';
+  public name: string = 'Samiya\'s Buizel';
+  public fullName: string = 'Samiya\'s Buizel PCGP 138';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+    // Aqua Lift
+    if (effect instanceof CheckRetreatCostEffect && effect.player.active.cards.includes(this)) {
+      const player = effect.player;
+      const pokemonCard = player.active.getPokemonCard();
+
+      if (pokemonCard !== this) {
+        return state;
+      }
+
+      if (IS_POKEBODY_BLOCKED(store, state, player, this)) {
+        return state;
+      }
+
+      const checkProvidedEnergy = new CheckProvidedEnergyEffect(player);
+      state = store.reduceEffect(state, checkProvidedEnergy);
+
+      // Check if there is any Water energy attached
+      const hasPsychicEnergy = checkProvidedEnergy.energyMap.some(energy =>
+        energy.provides.includes(CardType.WATER) || energy.provides.includes(CardType.ANY)
+      );
+
+      if (hasPsychicEnergy) {
+        effect.cost = [];
+      }
+    }
+    // Whirlpool
+    if (WAS_ATTACK_USED(effect, 1, this)) {
+      COIN_FLIP_PROMPT(store, state, effect.player, (result: boolean) => {
+        if (result) {
+          return DISCARD_AN_ENERGY_FROM_OPPONENTS_ACTIVE_POKEMON(store, state, effect);
+        }
+      });
+    }
+
+    return state;
+  }
+}

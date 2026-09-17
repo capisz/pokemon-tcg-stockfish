@@ -1,0 +1,24 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Fletchling extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [C];
+  public hp: number = 40;
+  public weakness = [{ type: L }];
+  public resistance = [{ type: F, value: -20 }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Peck',
+    cost: [C],
+    damage: 20,
+    text: ''
+  }];
+
+  public set: string = 'STS';
+  public setNumber: string = '94';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Fletchling';
+  public fullName: string = 'Fletchling STS';
+}

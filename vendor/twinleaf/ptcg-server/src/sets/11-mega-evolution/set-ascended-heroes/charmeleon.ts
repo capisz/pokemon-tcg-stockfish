@@ -1,0 +1,26 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Charmeleon extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Charmander';
+  public cardType: CardType[] = [R];
+  public hp: number = 100;
+  public weakness = [{ type: W }];
+  public resistance = [];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Heat Blast',
+    cost: [R, C],
+    damage: 50,
+    text: ''
+  }];
+
+  public regulationMark = 'I';
+  public set: string = 'ASC';
+  public setNumber: string = '21';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Charmeleon';
+  public fullName: string = 'Charmeleon MC';
+}

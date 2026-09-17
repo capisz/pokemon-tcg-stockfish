@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Zweilous extends PokemonCard {
+  public stage: Stage = Stage.STAGE_1;
+  public evolvesFrom = 'Deino';
+  public cardType: CardType[] = [N];
+  public hp: number = 100;
+  public retreat = [C, C];
+
+  public attacks = [{
+    name: 'Bite',
+    cost: [P, D],
+    damage: 40,
+    text: ''
+  },
+  {
+    name: 'Dragon Headbutt',
+    cost: [P, D, C, C],
+    damage: 100,
+    text: ''
+  }];
+
+  public regulationMark = 'E';
+  public set: string = 'EVS';
+  public setNumber: string = '114';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Zweilous';
+  public fullName: string = 'Zweilous EVS';
+}

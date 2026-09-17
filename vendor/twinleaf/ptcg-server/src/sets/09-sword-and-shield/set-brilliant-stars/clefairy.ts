@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Clefairy extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [P];
+  public hp: number = 60;
+  public weakness = [{ type: M }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Pound',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Magical Shot',
+    cost: [P, C],
+    damage: 30,
+    text: ''
+  }];
+
+  public regulationMark = 'F';
+  public set: string = 'BRS';
+  public setNumber: string = '53';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Clefairy';
+  public fullName: string = 'Clefairy BRS 53';
+}

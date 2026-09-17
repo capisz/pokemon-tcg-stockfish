@@ -1,0 +1,30 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Snover extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [W];
+  public hp: number = 80;
+  public weakness = [{ type: M }];
+  public retreat = [C, C, C];
+
+  public attacks = [{
+    name: 'Corkscrew Punch',
+    cost: [W],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Icicle Missile',
+    cost: [W, W, C],
+    damage: 60,
+    text: ''
+  }];
+
+  public regulationMark = 'F';
+  public set: string = 'LOR';
+  public setNumber: string = '42';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Snover';
+  public fullName: string = 'Snover LOR 42';
+}

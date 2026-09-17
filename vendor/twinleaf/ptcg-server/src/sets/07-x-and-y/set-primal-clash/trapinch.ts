@@ -1,0 +1,29 @@
+import { PokemonCard } from '../../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../../game/store/card/card-types';
+
+export class Trapinch extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [F];
+  public hp: number = 60;
+  public weakness = [{ type: G }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Gnaw',
+    cost: [C],
+    damage: 10,
+    text: ''
+  },
+  {
+    name: 'Mud-Slap',
+    cost: [F, C],
+    damage: 20,
+    text: ''
+  }];
+
+  public set: string = 'PRC';
+  public setNumber: string = '82';
+  public cardImage: string = 'assets/cardback.png';
+  public name: string = 'Trapinch';
+  public fullName: string = 'Trapinch PRC';
+}

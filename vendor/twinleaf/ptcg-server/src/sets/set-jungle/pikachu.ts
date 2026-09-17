@@ -1,0 +1,52 @@
+import { PokemonCard } from '../../game/store/card/pokemon-card';
+import { Stage, CardType } from '../../game/store/card/card-types';
+import { StoreLike, State, ChoosePokemonPrompt, GameMessage, PlayerType, SlotType } from '../../game';
+import { Effect } from '../../game/store/effects/effect';
+
+import { PutDamageEffect } from '../../game/store/effects/attack-effects';
+import { WAS_ATTACK_USED } from '../../game/store/prefabs/prefabs';
+
+export class Pikachu extends PokemonCard {
+  public stage: Stage = Stage.BASIC;
+  public cardType: CardType[] = [L];
+  public hp: number = 50;
+  public weakness = [{ type: F }];
+  public retreat = [C];
+
+  public attacks = [{
+    name: 'Spark',
+    cost: [L, L],
+    damage: 20,
+    text: 'If your opponent has any Benched Pokémon, choose 1 of them and this attack does 10 damage to it. (Don\'t apply Weakness and Resistance for Benched Pokémon.)'
+  }];
+
+  public set: string = 'JU';
+  public cardImage: string = 'assets/cardback.png';
+  public setNumber: string = '60';
+  public name: string = 'Pikachu';
+  public fullName: string = 'Pikachu JU';
+
+  public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
+
+    if (WAS_ATTACK_USED(effect, 0, this)) {
+      const player = effect.player;
+
+      return store.prompt(state, new ChoosePokemonPrompt(
+        player.id,
+        GameMessage.CHOOSE_POKEMON_TO_DAMAGE,
+        PlayerType.TOP_PLAYER,
+        [SlotType.BENCH],
+        { min: 1, max: 1, allowCancel: false }
+      ), selected => {
+        const targets = selected || [];
+        targets.forEach(target => {
+          const damageEffect = new PutDamageEffect(effect, 10);
+          damageEffect.target = target;
+          store.reduceEffect(state, damageEffect);
+        });
+        return state;
+      });
+    }
+    return state;
+  }
+}
