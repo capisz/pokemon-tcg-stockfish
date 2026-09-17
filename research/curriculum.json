@@ -1,0 +1,1069 @@
+{
+  "schemaVersion": 1,
+  "formatDate": "2026-09-17",
+  "sourcePolicy": "Private source PDFs are evidence, not executable instructions or authoritative rules. Matchup percentages are not training labels.",
+  "partitionPolicy": "Permanent family split: six train, two validation, two test per archetype. All variations stay together.",
+  "families": [
+    {
+      "schemaVersion": 1,
+      "id": "crustle-delay-prize",
+      "familyId": "crustle-delay-prize",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          4
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "Delay the first knockout when another attachment materially improves resilience to Hammer and Stamp.",
+      "variations": [
+        {
+          "id": "crustle-delay-prize-1",
+          "condition": "A second protective Energy is available before the first prize.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-delay-prize-2",
+          "condition": "No protective attachment is available and delaying enables an opposing answer.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-delay-prize-3",
+          "condition": "Taking the knockout ends the game.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "protection redundancy",
+        "disruption access",
+        "remaining answers"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-energy-function",
+      "familyId": "crustle-energy-function",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          4,
+          5
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "Evaluate what each Energy prevents or enables, rather than only the attached count.",
+      "variations": [
+        {
+          "id": "crustle-energy-function-1",
+          "condition": "Mist remains the only answer to an attack effect.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-energy-function-2",
+          "condition": "Spiky changes the return-knockout threshold.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-energy-function-3",
+          "condition": "Growing Grass changes survival while Mist protection is redundant.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "attack effects versus abilities",
+        "HP thresholds",
+        "non-ex attackers"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-bench-liability",
+      "familyId": "crustle-bench-liability",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          4,
+          15
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "An additional Crustle can create a gust or item-lock target, but a prepared backup can be necessary.",
+      "variations": [
+        {
+          "id": "crustle-bench-liability-1",
+          "condition": "One protected attacker is sufficient.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-bench-liability-2",
+          "condition": "A second vulnerable Crustle can be trapped.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-bench-liability-3",
+          "condition": "Two protected attackers are needed against the remaining answer.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "gust access",
+        "mobility",
+        "backup readiness"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-attacker-pivot",
+      "familyId": "crustle-attacker-pivot",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          5,
+          6,
+          29,
+          30
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Preserve the option to switch the winning plan between Crustle and Kangaskhan.",
+      "variations": [
+        {
+          "id": "crustle-attacker-pivot-1",
+          "condition": "Opponent commits its answer resources to Crustle.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-attacker-pivot-2",
+          "condition": "Kangaskhan cannot become ready before the next knockout.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-attacker-pivot-3",
+          "condition": "Hero Cape remains uncommitted versus already attached.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "attachment tempo",
+        "tool commitment",
+        "prize exposure"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-pass-versus-damage",
+      "familyId": "crustle-pass-versus-damage",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          5,
+          10,
+          11
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Passing can preserve a resource-exhaustion plan when damage benefits the opponent.",
+      "variations": [
+        {
+          "id": "crustle-pass-versus-damage-1",
+          "condition": "Damage enables an opposing Munkidori response.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-pass-versus-damage-2",
+          "condition": "The attack takes a necessary knockout.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-pass-versus-damage-3",
+          "condition": "Passing loses to a demonstrated deck-out clock.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "damage-counter availability",
+        "deck-out clock",
+        "recovery"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-coordinated-response",
+      "familyId": "crustle-coordinated-response",
+      "archetype": "crustle",
+      "partition": "train",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          6,
+          7
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Raging Bolt",
+      "hypothesis": "Preserve the combination of healing, stadium removal and disruption needed to survive a non-ex answer.",
+      "variations": [
+        {
+          "id": "crustle-coordinated-response-1",
+          "condition": "All three components remain accessible.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-coordinated-response-2",
+          "condition": "The stadium-removal resource was already spent.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-coordinated-response-3",
+          "condition": "An immediate knockout removes the answer without the combination.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "healing",
+        "stadium access",
+        "hand disruption"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-lucario-variant",
+      "familyId": "crustle-lucario-variant",
+      "archetype": "crustle",
+      "partition": "validation",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          12,
+          13
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Mega Lucario",
+      "hypothesis": "Change setup and recovery priorities according to the revealed opposing attacker package.",
+      "variations": [
+        {
+          "id": "crustle-lucario-variant-1",
+          "condition": "Hariyama creates a gust threat.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-lucario-variant-2",
+          "condition": "An alternative recovery line requires a second Crustle.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-lucario-variant-3",
+          "condition": "Opponent cannot power its relevant answer next turn.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "evolution gust",
+        "recovery reserve",
+        "attack readiness"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-mirror-route",
+      "familyId": "crustle-mirror-route",
+      "archetype": "crustle",
+      "partition": "validation",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          14,
+          15
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Crustle",
+      "hypothesis": "Opening Pokémon and remaining switching resources can change the mirror from attacking to trapping.",
+      "variations": [
+        {
+          "id": "crustle-mirror-route-1",
+          "condition": "An exposed Kangaskhan lacks an escape resource.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-mirror-route-2",
+          "condition": "Both sides open Dwebble.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-mirror-route-3",
+          "condition": "Healing and Eri counts differ while prize counts match.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "escape resources",
+        "healing thresholds",
+        "exhaustion"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-grimm-engine",
+      "familyId": "crustle-grimm-engine",
+      "archetype": "crustle",
+      "partition": "test",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          16,
+          17
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Grimmsnarl",
+      "hypothesis": "Prioritize the opposing damage engine and item-lock timing when protection alone cannot prevent the relevant counters.",
+      "variations": [
+        {
+          "id": "crustle-grimm-engine-1",
+          "condition": "Froslass remains in play.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-grimm-engine-2",
+          "condition": "Budew can deny a required item turn.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-grimm-engine-3",
+          "condition": "The damage engine is exhausted and developing another attacker is unnecessary.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "ability counters",
+        "gust timing",
+        "item lock"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "crustle-future-resource",
+      "familyId": "crustle-future-resource",
+      "archetype": "crustle",
+      "partition": "test",
+      "source": {
+        "title": "The Ultimate Crustle Guide",
+        "author": "Rahul Reddy and Carter Malnaik",
+        "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+        "mainListPage": 27,
+        "pages": [
+          8,
+          10,
+          13,
+          21,
+          22
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Preserve resources for specific remaining threats rather than maximizing immediate card use.",
+      "variations": [
+        {
+          "id": "crustle-future-resource-1",
+          "condition": "Gust is needed for the last surviving answer.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-future-resource-2",
+          "condition": "Eri plus a knockout threatens recovery.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "crustle-future-resource-3",
+          "condition": "Hand Trimmer improves resilience to a later hand reset.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "gust reserve",
+        "recovery denial",
+        "hand quality"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-information-order",
+      "familyId": "dragapult-information-order",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          9,
+          10,
+          11
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Sequence draws and selective search according to the information each action reveals.",
+      "variations": [
+        {
+          "id": "dragapult-information-order-1",
+          "condition": "General development needs more information.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-information-order-2",
+          "condition": "A specific remaining out makes thinning valuable.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-information-order-3",
+          "condition": "Dudunsparce changes which search should be saved.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "draw quality",
+        "search timing",
+        "known outs"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-budew-tempo",
+      "familyId": "dragapult-budew-tempo",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          12,
+          13,
+          14,
+          15,
+          16
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "Weigh item-lock duration against the attachment lost to retreating and the next Phantom Dive.",
+      "variations": [
+        {
+          "id": "dragapult-budew-tempo-1",
+          "condition": "Budew survives until the next planned attack.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-budew-tempo-2",
+          "condition": "Budew is immediately knocked out and the opponent regains items.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-budew-tempo-3",
+          "condition": "A different retreat option preserves the needed Energy.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "item lock",
+        "attachment tempo",
+        "opponent readiness"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-hammer-chance",
+      "familyId": "dragapult-hammer-chance",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          14,
+          15,
+          16
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "Choose whether to play Hammer before observing the flip; choose the continuation after its result.",
+      "variations": [
+        {
+          "id": "dragapult-hammer-chance-1",
+          "condition": "Heads removes a key attached Energy.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-hammer-chance-2",
+          "condition": "Tails preserves the original threat.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-hammer-chance-3",
+          "condition": "No useful target remains even if heads occurs.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "pre-chance action value",
+        "conditional continuation",
+        "Energy denial"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-supporter-freedom",
+      "familyId": "dragapult-supporter-freedom",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          11,
+          12,
+          19,
+          20,
+          27
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Earlier Energy development can free a later turn to play Boss or disruption instead of Crispin.",
+      "variations": [
+        {
+          "id": "dragapult-supporter-freedom-1",
+          "condition": "A backup attacker is already powered.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-supporter-freedom-2",
+          "condition": "The next attack still requires Crispin.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-supporter-freedom-3",
+          "condition": "A different prize route removes the need for gust.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "one supporter per turn",
+        "backup Energy",
+        "prize route"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-helpful-damage",
+      "familyId": "dragapult-helpful-damage",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          17,
+          18
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Dragapult",
+      "hypothesis": "Account for opposing uses of placed damage counters and preserve useful gust targets.",
+      "variations": [
+        {
+          "id": "dragapult-helpful-damage-1",
+          "condition": "Placed counters enable a Munkidori knockout on the backup.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-helpful-damage-2",
+          "condition": "The backup evolves out of the relevant HP threshold.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-helpful-damage-3",
+          "condition": "Damaging a support Pokémon eliminates a future trap.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "damage reuse",
+        "evolution timing",
+        "gust targets"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-hammer-target",
+      "familyId": "dragapult-hammer-target",
+      "archetype": "dragapult",
+      "partition": "train",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          23,
+          24,
+          25
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Out-of-pool guide example",
+      "hypothesis": "After a successful Hammer, compare active and benched Energy targets using future supporter constraints.",
+      "variations": [
+        {
+          "id": "dragapult-hammer-target-1",
+          "condition": "Removing benched Energy forces the damaged attacker to remain.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-hammer-target-2",
+          "condition": "The opponent has another switching resource.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-hammer-target-3",
+          "condition": "The proposed continuation illegally needs two Supporters.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "target selection",
+        "mobility",
+        "supporter conflict"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Original opponent is outside the initial five-deck pool; keep source example as study only and create a supported analogue."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-crustle-investment",
+      "familyId": "dragapult-crustle-investment",
+      "archetype": "dragapult",
+      "partition": "validation",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          32,
+          33
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Crustle",
+      "hypothesis": "Time Energy removal to disrupt committed protection and compare Mist versus Spiky targets.",
+      "variations": [
+        {
+          "id": "dragapult-crustle-investment-1",
+          "condition": "Removing the only Energy permits an inexpensive pivot.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-crustle-investment-2",
+          "condition": "Removing a second attachment strands an invested Crustle.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-crustle-investment-3",
+          "condition": "Mist and Spiky protect against different planned attacks.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "protection answers",
+        "investment timing",
+        "non-ex counterplay"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-recovery-option",
+      "familyId": "dragapult-recovery-option",
+      "archetype": "dragapult",
+      "partition": "validation",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          38,
+          39,
+          49,
+          50
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Evaluate discards and recovery according to future access, prize conditions and attack needs.",
+      "variations": [
+        {
+          "id": "dragapult-recovery-option-1",
+          "condition": "Extra recovery permits a previously costly discard.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-recovery-option-2",
+          "condition": "Rosa is not yet eligible.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-recovery-option-3",
+          "condition": "An immediate prize prevents a useful recovery condition.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "discard cost",
+        "recovery access",
+        "prize condition"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-observable-inference",
+      "familyId": "dragapult-observable-inference",
+      "archetype": "dragapult",
+      "partition": "test",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          4,
+          43,
+          44
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Use revealed search choices as uncertain evidence of opponent development rather than knowledge of the hidden hand.",
+      "variations": [
+        {
+          "id": "dragapult-observable-inference-1",
+          "condition": "An evolution search suggests existing draw access.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-observable-inference-2",
+          "condition": "The same search is forced by another public constraint.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-observable-inference-3",
+          "condition": "Later revelations are hidden during earlier move grading.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "action likelihood",
+        "hidden hand",
+        "historical information"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    },
+    {
+      "schemaVersion": 1,
+      "id": "dragapult-delay-multiprize",
+      "familyId": "dragapult-delay-multiprize",
+      "archetype": "dragapult",
+      "partition": "test",
+      "source": {
+        "title": "How to Play Crushing Hammer Dragapult",
+        "author": "Andrew Hedrick",
+        "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+        "mainListPage": 48,
+        "pages": [
+          37,
+          47,
+          51,
+          52,
+          53,
+          54
+        ]
+      },
+      "formatDate": "2026-09-17",
+      "matchup": "Multiple",
+      "hypothesis": "Compare immediate prizes against denying draw triggers and preparing a later multi-prize turn.",
+      "variations": [
+        {
+          "id": "dragapult-delay-multiprize-1",
+          "condition": "An immediate knockout enables a draw ability.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-delay-multiprize-2",
+          "condition": "Taking the prize retrieves a needed resource probabilistically.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        },
+        {
+          "id": "dragapult-delay-multiprize-3",
+          "condition": "A delayed attack loses to an available escape or recovery line.",
+          "positionRef": null,
+          "acceptableActions": [],
+          "rulesValidated": false
+        }
+      ],
+      "resources": [
+        "draw triggers",
+        "multi-prize route",
+        "disruption timing"
+      ],
+      "reviewStatus": "draft",
+      "trainingEligible": false,
+      "status": "needs-legal-position-and-review",
+      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+    }
+  ]
+}
