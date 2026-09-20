@@ -104,7 +104,12 @@ class Store:
                 replay.setdefault("sourceEngineId", identifier)
                 identifier = f"{identifier[:110]}-{digest({key: value for key, value in replay.items() if key != 'id'})[:24]}"
         replay["id"] = identifier
+        from .dataset import family_key, training_eligible
+        key, eligible = family_key(replay), training_eligible(replay)
+        if not eligible:
+            self.put("partitions", f"excluded-{key}", {"familyId": key, "excludedFromTraining": True})
         self.put("replays", identifier, replay)
         self.put("replay-index", identifier, {"id": identifier, "decks": replay.get("decks", []),
-                                             "status": replay["status"], "frames": len(replay.get("frames", []))})
+                                             "status": replay["status"], "frames": len(replay.get("frames", [])),
+                                             "familyKey": key, "trainingEligible": eligible})
         return identifier

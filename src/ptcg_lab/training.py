@@ -10,7 +10,7 @@ from pathlib import Path
 
 import numpy as np
 
-from .dataset import complete_games, examples, game_split
+from .dataset import complete_games, examples, game_split, family_key
 from .features import ACTION_DIM, FEATURE_NAMES, action_features, card_tokens, resource_features
 from .storage import Store, digest, file_digest
 
@@ -100,7 +100,7 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
     config = {"seed": seed, "device": device, "maxPositions": max_positions, "batchSize": 32,
               "learningRate": .001, "features": list(FEATURE_NAMES), "actionDimensions": ACTION_DIM,
               "featureVersion": "owned-zone-semantic-actions-v2", "splitPolicy": "stable-family-hash-v1",
-              "datasetHash": digest(manifest)}
+              "datasetHash": digest(manifest), "eligibilityPolicy": "explicit-verified-roles-v1"}
     model = PolicyResourceModel().to(device)
     parameters = sum(parameter.numel() for parameter in model.parameters())
     if parameters >= 2_000_000:
@@ -110,16 +110,24 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
     history = []
     experiment_id = run_id or uuid.uuid4().hex
     parent = None
+    seen_seeds = {game["seed"] for game in games}
+    seen_families = {family_key(game) for game in games}
     start_batch = 0
     if resume and warm_start:
         raise ValueError("Choose resume or warm-start, not both")
     if warm_start:
         previous_model, previous_checkpoint = load_model(warm_start)
         model.load_state_dict(previous_model.state_dict())
+        previous_lineage = checkpoint_lineage(previous_checkpoint)
+        seen_seeds.update(previous_lineage["seenSeeds"])
+        seen_families.update(previous_lineage["familyIds"])
         parent = {"experimentId": previous_checkpoint["experimentId"], "checkpointHash": file_digest(warm_start),
                   "mode": "warm-start-new-data", "optimizer": "fresh"}
     if resume:
         checkpoint = torch.load(resume, map_location="cpu", weights_only=True)
+        previous_lineage = checkpoint_lineage(checkpoint)
+        seen_seeds.update(previous_lineage["seenSeeds"])
+        seen_families.update(previous_lineage["familyIds"])
         previous_config = dict(checkpoint["config"])
         comparable = dict(config)
         if linked_resume:
@@ -146,9 +154,13 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
     search_examples = sum(row["policyTargetSource"] == "search-distillation" for row in data["train"])
     policy_target = "mixed search distillation and recorded legal decisions" if search_examples else "behavior cloning of recorded legal decisions; not search distillation"
 
+    lineage = {"schemaVersion": 1, "seenSeeds": sorted(seen_seeds), "familyIds": sorted(seen_families)}
+    lineage["hash"] = digest(lineage)
+
     def checkpoint_at(epoch, next_batch=0):
         return {"schemaVersion": 2, "experimentId": experiment_id, "parent": parent, "platform": platform.platform(),
                 "epoch": epoch, "nextBatch": next_batch, "config": config, "manifest": manifest, "parameters": parameters,
+                "dataLineage": lineage,
                 "model": {key: value.cpu() for key, value in model.state_dict().items()},
                 "optimizer": optimizer.state_dict(), "calibration": None, "history": history,
                 "searchTargetExamples": search_examples, "policyTarget": policy_target,
@@ -218,7 +230,8 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
         report = {"id": experiment_id, "status": "completed", "type": "policy-value-training", "config": config,
                   "parameters": parameters, "checkpoint": str(model_path), "modelHash": file_digest(model_path),
                   "metrics": metrics, "calibration": calibration_status, "history": history,
-                  "parent": parent, "searchTargetExamples": search_examples, "policyTarget": policy_target,
+                  "parent": parent, "dataLineageHash": lineage["hash"],
+                  "searchTargetExamples": search_examples, "policyTarget": policy_target,
                   "splits": {name: [game["id"] for game in selected] for name, selected in splits.items()},
                   "promotion": "experimental; no champion promotion without held-out playing-strength evaluation"}
         store.put("experiments", experiment_id, report)
@@ -257,13 +270,30 @@ def _save_checkpoint(store: Store, path: Path, checkpoint: dict) -> None:
         temporary.unlink(missing_ok=True)
 
 
+def checkpoint_lineage(checkpoint: dict) -> dict:
+    lineage = checkpoint.get("dataLineage")
+    if not isinstance(lineage, dict) or lineage.get("schemaVersion") != 1:
+        raise ValueError("Checkpoint lacks cumulative data lineage; held-out evaluation and continuation are blocked")
+    if digest({key: value for key, value in lineage.items() if key != "hash"}) != lineage.get("hash"):
+        raise ValueError("Checkpoint cumulative data lineage checksum is invalid")
+    if (not isinstance(lineage.get("seenSeeds"), list) or not isinstance(lineage.get("familyIds"), list)
+            or not lineage["seenSeeds"] or not lineage["familyIds"]
+            or any(type(seed) is not int or not 0 <= seed < 2**32 for seed in lineage["seenSeeds"])
+            or any(not isinstance(key, str) or len(key) != 64 for key in lineage["familyIds"])):
+        raise ValueError("Checkpoint cumulative data lineage is malformed")
+    return lineage
+
+
 def load_model(path: Path):
     torch = _torch()
     from .model import PolicyResourceModel
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    if checkpoint.get("config", {}).get("eligibilityPolicy") != "explicit-verified-roles-v1":
+        raise ValueError("Historical checkpoint lacks verified training provenance; preserve it as evidence and train a new eligible model")
     if (checkpoint.get("config", {}).get("featureVersion") != "owned-zone-semantic-actions-v2"
             or checkpoint.get("config", {}).get("actionDimensions") != ACTION_DIM):
         raise ValueError("Checkpoint feature schema is incompatible with this engine lab version; train a fresh checkpoint. Historical artifacts are preserved.")
+    checkpoint_lineage(checkpoint)
     model = PolicyResourceModel()
     model.load_state_dict(checkpoint["model"])
     model.eval()

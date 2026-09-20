@@ -38,7 +38,7 @@ class Agent:
 def admitted_decks(registry: list[dict], allow_unverified: bool = False, evaluation: bool = False) -> list[dict]:
     roles = {"main", "training-variant", "heldout"} if evaluation else {"main", "training-variant"}
     result = [deck for deck in registry if deck.get("role", "main") in roles
-              and (allow_unverified or "role" not in deck or deck.get("validation", {}).get("trainingEligible") is True)]
+              and (allow_unverified or ("role" in deck and deck.get("validation", {}).get("trainingEligible") is True))]
     if not result:
         raise ValueError("No rules-validated competitive decks are training eligible. Use --allow-unverified only for rules QA; its games cannot train or promote a model.")
     return result
@@ -70,9 +70,14 @@ def population(store: Store, limit: int = 4) -> list[str]:
     return result
 
 
-def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budget_ms: int, method: str = "ismcts"):
+def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budget_ms: int, method: str = "ismcts",
+                  known_opponent_deck_id: str | None = None, prior_revealed_cards: list[str] | None = None):
     params = {"observation": observation, "seed": seed, "budgetMs": budget_ms,
               "method": method, "iterations": 100, "maxRolloutDecisions": 16}
+    if known_opponent_deck_id is not None:
+        params["knownOpponentDeckId"] = known_opponent_deck_id
+    if prior_revealed_cards is not None:
+        params["priorRevealedCards"] = list(prior_revealed_cards)
     if fallback.loaded is not None:
         from .training import predict
         _, scores = predict(Path(fallback.policy), observation, fallback.loaded)
@@ -84,7 +89,7 @@ def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budg
                                    for action, weight in zip(observation.get("legalActions", []), weights)]
     result = engine.request("search", params)
     legal = {action["id"] for action in observation.get("legalActions", [])}
-    measured = [item for item in result.get("alternatives", []) if item.get("actionId") in legal
+    measured = [item for item in (result.get("alternatives", []) if result.get("status") == "complete" else []) if item.get("actionId") in legal
                 and item.get("visits", 0) > 0 and item.get("score") is not None and math.isfinite(item["score"])]
     choice = max(measured, key=lambda item: item["score"])["actionId"] if measured else fallback.choose(observation)
     target = None

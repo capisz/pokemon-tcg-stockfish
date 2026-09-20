@@ -26,7 +26,7 @@ The simulator probe is explicitly QA and may truncate. Its throughput is not evi
 
 ## Manual runs and recovery
 
-`continuous --batches 0` runs successive bounded batches until interrupted. Each batch freezes an opponent population containing random/heuristic baselines and compatible champion/historical checkpoints. It gathers complete games with optional search-policy targets, trains for one epoch, and periodically records a paired evaluation. Evaluation is experimental and does not automatically install a champion.
+`continuous --batches 0` runs successive bounded batches until interrupted. Each batch freezes an opponent population containing random/heuristic baselines and compatible champion/historical checkpoints. It gathers complete games with optional search-policy targets, trains for one epoch, and periodically records a paired evaluation. Evaluation is experimental and does not automatically install a champion. Explicit promotion requires coverage of every registered competitive list and all five archetypes in main, training-variant, and held-out roles; validating only a subset cannot satisfy the gate.
 
 Only search decisions that sampled every legal action at least twice become soft policy targets. An observation hash ties each target to the actor's pre-decision information. Learned checkpoints can supply legal root-action priors to ISMCTS; deeper nodes and leaf evaluation remain heuristic. This is not a claim that learned search is stronger.
 
@@ -47,7 +47,7 @@ Defaults are two workers, 8 GiB process-tree target and 25 GiB managed data on M
 
 The memory monitor covers the launching Python process and its descendants, not unrelated independent API/training processes. Limits are checked targets, not OS hard caps. Run heavyweight learning and language-model work separately. Model caches or Ollama stores outside managed data are not included in its disk quota. If process inspection is unavailable, monitored work pauses instead of pretending its memory is accounted for.
 
-The training replay buffer reads at most 2,000 recent complete games and 256 MiB of source JSON. Original artifacts are retained. Parquet export streams records and writes compressed chunks rather than loading the entire collection. Exported rows retain stable complete-game-family splits. Evaluation, benchmark, held-out-list, historical-list, and unverified games never supply training labels.
+The training replay buffer reads at most 2,000 recent complete games and 256 MiB of source JSON. Original artifacts are retained. Parquet export streams records and writes compressed chunks rather than loading the entire collection. Exported rows retain stable complete-game-family splits. Evaluation, benchmark, held-out-list, historical-list, and unverified games never supply training labels. Eligibility must be explicit; missing legacy metadata is not approval. A permanent family-quarantine marker prevents a trusted-looking copy of a benchmark or QA game from entering training, even after the original source is archived. These markers travel with bundles.
 
 ## Transfer between computers
 
@@ -64,7 +64,7 @@ Windows accepts a normal drive path such as `E:\ptcg-archives\run-bundle`. The d
 python -m ptcg_lab.cli --data IMPORTED_ROOT train --epochs 4 --max-positions 10000 --resume IMPORTED_ROOT/models/CHECKPOINT.pt --linked-resume
 ```
 
-Repeat the checkpoint's seed and maximum-position settings. Its data corpus must be identical. `--linked-resume` permits a changed device and assigns a new experiment ID with the parent checkpoint hash, restoring optimizer progress. Floating-point equivalence across machines is not promised. To train on a larger/new corpus use `--warm-start CHECKPOINT.pt`, which starts a new experiment and fresh optimizer instead.
+Repeat the checkpoint's seed and maximum-position settings. Its data corpus must be identical. `--linked-resume` permits a changed device and assigns a new experiment ID with the parent checkpoint hash, restoring optimizer progress. Each checkpoint also preserves checksummed cumulative seed/family lineage across warm starts and resumes, so held-out evaluation cannot reuse an ancestor's training or validation seeds after the buffer moves on. Historical checkpoints without verified eligibility and complete lineage remain evidence and cannot be used as trusted policies or warm starts. Floating-point equivalence across machines is not promised. To train on a larger/new corpus use `--warm-start CHECKPOINT.pt`, which starts a new experiment and fresh optimizer instead.
 
 Source absolute paths in historical reports remain provenance, not executable destinations. Select imported checkpoints by their path within the returned data root. A transfer interrupted before final publication leaves no successful bundle. Corrupt, incompatible, traversing, symlinked, or partition-conflicting bundles are rejected.
 

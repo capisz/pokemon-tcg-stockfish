@@ -158,7 +158,7 @@ def test_search_targets_require_complete_legal_coverage_and_same_information(obs
     class Engine:
         alternatives = [{"actionId": "action-0", "score": .4, "visits": 2}, {"actionId": "action-1", "score": .8, "visits": 3}]
         def request(self, method, params):
-            return {"alternatives": self.alternatives, "iterations": 5}
+            return {"status": "complete", "alternatives": self.alternatives, "iterations": 5}
     engine = Engine()
     choice, target = search_choice(engine, observation, Agent("heuristic", 1), seed=2, budget_ms=10)
     assert choice == "action-1"
@@ -281,3 +281,111 @@ def test_disk_accounting_does_not_follow_directory_links(tmp_path):
     except OSError:
         pytest.skip("Directory symlink creation requires Windows developer permission")
     assert directory_bytes(managed) == 3
+
+
+def test_legacy_replays_and_checkpoints_cannot_supply_trusted_learning(tmp_path, observation):
+    from ptcg_lab.training import train, load_model
+    torch = pytest.importorskip("torch")
+    store = Store(tmp_path)
+    old = make_replay(observation, 99)
+    old.pop("trainingEligible")
+    old.pop("deckRoles")
+    store.save_replay(old)
+    assert not training_eligible(old)
+    assert complete_games(store) == []
+    with pytest.raises(ValueError, match="No rules-validated"):
+        admitted_decks([{"id": "legacy"}])
+    for index in range(12):
+        store.save_replay(make_replay(observation, index))
+    result = train(store, epochs=1, max_positions=100)
+    checkpoint = torch.load(result["checkpoint"], weights_only=True)
+    checkpoint["config"].pop("eligibilityPolicy")
+    legacy = tmp_path / "legacy.pt"
+    torch.save(checkpoint, legacy)
+    with pytest.raises(ValueError, match="Historical checkpoint"):
+        load_model(legacy)
+    with pytest.raises(ValueError, match="Historical checkpoint"):
+        Agent(str(legacy), 1)
+
+
+def test_family_quarantine_persists_after_benchmark_copy_is_archived(tmp_path, observation):
+    store = Store(tmp_path)
+    trusted = make_replay(observation, 5)
+    store.save_replay(trusted)
+    benchmark = copy.deepcopy(trusted)
+    benchmark["id"], benchmark["benchmarkMatch"] = "benchmark-copy", "match"
+    store.save_replay(benchmark)
+    assert complete_games(store) == []
+    store.location("replays", "benchmark-copy").unlink()
+    store.location("replay-index", "benchmark-copy").unlink()
+    assert complete_games(store) == []
+    newer_copy = copy.deepcopy(trusted)
+    newer_copy["id"] = "trusted-looking-copy"
+    store.save_replay(newer_copy)
+    assert complete_games(store) == []
+    bundle = tmp_path.parent / f"bundle-{tmp_path.name}"
+    export_bundle(store, bundle, IDENTITIES, min_free=0)
+    imported = import_bundle(Store(tmp_path.parent / f"import-{tmp_path.name}"), bundle, IDENTITIES, min_free=0)
+    assert complete_games(Store(Path(imported["dataRoot"]))) == []
+
+
+def test_promotion_requires_all_registered_lists_and_five_archetypes():
+    from ptcg_lab.evaluation import coverage_failures, REQUIRED_ARCHETYPES, REQUIRED_ROLES
+    registry = [{"id": f"{archetype}-{role}", "archetype": archetype, "role": role}
+                for archetype in REQUIRED_ARCHETYPES for role in REQUIRED_ROLES]
+    assert coverage_failures(registry, registry) == []
+    subset = [deck for deck in registry if deck["archetype"] == "crustle"]
+    assert any("every registered" in reason for reason in coverage_failures(registry, subset))
+    assert any("all five" in reason for reason in coverage_failures(subset, subset))
+    assert coverage_failures(registry, registry[:-1])
+
+
+def test_search_forwards_lab_knowledge_and_rejects_unfinished_scores(observation):
+    received = {}
+    class Engine:
+        def request(self, method, params):
+            received.update(params)
+            return {"status": "unavailable", "alternatives": [
+                {"actionId": "action-1", "score": .99, "visits": 20}]}
+    fallback = Agent("heuristic", 1)
+    action, target = search_choice(Engine(), observation, fallback, seed=1, budget_ms=20,
+                                  known_opponent_deck_id="known-lab-list", prior_revealed_cards=["DRI-007"])
+    assert received["knownOpponentDeckId"] == "known-lab-list"
+    assert received["priorRevealedCards"] == ["DRI-007"]
+    assert action == "action-0" and target is None
+
+
+def test_warm_start_keeps_ancestor_families_out_of_heldout_evaluation(tmp_path, observation, monkeypatch):
+    torch = pytest.importorskip("torch")
+    from ptcg_lab.training import train, load_model
+    import ptcg_lab.evaluation as evaluation
+    source = Store(tmp_path / "ancestor")
+    for index in range(12):
+        source.save_replay(make_replay(observation, index))
+    ancestor = train(source, epochs=1, max_positions=100)
+    newer = Store(tmp_path / "new-corpus")
+    for index in range(100, 150):
+        newer.save_replay(make_replay(observation, index))
+    child = train(newer, epochs=1, max_positions=100, warm_start=Path(ancestor["checkpoint"]))
+    _, checkpoint = load_model(Path(child["checkpoint"]))
+    assert set(range(12)) <= set(checkpoint["dataLineage"]["seenSeeds"])
+    assert all(game["id"] != "test-0" for group in checkpoint["manifest"].values() for game in group)
+    class Engine:
+        def __init__(self, *args):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def request(self, method):
+            if method == "decks":
+                return [{"id": "crustle", "archetype": "crustle", "role": "main", "validation": {"trainingEligible": True}}]
+            return {"firstPlayerControl": True}
+    monkeypatch.setattr(evaluation, "EngineClient", Engine)
+    with pytest.raises(ValueError, match="overlaps"):
+        evaluation.evaluate(Settings(tmp_path, newer.path, min_free_bytes=0), candidate=child["checkpoint"], opponent="heuristic", seed_start=0)
+    checkpoint.pop("dataLineage")
+    unsupported = tmp_path / "unsupported.pt"
+    torch.save(checkpoint, unsupported)
+    with pytest.raises(ValueError, match="cumulative data lineage"):
+        load_model(unsupported)
