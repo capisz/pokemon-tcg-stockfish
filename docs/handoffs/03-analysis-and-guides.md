@@ -1,6 +1,6 @@
 # Assignment 3: visual play, teaching and analysis
 
-Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Use the isolated `codex/competitive-play` worktree. Inspect current status and implementation evidence; the shared foundation is `f6e9ac1`, with subsequent work preserved.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Start an isolated worktree from the latest reviewed `codex/competitive-integration` commit. The three original work branches are preserved as implementation history; do not restart from their old foundation. Inspect status and preserve unrelated edits.
 
 Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, `PRODUCT.md` and `DESIGN.md`. Use the approved familiar 2D table and preserve existing replay navigation. Do not restart design discovery.
 

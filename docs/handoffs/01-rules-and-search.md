@@ -1,8 +1,8 @@
 # Assignment 1: competitive rules and search
 
-Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Work on `codex/competitive-rules` in its isolated worktree, or create an isolated worktree from the latest agreed integration commit. Inspect status and preserve unrelated edits.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Start an isolated worktree from the latest reviewed `codex/competitive-integration` commit. The three original work branches are preserved as implementation history; do not restart from their old foundation. Inspect status and preserve unrelated edits.
 
-Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and the latest implementation status before editing. The shared foundation is commit `f6e9ac1`; newer integration commits may already contain completed work. Continue from current evidence rather than restarting.
+Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and the latest implementation status before editing. The initial shared foundation was `f6e9ac1`; current implementation and acceptance gaps are recorded in `docs/IMPLEMENTATION_STATUS.md`. Continue the remaining gates rather than rebuilding completed infrastructure.
 
 ## Ownership
 
