@@ -1,0 +1,204 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-19",
+  "engineVersion": "twinleaf-adapter-0.1.0+c01ee150cbe47377",
+  "runtime": "v22.22.3",
+  "interfaces": {
+    "structuredActionRefs": true,
+    "inspectableAttachments": true,
+    "nonMutatingChoose": true,
+    "canonicalTacticalFixtures": 12
+  },
+  "tacticalFixtures": [
+    {
+      "fixtureId": "crustle-delay-prize",
+      "variationId": "crustle-delay-prize-1",
+      "fixtureHash": "f218316ae1d408d4f4470e26371f070aa002f9dfd8d106e7997fbc889e848c83",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "crustle-delay-prize",
+      "variationId": "crustle-delay-prize-2",
+      "fixtureHash": "6e074de45668c08ca13c07af83b2d9df39dbee62ea3a7632ee323d1fd6e9a6c8",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "crustle-delay-prize",
+      "variationId": "crustle-delay-prize-3",
+      "fixtureHash": "2c26b8858072407140be79ec0a8de3bba84cbc8f61db3c3c561cd949d56f0b97",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "crustle-energy-function",
+      "variationId": "crustle-energy-function-1",
+      "fixtureHash": "0e7b3a253c992915f9becf2492c1aab5963c2beafee46973abba16ad647bcee9",
+      "validatedRoots": 3,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "crustle-energy-function",
+      "variationId": "crustle-energy-function-2",
+      "fixtureHash": "742f47f3c44c0de77334b8e94311632c88bc749a819ab10f8cd84f005058278d",
+      "validatedRoots": 3,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "crustle-energy-function",
+      "variationId": "crustle-energy-function-3",
+      "fixtureHash": "34016aef3988d1a49985d69f3a0c4acf6adfe13997f6aab76fa3e2dd115422ba",
+      "validatedRoots": 3,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-information-order",
+      "variationId": "dragapult-information-order-1",
+      "fixtureHash": "973b7c01c5577745772926103567c007da16c8efc108429571697346463107a4",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-information-order",
+      "variationId": "dragapult-information-order-2",
+      "fixtureHash": "1e4ff848a4d14a904dd9f06a79dd1584115d232451d8aad33c3d8876c118bf4c",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-information-order",
+      "variationId": "dragapult-information-order-3",
+      "fixtureHash": "9f23773e1d4cebfc2c312ce455feb125c1c6440f4f9ede0db662c3a7ee720896",
+      "validatedRoots": 3,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-hammer-target",
+      "variationId": "dragapult-hammer-target-1",
+      "fixtureHash": "d5c96984feea3417790383d30f794e736e9b52959bc08b8e446b646ef72472d9",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-hammer-target",
+      "variationId": "dragapult-hammer-target-2",
+      "fixtureHash": "d713cdc8430c1fbd4d81a5f0273259034f9ace8b63e41ee803b4bc3a3e126350",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    },
+    {
+      "fixtureId": "dragapult-hammer-target",
+      "variationId": "dragapult-hammer-target-3",
+      "fixtureHash": "d36063e7ec78b5d0e97c111853608131a7c76e129ce71e414b7c4a6c06d73d23",
+      "validatedRoots": 2,
+      "scope": [
+        "exact registered-card conservation",
+        "legal roots and prompt continuations",
+        "selected one-step resource/Prize transitions"
+      ]
+    }
+  ],
+  "provenance": {
+    "verifiedPatchChecksums": 22
+  },
+  "checks": [
+    {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    {
+      "command": "npm run engine:build",
+      "status": "passed"
+    },
+    {
+      "command": "worker fixture for twelve canonical family/variation IDs",
+      "status": "passed"
+    },
+    {
+      "command": "prior full npm run test:engine",
+      "engineVersion": "twinleaf-adapter-0.1.0+9b736aae33b6fd8c",
+      "status": "passed",
+      "tests": 52,
+      "failures": 0,
+      "durationMs": 165162.267208
+    },
+    {
+      "command": "final knowledge.test.ts including indistinguishable-copy regression",
+      "status": "passed",
+      "tests": 7,
+      "failures": 0
+    },
+    {
+      "command": "final npm run test:engine",
+      "status": "passed",
+      "tests": 53,
+      "failures": 0,
+      "durationMs": 164961.888375
+    },
+    {
+      "command": "git diff --check -- packages/engine vendor formats/rules-coverage.json",
+      "status": "passed"
+    }
+  ],
+  "trustedWholeDeckTrainingEligible": false,
+  "limitations": [
+    "Tactical recipes are constructed analogues; only listed roots and explicit mechanics assertions are admitted. Strategic labels require human review.",
+    "No card or whole deck newly certified; full interaction and per-print legality audits remain incomplete.",
+    "Unfamiliar reveal destinations, Special Red Card unordered bottom segments, stale Prize knowledge, and unsupported marker provenance refuse affected search.",
+    "Search/policy strength and outcome calibration remain unestablished.",
+    "Windows hardware execution was not performed on this Mac."
+  ],
+  "fullGameSmoke": {
+    "completed": 15,
+    "seed": 5,
+    "opponent": "mega-lucario",
+    "policy": "heuristic",
+    "maxDecisions": 1200,
+    "scope": "All registered competitive mains/training variants/heldout variants reached real terminal games in one fixed-seed execution test; not a strength experiment."
+  }
+}

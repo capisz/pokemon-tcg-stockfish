@@ -1,0 +1,25 @@
+{
+  "checkedAt": "2026-09-20T01:23:28.291094+00:00",
+  "total": 98,
+  "failures": {
+    "MEE-1": "verified image URL unavailable",
+    "MEE-2": "verified image URL unavailable",
+    "MEE-3": "verified image URL unavailable",
+    "MEE-4": "verified image URL unavailable",
+    "MEE-5": "verified image URL unavailable",
+    "MEE-6": "verified image URL unavailable",
+    "MEE-7": "verified image URL unavailable",
+    "SVE-1": "verified image URL unavailable",
+    "SVE-2": "verified image URL unavailable",
+    "SVE-4": "verified image URL unavailable",
+    "SVE-5": "verified image URL unavailable",
+    "SVE-6": "verified image URL unavailable",
+    "SVE-7": "verified image URL unavailable"
+  },
+  "limitation": "Provider identity cross-check only; not official release, reprint or rules validation.",
+  "verifiedIdentityCount": 98,
+  "verifiedArtworkCount": 85,
+  "reproduce": "python scripts/refresh-card-metadata.py",
+  "provider": "TCGdex public English API",
+  "imageFilesDownloaded": false
+}

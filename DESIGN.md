@@ -15,10 +15,10 @@ The approved direction is a compact chess-analysis workspace: board and decision
 
 Warm offwhite canvas, almost-white working surfaces, dark green-black text, and restrained forest green for primary actions and selected states. The system sans stack supports a dense working interface without downloading fonts. Numbers use tabular figures where comparison matters. Color reinforces labels rather than replacing them.
 
-Pokémon are represented by compact text tiles using actual replay data; there are no invented card images or remote assets. An unavailable evaluation bar is visibly neutral and explicitly labeled unavailable.
+Live watching, saved replay, Play and teaching share familiar 2D card zones and catalog-provided card images, with readable text faces when art is missing or offline. The opponent Bench sits behind their Active Pokémon; our Active faces theirs, with our Bench and hand below. Public attachments, damage and conditions remain visible; the opponent hand shows card backs and its count. A narrow adjacent panel holds choices, enlarged inspection and analysis. An unavailable evaluation bar is visibly neutral and explicitly labeled unavailable.
 
 ## Interaction and accessibility
 
-Native labeled inputs, buttons, selects, range controls, and disclosure elements provide familiar keyboard behavior. All controls have visible focus, disabled, hover, and active states. Errors name recovery actions; asynchronous completion uses a polite live region. Timeline shortcuts never consume keys inside inputs or selects. Reduced motion disables loading pulses and transitions. No automatic playback or decorative entry choreography is used.
+Native labeled inputs, buttons, selects, range controls, and disclosure elements provide familiar keyboard behavior. All controls have visible focus, disabled, hover, and active states. Errors name recovery actions; asynchronous completion uses a polite live region. Timeline shortcuts never consume keys inside inputs or selects. Live runs begin following the stream; saved games have explicit playback controls. Reduced motion disables zone transitions. Observable damage and zone changes may be highlighted, but duplicate-card trajectories and hidden chance events are never invented. There is no decorative entry choreography.
 
 The implementation follows the settled function-first product brief and the Impeccable Operate and craft-floor guidance. The approved system font and restrained product styling take precedence over unrelated brand/display defaults.

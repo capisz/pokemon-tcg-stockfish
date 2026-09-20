@@ -1,115 +1,173 @@
 {
+  "schemaVersion": 2,
   "id": "mega-lucario",
-  "name": "Mega Lucario ex",
+  "name": "Mega Lucario ex / Hariyama",
   "archetype": "mega-lucario",
+  "role": "main",
   "formatDate": "2026-09-17",
-  "version": 1,
-  "source": "Authored engineering baseline; not a tournament list.",
+  "version": 2,
+  "source": {
+    "kind": "user-supplied-list",
+    "received": "2026-09-17"
+  },
+  "listHash": "4c397dc7b0fbf9b0c40efa879d9c638d4f571e83af28ee1642d4d1c952820b19",
   "cards": [
     {
       "cardId": "MEG-76",
       "name": "Riolu",
-      "engineName": "Riolu M1L",
       "regulationMark": "I",
-      "count": 4
+      "engineName": "Riolu MEG-76",
+      "count": 3
     },
     {
       "cardId": "MEG-77",
       "name": "Mega Lucario ex",
-      "engineName": "Mega Lucario ex M1L",
       "regulationMark": "I",
-      "count": 4
+      "engineName": "Mega Lucario ex MEG-77",
+      "count": 3
     },
     {
-      "cardId": "TWM-107",
-      "name": "Hawlucha",
-      "engineName": "Hawlucha TWM",
-      "regulationMark": "H",
+      "cardId": "MEG-75",
+      "name": "Solrock",
+      "regulationMark": "I",
+      "engineName": "Solrock MEG-75",
+      "count": 3
+    },
+    {
+      "cardId": "MEG-72",
+      "name": "Makuhita",
+      "regulationMark": "I",
+      "engineName": "Makuhita MEG-72",
       "count": 2
     },
     {
-      "cardId": "SFA-38",
-      "name": "Fezandipiti ex",
-      "engineName": "Fezandipiti ex SFA",
-      "regulationMark": "H",
+      "cardId": "MEG-73",
+      "name": "Hariyama",
+      "regulationMark": "I",
+      "engineName": "Hariyama MEG-73",
       "count": 2
     },
     {
-      "cardId": "MEG-131",
-      "name": "Ultra Ball",
-      "engineName": "Ultra Ball MEG",
+      "cardId": "MEG-74",
+      "name": "Lunatone",
       "regulationMark": "I",
-      "count": 4
+      "engineName": "Lunatone MEG-74",
+      "count": 2
+    },
+    {
+      "cardId": "POR-62",
+      "regulationMark": "J",
+      "name": "Meowth ex",
+      "engineName": "Meowth ex POR-62",
+      "count": 1
     },
     {
       "cardId": "MEG-119",
       "name": "Lillie's Determination",
-      "engineName": "Lillie's Determination M1L",
       "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119",
       "count": 4
     },
     {
-      "cardId": "MEG-116",
-      "name": "Fighting Gong",
-      "engineName": "Fighting Gong M1L",
-      "regulationMark": "I",
-      "count": 4
+      "cardId": "POR-76",
+      "regulationMark": "J",
+      "name": "Judge",
+      "engineName": "Judge POR-76",
+      "count": 2
     },
     {
       "cardId": "MEG-114",
       "name": "Boss's Orders",
-      "engineName": "Boss's Orders MEG",
       "regulationMark": "I",
-      "count": 3
-    },
-    {
-      "cardId": "SFA-61",
-      "name": "Night Stretcher",
-      "engineName": "Night Stretcher SFA",
-      "regulationMark": "H",
-      "count": 4
-    },
-    {
-      "cardId": "MEG-130",
-      "name": "Switch",
-      "engineName": "Switch MEG",
-      "regulationMark": "I",
-      "count": 3
-    },
-    {
-      "cardId": "TWM-145",
-      "name": "Carmine",
-      "engineName": "Carmine TWM",
-      "regulationMark": "H",
-      "count": 3
-    },
-    {
-      "cardId": "MEG-121",
-      "name": "Mega Signal",
-      "engineName": "Mega Signal M1S",
-      "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114",
       "count": 2
+    },
+    {
+      "cardId": "DRI-176",
+      "name": "Team Rocket's Petrel",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Petrel DRI-176",
+      "count": 1
     },
     {
       "cardId": "MEG-132",
       "name": "Wally's Compassion",
-      "engineName": "Wally's Compassion M1S",
       "regulationMark": "I",
+      "engineName": "Wally's Compassion MEG-132",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-116",
+      "name": "Fighting Gong",
+      "regulationMark": "I",
+      "engineName": "Fighting Gong MEG-116",
+      "count": 4
+    },
+    {
+      "cardId": "POR-81",
+      "regulationMark": "J",
+      "name": "Pok\u00e9 Pad",
+      "engineName": "Pok\u00e9 Pad POR-81",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-124",
+      "name": "Premium Power Pro",
+      "regulationMark": "I",
+      "engineName": "Premium Power Pro MEG-124",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131",
+      "count": 4
+    },
+    {
+      "cardId": "TWM-165",
+      "name": "Unfair Stamp",
+      "regulationMark": "H",
+      "engineName": "Unfair Stamp TWM-165",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-130",
+      "name": "Switch",
+      "regulationMark": "I",
+      "engineName": "Switch MEG-130",
+      "count": 1
+    },
+    {
+      "cardId": "ASC-181",
+      "regulationMark": "I",
+      "name": "Air Balloon",
+      "engineName": "Air Balloon ASC-181",
       "count": 2
     },
     {
-      "cardId": "SVE-6",
-      "name": "Fighting Energy",
-      "engineName": "Fighting Energy SVE",
+      "cardId": "SSP-177",
+      "name": "Gravity Mountain",
+      "regulationMark": "H",
+      "engineName": "Gravity Mountain SSP-177",
+      "count": 3
+    },
+    {
+      "cardId": "MEE-6",
       "regulationMark": "ENERGY",
-      "count": 19
+      "name": "Fighting Energy",
+      "engineName": "Fighting Energy MEE-6",
+      "count": 11
     }
   ],
   "validation": {
     "status": "experimental",
+    "trainingEligible": false,
+    "legalityVerified": false,
+    "construction": "checked",
     "notes": [
-      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
-      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+      "Complete competitive reference list; all cards mapped to executable rules.",
+      "Per-print external identity audit and exhaustive interaction certification remain pending; trusted training is blocked."
     ]
   }
 }

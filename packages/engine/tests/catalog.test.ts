@@ -1,15 +1,24 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { getDecks, getDeck, validateDeck, CARD_FACTORIES } from '../src/catalog';
+import { getDecks, getDeck, validateDeck, CARD_FACTORIES, getAgentDecks, listHash } from '../src/catalog';
 
-test('all five distinct starter lists contain 60 supported H/I/basic cards', () => {
+test('five main lists and ten variants have immutable legal constructions and explicit audit gates', () => {
   const decks = getDecks();
-  assert.deepEqual(decks.map(d=>d.id), ['dragapult','raging-bolt','grimmsnarl','mega-lucario','crustle']);
+  assert.equal(decks.length, 15);
+  assert.equal(decks.filter(d => d.role === 'main').length, 5);
+  assert.equal(decks.filter(d => d.role === 'training-variant').length, 5);
+  assert.equal(decks.filter(d => d.role === 'heldout').length, 5);
+  assert.equal(new Set(decks.map(d => d.listHash)).size, 15);
   for (const deck of decks) {
-    assert.equal(deck.cardCount,60);
-    assert.deepEqual(validateDeck(deck),[]);
-    assert.equal(deck.validation.status,'experimental');
+    assert.equal(deck.cardCount, 60, deck.id);
+    assert.deepEqual(validateDeck(deck), [], deck.id);
+    assert.equal(deck.listHash, listHash(deck), deck.id);
+    assert.equal(deck.validation.trainingEligible, false, deck.id);
+    assert.equal(deck.validation.legalityVerified, false, deck.id);
   }
+  assert.equal(getAgentDecks().length, 10);
+  assert.ok(getAgentDecks().every(d => d.role !== 'heldout' && d.role !== 'historical'));
+  assert.equal(getDecks({includeHistorical: true}).filter(d => d.role === 'historical').length, 5);
 });
 
 test('structural validation rejects missing cards, too many copies, and wrong engine mappings', () => {

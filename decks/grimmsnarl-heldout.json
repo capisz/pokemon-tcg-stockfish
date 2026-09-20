@@ -1,0 +1,199 @@
+{
+  "schemaVersion": 2,
+  "id": "grimmsnarl-heldout",
+  "name": "Marnie's Grimmsnarl ex / Froslass (heldout)",
+  "archetype": "grimmsnarl",
+  "role": "heldout",
+  "formatDate": "2026-09-17",
+  "version": 2,
+  "source": {
+    "kind": "curated-variant",
+    "parent": "grimmsnarl",
+    "changes": {
+      "PBL-78": -1,
+      "POR-76": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
+  },
+  "listHash": "bf283325b944981272257d6fa0b5a2b27d1ed0cba19610fd8ec1f478ac1b78e9",
+  "cards": [
+    {
+      "cardId": "TWM-95",
+      "name": "Munkidori",
+      "regulationMark": "H",
+      "engineName": "Munkidori TWM-95",
+      "count": 4
+    },
+    {
+      "cardId": "DRI-134",
+      "name": "Marnie's Impidimp",
+      "regulationMark": "I",
+      "engineName": "Marnie's Impidimp DRI-134",
+      "count": 3
+    },
+    {
+      "cardId": "DRI-135",
+      "name": "Marnie's Morgrem",
+      "regulationMark": "I",
+      "engineName": "Marnie's Morgrem DRI-135",
+      "count": 3
+    },
+    {
+      "cardId": "DRI-136",
+      "name": "Marnie's Grimmsnarl ex",
+      "regulationMark": "I",
+      "engineName": "Marnie's Grimmsnarl ex DRI-136",
+      "count": 2
+    },
+    {
+      "cardId": "ASC-46",
+      "regulationMark": "I",
+      "name": "Snorunt",
+      "engineName": "Snorunt ASC-46",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-53",
+      "name": "Froslass",
+      "regulationMark": "H",
+      "engineName": "Froslass TWM-53",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-141",
+      "name": "Bloodmoon Ursaluna ex",
+      "regulationMark": "H",
+      "engineName": "Bloodmoon Ursaluna ex TWM-141",
+      "count": 1
+    },
+    {
+      "cardId": "ASC-16",
+      "regulationMark": "H",
+      "name": "Budew",
+      "engineName": "Budew ASC-16",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-88",
+      "name": "Yveltal",
+      "regulationMark": "I",
+      "engineName": "Yveltal MEG-88",
+      "count": 1
+    },
+    {
+      "cardId": "DRI-10",
+      "name": "Shaymin",
+      "regulationMark": "I",
+      "engineName": "Shaymin DRI-10",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-119",
+      "name": "Lillie's Determination",
+      "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-114",
+      "name": "Boss's Orders",
+      "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114",
+      "count": 3
+    },
+    {
+      "cardId": "DRI-176",
+      "name": "Team Rocket's Petrel",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Petrel DRI-176",
+      "count": 3
+    },
+    {
+      "cardId": "POR-81",
+      "regulationMark": "J",
+      "name": "Pok\u00e9 Pad",
+      "engineName": "Pok\u00e9 Pad POR-81",
+      "count": 4
+    },
+    {
+      "cardId": "TEF-144",
+      "name": "Buddy-Buddy Poffin",
+      "regulationMark": "H",
+      "engineName": "Buddy-Buddy Poffin TEF-144",
+      "count": 3
+    },
+    {
+      "cardId": "ASC-196",
+      "regulationMark": "H",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher ASC-196",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-163",
+      "name": "Secret Box",
+      "regulationMark": "H",
+      "engineName": "Secret Box TWM-163",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-125",
+      "name": "Rare Candy",
+      "regulationMark": "I",
+      "engineName": "Rare Candy MEG-125",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-115",
+      "name": "Energy Switch",
+      "regulationMark": "I",
+      "engineName": "Energy Switch MEG-115",
+      "count": 1
+    },
+    {
+      "cardId": "ASC-181",
+      "regulationMark": "I",
+      "name": "Air Balloon",
+      "engineName": "Air Balloon ASC-181",
+      "count": 1
+    },
+    {
+      "cardId": "DRI-169",
+      "name": "Spikemuth Gym",
+      "regulationMark": "I",
+      "engineName": "Spikemuth Gym DRI-169",
+      "count": 3
+    },
+    {
+      "cardId": "MEE-7",
+      "regulationMark": "ENERGY",
+      "name": "Darkness Energy",
+      "engineName": "Darkness Energy MEE-7",
+      "count": 9
+    },
+    {
+      "cardId": "POR-76",
+      "regulationMark": "J",
+      "name": "Judge",
+      "engineName": "Judge POR-76",
+      "count": 1
+    }
+  ],
+  "validation": {
+    "status": "experimental",
+    "trainingEligible": false,
+    "legalityVerified": false,
+    "construction": "checked",
+    "notes": [
+      "Complete competitive reference list; all cards mapped to executable rules.",
+      "Per-print external identity audit and exhaustive interaction certification remain pending; trusted training is blocked."
+    ]
+  }
+}

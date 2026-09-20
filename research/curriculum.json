@@ -26,23 +26,47 @@
         {
           "id": "crustle-delay-prize-1",
           "condition": "A second protective Energy is available before the first prize.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-delay-prize-1",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-delay-prize",
+              "variationId": "crustle-delay-prize-1"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "crustle-delay-prize-2",
           "condition": "No protective attachment is available and delaying enables an opposing answer.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-delay-prize-2",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-delay-prize",
+              "variationId": "crustle-delay-prize-2"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "crustle-delay-prize-3",
           "condition": "Taking the knockout ends the game.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-delay-prize-3",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-delay-prize",
+              "variationId": "crustle-delay-prize-3"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         }
       ],
       "resources": [
@@ -52,8 +76,8 @@
       ],
       "reviewStatus": "draft",
       "trainingEligible": false,
-      "status": "needs-legal-position-and-review",
-      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+      "status": "reproducible-position-awaiting-human-review",
+      "coverageWarning": "Supported-deck teaching analogue. The simulator certifies only the specific transitions named in each receipt; strategy and full-game correctness remain separate gates."
     },
     {
       "schemaVersion": 1,
@@ -78,23 +102,47 @@
         {
           "id": "crustle-energy-function-1",
           "condition": "Mist remains the only answer to an attack effect.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-energy-function-1",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-energy-function",
+              "variationId": "crustle-energy-function-1"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "crustle-energy-function-2",
           "condition": "Spiky changes the return-knockout threshold.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-energy-function-2",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-energy-function",
+              "variationId": "crustle-energy-function-2"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "crustle-energy-function-3",
           "condition": "Growing Grass changes survival while Mist protection is redundant.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:crustle-energy-function-3",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "crustle-energy-function",
+              "variationId": "crustle-energy-function-3"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         }
       ],
       "resources": [
@@ -104,8 +152,8 @@
       ],
       "reviewStatus": "draft",
       "trainingEligible": false,
-      "status": "needs-legal-position-and-review",
-      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+      "status": "reproducible-position-awaiting-human-review",
+      "coverageWarning": "Supported-deck teaching analogue. The simulator certifies only the specific transitions named in each receipt; strategy and full-game correctness remain separate gates."
     },
     {
       "schemaVersion": 1,
@@ -388,7 +436,7 @@
       },
       "formatDate": "2026-09-17",
       "matchup": "Crustle",
-      "hypothesis": "Opening Pokémon and remaining switching resources can change the mirror from attacking to trapping.",
+      "hypothesis": "Opening Pok\u00e9mon and remaining switching resources can change the mirror from attacking to trapping.",
       "variations": [
         {
           "id": "crustle-mirror-route-1",
@@ -553,23 +601,47 @@
         {
           "id": "dragapult-information-order-1",
           "condition": "General development needs more information.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-information-order-1",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-information-order",
+              "variationId": "dragapult-information-order-1"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "dragapult-information-order-2",
           "condition": "A specific remaining out makes thinning valuable.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-information-order-2",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-information-order",
+              "variationId": "dragapult-information-order-2"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "dragapult-information-order-3",
           "condition": "Dudunsparce changes which search should be saved.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-information-order-3",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-information-order",
+              "variationId": "dragapult-information-order-3"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         }
       ],
       "resources": [
@@ -579,8 +651,8 @@
       ],
       "reviewStatus": "draft",
       "trainingEligible": false,
-      "status": "needs-legal-position-and-review",
-      "coverageWarning": "Source section may use a different deck version; resolve exact card interactions before review."
+      "status": "reproducible-position-awaiting-human-review",
+      "coverageWarning": "Supported-deck teaching analogue. The simulator certifies only the specific transitions named in each receipt; strategy and full-game correctness remain separate gates."
     },
     {
       "schemaVersion": 1,
@@ -781,7 +853,7 @@
         },
         {
           "id": "dragapult-helpful-damage-3",
-          "condition": "Damaging a support Pokémon eliminates a future trap.",
+          "condition": "Damaging a support Pok\u00e9mon eliminates a future trap.",
           "positionRef": null,
           "acceptableActions": [],
           "rulesValidated": false
@@ -821,23 +893,47 @@
         {
           "id": "dragapult-hammer-target-1",
           "condition": "Removing benched Energy forces the damaged attacker to remain.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-hammer-target-1",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-hammer-target",
+              "variationId": "dragapult-hammer-target-1"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "dragapult-hammer-target-2",
           "condition": "The opponent has another switching resource.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-hammer-target-2",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-hammer-target",
+              "variationId": "dragapult-hammer-target-2"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         },
         {
           "id": "dragapult-hammer-target-3",
           "condition": "The proposed continuation illegally needs two Supporters.",
-          "positionRef": null,
+          "positionRef": "engine-fixture:dragapult-hammer-target-3",
           "acceptableActions": [],
-          "rulesValidated": false
+          "rulesValidated": false,
+          "fixtureRequest": {
+            "method": "fixture",
+            "params": {
+              "fixtureId": "dragapult-hammer-target",
+              "variationId": "dragapult-hammer-target-3"
+            }
+          },
+          "mechanicsScope": "Receipt lists exercised legal actions and exact test scope; no strategic preference is pre-approved."
         }
       ],
       "resources": [
@@ -847,8 +943,8 @@
       ],
       "reviewStatus": "draft",
       "trainingEligible": false,
-      "status": "needs-legal-position-and-review",
-      "coverageWarning": "Original opponent is outside the initial five-deck pool; keep source example as study only and create a supported analogue."
+      "status": "reproducible-position-awaiting-human-review",
+      "coverageWarning": "Supported-deck teaching analogue. The simulator certifies only the specific transitions named in each receipt; strategy and full-game correctness remain separate gates."
     },
     {
       "schemaVersion": 1,

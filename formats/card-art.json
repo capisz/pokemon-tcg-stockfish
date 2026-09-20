@@ -1,0 +1,601 @@
+{
+  "schemaVersion": 1,
+  "provider": "TCGdex",
+  "cards": {
+    "ASC-142": {
+      "name": "Fezandipiti ex",
+      "providerCardId": "me02.5-142",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02.5/142/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02.5-142",
+      "metadataHash": "f00c91195ee9ef948a342ed716c87b8e77a26db00791692010dbe8a8fa491dbb"
+    },
+    "ASC-16": {
+      "name": "Budew",
+      "providerCardId": "me02.5-016",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02.5/016/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02.5-016",
+      "metadataHash": "77399b121b7efdd53772e711e0ae8db657de0b3fd12ee08c869d7d63c17f8e3c"
+    },
+    "ASC-181": {
+      "name": "Air Balloon",
+      "providerCardId": "me02.5-181",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02.5/181/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02.5-181",
+      "metadataHash": "61414321058a98811f1a4f03dfbedd8abecce3fcebc9843846eaa9f1d981a240"
+    },
+    "ASC-196": {
+      "name": "Night Stretcher",
+      "providerCardId": "me02.5-196",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02.5/196/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02.5-196",
+      "metadataHash": "baf77c280cd3d233185c42eb365c3df23112ab8a4f686d0c9059ffe01349f3f6"
+    },
+    "ASC-46": {
+      "name": "Snorunt",
+      "providerCardId": "me02.5-046",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02.5/046/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02.5-046",
+      "metadataHash": "8de545185f0aa102882e7110f63bc531edc3e64ceb8ca1dacc60860a6728ca31"
+    },
+    "BLK-84": {
+      "name": "Pokégear 3.0",
+      "providerCardId": "sv10.5b-084",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10.5b/084/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10.5b-084",
+      "metadataHash": "04f21afad8602508fa4451feb13d5dca72b4cf0011d65bb91bc96fb532ec0fe6"
+    },
+    "CRI-80": {
+      "name": "Prism Tower",
+      "providerCardId": "me04-080",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me04/080/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me04-080",
+      "metadataHash": "0bba3e7c10a64f7a79684824d633d9d30f9c03863ce1f0d15136faa0c2bb19b7"
+    },
+    "CRI-82": {
+      "name": "Special Red Card",
+      "providerCardId": "me04-082",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me04/082/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me04-082",
+      "metadataHash": "1c4bbc73ca71e7504f047bb727ee125c81f957df023f7a1dacf1b318f325f9f9"
+    },
+    "DRI-10": {
+      "name": "Shaymin",
+      "providerCardId": "sv10-010",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/010/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-010",
+      "metadataHash": "47553678ceef182a46d5d37004bc447102dfc4aa2399fee1591e0aed620b544f"
+    },
+    "DRI-11": {
+      "name": "Dwebble",
+      "providerCardId": "sv10-011",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/011/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-011",
+      "metadataHash": "758eb32174bfa0413869e088486809ed35c3b608291821a5944619866ed3dacd"
+    },
+    "DRI-12": {
+      "name": "Crustle",
+      "providerCardId": "sv10-012",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/012/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-012",
+      "metadataHash": "4e65fcd1f5df528e02e771d26d837c4b7c7ad1c3bbbef4d041a37802769acb62"
+    },
+    "DRI-134": {
+      "name": "Marnie's Impidimp",
+      "providerCardId": "sv10-134",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/134/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-134",
+      "metadataHash": "49ae7d1c6624ce52305f0a491cfae409cd44ef8ac0e0aae384b0ce2f7f4c4b29"
+    },
+    "DRI-135": {
+      "name": "Marnie's Morgrem",
+      "providerCardId": "sv10-135",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/135/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-135",
+      "metadataHash": "2b6c77c9a62276943b0e0bca1ba92bf0abc8aee16498c519d830a96313d8d23e"
+    },
+    "DRI-136": {
+      "name": "Marnie's Grimmsnarl ex",
+      "providerCardId": "sv10-136",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/136/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-136",
+      "metadataHash": "dbe2bbab1fc2638b2c850c04bbbe33f3ed882e72aa46d67fba7d7b2f60b1ba57"
+    },
+    "DRI-169": {
+      "name": "Spikemuth Gym",
+      "providerCardId": "sv10-169",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/169/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-169",
+      "metadataHash": "6371a01073d2c206247e963e486c1641557c8cb443a2de32f04bdf7099190dd9"
+    },
+    "DRI-173": {
+      "name": "Team Rocket's Factory",
+      "providerCardId": "sv10-173",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/173/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-173",
+      "metadataHash": "732cfe3b7f165bcc4ac973d6e94a0c269e75bf940f779843ad7fa8921ed6348a"
+    },
+    "DRI-176": {
+      "name": "Team Rocket's Petrel",
+      "providerCardId": "sv10-176",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10/176/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10-176",
+      "metadataHash": "192f1b388fb5113c74df3b5a2eeeffb4e5881141ad4dd22d36831197cc5c245f"
+    },
+    "JTG-120": {
+      "name": "Dunsparce",
+      "providerCardId": "sv09-120",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv09/120/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv09-120",
+      "metadataHash": "64aae835963e1028fb91cf37ea74e9f9517fa8e826bac564d24ee79b115e1bd5"
+    },
+    "JTG-159": {
+      "name": "Spiky Energy",
+      "providerCardId": "sv09-159",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv09/159/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv09-159",
+      "metadataHash": "61a7e36915525408db483b23edac04950f08b20070139a8193c9ecf6bd79ba3b"
+    },
+    "JTG-56": {
+      "name": "Lillie's Clefairy ex",
+      "providerCardId": "sv09-056",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv09/056/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv09-056",
+      "metadataHash": "32440bd315367fc17cf18dbfe9302c40711040f32b7109f63d5754eb6a2094ee"
+    },
+    "MEG-104": {
+      "name": "Mega Kangaskhan ex",
+      "providerCardId": "me01-104",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/104/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-104",
+      "metadataHash": "fc0d711b788c8ec5f2b72f86d64783676ecbc4d1ea2dd80102cbc87b36454dcb"
+    },
+    "MEG-114": {
+      "name": "Boss's Orders",
+      "providerCardId": "me01-114",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/114/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-114",
+      "metadataHash": "e83f6d20ff48d0071d98904c3055b6ad2b8412d4154a1649a38fe55286830f06"
+    },
+    "MEG-115": {
+      "name": "Energy Switch",
+      "providerCardId": "me01-115",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/115/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-115",
+      "metadataHash": "81890c492e0b078afc8035ad3dd45dca4ab16491e8e6427f0ad86f59a46f3dec"
+    },
+    "MEG-116": {
+      "name": "Fighting Gong",
+      "providerCardId": "me01-116",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/116/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-116",
+      "metadataHash": "b7babe9da805231d843d91c27f0cfb488608147adc0f99c6db03609e73c1a716"
+    },
+    "MEG-119": {
+      "name": "Lillie's Determination",
+      "providerCardId": "me01-119",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/119/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-119",
+      "metadataHash": "9b04aeb4bc2ac964514d0fc5f0b1bb3570cbae5655223dfbded05267174d8edb"
+    },
+    "MEG-121": {
+      "name": "Mega Signal",
+      "providerCardId": "me01-121",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/121/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-121",
+      "metadataHash": "538c61886983d8d09b05c76e4b1ec76a5417f5d16869fa645a7f501945075106"
+    },
+    "MEG-123": {
+      "name": "Pokémon Center Lady",
+      "providerCardId": "me01-123",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/123/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-123",
+      "metadataHash": "2b4718961559eb1d06f9fdb67db6e9eec03ce50115e8f3e2175d9a32e3d3bd68"
+    },
+    "MEG-124": {
+      "name": "Premium Power Pro",
+      "providerCardId": "me01-124",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/124/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-124",
+      "metadataHash": "df225487d1c8a5b4544502297a8978305582b65bab8409b354759a80ca3e6c0c"
+    },
+    "MEG-125": {
+      "name": "Rare Candy",
+      "providerCardId": "me01-125",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/125/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-125",
+      "metadataHash": "ab14689d8dea4327c113a919f6cd3b4ea5471eb65d2c4c3df6e3eea256645975"
+    },
+    "MEG-127": {
+      "name": "Risky Ruins",
+      "providerCardId": "me01-127",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/127/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-127",
+      "metadataHash": "1ce4302befa6fe0f4237c8f9d58dc1c77b4573aa40a16812a6992baeba3eef4f"
+    },
+    "MEG-130": {
+      "name": "Switch",
+      "providerCardId": "me01-130",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/130/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-130",
+      "metadataHash": "07e8bb63fb1033242bb800d0e4cfd48aee362954cc33171ddf39cbf31c0bb6c7"
+    },
+    "MEG-131": {
+      "name": "Ultra Ball",
+      "providerCardId": "me01-131",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/131/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-131",
+      "metadataHash": "cb3ca8c2d49e70edc8c94559e1b213dbd4f2ed8ffd273e346c5f5e273aa2fd8c"
+    },
+    "MEG-132": {
+      "name": "Wally's Compassion",
+      "providerCardId": "me01-132",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/132/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-132",
+      "metadataHash": "635f40829980c1c308114a9d372ced6d30c6f87cd9bb4027f618585086e0a823"
+    },
+    "MEG-72": {
+      "name": "Makuhita",
+      "providerCardId": "me01-072",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/072/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-072",
+      "metadataHash": "2f3051a611e39470d9292dbcf785a8fe7ab913b5db97b02e3c40df4545e363ea"
+    },
+    "MEG-73": {
+      "name": "Hariyama",
+      "providerCardId": "me01-073",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/073/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-073",
+      "metadataHash": "1db41980d5cd3220ddfd891807fdbfc19d5a9f1c6667a1b267e7a936893cfea1"
+    },
+    "MEG-74": {
+      "name": "Lunatone",
+      "providerCardId": "me01-074",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/074/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-074",
+      "metadataHash": "c737bbfe1cdd840a783b9ad052ccdfcbd5662c3c018910f0656818755da636d7"
+    },
+    "MEG-75": {
+      "name": "Solrock",
+      "providerCardId": "me01-075",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/075/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-075",
+      "metadataHash": "d975569df5643c271c9a278a8817d7ac62a05ed4d3c59f3222537b59d73e64f2"
+    },
+    "MEG-76": {
+      "name": "Riolu",
+      "providerCardId": "me01-076",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/076/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-076",
+      "metadataHash": "40ed0469c2c73e0d27984fdcc898f9708279176e4b6db087504f66e7b2e1f0eb"
+    },
+    "MEG-77": {
+      "name": "Mega Lucario ex",
+      "providerCardId": "me01-077",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/077/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-077",
+      "metadataHash": "0d4eeb4cc036605f14882d1959be2be6ede4b95ca88b049c0d7ba2b8ecd27947"
+    },
+    "MEG-88": {
+      "name": "Yveltal",
+      "providerCardId": "me01-088",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me01/088/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me01-088",
+      "metadataHash": "ad3a393319049934b20c2e42cd9737d5775e7df683c358c955925294c678c0e1"
+    },
+    "PBL-78": {
+      "name": "Gwynn",
+      "providerCardId": "me05-078",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me05/078/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me05-078",
+      "metadataHash": "372474e3ea9d8cb22083ceb7b36e3933e19762b5d21594d5e00070f9e9a30e36"
+    },
+    "PFL-91": {
+      "name": "Jumbo Ice Cream",
+      "providerCardId": "me02-091",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me02/091/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me02-091",
+      "metadataHash": "e61d8304b940320a4fe19ca1fd229096ad8d9ec607112b3518705fd5f018ecb2"
+    },
+    "POR-62": {
+      "name": "Meowth ex",
+      "providerCardId": "me03-062",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/062/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-062",
+      "metadataHash": "c58d39a97e5b010780931d66870de975ff9f104a575dd87b4c3028e8bcea20b3"
+    },
+    "POR-71": {
+      "name": "Crushing Hammer",
+      "providerCardId": "me03-071",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/071/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-071",
+      "metadataHash": "08aa6892e9ed6cd9447ad809c8350a8cdbf6f9db778362648501a852245c537e"
+    },
+    "POR-76": {
+      "name": "Judge",
+      "providerCardId": "me03-076",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/076/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-076",
+      "metadataHash": "949db4c23ef1f0c7e642cd9f8dbeec80cb688203c5b2e4b7c055c897562213ad"
+    },
+    "POR-77": {
+      "name": "Lumiose City",
+      "providerCardId": "me03-077",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/077/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-077",
+      "metadataHash": "3a3fc625a6884686a4edcc06343009119db05f83ad6d8812d2241e0479c6bcc5"
+    },
+    "POR-81": {
+      "name": "Poké Pad",
+      "providerCardId": "me03-081",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/081/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-081",
+      "metadataHash": "ba12fa9d98ef9ba4a5fbe831b8d1eaa2d89d8974e54e769325f5b656e2e718b6"
+    },
+    "POR-84": {
+      "name": "Rosa's Encouragement",
+      "providerCardId": "me03-084",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/084/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-084",
+      "metadataHash": "26a9fc13025879945f582499ceff84de5298813ae0fb8f365c486045b8606ee7"
+    },
+    "POR-86": {
+      "name": "Growing Grass Energy",
+      "providerCardId": "me03-086",
+      "imageUrl": "https://assets.tcgdex.net/en/me/me03/086/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/me03-086",
+      "metadataHash": "477d24fd90c6e921edca38a5f5158d035994022ead7581ae1547d11e1bcf208c"
+    },
+    "SCR-131": {
+      "name": "Area Zero Underdepths",
+      "providerCardId": "sv07-131",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv07/131/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv07-131",
+      "metadataHash": "404d83b2e1f95b4eb03c337a1ba23d08c61c2a658e245e43be30fca989f5eabd"
+    },
+    "SCR-133": {
+      "name": "Crispin",
+      "providerCardId": "sv07-133",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv07/133/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv07-133",
+      "metadataHash": "8d9968ebc7e50b2befa3080e57771329b81c572d7620f10053245d4429950c5a"
+    },
+    "SCR-135": {
+      "name": "Glass Trumpet",
+      "providerCardId": "sv07-135",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv07/135/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv07-135",
+      "metadataHash": "0643b862b5e72c595248cfeacceee74ef427adaa0161db31ecb320271d90798c"
+    },
+    "SCR-137": {
+      "name": "Gravity Gemstone",
+      "providerCardId": "sv07-137",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv07/137/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv07-137",
+      "metadataHash": "497977091224aa02fa928716f0aa1ed2934bd2f42a196eb3f8c0d77f1c9838fe"
+    },
+    "SFA-38": {
+      "name": "Fezandipiti ex",
+      "providerCardId": "sv06.5-038",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06.5/038/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06.5-038",
+      "metadataHash": "217cb4d647bb31b98799eee5fb539078f5d29a2283fcac79a361acfaad389574"
+    },
+    "SFA-61": {
+      "name": "Night Stretcher",
+      "providerCardId": "sv06.5-061",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06.5/061/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06.5-061",
+      "metadataHash": "45b4276b53a6c7ef92227edcfd7192d039e0481d22c1c4d0a45eda4589ac5e7e"
+    },
+    "SFA-64": {
+      "name": "Xerosic's Machinations",
+      "providerCardId": "sv06.5-064",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06.5/064/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06.5-064",
+      "metadataHash": "66701c132f11772820640f4e6bd220f1b480a28ab7438efc9a4ed14cf17f014c"
+    },
+    "SSP-170": {
+      "name": "Cyrano",
+      "providerCardId": "sv08-170",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv08/170/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv08-170",
+      "metadataHash": "ce9c7c0bfff189e4b2da5ec22d399d6cca704a2905d043eeb938121489bbb256"
+    },
+    "SSP-177": {
+      "name": "Gravity Mountain",
+      "providerCardId": "sv08-177",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv08/177/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv08-177",
+      "metadataHash": "f7c894fd17151f8ba717476d2fafaf83f1d1a4750577582dffa6248435e560d8"
+    },
+    "SSP-56": {
+      "name": "Chien-Pao",
+      "providerCardId": "sv08-056",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv08/056/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv08-056",
+      "metadataHash": "36491b94d875d3c2d1bc7971ebc420b12efd74915dc24ab2bdf6aaa23c396d47"
+    },
+    "SSP-76": {
+      "name": "Latias ex",
+      "providerCardId": "sv08-076",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv08/076/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv08-076",
+      "metadataHash": "224deb7158a305c8d012357f41a33306a13022273bbf3729756960dcde37eab4"
+    },
+    "TEF-123": {
+      "name": "Raging Bolt ex",
+      "providerCardId": "sv05-123",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/123/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-123",
+      "metadataHash": "43f95f3aabe02df097e95f75e85de6207819bddadb865284e7f31fbe75dbcf96"
+    },
+    "TEF-129": {
+      "name": "Dudunsparce",
+      "providerCardId": "sv05-129",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/129/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-129",
+      "metadataHash": "ffb0f889cef7767ec3e8022e973d0e5edd2e2c5d746772f48f6e514722cdebce"
+    },
+    "TEF-144": {
+      "name": "Buddy-Buddy Poffin",
+      "providerCardId": "sv05-144",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/144/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-144",
+      "metadataHash": "567166e9983dd8096958e79397c1eebf1ee1a8323aca1f07053e1086eb1924fb"
+    },
+    "TEF-145": {
+      "name": "Ciphermaniac's Codebreaking",
+      "providerCardId": "sv05-145",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/145/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-145",
+      "metadataHash": "414b46d73418f47c62b97682c22a739f84d94116e839bcd7fb9d6f80072c5603"
+    },
+    "TEF-146": {
+      "name": "Eri",
+      "providerCardId": "sv05-146",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/146/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-146",
+      "metadataHash": "d64e1ae89324cdffbfbe9e2408071135bd0a7ea387c42297ae15a42476273a4a"
+    },
+    "TEF-150": {
+      "name": "Hand Trimmer",
+      "providerCardId": "sv05-150",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/150/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-150",
+      "metadataHash": "b2b03e6f097e6048123b14b32c5e85536157fd984c1f7820205b43ceafe9bf90"
+    },
+    "TEF-152": {
+      "name": "Hero's Cape",
+      "providerCardId": "sv05-152",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/152/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-152",
+      "metadataHash": "00a714938e0e42aa723865832e22dd24020112ce13a6868ebd43f3f9993ea44c"
+    },
+    "TEF-161": {
+      "name": "Mist Energy",
+      "providerCardId": "sv05-161",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/161/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-161",
+      "metadataHash": "e965560c4ff0f4d5d954950b112203392bc1c4979d998aa879898ed06886b354"
+    },
+    "TEF-25": {
+      "name": "Iron Leaves ex",
+      "providerCardId": "sv05-025",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv05/025/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv05-025",
+      "metadataHash": "c988e0bba33f88259d9485823d1f5f8f098957f458b72e077e7c6ec41574ebf9"
+    },
+    "TWM-107": {
+      "name": "Hawlucha",
+      "providerCardId": "sv06-107",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/107/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-107",
+      "metadataHash": "9b1538df573e9a70150777ed2ff4e8ade90608cb1d21fdea987516c71a79e6fa"
+    },
+    "TWM-128": {
+      "name": "Dreepy",
+      "providerCardId": "sv06-128",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/128/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-128",
+      "metadataHash": "07578ba93cef1ab3cb0535651e2ae9e10830af994a234e173e25c617d35b65c8"
+    },
+    "TWM-129": {
+      "name": "Drakloak",
+      "providerCardId": "sv06-129",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/129/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-129",
+      "metadataHash": "091437e931175723e1b6669fa916abce567dd172e9b243b0e812ec09d8c6172e"
+    },
+    "TWM-130": {
+      "name": "Dragapult ex",
+      "providerCardId": "sv06-130",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/130/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-130",
+      "metadataHash": "d03891c88007064beabbdedbde657ad29815f8be3c4ca1bf34450b392c30f7c5"
+    },
+    "TWM-141": {
+      "name": "Bloodmoon Ursaluna ex",
+      "providerCardId": "sv06-141",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/141/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-141",
+      "metadataHash": "2022f53c792c45d44d2b2c7d7dc9ff7adaa04837675c5f188290752ad2e80e82"
+    },
+    "TWM-145": {
+      "name": "Carmine",
+      "providerCardId": "sv06-145",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/145/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-145",
+      "metadataHash": "b1c0f671834930373d590f32ca5f5c8422f70ac73ed7c147ad4cd361c8e10d49"
+    },
+    "TWM-148": {
+      "name": "Enhanced Hammer",
+      "providerCardId": "sv06-148",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/148/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-148",
+      "metadataHash": "cc383039475f144c97f4dffa56b853f0a3cefbbe239a1c104008c716ac8167ce"
+    },
+    "TWM-149": {
+      "name": "Festival Grounds",
+      "providerCardId": "sv06-149",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/149/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-149",
+      "metadataHash": "c049a465dedffa90d12e936de208fee38a330e53f6cdcf9a6f39092384dd21e9"
+    },
+    "TWM-150": {
+      "name": "Handheld Fan",
+      "providerCardId": "sv06-150",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/150/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-150",
+      "metadataHash": "e0e7880d77a7bf1640e5f23aaecc8f5a213641d045beb1eab5fc2819978f5103"
+    },
+    "TWM-163": {
+      "name": "Secret Box",
+      "providerCardId": "sv06-163",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/163/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-163",
+      "metadataHash": "061b32f058806832ecb1380719d24116a4a5f47094132b3b8f4c6e3b2669dfe8"
+    },
+    "TWM-165": {
+      "name": "Unfair Stamp",
+      "providerCardId": "sv06-165",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/165/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-165",
+      "metadataHash": "e44c8b2541e78cf1e19892d5c9873ffd1c452a8d63f24043a470ef9ad21fcba9"
+    },
+    "TWM-25": {
+      "name": "Teal Mask Ogerpon ex",
+      "providerCardId": "sv06-025",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/025/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-025",
+      "metadataHash": "eeecea5097ebf00ea0b46c71b651e104df53feebce3ea640f45e692377d29773"
+    },
+    "TWM-53": {
+      "name": "Froslass",
+      "providerCardId": "sv06-053",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/053/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-053",
+      "metadataHash": "a23c9422fd2070b05db8abf72b82d681c9b75ade21e8ae19b6e685f339eb0fe6"
+    },
+    "TWM-64": {
+      "name": "Wellspring Mask Ogerpon ex",
+      "providerCardId": "sv06-064",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/064/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-064",
+      "metadataHash": "bfd351c03e6c6566fae402797252d2212d574db42cc56485ab7d84da322ee97c"
+    },
+    "TWM-95": {
+      "name": "Munkidori",
+      "providerCardId": "sv06-095",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv06/095/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv06-095",
+      "metadataHash": "1d18b335c671510557055365175f18a5e8878d1c4e97176825d5207595189378"
+    },
+    "WHT-84": {
+      "name": "Hilda",
+      "providerCardId": "sv10.5w-084",
+      "imageUrl": "https://assets.tcgdex.net/en/sv/sv10.5w/084/high.webp",
+      "sourceUrl": "https://api.tcgdex.net/v2/en/cards/sv10.5w-084",
+      "metadataHash": "e8d016bab4e9b95477e1823974fdfe64972e1da495c430939265e0dc8161055f"
+    }
+  }
+}

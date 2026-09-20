@@ -1,0 +1,102 @@
+{
+  "date": "2026-09-19",
+  "branch": "codex/competitive-integration",
+  "engineVersion": "twinleaf-adapter-0.1.0+6dae18d12adf6214",
+  "checks": {
+    "engineSuite": {
+      "passed": 31,
+      "seconds": 170.83,
+      "note": "Before final Drakloak private-peek correction"
+    },
+    "finalCompetitiveFixtures": {
+      "passed": 13,
+      "seconds": 0.72
+    },
+    "python": {
+      "passed": 76,
+      "seconds": 6.97,
+      "dependencyWarnings": 2
+    },
+    "typescript": "passed",
+    "webBuild": "passed",
+    "matchBrowser": {
+      "passed": true,
+      "matchId": "825012cc88e5447f8aa85453f4162fe6",
+      "privateView": true,
+      "mobileOverflow": false,
+      "pageErrors": [],
+      "outcomes": "two explicit concessions; product transition check"
+    },
+    "replayBrowser": {
+      "passed": true,
+      "replayId": "813fce70c75c53da3986",
+      "frames": 47,
+      "status": "finished",
+      "evaluation": "heuristic",
+      "search": "unavailable: unsupported acquired knowledge",
+      "mobileOverflow": false,
+      "pageErrors": []
+    },
+    "artworkResilience": {
+      "slowImage": "passed",
+      "failedImage": "passed",
+      "loadedImage": "passed",
+      "readablePrompt": "passed"
+    },
+    "boundedNaturalLiveMatch": {
+      "status": "incomplete",
+      "budgetSeconds": 180,
+      "matchId": "959836a285ef4e84870d707b0f16f921",
+      "revision": 104,
+      "gameNumber": 1,
+      "turn": 11,
+      "score": [
+        0,
+        0
+      ],
+      "reason": "Bounded live API probe elapsed before a natural match result; no result assigned."
+    },
+    "realCrashRecovery": {
+      "passed": true,
+      "termination": "SIGKILL isolated API after acknowledged action",
+      "revision": 1,
+      "observationIdentical": true,
+      "budgetPreserved": true,
+      "resumeReconstruction": "passed",
+      "cleanup": "incomplete journal preserved"
+    },
+    "finalControlledStartCapability": {
+      "engine": {
+        "ok": true,
+        "protocolVersion": 1,
+        "engineVersion": "twinleaf-adapter-0.1.0+6dae18d12adf6214",
+        "firstPlayerControl": true,
+        "warnings": [
+          "Experimental rules adapter; learned strength is not established."
+        ],
+        "engineBuildHash": "ec05a0fc25d4d5885973e552e9114c91dc3dd53dd54835d99ff6e3881f411063"
+      },
+      "controlledStarts": [
+        {
+          "requested": 0,
+          "actual": 0,
+          "status": "truncated",
+          "outcome": null
+        },
+        {
+          "requested": 1,
+          "actual": 1,
+          "status": "truncated",
+          "outcome": null
+        }
+      ]
+    }
+  },
+  "limits": [
+    "Every competitive manifest is training-ineligible pending rules and legality audit.",
+    "No strength improvement or calibrated competitive outcome estimate established.",
+    "Windows native execution not yet verified.",
+    "Guide curriculum remains draft; guide-imitation learner not implemented."
+  ],
+  "testedRulesAndBrowserEngineVersion": "twinleaf-adapter-0.1.0+310ae24b3cc8cbbc"
+}

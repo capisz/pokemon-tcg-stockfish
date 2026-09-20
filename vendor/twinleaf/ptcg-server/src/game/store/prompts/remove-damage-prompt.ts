@@ -27,6 +27,7 @@ export interface RemoveDamageOptions {
   blockedFrom: CardTarget[];
   blockedTo: CardTarget[];
   sameTarget: boolean;
+  singleSourceTarget: boolean;
 }
 
 export class RemoveDamagePrompt extends Prompt<DamageTransfer[]> {
@@ -52,7 +53,8 @@ export class RemoveDamagePrompt extends Prompt<DamageTransfer[]> {
       max: undefined,
       blockedFrom: [],
       blockedTo: [],
-      sameTarget: false
+      sameTarget: false,
+      singleSourceTarget: false
     }, options);
   }
 
@@ -79,6 +81,8 @@ export class RemoveDamagePrompt extends Prompt<DamageTransfer[]> {
     if (this.options.max !== undefined && result.length > this.options.max) {
       return false;
     }
+
+    if (this.options.singleSourceTarget && new Set(result.map(r => JSON.stringify(r.from))).size > 1) return false;
 
     // Check if all targets are the same
     if (this.options.sameTarget && result.length > 1) {

@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-20",
+  "engineVersion": "twinleaf-adapter-0.1.0+d61f1ca4f9b2bc8d",
+  "engineBuildHash": "e91efcf5d1d8eefcddf7750715f19858ed663532b9f33af9fbe9103f92a27b47",
+  "validation": {
+    "typecheck": "passed",
+    "focusedEngineTests": {"passed": 4, "failed": 0, "files": ["teaching-audit.test.ts", "tactical-fixtures.test.ts"]},
+    "focusedPythonTests": {"passed": 31, "failed": 0, "files": ["test_teaching_audits.py", "test_teaching.py", "test_guide_policy.py"]}
+  },
+  "admission": {
+    "teachingId": "61764804475674c00d109495f99e210f",
+    "reviewHash": "1e803b1a30c55cf8f61bbe7ee1cc2ec6aca2b5dbaa7f20f416560aeaf84a0510",
+    "attestationHash": "f9c73de8c14fe6693d517ceb07fbec3cad3146c7cf0264a44b05b8f0349e683f",
+    "previousEligibleDemonstrations": 4,
+    "currentEligibleDemonstrations": 5,
+    "originalBytesAndModificationTimesUnchanged": true,
+    "originalReviewFileSha256": "2315e1283ef2fae16f3a303d16862fdd101d8f2f2af70b1453b290e0b7c47e52",
+    "originalReceiptFileSha256": "8531c81358d8cdde3d1a6a5dc447b1f75ad8aca03ef6df9b1426ca1edb95affa",
+    "auditedActions": ["0:2", "0:3", "0:1"],
+    "hpTransitions": [[150, 170], [300, 300], [300, 300]]
+  },
+  "limits": [
+    "Only the exact saved fixture's three attachment roots receive new mechanical coverage.",
+    "No strategic answer, full-game outcome, stronger play, or whole-deck eligibility is certified.",
+    "This focused run does not replace the broader integration suite."
+  ]
+}

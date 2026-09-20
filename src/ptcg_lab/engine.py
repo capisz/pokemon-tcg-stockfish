@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
+# Match worker.ts. Count the complete JSON envelope as UTF-8, without its newline.
+MAX_REQUEST_BYTES = 32 * 1024**2
+
+
 class EngineError(RuntimeError):
     pass
 
@@ -39,7 +43,8 @@ class EngineClient:
         self.responses = queue.Queue()
         bundle = self.root / "packages/engine/dist/worker.cjs"
         self.build_hash = hashlib.sha256(bundle.read_bytes()).hexdigest() if bundle.exists() else None
-        self.process = subprocess.Popen(self.command, cwd=self.root, stdin=subprocess.PIPE,
+        environment = {**os.environ, "OMP_NUM_THREADS": "2", "MKL_NUM_THREADS": "2", "OPENBLAS_NUM_THREADS": "2"}
+        self.process = subprocess.Popen(self.command, cwd=self.root, env=environment, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                         text=True, encoding="utf-8", bufsize=1)
         responses, process = self.responses, self.process
@@ -63,16 +68,28 @@ class EngineClient:
 
     def request(self, method: str, params: dict | None = None) -> Any:
         with self.lock:
-            self.start()
             request_id = uuid.uuid4().hex
             try:
-                self.process.stdin.write(json.dumps({"id": request_id, "method": method, "params": params or {}}) + "\n")
+                payload = json.dumps({"id": request_id, "method": method, "params": params or {}},
+                                     ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+                request_bytes = len(payload.encode("utf-8"))
+            except (ValueError, TypeError, UnicodeError) as exc:
+                raise EngineError(f"Cannot encode engine request: {exc}") from exc
+            if request_bytes > MAX_REQUEST_BYTES:
+                raise EngineError(f"Engine request is {request_bytes} bytes; exceeds 32 MiB UTF-8 protocol limit before sending")
+            self.start()
+            try:
+                self.process.stdin.write(payload + "\n")
                 self.process.stdin.flush()
                 raw = self.responses.get(timeout=self.timeout)
                 if isinstance(raw, Exception):
                     raise raw
                 response = json.loads(raw)
                 if response.get("id") != request_id:
+                    # A worker cannot echo the request ID when JSON parsing or
+                    # the pre-parse size guard failed. Preserve that diagnostic.
+                    if response.get("id") is None and isinstance(response.get("error"), dict):
+                        raise EngineError(str(response["error"].get("message", response["error"])))
                     raise EngineError("Engine protocol request id mismatch")
                 if "error" in response:
                     raise EngineError(str(response["error"].get("message", response["error"])))
@@ -112,26 +129,32 @@ class EngineClient:
 
 class EnginePool:
     def __init__(self, root: Path, size: int = 2, timeout: float = 300):
-        if not 1 <= size <= 2:
-            raise ValueError("Local configuration supports one or two simulation workers")
+        if not 1 <= size <= 8:
+            raise ValueError("Local configuration supports one to eight simulation workers; benchmark before raising the default of two")
         self.clients = [EngineClient(root, timeout) for _ in range(size)]
         self.available: queue.Queue[EngineClient] = queue.Queue()
         for client in self.clients:
             self.available.put(client)
 
-    @contextlib.contextmanager
-    def lease(self, wait_timeout: float = 310) -> Iterator[EngineClient]:
+    def acquire(self, wait_timeout: float = 310) -> EngineClient:
         try:
-            client = self.available.get(timeout=wait_timeout)
+            return self.available.get(timeout=wait_timeout)
         except queue.Empty as exc:
             raise EngineError("All local simulation workers are busy") from exc
+
+    def release(self, client: EngineClient) -> None:
+        self.available.put(client)
+
+    @contextlib.contextmanager
+    def lease(self, wait_timeout: float = 310) -> Iterator[EngineClient]:
+        client = self.acquire(wait_timeout)
         try:
             yield client
         except EngineError:
             client.close()
             raise
         finally:
-            self.available.put(client)
+            self.release(client)
 
     def close(self) -> None:
         for client in self.clients:

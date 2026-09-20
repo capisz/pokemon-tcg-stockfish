@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 2,
+  "id": "raging-bolt-heldout",
+  "name": "Raging Bolt ex / Mega Kangaskhan ex (heldout)",
+  "archetype": "raging-bolt",
+  "role": "heldout",
+  "formatDate": "2026-09-17",
+  "version": 2,
+  "source": {
+    "kind": "curated-variant",
+    "parent": "raging-bolt",
+    "changes": {
+      "SSP-170": -1,
+      "MEG-119": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
+  },
+  "listHash": "50c5e57aa6a26c8176b92a812df6f82ab8e66179a2f6255bee7809d9ae091579",
+  "cards": [
+    {
+      "cardId": "MEG-104",
+      "name": "Mega Kangaskhan ex",
+      "regulationMark": "I",
+      "engineName": "Mega Kangaskhan ex MEG-104",
+      "count": 4
+    },
+    {
+      "cardId": "POR-62",
+      "regulationMark": "J",
+      "name": "Meowth ex",
+      "engineName": "Meowth ex POR-62",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-25",
+      "name": "Teal Mask Ogerpon ex",
+      "regulationMark": "H",
+      "engineName": "Teal Mask Ogerpon ex TWM-25",
+      "count": 3
+    },
+    {
+      "cardId": "TEF-123",
+      "name": "Raging Bolt ex",
+      "regulationMark": "H",
+      "engineName": "Raging Bolt ex TEF-123",
+      "count": 2
+    },
+    {
+      "cardId": "SSP-76",
+      "name": "Latias ex",
+      "regulationMark": "H",
+      "engineName": "Latias ex SSP-76",
+      "count": 2
+    },
+    {
+      "cardId": "JTG-56",
+      "name": "Lillie's Clefairy ex",
+      "regulationMark": "I",
+      "engineName": "Lillie's Clefairy ex JTG-56",
+      "count": 2
+    },
+    {
+      "cardId": "TEF-25",
+      "name": "Iron Leaves ex",
+      "regulationMark": "H",
+      "engineName": "Iron Leaves ex TEF-25",
+      "count": 1
+    },
+    {
+      "cardId": "SSP-56",
+      "name": "Chien-Pao",
+      "regulationMark": "H",
+      "engineName": "Chien-Pao SSP-56",
+      "count": 1
+    },
+    {
+      "cardId": "TWM-64",
+      "name": "Wellspring Mask Ogerpon ex",
+      "regulationMark": "H",
+      "engineName": "Wellspring Mask Ogerpon ex TWM-64",
+      "count": 1
+    },
+    {
+      "cardId": "ASC-142",
+      "regulationMark": "H",
+      "name": "Fezandipiti ex",
+      "engineName": "Fezandipiti ex ASC-142",
+      "count": 1
+    },
+    {
+      "cardId": "SCR-133",
+      "name": "Crispin",
+      "regulationMark": "H",
+      "engineName": "Crispin SCR-133",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-114",
+      "name": "Boss's Orders",
+      "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114",
+      "count": 2
+    },
+    {
+      "cardId": "SSP-170",
+      "name": "Cyrano",
+      "regulationMark": "H",
+      "engineName": "Cyrano SSP-170",
+      "count": 1
+    },
+    {
+      "cardId": "TEF-145",
+      "name": "Ciphermaniac's Codebreaking",
+      "regulationMark": "H",
+      "engineName": "Ciphermaniac's Codebreaking TEF-145",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-119",
+      "name": "Lillie's Determination",
+      "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119",
+      "count": 2
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-115",
+      "name": "Energy Switch",
+      "regulationMark": "I",
+      "engineName": "Energy Switch MEG-115",
+      "count": 4
+    },
+    {
+      "cardId": "ASC-196",
+      "regulationMark": "H",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher ASC-196",
+      "count": 2
+    },
+    {
+      "cardId": "SCR-135",
+      "name": "Glass Trumpet",
+      "regulationMark": "H",
+      "engineName": "Glass Trumpet SCR-135",
+      "count": 2
+    },
+    {
+      "cardId": "TWM-165",
+      "name": "Unfair Stamp",
+      "regulationMark": "H",
+      "engineName": "Unfair Stamp TWM-165",
+      "count": 1
+    },
+    {
+      "cardId": "SCR-131",
+      "name": "Area Zero Underdepths",
+      "regulationMark": "H",
+      "engineName": "Area Zero Underdepths SCR-131",
+      "count": 3
+    },
+    {
+      "cardId": "MEE-1",
+      "regulationMark": "ENERGY",
+      "name": "Grass Energy",
+      "engineName": "Grass Energy MEE-1",
+      "count": 7
+    },
+    {
+      "cardId": "MEE-4",
+      "regulationMark": "ENERGY",
+      "name": "Lightning Energy",
+      "engineName": "Lightning Energy MEE-4",
+      "count": 2
+    },
+    {
+      "cardId": "MEE-6",
+      "regulationMark": "ENERGY",
+      "name": "Fighting Energy",
+      "engineName": "Fighting Energy MEE-6",
+      "count": 2
+    },
+    {
+      "cardId": "MEE-5",
+      "regulationMark": "ENERGY",
+      "name": "Psychic Energy",
+      "engineName": "Psychic Energy MEE-5",
+      "count": 2
+    },
+    {
+      "cardId": "MEE-3",
+      "regulationMark": "ENERGY",
+      "name": "Water Energy",
+      "engineName": "Water Energy MEE-3",
+      "count": 1
+    }
+  ],
+  "validation": {
+    "status": "experimental",
+    "trainingEligible": false,
+    "legalityVerified": false,
+    "construction": "checked",
+    "notes": [
+      "Complete competitive reference list; all cards mapped to executable rules.",
+      "Per-print external identity audit and exhaustive interaction certification remain pending; trusted training is blocked."
+    ]
+  }
+}

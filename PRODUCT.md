@@ -5,7 +5,7 @@ A local research tool for understanding Pokémon TCG decisions. The first interf
 ## First workflow
 
 1. Choose two decks from the server's research registry, a deterministic seed, decision limit, and baseline policy.
-2. Run a game. The interface follows the background job and opens its persisted replay when available.
+2. Run a game. The shared card table follows ordered, durable decisions while computation continues and retains the saved replay afterward. Watching or pausing playback does not train or pause a policy.
 3. Move through the decision timeline using buttons, the range control, the decision list, or Left / Right / Home / End keys outside form inputs.
 4. Switch player perspective to inspect that player's hand, both public boards, resource terms, candidate actions, and pool-limited opponent beliefs.
 5. Save a position from the timeline. Reopen it using the saved-position selector; a saved position contains only the selected observation. Open source replay is a separate, explicit action.
@@ -14,7 +14,7 @@ A local research tool for understanding Pokémon TCG decisions. The first interf
 
 - Deck support and validation status come from the registry. Experimental decks remain labeled experimental.
 - Every board comes from a real replay frame. Frames describe the position before the displayed action; the final frame has no action.
-- The UI consumes one player observation at a time. The opponent's hand is represented by its count; both full private observations are stored in the local research replay, which is not a public export.
+- The UI consumes one player observation at a time. The opponent's hand is represented by its count; both full private observations remain in server-side research storage. Replay responses and live frame streams are projected before crossing the browser boundary.
 - Opponent prompt choices are redacted in the timeline and its accessible labels. The board does not disclose the opponent's actual deck identity; opponent inference comes from the analysis response. Deck selections remain visible as local run metadata.
 - Heuristic scores are labeled heuristic and uncalibrated. Missing probabilities display as unavailable. Resource terms describe the evaluator, not universal card values or exact causal explanations.
 - A game stopped by a decision limit has an unknown outcome. It is never displayed as a draw or a completed win.
@@ -23,6 +23,14 @@ A local research tool for understanding Pokémon TCG decisions. The first interf
 - Candidate details may include an illustrative sampled continuation, explicitly conditional on a sampled opponent assumption and future chance. Decision review, when available, reports opportunity loss against the best tested move in expected-result percentage points, with sampling caveats; it is not a definitive mistake grade or a measure of later luck.
 
 ## Local surface
+
+The Play tab adds a real 2D card table, private server-journaled best-of-three sessions, and separate practice and benchmark modes. Engine decisions share one turn budget; accepted actions survive browser reconnects and server restart. The selected model is copied to an immutable private checkpoint at match creation. Analysis and research views are locked during an unfinished benchmark, including paused matches. Full research replays require explicit publication after the entire match ends.
+
+Play, live/saved replay and teaching use one familiar playmat. Click-to-play uses explicit simulator source/target references and staged prompts. Seeking history disables live moves and annotations until the displayed cursor catches up. A reserved worker retains the active game; the durable journal reconstructs it after replacement or restart.
+
+Teaching review shows the bookmarked player view and legal choices, accepts multiple sound actions with conditional reasoning, and caps each queue at ten positions. Saved replay positions can be attached to a fixed guide family. Human benchmark records stay in the test partition; unaudited rules, prose lessons, and unreviewed annotations cannot become demonstrations. Local guide retrieval displays attributed passages and page/timestamp references.
+
+The first twelve guide positions have checked transition receipts and await strategic review. Reviewed acceptable-action sets can train a policy-only checkpoint; they cannot train an outcome value. Immutable review snapshots, family partitions and checkpoint checksums preserve provenance through corrections and portable continuation. The complete workflow is documented in docs/WATCH_AND_LEARN.md.
 
 The Vite development server serves `/` on `127.0.0.1:5173` and proxies `/api` to the local backend at `127.0.0.1:8765`. The REST boundary is defined in `contracts/PROTOCOL.md`. Production files build into `web/dist`; deployment is not part of this interface work.
 

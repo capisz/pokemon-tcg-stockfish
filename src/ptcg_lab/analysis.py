@@ -10,7 +10,7 @@ from .features import FEATURE_NAMES, deck_beliefs, heuristic_action_score, resou
 HEURISTIC_WEIGHTS = np.array([2.5, .8, .4, .9, .25, .1, .4, .8, .15, .15, .1, .2, -.5, .2, .3, -.1])
 
 
-def analyze_observation(observation: dict, decks: list[dict], model_path: Path | None = None) -> dict:
+def analyze_observation(observation: dict, decks: list[dict], model_path: Path | None = None, *, allow_experimental: bool = False) -> dict:
     """Only a single player's view enters the analysis boundary.
 
     In particular this function has no replay, future frames, RNG state, or hidden
@@ -20,7 +20,7 @@ def analyze_observation(observation: dict, decks: list[dict], model_path: Path |
     warnings.extend(observation.get("warnings", []))
     if model_path and model_path.exists():
         from .training import predict
-        evaluation, scores = predict(model_path, observation)
+        evaluation, scores = predict(model_path, observation, **({"allow_experimental": True} if allow_experimental else {}))
         label = "Learned policy preference, not a searched continuation or mistake estimate."
     else:
         contributions = resource_features(observation) * HEURISTIC_WEIGHTS
@@ -29,7 +29,7 @@ def analyze_observation(observation: dict, decks: list[dict], model_path: Path |
                       "modelVersion": "resource-heuristic-v1", "calibrated": False,
                       "components": [{"name": name, "value": round(float(value), 4)} for name, value in zip(FEATURE_NAMES, contributions)],
                       "description": "Untrained resource index. These hand-set contributions are not advantage units or probabilities; opponent private resources are unknown."}
-        scores = [heuristic_action_score(action) for action in observation.get("legalActions", [])]
+        scores = [heuristic_action_score(action, observation) for action in observation.get("legalActions", [])]
         label = "Static action heuristic; no simulation visits, expected-result estimate, or optimality claim."
     alternatives = [{"actionId": action["id"], "label": action["label"], "score": round(float(score), 4),
                      "visits": 0, "description": label}

@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-19",
+  "engineBuild": "twinleaf-adapter-0.1.0+633df03b45364758",
+  "runtime": "Node v24.10.0",
+  "checks": [
+    {
+      "command": "npm run engine:build",
+      "status": "passed"
+    },
+    {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    {
+      "command": "npm run test:engine",
+      "status": "passed",
+      "tests": 31,
+      "failures": 0,
+      "durationMs": 165882.796833
+    },
+    {
+      "command": "bundled competitive.test.ts after final stale-Prize guard and separate attachment-zone assertions",
+      "status": "passed",
+      "tests": 12,
+      "failures": 0
+    },
+    {
+      "command": "git diff --check",
+      "status": "passed"
+    }
+  ],
+  "fullGameSmoke": {
+    "seed": 5,
+    "opponent": "mega-lucario",
+    "policy": "heuristic",
+    "policySeed": 324508634,
+    "maxDecisions": 1200,
+    "lists": [
+      {
+        "id": "crustle-heldout",
+        "role": "heldout",
+        "listHash": "b4b82fd42d56d5c0fef73f30ef2691d39e1a74239c3ad480672e2ecbaccf66b4"
+      },
+      {
+        "id": "crustle-training",
+        "role": "training-variant",
+        "listHash": "352c586d10bc1a59697df08d713d3528776d9fbd77569f36640392afcbd15a5f"
+      },
+      {
+        "id": "crustle",
+        "role": "main",
+        "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095"
+      },
+      {
+        "id": "dragapult-heldout",
+        "role": "heldout",
+        "listHash": "1acad0d38bfca5786d7ef44eb53dbd4933295dbd70c48e9de8fb26aba6a875bf"
+      },
+      {
+        "id": "dragapult-training",
+        "role": "training-variant",
+        "listHash": "8845ffcc27189b11db7f9a3aa275ac6830dd94266efea310da8d5fdf26dc6a85"
+      },
+      {
+        "id": "dragapult",
+        "role": "main",
+        "listHash": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9"
+      },
+      {
+        "id": "grimmsnarl-heldout",
+        "role": "heldout",
+        "listHash": "bf283325b944981272257d6fa0b5a2b27d1ed0cba19610fd8ec1f478ac1b78e9"
+      },
+      {
+        "id": "grimmsnarl-training",
+        "role": "training-variant",
+        "listHash": "8174c47e3bbb035ec286d5b6cdf5c0527d256b42fb114ee964ffbde2d00c81e0"
+      },
+      {
+        "id": "grimmsnarl",
+        "role": "main",
+        "listHash": "25e207010b0472e62a7c00c247149fb0ad66fc22d1083647e2535c7ab09a6923"
+      },
+      {
+        "id": "mega-lucario-heldout",
+        "role": "heldout",
+        "listHash": "63acc1c1d900c023abe37c9414bcb61d80d59fa8598d6b438ab0ce294c8dc6a7"
+      },
+      {
+        "id": "mega-lucario-training",
+        "role": "training-variant",
+        "listHash": "1d15601d58d5a0e697ae4100b85af1b316348085faca2063f8c5a0def98d709d"
+      },
+      {
+        "id": "mega-lucario",
+        "role": "main",
+        "listHash": "4c397dc7b0fbf9b0c40efa879d9c638d4f571e83af28ee1642d4d1c952820b19"
+      },
+      {
+        "id": "raging-bolt-heldout",
+        "role": "heldout",
+        "listHash": "50c5e57aa6a26c8176b92a812df6f82ab8e66179a2f6255bee7809d9ae091579"
+      },
+      {
+        "id": "raging-bolt-training",
+        "role": "training-variant",
+        "listHash": "213abd7e1cbec566f181353c7e66e48145d26aa61fcabf6bd69ee2715dadda77"
+      },
+      {
+        "id": "raging-bolt",
+        "role": "main",
+        "listHash": "88e020aa588a1d65c9f34fe146ea1a6a346711b8a354477e6e79187728c60292"
+      }
+    ],
+    "completed": 15,
+    "scope": "one complete game per list; no playing-strength or exhaustive-correctness claim"
+  },
+  "limitations": [
+    "Final search refusal guard and separate attachment-zone corrections was verified by the focused 12-test suite after the full 31-test run; integration should run the complete suite again.",
+    "No trusted-training eligibility granted; see formats/rules-coverage.json.",
+    "Windows runtime not executed on this Mac.",
+    "Actual engine build changes on integration when root card-art catalog is included."
+  ]
+}

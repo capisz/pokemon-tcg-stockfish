@@ -2,17 +2,103 @@
   "schemaVersion": 1,
   "date": "2026-09-17",
   "region": "International Standard",
-  "regulationMarks": ["H", "I", "J"],
+  "regulationMarks": [
+    "H",
+    "I",
+    "J"
+  ],
   "rotationSource": "https://www.pokemon.com/us/pokemon-news/2026-pokemon-tcg-standard-format-rotation-announcement",
-  "scope": "Closed allowlist for the five starter decks; not a complete Standard card database. Basic Energy is exempt from regulation-mark rotation. Exact MEG reprints are used instead of inferring arbitrary old-print legality.",
+  "scope": "Competitive five-archetype reference pool plus historical engineering fixtures. Structural playability is separate from independently verified per-print legality and interaction coverage.",
   "sets": {
-    "TEF": {"released": "2024-03-22", "source": "https://press.pokemon.com/en-CA/MEDIA-ALERT-Pokemon-Trading-Card-Game-Scarlet-VioletTemporal-Forces-Ex"},
-    "TWM": {"released": "2024-05-24", "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"},
-    "SFA": {"released": "2024-08-02", "source": "https://www.pokemon.com/us/pokemon-tcg/scarlet-violet-shrouded-fable"},
-    "SCR": {"released": "2024-09-13", "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-stellar-crown-booster-bundle"},
-    "DRI": {"released": "2025-05-30", "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"},
-    "MEG": {"released": "2025-10-10", "note": "Conservative later EMEA release; North America released September 26, 2025. Both precede the frozen format by almost a year.", "source": "https://www.pokemon.com/uk/pokemon-news/see-new-cards-from-the-pokemon-tcg-mega-evolution-expansion"},
-    "SVE": {"released": "2023-03-31", "note": "Basic Energy only; no special Energy in this catalog."}
+    "TEF": {
+      "released": "2024-03-22",
+      "source": "https://press.pokemon.com/en-CA/MEDIA-ALERT-Pokemon-Trading-Card-Game-Scarlet-VioletTemporal-Forces-Ex"
+    },
+    "TWM": {
+      "released": "2024-05-24",
+      "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"
+    },
+    "SFA": {
+      "released": "2024-08-02",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/scarlet-violet-shrouded-fable"
+    },
+    "SCR": {
+      "released": "2024-09-13",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-stellar-crown-booster-bundle"
+    },
+    "DRI": {
+      "released": "2025-05-30",
+      "source": "https://press.pokemon.com/en/Items/_SchedulePage/lvyoogoqvy"
+    },
+    "MEG": {
+      "released": "2025-10-10",
+      "note": "Conservative later EMEA release; North America released September 26, 2025. Both precede the frozen format by almost a year.",
+      "source": "https://www.pokemon.com/uk/pokemon-news/see-new-cards-from-the-pokemon-tcg-mega-evolution-expansion"
+    },
+    "SVE": {
+      "released": "2023-03-31",
+      "note": "Basic Energy only; no special Energy in this catalog."
+    },
+    "POR": {
+      "released": "2026-03-27",
+      "tournamentLegal": "2026-04-10",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-perfect-order-booster-bundle",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "CRI": {
+      "released": "2026-05-22",
+      "tournamentLegal": "2026-06-05",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-chaos-rising-elite-trainer-box",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "PBL": {
+      "released": "2026-07-17",
+      "tournamentLegal": "2026-07-31",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-pitch-black-booster-bundle",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "ASC": {
+      "released": "2026-01-30",
+      "tournamentLegal": "2026-02-13",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-ascended-heroes-tech-sticker-collection",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "PFL": {
+      "released": "2025-11-14",
+      "tournamentLegal": "2025-11-28",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-phantasmal-flames-booster-bundle",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "SSP": {
+      "released": "2024-11-08",
+      "tournamentLegal": "2024-11-22",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-surging-sparks-booster-bundle",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "JTG": {
+      "released": "2025-03-28",
+      "tournamentLegal": "2025-04-11",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-journey-together-booster-bundle",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "WHT": {
+      "released": "2025-07-18",
+      "tournamentLegal": "2025-08-01",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-white-flare-binder-collection",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "BLK": {
+      "released": "2025-07-18",
+      "tournamentLegal": "2025-08-01",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/scarlet-violet-black-bolt-binder-collection",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    },
+    "MEE": {
+      "released": "2025-09-26",
+      "tournamentLegal": "2025-10-10",
+      "source": "https://www.pokemon.com/us/pokemon-tcg/product-gallery/mega-evolution-elite-trainer-box",
+      "evidenceStatus": "release-source-recorded; per-print audit pending"
+    }
   },
-  "review": "All included expansions substantially predate the freeze. This allowlist intentionally refuses unknown sets and different format dates; adding newly released cards needs a tournament-eligibility review. Full interaction certification remains separate from deck construction validation."
+  "review": "Rotation and new expansion release dates checked against official sources. Exact per-print identities and reprint compatibility remain pending external audit; decks stay explicitly training-ineligible. The simulator accepts experimental manifests for rules QA."
 }

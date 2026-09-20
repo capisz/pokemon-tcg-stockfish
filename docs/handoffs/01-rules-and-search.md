@@ -1,10 +1,19 @@
 # Assignment 1: competitive rules and search
 
-Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Work on `codex/competitive-rules` in its isolated worktree, or create an isolated worktree from the latest agreed integration commit. Inspect status and preserve unrelated edits.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Start an isolated worktree from the latest reviewed `codex/competitive-integration` commit. The three original work branches are preserved as implementation history; do not restart from their old foundation. Inspect status and preserve unrelated edits.
 
-Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and the latest implementation status before editing. The shared foundation is commit `f6e9ac1`; newer integration commits may already contain completed work. Continue from current evidence rather than restarting.
+Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and the latest implementation status before editing. The initial shared foundation was `f6e9ac1`; current implementation and acceptance gaps are recorded in `docs/IMPLEMENTATION_STATUS.md`. Continue the remaining gates rather than rebuilding completed infrastructure.
 
 ## Ownership
+
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md` and
+`packages/engine/COMPETITIVE_STATUS.md`. Structured board bindings, twelve
+mechanically checked teaching positions, retained-worker support, ordinary
+Drakloak/Pokégear knowledge and portable learned search leaves are implemented.
+Finish the remaining per-print legality and interaction closure, including
+Special Red Card's unordered bottom knowledge and final-Prize simultaneous
+terminals. Preserve engine-bound tactical receipts when changing mechanics.
+Every competitive deck remains outcome-training-ineligible.
 
 Own the TypeScript environment/search, vendor patches and provenance, deck/format manifests, catalogue/build scripts, and engine tests. The learning assignment owns Python transport/storage/training. The play assignment owns FastAPI, live sessions, guides/teaching, and React. The lead owns shared contracts and combined verification. Communicate contract changes before relying on them.
 

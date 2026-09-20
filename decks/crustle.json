@@ -1,129 +1,207 @@
 {
+  "schemaVersion": 2,
   "id": "crustle",
-  "name": "Crustle",
+  "name": "Crustle / Mega Kangaskhan ex",
   "archetype": "crustle",
+  "role": "main",
   "formatDate": "2026-09-17",
-  "version": 1,
-  "source": "Authored engineering baseline; not a tournament list.",
+  "version": 2,
+  "source": {
+    "kind": "private-guide-transcription",
+    "authors": [
+      "Rahul Reddy",
+      "Carter Malnaik"
+    ],
+    "page": 27,
+    "sourceSha256": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+  },
+  "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095",
   "cards": [
+    {
+      "cardId": "MEG-104",
+      "name": "Mega Kangaskhan ex",
+      "regulationMark": "I",
+      "engineName": "Mega Kangaskhan ex MEG-104",
+      "count": 4
+    },
     {
       "cardId": "DRI-11",
       "name": "Dwebble",
-      "engineName": "Dwebble DRI",
       "regulationMark": "I",
-      "count": 4
+      "engineName": "Dwebble DRI-11",
+      "count": 3
     },
     {
       "cardId": "DRI-12",
       "name": "Crustle",
-      "engineName": "Crustle DRI",
       "regulationMark": "I",
-      "count": 4
-    },
-    {
-      "cardId": "DRI-10",
-      "name": "Shaymin",
-      "engineName": "Shaymin DRI",
-      "regulationMark": "I",
-      "count": 2
-    },
-    {
-      "cardId": "TWM-95",
-      "name": "Munkidori",
-      "engineName": "Munkidori TWM",
-      "regulationMark": "H",
-      "count": 2
-    },
-    {
-      "cardId": "TEF-144",
-      "name": "Buddy-Buddy Poffin",
-      "engineName": "Buddy-Buddy Poffin TEF",
-      "regulationMark": "H",
-      "count": 4
-    },
-    {
-      "cardId": "MEG-131",
-      "name": "Ultra Ball",
-      "engineName": "Ultra Ball MEG",
-      "regulationMark": "I",
-      "count": 4
+      "engineName": "Crustle DRI-12",
+      "count": 3
     },
     {
       "cardId": "MEG-119",
       "name": "Lillie's Determination",
-      "engineName": "Lillie's Determination M1L",
       "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119",
+      "count": 4
+    },
+    {
+      "cardId": "DRI-176",
+      "name": "Team Rocket's Petrel",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Petrel DRI-176",
       "count": 4
     },
     {
       "cardId": "MEG-114",
       "name": "Boss's Orders",
-      "engineName": "Boss's Orders MEG",
       "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114",
       "count": 4
     },
     {
-      "cardId": "SFA-61",
-      "name": "Night Stretcher",
-      "engineName": "Night Stretcher SFA",
+      "cardId": "TEF-146",
+      "name": "Eri",
       "regulationMark": "H",
+      "engineName": "Eri TEF-146",
+      "count": 3
+    },
+    {
+      "cardId": "WHT-84",
+      "name": "Hilda",
+      "regulationMark": "I",
+      "engineName": "Hilda WHT-84",
+      "count": 3
+    },
+    {
+      "cardId": "SFA-64",
+      "name": "Xerosic's Machinations",
+      "regulationMark": "H",
+      "engineName": "Xerosic's Machinations SFA-64",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-123",
+      "name": "Pok\u00e9mon Center Lady",
+      "engineName": "Pok\u00e9mon Center Lady MEG-123",
+      "regulationMark": "I",
+      "count": 1
+    },
+    {
+      "cardId": "PFL-91",
+      "name": "Jumbo Ice Cream",
+      "regulationMark": "I",
+      "engineName": "Jumbo Ice Cream PFL-91",
       "count": 4
+    },
+    {
+      "cardId": "BLK-84",
+      "name": "Pok\u00e9gear 3.0",
+      "engineName": "Pok\u00e9gear 3.0 BLK-84",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "TEF-144",
+      "name": "Buddy-Buddy Poffin",
+      "regulationMark": "H",
+      "engineName": "Buddy-Buddy Poffin TEF-144",
+      "count": 2
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131",
+      "count": 1
     },
     {
       "cardId": "MEG-130",
       "name": "Switch",
-      "engineName": "Switch MEG",
       "regulationMark": "I",
-      "count": 3
+      "engineName": "Switch MEG-130",
+      "count": 1
     },
     {
-      "cardId": "SCR-133",
-      "name": "Crispin",
-      "engineName": "Crispin SCR",
-      "regulationMark": "H",
-      "count": 2
+      "cardId": "CRI-82",
+      "regulationMark": "J",
+      "name": "Special Red Card",
+      "engineName": "Special Red Card CRI-82",
+      "count": 1
     },
     {
-      "cardId": "TWM-145",
-      "name": "Carmine",
-      "engineName": "Carmine TWM",
+      "cardId": "TWM-150",
+      "name": "Handheld Fan",
       "regulationMark": "H",
-      "count": 2
+      "engineName": "Handheld Fan TWM-150",
+      "count": 1
     },
     {
-      "cardId": "SCR-137",
-      "name": "Gravity Gemstone",
-      "engineName": "Gravity Gemstone SCR",
+      "cardId": "TEF-152",
+      "name": "Hero's Cape",
       "regulationMark": "H",
-      "count": 3
+      "engineName": "Hero's Cape TEF-152",
+      "count": 1
     },
     {
-      "cardId": "TEF-150",
-      "name": "Hand Trimmer",
-      "engineName": "Hand Trimmer TEF",
+      "cardId": "POR-77",
+      "regulationMark": "J",
+      "name": "Lumiose City",
+      "engineName": "Lumiose City POR-77",
+      "count": 1
+    },
+    {
+      "cardId": "DRI-173",
+      "name": "Team Rocket's Factory",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Factory DRI-173",
+      "count": 1
+    },
+    {
+      "cardId": "CRI-80",
+      "regulationMark": "J",
+      "name": "Prism Tower",
+      "engineName": "Prism Tower CRI-80",
+      "count": 1
+    },
+    {
+      "cardId": "TEF-161",
+      "name": "Mist Energy",
       "regulationMark": "H",
+      "engineName": "Mist Energy TEF-161",
       "count": 4
     },
     {
-      "cardId": "SVE-1",
+      "cardId": "POR-86",
+      "regulationMark": "J",
+      "name": "Growing [G] Energy",
+      "engineName": "Growing [G] Energy POR-86",
+      "count": 4
+    },
+    {
+      "cardId": "JTG-159",
+      "name": "Spiky Energy",
+      "regulationMark": "I",
+      "engineName": "Spiky Energy JTG-159",
+      "count": 4
+    },
+    {
+      "cardId": "MEE-1",
+      "regulationMark": "ENERGY",
       "name": "Grass Energy",
-      "engineName": "Grass Energy SVE",
-      "regulationMark": "ENERGY",
-      "count": 10
-    },
-    {
-      "cardId": "SVE-7",
-      "name": "Darkness Energy",
-      "engineName": "Darkness Energy SVE",
-      "regulationMark": "ENERGY",
-      "count": 4
+      "engineName": "Grass Energy MEE-1",
+      "count": 1
     }
   ],
   "validation": {
     "status": "experimental",
+    "trainingEligible": false,
+    "legalityVerified": false,
+    "construction": "checked",
     "notes": [
-      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
-      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+      "Complete competitive reference list; all cards mapped to executable rules.",
+      "Per-print external identity audit and exhaustive interaction certification remain pending; trusted training is blocked."
     ]
   }
 }

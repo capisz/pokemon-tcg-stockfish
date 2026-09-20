@@ -1,0 +1,103 @@
+{
+  "schemaVersion": 1,
+  "kind": "bounded-real-integration",
+  "runId": "2eb936b60f6b48c78a764b6e00b6b847",
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+4958d864a552fb17",
+    "firstPlayerControl": true,
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ],
+    "engineBuildHash": "eb2d59396941d057329fd2cc02881641cee8bc50d1724d03cca8115791ed345a"
+  },
+  "configuration": {
+    "seed": 92026,
+    "keepAwake": false,
+    "gamesPerBatch": 10,
+    "searchBudgetMs": 0,
+    "investigationPositions": 2,
+    "investigationBudgetMs": 50,
+    "maxPositions": 1000,
+    "comparisonSeeds": 2,
+    "comparisonGameLimit": 4,
+    "maxDecisions": 3000,
+    "maxCycles": 1
+  },
+  "status": "stopped",
+  "completedCycles": 1,
+  "elapsedSeconds": 148.517484,
+  "metrics": {
+    "completedGames": 10,
+    "truncatedGames": 0,
+    "errors": 0,
+    "searchDecisions": 0,
+    "searchTargets": 0,
+    "peakMemoryBytes": 1391034368,
+    "managedBytes": 1595626087,
+    "freeBytes": 242494083072,
+    "coverage": {
+      "scheduledPairs": 10,
+      "completedPairs": 10,
+      "totalPairs": 100,
+      "archetypes": 5
+    },
+    "comparison": {
+      "status": "completed",
+      "completedGames": 4,
+      "totalGames": 400,
+      "pairs": 2,
+      "mean": 1.0,
+      "lower": 0.03967720868007929,
+      "upper": 1.0,
+      "method": "95% bounded-sample Hoeffding interval",
+      "matchups": {
+        "crustle / crustle": {
+          "pairs": 2,
+          "mean": 1.0,
+          "lower": 0.03967720868007929,
+          "upper": 1.0,
+          "method": "95% bounded-sample Hoeffding interval"
+        }
+      },
+      "excludedPairs": 0,
+      "adopted": false,
+      "notes": [
+        "Comparison pair IDs differ from the exact scheduled set.",
+        "Comparison has missing, failed, or truncated seat pairs.",
+        "Aggregate experimental improvement is inconclusive.",
+        "All 25 archetype matchups need at least five complete pairs."
+      ],
+      "invalidRecords": 0,
+      "scope": "Experimental simulator comparison, not trusted champion promotion."
+    },
+    "guideAgreement": {
+      "status": "measured",
+      "positions": 5,
+      "acceptableActionAccuracy": 0.8
+    },
+    "loss": 1.0343965291976929
+  },
+  "training": {
+    "parameters": 38532,
+    "rows": 1000,
+    "outcomeRows": 900,
+    "demonstrationExamples": 100,
+    "searchExamples": 0,
+    "modelHash": "5009ee80b36721be27f4cc420242ac6ab756f7877840ac3349339cc7d338760e",
+    "dataLineageHash": "10115c955724bc2f25510edb43dbe531c2e60f67e2d36c54702c52b80e6433f7"
+  },
+  "teaching": {
+    "reviewedPositions": 5,
+    "changedDecisions": 3
+  },
+  "notes": [
+    "Diagnostic search and comparison budgets were reduced; this is not a playing-strength result.",
+    "Both investigated positions lacked sufficient search coverage; no search target was fabricated.",
+    "Ten collection and four comparison games ended naturally. No candidate was adopted.",
+    "Metrics managedBytes include prior isolated browser and cancellation-loop diagnostics.",
+    "Final storage encoding and permanent comparison seed ledger have additional focused tests after this run."
+  ],
+  "soak24Hours": "pending"
+}

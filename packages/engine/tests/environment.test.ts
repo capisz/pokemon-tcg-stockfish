@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { getDecks } from '../src/catalog';
 import { Environment } from '../src/environment';
 import { chooseAction } from '../src/policies';
 import { SeededRandom } from '../src/random';
@@ -51,11 +52,11 @@ test('bounded runs are truncated and stale actions leave the state intact', () =
   assert.deepEqual(env.replay(), before);
 });
 
-test('all five archetypes reach real terminal games with the baseline', {timeout: 120000}, () => {
-  const decks = ['dragapult', 'raging-bolt', 'grimmsnarl', 'mega-lucario', 'crustle'];
+test('all fifteen competitive lists reach real terminal games with the baseline', {timeout: 180000}, () => {
+  const decks = getDecks().map(d=>d.id);
   for (let i = 0; i < decks.length; i++) {
-    const env = new Environment(); env.reset(5, [decks[i], decks[(i + 1) % decks.length]]);
-    play(env, 600, (5 ^ 0x13579bdf) >>> 0);
+    const env = new Environment(); env.reset(5, [decks[i], 'mega-lucario']);
+    play(env, 1200, (5 ^ 0x13579bdf) >>> 0);
     const replay = env.replay();
     assert.equal(replay.status, 'finished', decks[i]);
     assert.ok(replay.outcome?.winner === 0 || replay.outcome?.winner === 1, decks[i]);

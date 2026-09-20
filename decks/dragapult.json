@@ -1,136 +1,199 @@
 {
+  "schemaVersion": 2,
   "id": "dragapult",
-  "name": "Dragapult ex",
+  "name": "Dragapult ex / Crushing Hammer",
   "archetype": "dragapult",
+  "role": "main",
   "formatDate": "2026-09-17",
-  "version": 1,
-  "source": "Authored engineering baseline; not a tournament list.",
+  "version": 2,
+  "source": {
+    "kind": "private-guide-transcription",
+    "authors": [
+      "Andrew Hedrick"
+    ],
+    "page": 48,
+    "sourceSha256": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+  },
+  "listHash": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9",
   "cards": [
     {
       "cardId": "TWM-128",
       "name": "Dreepy",
-      "engineName": "Dreepy TWM",
       "regulationMark": "H",
+      "engineName": "Dreepy TWM-128",
       "count": 4
     },
     {
       "cardId": "TWM-129",
       "name": "Drakloak",
-      "engineName": "Drakloak TWM",
       "regulationMark": "H",
+      "engineName": "Drakloak TWM-129",
       "count": 4
     },
     {
       "cardId": "TWM-130",
       "name": "Dragapult ex",
-      "engineName": "Dragapult ex TWM",
       "regulationMark": "H",
+      "engineName": "Dragapult ex TWM-130",
       "count": 3
-    },
-    {
-      "cardId": "SFA-38",
-      "name": "Fezandipiti ex",
-      "engineName": "Fezandipiti ex SFA",
-      "regulationMark": "H",
-      "count": 2
     },
     {
       "cardId": "TWM-95",
       "name": "Munkidori",
-      "engineName": "Munkidori TWM",
       "regulationMark": "H",
+      "engineName": "Munkidori TWM-95",
+      "count": 2
+    },
+    {
+      "cardId": "ASC-16",
+      "regulationMark": "H",
+      "name": "Budew",
+      "engineName": "Budew ASC-16",
+      "count": 2
+    },
+    {
+      "cardId": "JTG-120",
+      "name": "Dunsparce",
+      "regulationMark": "I",
+      "engineName": "Dunsparce JTG-120",
       "count": 1
     },
     {
-      "cardId": "TEF-144",
-      "name": "Buddy-Buddy Poffin",
-      "engineName": "Buddy-Buddy Poffin TEF",
+      "cardId": "TEF-129",
+      "name": "Dudunsparce",
       "regulationMark": "H",
-      "count": 4
+      "engineName": "Dudunsparce TEF-129",
+      "count": 1
     },
     {
-      "cardId": "MEG-131",
-      "name": "Ultra Ball",
-      "engineName": "Ultra Ball MEG",
-      "regulationMark": "I",
-      "count": 4
+      "cardId": "POR-62",
+      "regulationMark": "J",
+      "name": "Meowth ex",
+      "engineName": "Meowth ex POR-62",
+      "count": 1
+    },
+    {
+      "cardId": "ASC-142",
+      "regulationMark": "H",
+      "name": "Fezandipiti ex",
+      "engineName": "Fezandipiti ex ASC-142",
+      "count": 1
     },
     {
       "cardId": "MEG-119",
       "name": "Lillie's Determination",
-      "engineName": "Lillie's Determination M1L",
       "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119",
       "count": 4
-    },
-    {
-      "cardId": "SCR-133",
-      "name": "Crispin",
-      "engineName": "Crispin SCR",
-      "regulationMark": "H",
-      "count": 3
     },
     {
       "cardId": "MEG-114",
       "name": "Boss's Orders",
-      "engineName": "Boss's Orders MEG",
       "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114",
       "count": 3
     },
     {
-      "cardId": "SFA-61",
-      "name": "Night Stretcher",
-      "engineName": "Night Stretcher SFA",
+      "cardId": "SCR-133",
+      "name": "Crispin",
       "regulationMark": "H",
-      "count": 4
-    },
-    {
-      "cardId": "MEG-125",
-      "name": "Rare Candy",
-      "engineName": "Rare Candy MEG",
-      "regulationMark": "I",
-      "count": 4
-    },
-    {
-      "cardId": "MEG-130",
-      "name": "Switch",
-      "engineName": "Switch MEG",
-      "regulationMark": "I",
-      "count": 3
-    },
-    {
-      "cardId": "TWM-145",
-      "name": "Carmine",
-      "engineName": "Carmine TWM",
-      "regulationMark": "H",
+      "engineName": "Crispin SCR-133",
       "count": 2
     },
     {
-      "cardId": "SVE-2",
-      "name": "Fire Energy",
-      "engineName": "Fire Energy SVE",
-      "regulationMark": "ENERGY",
-      "count": 6
+      "cardId": "POR-84",
+      "regulationMark": "J",
+      "name": "Rosa's Encouragement",
+      "engineName": "Rosa's Encouragement POR-84",
+      "count": 1
     },
     {
-      "cardId": "SVE-5",
-      "name": "Psychic Energy",
-      "engineName": "Psychic Energy SVE",
-      "regulationMark": "ENERGY",
-      "count": 6
+      "cardId": "POR-76",
+      "regulationMark": "J",
+      "name": "Judge",
+      "engineName": "Judge POR-76",
+      "count": 1
     },
     {
-      "cardId": "SVE-7",
-      "name": "Darkness Energy",
-      "engineName": "Darkness Energy SVE",
-      "regulationMark": "ENERGY",
+      "cardId": "POR-81",
+      "regulationMark": "J",
+      "name": "Pok\u00e9 Pad",
+      "engineName": "Pok\u00e9 Pad POR-81",
+      "count": 4
+    },
+    {
+      "cardId": "POR-71",
+      "regulationMark": "J",
+      "name": "Crushing Hammer",
+      "engineName": "Crushing Hammer POR-71",
+      "count": 4
+    },
+    {
+      "cardId": "TEF-144",
+      "name": "Buddy-Buddy Poffin",
+      "regulationMark": "H",
+      "engineName": "Buddy-Buddy Poffin TEF-144",
+      "count": 4
+    },
+    {
+      "cardId": "ASC-196",
+      "regulationMark": "H",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher ASC-196",
       "count": 3
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-165",
+      "name": "Unfair Stamp",
+      "regulationMark": "H",
+      "engineName": "Unfair Stamp TWM-165",
+      "count": 1
+    },
+    {
+      "cardId": "MEG-127",
+      "name": "Risky Ruins",
+      "regulationMark": "I",
+      "engineName": "Risky Ruins MEG-127",
+      "count": 2
+    },
+    {
+      "cardId": "MEE-5",
+      "regulationMark": "ENERGY",
+      "name": "Psychic Energy",
+      "engineName": "Psychic Energy MEE-5",
+      "count": 4
+    },
+    {
+      "cardId": "MEE-2",
+      "regulationMark": "ENERGY",
+      "name": "Fire Energy",
+      "engineName": "Fire Energy MEE-2",
+      "count": 3
+    },
+    {
+      "cardId": "MEE-7",
+      "regulationMark": "ENERGY",
+      "name": "Darkness Energy",
+      "engineName": "Darkness Energy MEE-7",
+      "count": 2
     }
   ],
   "validation": {
     "status": "experimental",
+    "trainingEligible": false,
+    "legalityVerified": false,
+    "construction": "checked",
     "notes": [
-      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
-      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+      "Complete competitive reference list; all cards mapped to executable rules.",
+      "Per-print external identity audit and exhaustive interaction certification remain pending; trusted training is blocked."
     ]
   }
 }

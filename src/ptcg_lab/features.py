@@ -9,11 +9,58 @@ import numpy as np
 
 FEATURE_NAMES = (
     "prize_race", "attacker_health", "bench_development", "attached_energy",
-    "hand_access", "deck_reserve", "evolution_development", "ready_attackers",
+    "hand_access", "deck_reserve", "evolution_development", "energy_covered_attackers",
     "recovery_access", "draw_search_access", "mobility_access", "disruption_access",
-    "exposed_prizes", "defensive_protection", "non_ex_answers", "resource_exhaustion",
+    "exposed_prizes", "ex_damage_protection_potential", "non_ex_answers", "resource_exhaustion",
 )
 CARD_BUCKETS, MAX_VISIBLE_CARDS, ACTION_DIM = 2048, 128, 32
+FEATURE_VERSION = "visible-energy-coverage-v3"
+
+
+def energy_kind(name: str) -> str | None:
+    """Static provision for identified cards only, never dynamic Energy effects."""
+    normalized = name.strip().lower()
+    types = {"grass", "fire", "water", "lightning", "psychic", "fighting", "darkness", "metal", "fairy", "colorless"}
+    if normalized in types:
+        return normalized  # Legacy typed fixture observations.
+    for kind in types - {"colorless"}:
+        if normalized in {f"{kind} energy", f"basic {kind} energy"}:
+            return kind
+    symbol = {"g": "grass", "r": "fire", "w": "water", "l": "lightning", "p": "psychic",
+              "f": "fighting", "d": "darkness", "m": "metal", "y": "fairy"}
+    match = re.fullmatch(r"basic \[([grwlpf dmy])\] energy", normalized)
+    if match:
+        return symbol.get(match.group(1))
+    if normalized in {"mist energy", "spiky energy"}:
+        return "colorless"
+    if normalized in {"growing [g] energy", "grow [g] energy"}:
+        return "grass"
+    return None
+
+
+def energy_covers_attack(item: dict) -> bool:
+    """Visible static cost coverage; not permission to attack or a rules oracle."""
+    energy = Counter(kind for name in item.get("energy", []) if (kind := energy_kind(name)) is not None)
+    for attack in item.get("card", {}).get("attacks", []):
+        cost = attack.get("cost")
+        if not isinstance(cost, list):
+            continue
+        required = Counter(str(kind).lower() for kind in cost)
+        if (set(required) <= {"grass", "fire", "water", "lightning", "psychic", "fighting", "darkness", "metal", "fairy", "colorless"}
+                and all(energy[kind] >= count for kind, count in required.items() if kind != "colorless")
+                and sum(energy.values()) >= sum(required.values())):
+            return True
+    return False
+
+
+def resource_coverage(observation: dict) -> dict:
+    unknown = sorted({name for player in observation.get("players", []) for item in pokemon(player)
+                      for name in item.get("energy", []) if energy_kind(name) is None})
+    return {"featureVersion": FEATURE_VERSION, "energyCoverage": "visible-static-costs",
+            "unknownEnergyCards": unknown, "limitations": [
+                "Energy coverage excludes unknown provision, cost modifiers, conditions and ability suppression; it is not legal attack readiness.",
+                "Crustle protection is a matchup-dependent capability feature, not an assertion that protection currently resolves.",
+                "Opponent private hand resources are unavailable."]}
 
 
 def card_bucket(identifier: str) -> int:
@@ -50,7 +97,7 @@ def card_tokens(observation: dict) -> np.ndarray:
     return np.array(ids + [0] * (MAX_VISIBLE_CARDS - len(ids)), dtype=np.int64)
 
 
-def _resources(player: dict, own: bool) -> np.ndarray:
+def _resources(player: dict, own: bool, opponent: dict) -> np.ndarray:
     board = pokemon(player)
     hand = player.get("hand", []) if own else []
     names = [card.get("name", "").lower() for card in hand]
@@ -61,16 +108,16 @@ def _resources(player: dict, own: bool) -> np.ndarray:
     health = sum(max(0, item["card"].get("hp", 0) - item.get("damage", 0)) for item in board) / 1000
     energy = sum(len(item.get("energy", [])) for item in board) / 12
     evolved = sum(str(item["card"].get("stage", "")).lower() not in {"", "basic", "0"} for item in board) / 6
-    # Readiness is a resource proxy, not a legal-cost checker (special energies differ).
-    ready = sum(bool(item.get("energy")) and bool(item["card"].get("attacks")) for item in board) / 6
+    ready = sum(energy_covers_attack(item) for item in board) / 6
     liabilities = sum(max(0, item["card"].get("prizeValue", 1) - 1) for item in board) / 6
-    crustle = sum(item["card"].get("name", "").lower() == "crustle" for item in board) / 4
-    non_ex = sum(item["card"].get("prizeValue", 1) == 1 and bool(item.get("energy")) for item in board) / 6
+    opposing_ex = bool(opponent.get("active") and re.search(r"\bex$", opponent["active"]["card"].get("name", "").lower()))
+    crustle = sum(item["card"].get("name", "").lower() == "crustle" and opposing_ex for item in board) / 4
+    non_ex = sum(item["card"].get("prizeValue", 1) == 1 and energy_covers_attack(item) for item in board) / 6
     return np.array([
         (6 - player.get("prizesRemaining", 6)) / 6, health, len(board) / 6, energy,
         player.get("handCount", len(hand)) / 10, player.get("deckCount", 0) / 60,
         evolved, ready, count_words(("rod", "recovery", "recycler", "stretcher")),
-        count_words(("research", "iono", "ultra ball", "nest ball", "poffin", "arven")),
+        count_words(("research", "iono", "ultra ball", "nest ball", "poffin", "arven", "lillie", "petrel", "poké pad", "pokégear")),
         count_words(("switch", "jet energy", "rescue board")),
         count_words(("boss", "iono", "catcher", "stamp")), liabilities, crustle, non_ex,
         len(player.get("discard", [])) / 60,
@@ -82,7 +129,7 @@ def resource_features(observation: dict) -> np.ndarray:
     opponent = next((p for p in observation.get("players", []) if p["id"] != observation["playerId"]), {})
     if not own or not opponent:
         raise ValueError("Observation requires both player views")
-    result = _resources(own, True) - _resources(opponent, False)
+    result = _resources(own, True, opponent) - _resources(opponent, False, own)
     # Opponent hidden hand features remain unknown; no fabricated cards are supplied.
     return np.clip(result, -4, 4)
 
@@ -105,12 +152,23 @@ def action_features(action: dict) -> np.ndarray:
     return np.array(features, dtype=np.float32)
 
 
-def heuristic_action_score(action: dict) -> float:
+def heuristic_action_score(action: dict, observation: dict | None = None) -> float:
+    # Staged selection controls are operations, not card names. Scoring an Undo
+    # containing "Energy" by keyword alone can select/undo forever.
+    if action.get("type") == "choice":
+        if action.get("choiceOperation") == "undo" or action.get("label") == "Cancel":
+            return -100.0
+        if action.get("choiceOperation") == "finish":
+            return 20.0 if (observation or {}).get("prompt", {}).get("type") == "Choose energy" else 0.0
+        return 10.0
     weights = np.array([3, 2, 2.5, 1.2, 1, .5, 1.3, -.8, -2, -2, .1, -.5, 1, .7, .1, -.3] + [0] * 16)
     return float(action_features(action) @ weights)
 
 
 def deck_beliefs(observation: dict, decks: list[dict]) -> tuple[list[dict], list[str]]:
+    # The registry also serves the experiment runner. Its withheld lists must
+    # never become an inference oracle merely because the API passed that registry.
+    decks = [deck for deck in decks if deck.get("role", "main") not in {"heldout", "historical"}]
     opponent = next((p for p in observation.get("players", []) if p["id"] != observation["playerId"]), None)
     warnings = ["Opponent beliefs are conditional on the supported five-deck pool, not the full metagame."]
     if opponent is None or not decks:
@@ -130,5 +188,12 @@ def deck_beliefs(observation: dict, decks: list[dict]) -> tuple[list[dict], list
         return [], warnings + ["Visible cards are inconsistent with all frozen decklists; unsupported deck or variant."]
     weights = [math.exp(value - max(finite)) if math.isfinite(value) else 0 for value in log_weights]
     total = sum(weights)
-    return [{"archetype": deck.get("archetype", deck["id"]), "probability": weight / total}
-            for deck, weight in zip(decks, weights)], warnings + ["Beliefs use visible card composition; action likelihoods are not yet modeled."]
+    grouped: dict[str, float] = {}
+    for deck, weight in zip(decks, weights):
+        archetype = deck.get("archetype", deck["id"])
+        grouped[archetype] = grouped.get(archetype, 0.) + weight / total
+    return [{"archetype": archetype, "probability": probability}
+            for archetype, probability in sorted(grouped.items()) if probability > 0], warnings + [
+                "Composition-only reference-list prior; strategic action likelihoods and unknown-variant mass are not modeled here.",
+                "Held-out and historical exact lists are excluded. These priors are separate from sampled search hypotheses.",
+            ]

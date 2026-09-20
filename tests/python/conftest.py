@@ -27,6 +27,7 @@ def make_replay(observation, index=0, status="finished"):
     other["legalActions"] = []
     return {"schemaVersion": 1, "id": f"test-{index}", "seed": index, "decks": ["crustle", "dragapult"],
             "engineVersion": "test-fixture-only", "status": status,
+            "trainingEligible": True, "deckRoles": ["main", "main"],
             "outcome": {"winner": index % 2, "reason": "test_fixture"} if status == "finished" else None,
             "frames": [{"decisionIndex": 0, "actor": 0, "action": observation["legalActions"][0],
                         "observations": [copy.deepcopy(observation), other]},

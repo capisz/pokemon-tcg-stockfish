@@ -1,10 +1,19 @@
 # Assignment 2: learning and portable execution
 
-Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Use the isolated `codex/portable-learning` worktree and inspect current status/evidence. The shared foundation is `f6e9ac1`; continue from subsequent integration work when present.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Start an isolated worktree from the latest reviewed `codex/competitive-integration` commit. The three original work branches are preserved as implementation history; do not restart from their old foundation. Inspect status and preserve unrelated edits.
 
 Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and current implementation evidence. This assignment implements measurable learning, not a promise of superhuman performance.
 
 ## Ownership
+
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md`,
+`docs/WATCH_AND_LEARN.md` and `research/GUIDE_POLICY_MILESTONE.md`. Audited
+multi-action policy training, immutable review lineage, linked resume, safe
+checkpoint selection and portable learned leaves are implemented. Twelve actual
+positions await user review; no actual guide checkpoint exists. Run the first
+policy experiment only after those reviews, then compare changed decisions and
+plan the matched guide-initialization ablation. Outcome training remains gated
+on rules admission. Do not turn test-only annotations into user approvals.
 
 Own Python transport, configuration, storage, self-play, datasets, features/models, training, evaluation, CLI, portable execution scripts and research tests. Preserve transport/storage service compatibility. FastAPI, live sessions, guides, teaching and React belong to assignment 3. Rules, registry and search belong to assignment 1. Shared dependency and interface changes go through the lead.
 

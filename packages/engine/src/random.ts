@@ -1,6 +1,6 @@
 /** SplitMix32 stream; rejection sampling avoids modulo bias in permutations. */
 export class SeededRandom {
-  constructor(public state: number) { this.state >>>= 0; }
+  constructor(public state: number, private onAmbientRandom?: (value:number)=>void) { this.state >>>= 0; }
   uint32(): number {
     this.state = (this.state + 0x9e3779b9) >>> 0;
     let z = this.state;
@@ -22,7 +22,7 @@ export class SeededRandom {
   }
   /** Upstream has rare synchronous RNG paths outside chance prompts. Scope them to this worker. */
   scoped<T>(fn: () => T): T {
-    const previous = Math.random; Math.random = () => this.float();
+    const previous = Math.random; Math.random = () => {const value=this.float();this.onAmbientRandom?.(value);return value;};
     try { return fn(); } finally { Math.random = previous; }
   }
 }

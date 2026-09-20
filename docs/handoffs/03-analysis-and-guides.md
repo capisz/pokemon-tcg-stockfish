@@ -1,10 +1,19 @@
 # Assignment 3: visual play, teaching and analysis
 
-Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical local checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Use the isolated `codex/competitive-play` worktree. Inspect current status and implementation evidence; the shared foundation is `f6e9ac1`, with subsequent work preserved.
+Repository: https://github.com/capisz/pokemon-tcg-stockfish. Canonical checkout: `/Users/admin/Documents/ChatGPT/Pokemon Ai project`. Start an isolated worktree from the latest reviewed `codex/competitive-integration` commit. The three original work branches are preserved as implementation history; do not restart from their old foundation. Inspect status and preserve unrelated edits.
 
 Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, `PRODUCT.md` and `DESIGN.md`. Use the approved familiar 2D table and preserve existing replay navigation. Do not restart design discovery.
 
 ## Ownership
+
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md` and
+`docs/WATCH_AND_LEARN.md`. One card table now supports live/saved playback,
+human matches and teaching; cursor feeds and source/target selection are wired
+to the simulator. Preserve that table and its privacy boundary. The first twelve
+positions are materialized with mechanics receipts and await strategic review.
+Remaining work includes the other sixteen fixture families, practice study
+branches, video/transcript intake and reviewed-match test retirement. Keep the
+evaluation status honest while no admitted competitive outcome model exists.
 
 Own React, FastAPI, live-match persistence/session modules, guide/teaching modules and browser/session tests. Assignment 2 supplies transport/storage/training services; assignment 1 supplies legal rules, observations and search. The lead owns common contracts, integration, and attributed `research/curriculum.json`.
 

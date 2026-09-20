@@ -1,0 +1,42 @@
+{
+  "python": "3.10.20",
+  "platform": "macOS-26.6.2-arm64-arm-64bit",
+  "engineBuilt": true,
+  "optional": {
+    "torch": true,
+    "sklearn": true,
+    "pyarrow": true,
+    "mlflow": true,
+    "sentence_transformers": false
+  },
+  "limits": {
+    "simulationWorkers": 2,
+    "maxDecisions": 3000,
+    "maxDiskBytes": 26843545600,
+    "maxMemoryBytes": 8589934592,
+    "minFreeBytes": 21474836480,
+    "profile": "mac",
+    "workerTuningLimit": 2
+  },
+  "hardware": {
+    "logicalCpus": 10,
+    "processor": "arm",
+    "processTreeRssBytes": 24363008,
+    "dataBytes": 8635561,
+    "destinationFreeBytes": 251653799936,
+    "physicalMemoryBytes": 17179869184
+  },
+  "recommendedDevice": "cpu",
+  "gpuPolicy": "CPU baseline on Windows; AMD acceleration requires a separate validated experiment",
+  "engine": {
+    "ok": true,
+    "protocolVersion": 1,
+    "engineVersion": "twinleaf-adapter-0.1.0+310ae24b3cc8cbbc",
+    "warnings": [
+      "Experimental rules adapter; learned strength is not established."
+    ],
+    "engineBuildHash": "b9a2f0acb7d5e2f3b19c5e1f25c1544b4ad84785d610985fbcdf38499464f4a2"
+  },
+  "torchVersion": "2.14.0",
+  "mpsAvailable": true
+}
