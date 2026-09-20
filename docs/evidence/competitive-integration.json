@@ -42,6 +42,28 @@
       "failedImage": "passed",
       "loadedImage": "passed",
       "readablePrompt": "passed"
+    },
+    "boundedNaturalLiveMatch": {
+      "status": "incomplete",
+      "budgetSeconds": 180,
+      "matchId": "959836a285ef4e84870d707b0f16f921",
+      "revision": 104,
+      "gameNumber": 1,
+      "turn": 11,
+      "score": [
+        0,
+        0
+      ],
+      "reason": "Bounded live API probe elapsed before a natural match result; no result assigned."
+    },
+    "realCrashRecovery": {
+      "passed": true,
+      "termination": "SIGKILL isolated API after acknowledged action",
+      "revision": 1,
+      "observationIdentical": true,
+      "budgetPreserved": true,
+      "resumeReconstruction": "passed",
+      "cleanup": "incomplete journal preserved"
     }
   },
   "limits": [

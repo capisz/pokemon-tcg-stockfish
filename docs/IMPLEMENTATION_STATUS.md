@@ -22,13 +22,14 @@ The integrated engine fingerprint is `310ae24b3cc8cbbc`. Replays retain their ac
 | Integrated Python suite | 76 passed, two upstream dependency deprecation warnings |
 | Web | TypeScript and Vite production build passed |
 | Real match browser | Legal setup action, bookmark, pause/reload/resume, card inspection, two concession outcomes with next-game choice, explicit replay publication and reviewed annotation passed |
+| Actual API crash/restart | A durably acknowledged decision survived SIGKILL; restart paused the session, preserved identical player observation and budget, and reconstructed on resume |
 | Real replay browser | Competitive Crustle vs Lucario seed 17 finished; selected-player view, saved-position roundtrip and uncalibrated analysis passed; unsupported search correctly withheld |
 | Browser layout | 1440px desktop and 390px narrow checks; no JavaScript errors or horizontal page overflow |
 | Recovery / bundles | Two-game starter smoke paused and resumed; 3.66 MB / five-artifact bundle roundtrip. Unit integration additionally trains a tiny model, transfers its checkpoint and continues optimizer progress |
 | Device probe | Small-model CPU approximately 702 vs MPS 303 steps/sec on this Mac; CPU is the measured starting choice. Windows hardware remains untested |
 | Card metadata | All 98 names and available regulation marks matched provider metadata; 85 art URLs available, thirteen Basic Energy printings require text fallback |
 
-A longer live-API probe exposed a Python baseline selection/undo loop. The fix gives staged controls explicit priorities and has two regression tests. The browser best-of-three concession test verifies product state transitions, not strategic playing strength. Full simulator games and natural terminal reasons are tested separately. Engine test counts are not an assertion of exhaustive card coverage.
+A longer live-API probe exposed a Python baseline selection/undo loop. The fix gives staged controls explicit priorities and has two regression tests. The corrected 180-second live API probe advanced through eleven turns and ended incomplete with no assigned result; a full natural-outcome live best-of-three is still unverified. The browser best-of-three concession test verifies product state transitions, not strategic playing strength. Full simulator games and natural terminal reasons are tested separately. Engine test counts are not an assertion of exhaustive card coverage.
 
 Evidence and reproduction:
 
@@ -53,4 +54,4 @@ The next useful user contribution is strategic review of reproducible Crustle an
 
 ## Review and handoffs
 
-Commits and feature branches are preserved; the integration is prepared for a draft PR. Merges and deployment remain user-controlled. Start additional work from the current integration commit, not the original `f6e9ac1` foundation. The three scoped assignments in `docs/handoffs/` remain the ownership boundaries.
+Commits and feature branches are preserved; the integration is submitted as a draft PR. Merges and deployment remain user-controlled. Start additional work from the current integration commit, not the original `f6e9ac1` foundation. The three scoped assignments in `docs/handoffs/` remain the ownership boundaries.
