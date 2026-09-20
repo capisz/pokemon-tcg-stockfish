@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react';
 import { api, errorMessage } from './api';
+import { Play } from './Play';
+import { TeachingReview } from './TeachingReview';
 import type { Analysis, Card, Deck, Job, Observation, Player, Pokemon, PositionSummary, Replay, ReplaySummary, SavedPosition, SampledContinuation } from './types';
 
 const signed = (value: number) => `${value > 0 ? '+' : ''}${value.toFixed(2)}`;
@@ -76,7 +78,7 @@ function Continuation({ line }: { line: SampledContinuation }) {
   </details>;
 }
 
-function EvaluationPanel({ analysis, loading, error, retry, observation, playerId }: { analysis: Analysis | null; loading: boolean; error: string; retry: () => void; observation: Observation | null; playerId: number }) {
+export function EvaluationPanel({ analysis, loading, error, retry, observation, playerId }: { analysis: Analysis | null; loading: boolean; error: string; retry: () => void; observation: Observation | null; playerId: number }) {
   const evaluation = analysis?.evaluation;
   const hasWdl = evaluation && evaluation.winProbability !== null && evaluation.lossProbability !== null && evaluation.drawProbability !== null;
   const hasRollouts = analysis?.alternatives.some((alternative) => alternative.visits > 0) ?? false;
@@ -113,7 +115,7 @@ function EvaluationPanel({ analysis, loading, error, retry, observation, playerI
   </aside>;
 }
 
-export default function App() {
+function ReplayApp() {
   const [decks, setDecks] = useState<Deck[]>([]);
   const [replays, setReplays] = useState<ReplaySummary[]>([]);
   const [positions, setPositions] = useState<PositionSummary[]>([]);
@@ -371,7 +373,7 @@ export default function App() {
   ]);
   const ownPlayer = observation?.players.find((player) => player.id === playerId);
   const opponent = observation?.players.find((player) => player.id !== playerId);
-  const actionLabel = (item: Replay['frames'][number]) => !item.action ? 'Final recorded position' : item.actor !== playerId && item.action.type === 'prompt' ? 'Opponent choice · private details hidden' : item.action.label;
+  const actionLabel = (item: Replay['frames'][number]) => !item.action ? 'Final recorded position' : item.actor !== playerId && ['prompt', 'choice'].includes(item.action.type) ? 'Opponent choice · private details hidden' : item.action.label;
   const resultLabel = !replay ? '' : replay.status === 'truncated' ? 'Decision limit reached · outcome unknown' : replay.status === 'error' ? 'Simulation error · inspect research notes' : replay.outcome?.winner !== null && replay.outcome?.winner !== undefined ? `Player ${replay.outcome.winner + 1} won · ${replay.outcome.reason}` : replay.outcome?.reason === 'rules-draw' ? 'Draw · rules terminal' : 'Finished · outcome unavailable';
 
   return <>
@@ -435,4 +437,9 @@ export default function App() {
     <footer className="app-footer">Experimental engine analysis. Hidden information stays hidden within each player view; uncertainty and unsupported behavior are reported.</footer>
     <div className="sr-only" role="status" aria-live="polite">{lastAnnouncement}</div>
   </>;
+}
+
+export default function App() {
+  const [view, setView] = useState(() => window.location.hash === '#play' ? 'play' : window.location.hash === '#review' ? 'review' : 'replays');
+  return <><nav className="surface-tabs" aria-label="Research tools">{[['play','Play'],['replays','Replay analysis'],['review','Teaching review']].map(([id,label]) => <button key={id} type="button" aria-current={view === id ? 'page' : undefined} onClick={() => {setView(id); window.location.hash=id;}}>{label}</button>)}</nav>{view === 'play' ? <Play /> : view === 'review' ? <TeachingReview /> : <ReplayApp />}</>;
 }

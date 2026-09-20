@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import threading
 import uuid
+from pathlib import Path
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
@@ -14,6 +15,46 @@ from .analysis import analyze_observation, review_decision, select_frame, select
 from .config import Settings
 from .engine import EngineError, EnginePool
 from .storage import Store
+from .matches import MatchService, MatchConflict
+from . import teaching, guides
+
+
+class MatchRequest(BaseModel):
+    deckId: str = Field(min_length=1, max_length=160)
+    opponentArchetype: str = Field(min_length=1, max_length=160)
+    mode: str = Field(default="practice", pattern="^(practice|benchmark)$")
+    knownList: bool = False
+    budgetMs: int = Field(default=120000, ge=1, le=120000)
+
+
+class MatchActionRequest(BaseModel):
+    revision: int = Field(ge=0)
+    requestId: str = Field(pattern=r"^[A-Za-z0-9_-]{1,160}$")
+    actionId: str | None = Field(default=None, max_length=160)
+    firstPlayer: int | None = Field(default=None, ge=0, le=1)
+
+
+class BookmarkRequest(BaseModel):
+    title: str = Field(min_length=1, max_length=120)
+
+
+class TeachingReviewRequest(BaseModel):
+    reviewStatus: str = Field(pattern="^(draft|reviewed|rejected)$")
+    acceptableActionIds: list[str] = Field(default_factory=list, max_length=1000)
+    rejectedActionIds: list[str] = Field(default_factory=list, max_length=1000)
+    conditionalReasoning: str = Field(default="", max_length=10000)
+    criticalResources: str = Field(default="", max_length=2000)
+    confidence: str = Field(default="uncertain", pattern="^(uncertain|likely|confident)$")
+
+
+class TeachingPositionRequest(BaseModel):
+    positionId: str = Field(pattern=r"^[A-Za-z0-9_-]{1,160}$")
+    familyId: str = Field(pattern=r"^[A-Za-z0-9_-]{1,160}$")
+
+
+class GuideQueryRequest(BaseModel):
+    query: str = Field(min_length=1, max_length=2000)
+    limit: int = Field(default=5, ge=1, le=20)
 
 
 class GameRequest(BaseModel):
@@ -50,7 +91,8 @@ class PositionRequest(BaseModel):
 
 def create_app(settings: Settings | None = None) -> FastAPI:
     settings = settings or Settings.from_env()
-    store = Store(settings.data, settings.max_disk_bytes)
+    # The research Store adds a reserve while preserving the legacy constructor.
+    store = Store(settings.data, settings.max_disk_bytes, settings.min_free_bytes) if hasattr(settings, "min_free_bytes") else Store(settings.data, settings.max_disk_bytes)
     pool = EnginePool(settings.root, settings.workers, settings.engine_timeout)
     executor = ThreadPoolExecutor(max_workers=settings.workers, thread_name_prefix="ptcg-job")
     capacity = threading.BoundedSemaphore(settings.max_jobs)
@@ -63,7 +105,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         for job in store.list("jobs"):
             if job["status"] in {"queued", "running"}:
                 store.put("jobs", job["id"], {**job, "status": "interrupted", "error": "Server restarted; rerun the recorded seed and configuration."})
+        matches.recover()
         yield
+        matches.close()
         executor.shutdown(wait=True, cancel_futures=False)
         pool.close()
 
@@ -84,6 +128,108 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return deck_cache
         except (EngineError, FileNotFoundError) as exc:
             raise HTTPException(503, f"Engine unavailable. Run npm run engine:build. {exc}") from exc
+
+    matches = MatchService(settings, store, pool, decks)
+    app.state.matches = matches
+
+    def hypothesis_decks():
+        return [deck for deck in decks() if deck.get("role") not in {"heldout", "historical"}]
+
+    def protect_benchmark():
+        if matches.benchmark_active():
+            raise HTTPException(403, "Analysis and private research views are locked until the benchmark match finishes.")
+
+    def match_call(fn, *args, **kwargs):
+        try:
+            return fn(*args, **kwargs)
+        except FileNotFoundError as exc:
+            raise HTTPException(404, "Match or teaching record not found") from exc
+        except MatchConflict as exc:
+            raise HTTPException(409, str(exc)) from exc
+        except ValueError as exc:
+            raise HTTPException(422, str(exc)) from exc
+        except (EngineError, RuntimeError, OSError) as exc:
+            raise HTTPException(503, "Local match operation failed; the durable position is preserved. Check local diagnostics and resume.") from exc
+
+    @app.post("/api/matches", status_code=201)
+    def create_match(request: MatchRequest):
+        return match_call(matches.create, request.deckId, request.opponentArchetype, request.mode, request.knownList, request.budgetMs)
+
+    @app.get("/api/matches")
+    def list_matches():
+        return {"matches": matches.list()}
+
+    @app.get("/api/matches/{identifier}")
+    def get_match(identifier: str):
+        return match_call(matches.get, identifier)
+
+    @app.post("/api/matches/{identifier}/actions")
+    def match_action(identifier: str, request: MatchActionRequest):
+        if request.actionId is None: raise HTTPException(422, "actionId is required")
+        return match_call(matches.command, identifier, "action", request.revision, request.requestId, actionId=request.actionId)
+
+    @app.post("/api/matches/{identifier}/advance", status_code=202)
+    def advance_match(identifier: str):
+        return match_call(matches.advance, identifier)
+
+    @app.post("/api/matches/{identifier}/control/{operation}")
+    def control_match(identifier: str, operation: str, request: MatchActionRequest):
+        if operation not in {"pause", "resume", "concede", "next-game", "abandon"}: raise HTTPException(404, "Unknown match operation")
+        arguments = {"firstPlayer": request.firstPlayer} if operation == "next-game" else {}
+        return match_call(matches.command, identifier, operation, request.revision, request.requestId, **arguments)
+
+    @app.post("/api/matches/{identifier}/bookmarks", status_code=201)
+    def bookmark_match(identifier: str, request: BookmarkRequest):
+        if not request.title.strip(): raise HTTPException(422, "Bookmark title cannot be blank")
+        return match_call(matches.bookmark, identifier, request.title.strip())
+
+    @app.post("/api/matches/{identifier}/replays")
+    def publish_match(identifier: str):
+        return match_call(matches.publish, identifier)
+
+    @app.post("/api/matches/{identifier}/analyze")
+    def analyze_match(identifier: str):
+        protect_benchmark()
+        record = match_call(matches.get_private, identifier)
+        return analyze_observation(record["observation"], hypothesis_decks(), Path(record["policy"]) if record["policy"] != "heuristic" else None)
+
+    @app.get("/api/teaching/curriculum")
+    def get_curriculum():
+        protect_benchmark()
+        return {"families": teaching.curriculum(settings.root)}
+
+    @app.get("/api/teaching/queue")
+    def teaching_queue():
+        protect_benchmark()
+        return {"items": teaching.queue(store)}
+
+    @app.get("/api/teaching/{identifier}")
+    def get_teaching(identifier: str):
+        protect_benchmark()
+        return load("teaching", identifier)
+
+    @app.post("/api/teaching/{identifier}/review")
+    def review_teaching(identifier: str, request: TeachingReviewRequest):
+        protect_benchmark()
+        return match_call(teaching.review, store, identifier, review_status=request.reviewStatus,
+                          acceptable_action_ids=request.acceptableActionIds, rejected_action_ids=request.rejectedActionIds,
+                          reasoning=request.conditionalReasoning, critical_resources=request.criticalResources, confidence=request.confidence)
+
+    @app.post("/api/teaching", status_code=201)
+    def create_teaching(request: TeachingPositionRequest):
+        protect_benchmark()
+        return match_call(teaching.from_position, store, settings.root, request.positionId, request.familyId)
+
+    @app.get("/api/guides")
+    def list_guides():
+        protect_benchmark()
+        return {"guides": [{key: value for key, value in guide.items() if key != "chunks"}
+                           for guide in store.list("guides")]}
+
+    @app.post("/api/guides/retrieve")
+    def retrieve_guides(request: GuideQueryRequest):
+        protect_benchmark()
+        return {"passages": match_call(guides.retrieve, store, request.query, limit=request.limit)}
 
     def load(category: str, identifier: str) -> dict:
         try:
@@ -108,6 +254,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             store.put("jobs", identifier, job)
             with pool.lease() as engine:
                 replay = engine.request("run", request.model_dump())
+            # Interactive research runs may include lists still under audit.
+            # They are explicit QA data, never silently admitted to training.
+            replay["trainingEligible"] = False
+            replay["dataPurpose"] = "interactive-qa"
             replay_id = store.save_replay(replay)
             store.put("jobs", identifier, {**job, "status": "completed", "replayId": replay_id,
                                           "resultStatus": replay["status"]})
@@ -142,14 +292,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/replays")
     def get_replays():
+        protect_benchmark()
         return {"replays": store.list("replay-index")}
 
     @app.get("/api/replays/{identifier}")
     def get_replay(identifier: str):
+        protect_benchmark()
         return load("replays", identifier)
 
     @app.post("/api/analyze")
     def analyze(request: AnalysisRequest):
+        protect_benchmark()
         try:
             if request.positionId:
                 observation = load("positions", request.positionId)["observation"]
@@ -165,7 +318,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise ValueError("PTCG_ANALYSIS_MODEL does not point to an existing local checkpoint")
             if model_path is None and champion.exists():
                 model_path = champion
-            result = analyze_observation(observation, decks(), model_path)
+            result = analyze_observation(observation, hypothesis_decks(), model_path)
             if settings.analysis_model is not None:
                 result["warnings"].append("Explicit experimental analysis checkpoint; training does not establish superior playing strength or champion status.")
             try:
@@ -192,6 +345,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/positions", status_code=201)
     def save_position(request: PositionRequest):
+        protect_benchmark()
         replay = load("replays", request.replayId)
         try:
             observation = select_frame(replay, request.decisionIndex, request.playerId)
@@ -200,7 +354,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         # Deliberate allowlist: never save the full frame, chance record, future
         # frames, true opponent deck manifest, or opposite player's private view.
         allowed = {"schemaVersion", "playerId", "decisionPlayer", "turn", "phase", "status", "players", "ownDeck",
-                   "legalActions", "history", "prompt", "warnings", "searchPosition", "searchUnavailableReason"}
+                   "legalActions", "history", "prompt", "warnings", "searchPosition", "searchUnavailableReason", "stadium", "knowledge"}
         position = {"id": uuid.uuid4().hex, "schemaVersion": 1, "title": request.title.strip(),
                     "createdAt": datetime.now(timezone.utc).isoformat(), "playerId": request.playerId,
                     "decisionIndex": request.decisionIndex, "sourceReplayId": request.replayId,
@@ -213,15 +367,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/positions")
     def list_positions():
+        protect_benchmark()
         return {"positions": [{key: value for key, value in position.items() if key != "observation"}
                               for position in store.list("positions")]}
 
     @app.get("/api/positions/{identifier}")
     def get_position(identifier: str):
+        protect_benchmark()
         return load("positions", identifier)
 
     @app.get("/api/experiments")
     def get_experiments():
+        protect_benchmark()
         return {"experiments": store.list("experiments")}
 
     return app

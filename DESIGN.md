@@ -15,7 +15,7 @@ The approved direction is a compact chess-analysis workspace: board and decision
 
 Warm offwhite canvas, almost-white working surfaces, dark green-black text, and restrained forest green for primary actions and selected states. The system sans stack supports a dense working interface without downloading fonts. Numbers use tabular figures where comparison matters. Color reinforces labels rather than replacing them.
 
-Pokémon are represented by compact text tiles using actual replay data; there are no invented card images or remote assets. An unavailable evaluation bar is visibly neutral and explicitly labeled unavailable.
+Replay Pokémon use compact text tiles with actual replay data. The approved Play and teaching surfaces use familiar 2D card zones and catalog-provided card images, with readable text faces when art is missing or offline. Public attachments, damage and conditions remain visible; the opponent hand shows card backs and its count. An unavailable evaluation bar is visibly neutral and explicitly labeled unavailable.
 
 ## Interaction and accessibility
 

@@ -15,7 +15,8 @@ from .storage import Store, digest
 
 
 def import_guide(store: Store, path: Path, *, title: str, author: str, source: str, matchup: str,
-                 format_date: str = "2026-09-17") -> dict:
+                 format_date: str = "2026-09-17", deck_version: str | None = None, media_type: str = "written",
+                 page: int | None = None, timestamp: str | None = None) -> dict:
     if path.stat().st_size > 2 * 1024**2:
         raise ValueError("Guide text exceeds the 2 MiB local import cap")
     text = path.read_text(encoding="utf-8")
@@ -35,7 +36,8 @@ def import_guide(store: Store, path: Path, *, title: str, author: str, source: s
     identifier = digest({"text": text, "source": source})[:32]
     record = {"id": identifier, "title": title, "author": author, "source": source, "matchup": matchup,
               "formatDate": format_date, "contentHash": digest(text), "reviewStatus": "unreviewed",
-              "chunks": [{"id": f"{identifier}-{i + 1}", "text": chunk} for i, chunk in enumerate(chunks)],
+              "deckVersion": deck_version, "mediaType": media_type, "trainingEligible": False,
+              "chunks": [{"id": f"{identifier}-{i + 1}", "text": chunk, "page": page, "timestamp": timestamp} for i, chunk in enumerate(chunks)],
               "use": "Attributed evidence only; not an authoritative rules source or action training label."}
     store.put("guides", identifier, record)
     return {key: value for key, value in record.items() if key != "chunks"} | {"chunks": len(chunks)}
@@ -46,7 +48,9 @@ def retrieve(store: Store, query: str, *, limit: int = 5, embedding_model: Path 
         raise ValueError("Supply a query and retrieval limit 1..20")
     documents = [{"guideId": guide["id"], "chunkId": chunk["id"], "text": chunk["text"],
                   "title": guide["title"], "author": guide["author"], "source": guide["source"],
-                  "matchup": guide["matchup"], "formatDate": guide["formatDate"]}
+                  "matchup": guide["matchup"], "formatDate": guide["formatDate"],
+                  "page": chunk.get("page"), "timestamp": chunk.get("timestamp"), "contentHash": guide.get("contentHash"),
+                  "sourceHash": chunk.get("sourceHash", guide.get("sourceHash")), "deckVersion": guide.get("deckVersion")}
                  for guide in store.list("guides") for chunk in guide["chunks"]]
     if not documents:
         return []

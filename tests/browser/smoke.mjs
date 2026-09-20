@@ -8,8 +8,8 @@ try {
   const page = await browser.newPage({viewport:{width:1440,height:1000}});
   const errors=[];
   page.on('pageerror', error => errors.push(error.message));
-  await page.goto('http://127.0.0.1:5173');
-  await page.getByText('5 decks in the research pool').waitFor();
+  await page.goto('http://127.0.0.1:5173/#replays');
+  await page.getByText(/decks in the research pool/).waitFor();
   await page.getByRole('combobox',{name:/^Player 1/}).selectOption('crustle');
   await page.getByRole('combobox',{name:/^Player 2/}).selectOption('mega-lucario');
   await page.getByLabel('Seed',{exact:true}).fill('17');
