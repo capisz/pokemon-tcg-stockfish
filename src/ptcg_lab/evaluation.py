@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import itertools
+import os
 import shutil
 import uuid
 from pathlib import Path
@@ -11,6 +12,7 @@ from .config import Settings
 from .engine import EngineClient
 from .selfplay import play_game, admitted_decks
 from .storage import Store, digest, file_digest, terminal_score
+from .resources import check_storage
 
 
 def confidence_interval(scores: list[float], seed: int = 0) -> dict:
@@ -57,6 +59,30 @@ def coverage_failures(registered: list[dict], admitted: list[dict]) -> list[str]
     return reasons
 
 
+def _verified_checkpoint_copy(store: Store, source: Path, destination: Path, expected_hash: str, *, replace: bool = False) -> None:
+    if destination.exists() and not replace:
+        raise ValueError("Immutable evaluation checkpoint already exists")
+    check_storage(store.path, store.max_bytes, store.min_free_bytes, source.stat().st_size)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    temporary = destination.with_name(f".{destination.name}-{uuid.uuid4().hex}.tmp")
+    try:
+        shutil.copyfile(source, temporary)
+        if file_digest(temporary) != expected_hash:
+            raise ValueError("Checkpoint changed during evaluation copy; no checkpoint was published")
+        with temporary.open("rb") as artifact:
+            os.fsync(artifact.fileno())
+        check_storage(store.path, store.max_bytes, store.min_free_bytes)
+        temporary.replace(destination)
+    finally:
+        temporary.unlink(missing_ok=True)
+
+
+def _verify_frozen_models(policies: dict, identities: dict) -> None:
+    for role, policy in policies.items():
+        if policy not in {"random", "heuristic"} and file_digest(Path(policy)) != identities[role]:
+            raise ValueError("Frozen evaluation checkpoint changed; this experiment cannot publish results or promote")
+
+
 def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str = "random", seeds: int = 2,
              seed_start: int = 1_000_000_000, max_decisions: int = 1000, promote: bool = False,
              allow_unverified: bool = False, guard=None) -> dict:
@@ -66,17 +92,23 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
         raise ValueError("Evaluation seed-start must be uint32")
     store = Store(settings.data, settings.max_disk_bytes, settings.min_free_bytes)
     excluded_seeds: set[int] = set()
-    models = {}
+    models, frozen_policies, snapshots = {}, {}, {}
+    identifier = uuid.uuid4().hex
     for name, policy in (("candidate", candidate), ("opponent", opponent)):
         if policy not in {"random", "heuristic"}:
             from .training import load_model
-            _, checkpoint = load_model(Path(policy))
-            models[name] = file_digest(Path(policy))
+            source = Path(policy).resolve()
+            models[name] = file_digest(source)
+            frozen = store.path / "evaluation-models" / f"{identifier}-{name}-{models[name][:16]}.pt"
+            _verified_checkpoint_copy(store, source, frozen, models[name])
+            _, checkpoint = load_model(frozen)
+            frozen_policies[name] = str(frozen)
+            snapshots[name] = {"source": str(source), "path": frozen.relative_to(store.path).as_posix(),
+                               "sha256": models[name]}
             from .training import checkpoint_lineage
             excluded_seeds.update(checkpoint_lineage(checkpoint)["seenSeeds"])
         else:
-            models[name] = policy
-    identifier = uuid.uuid4().hex
+            models[name] = frozen_policies[name] = policy
     scores: list[float] = []
     by_matchup: dict[str, list[float]] = {}
     first_player_counts: dict[str, dict[str, int]] = {}
@@ -92,6 +124,7 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
         health = engine.request("health")
         trusted = not allow_unverified and all("role" not in deck or deck.get("validation", {}).get("trainingEligible") is True for deck in registry)
         protocol = {"candidate": models["candidate"], "opponent": models["opponent"], "seeds": seeds,
+                    "checkpointSnapshots": snapshots,
                     "seedStart": seed_start, "deckHash": digest(registered),
                     "admittedDeckHash": digest(registry), "omittedCoverage": coverage_reasons, "engine": health,
                     "maxDecisions": max_decisions, "gate": "95% lower expected-result bound >0.5, >=30pairs, >=5/matchup, no excluded pairs or supported regressions"}
@@ -112,7 +145,9 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
                 for seat in (0, 1):
                     if guard:
                         guard.check()
-                    policies = (candidate, opponent) if seat == 0 else (opponent, candidate)
+                    _verify_frozen_models(frozen_policies, models)
+                    policies = ((frozen_policies["candidate"], frozen_policies["opponent"]) if seat == 0
+                                else (frozen_policies["opponent"], frozen_policies["candidate"]))
                     ordered_pair = list(pair) if seat == 0 else list(reversed(pair))
                     # When the v2 worker reports first-player control, fixing
                     # seat0 and swapping the candidate balances starts exactly.
@@ -141,6 +176,7 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
                                      "score": float(np.mean(results)) if len(results) == 2 else None})
                 store.put("experiments", identifier, {"id": identifier, "type": "paired-evaluation", "status": "running",
                           "candidate": candidate, "opponent": opponent, "completedPairs": len(pair_records), "excludedPairs": excluded})
+    _verify_frozen_models(frozen_policies, models)
     summary = confidence_interval(scores)
     matchup_results = {key: confidence_interval(values) for key, values in by_matchup.items()}
     eligible, reasons = promotion_decision(summary, matchup_results, excluded)
@@ -155,7 +191,7 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
         reasons.append("Reserved variant coverage is required before promotion.")
     champion_path = settings.data / "models" / "champion.pt"
     if champion_path.exists():
-        if opponent in {"random", "heuristic"} or file_digest(Path(opponent)) != file_digest(champion_path):
+        if opponent in {"random", "heuristic"} or models["opponent"] != file_digest(champion_path):
             reasons.append("Champion promotion requires comparison against the installed champion checkpoint.")
             eligible = False
     elif opponent != "heuristic":
@@ -169,13 +205,11 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
         if candidate in {"random", "heuristic"}:
             reasons.append("Only a learned checkpoint can be installed as model champion.")
         else:
-            champion = champion_path
-            temporary = champion.with_suffix(".tmp")
-            shutil.copyfile(candidate, temporary)
-            temporary.replace(champion)
+            _verified_checkpoint_copy(store, Path(frozen_policies["candidate"]), champion_path,
+                                      models["candidate"], replace=True)
             promoted = True
     report = {"id": identifier, "type": "paired-evaluation", "status": "completed", "candidate": candidate,
-              "opponent": opponent, "models": models, "engine": health, "deckHash": digest(registry),
+              "opponent": opponent, "models": models, "checkpointSnapshots": snapshots, "engine": health, "deckHash": digest(registry),
               "seedStart": seed_start, "protocolHash": digest(protocol), "summary": summary, "matchups": matchup_results,
               "trustedRulesCoverage": trusted,
               "firstPlayerCounts": first_player_counts,
