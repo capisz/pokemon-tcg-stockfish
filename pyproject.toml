@@ -7,7 +7,7 @@ name = "ptcg-lab"
 version = "0.1.0"
 description = "Local, reproducible Pokémon TCG research and replay analysis"
 requires-python = ">=3.10"
-dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "numpy>=1.26,<3", "pydantic>=2.8,<3"]
+dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "numpy>=1.26,<3", "pydantic>=2.8,<3", "psutil>=6,<8"]
 
 [project.optional-dependencies]
 training = ["torch>=2.4,<3", "scikit-learn>=1.5,<2", "pyarrow>=17,<24", "mlflow-skinny>=2.17,<4", "sqlalchemy>=2,<3", "alembic>=1.13,<2"]

@@ -9,7 +9,7 @@ import numpy as np
 
 from .config import Settings
 from .engine import EngineClient
-from .selfplay import play_game
+from .selfplay import play_game, admitted_decks
 from .storage import Store, digest, file_digest, terminal_score
 
 
@@ -39,12 +39,13 @@ def promotion_decision(overall: dict, matchups: dict, excluded: int) -> tuple[bo
 
 
 def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str = "random", seeds: int = 2,
-             seed_start: int = 1_000_000_000, max_decisions: int = 1000, promote: bool = False) -> dict:
+             seed_start: int = 1_000_000_000, max_decisions: int = 1000, promote: bool = False,
+             allow_unverified: bool = False, guard=None) -> dict:
     if not 1 <= seeds <= 1000 or not 1 <= max_decisions <= settings.max_decisions:
         raise ValueError("Evaluation requires 1..1000 paired seeds and 1..3000 decisions")
     if not 0 <= seed_start < 2**32:
         raise ValueError("Evaluation seed-start must be uint32")
-    store = Store(settings.data, settings.max_disk_bytes)
+    store = Store(settings.data, settings.max_disk_bytes, settings.min_free_bytes)
     excluded_seeds: set[int] = set()
     models = {}
     for name, policy in (("candidate", candidate), ("opponent", opponent)):
@@ -66,8 +67,14 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
     with EngineClient(settings.root, settings.engine_timeout) as engine:
         registry = engine.request("decks")
         registry = registry["decks"] if isinstance(registry, dict) else registry
+        registry = admitted_decks(registry, allow_unverified, evaluation=True)
         deck_ids = [deck["id"] for deck in registry]
         health = engine.request("health")
+        trusted = not allow_unverified and all("role" not in deck or deck.get("validation", {}).get("trainingEligible") is True for deck in registry)
+        protocol = {"candidate": models["candidate"], "opponent": models["opponent"], "seeds": seeds,
+                    "seedStart": seed_start, "deckHash": digest(registry), "engine": health,
+                    "maxDecisions": max_decisions, "gate": "95% lower expected-result bound >0.5, >=30pairs, >=5/matchup, no excluded pairs or supported regressions"}
+        store.put("evaluation-protocols", identifier, {"id": identifier, "protocol": protocol, "hash": digest(protocol)})
         # The candidate must pilot EACH deck against EACH opponent deck. Merely
         # swapping seats of unordered pairs leaves half those assignments untested.
         for pair_index, pair in enumerate(itertools.product(deck_ids, repeat=2)):
@@ -82,10 +89,19 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
                 replay_ids = []
                 first_players = []
                 for seat in (0, 1):
+                    if guard:
+                        guard.check()
                     policies = (candidate, opponent) if seat == 0 else (opponent, candidate)
                     ordered_pair = list(pair) if seat == 0 else list(reversed(pair))
-                    replay = play_game(engine, decks=ordered_pair, seed=seed, policies=policies, max_decisions=max_decisions)
+                    # When the v2 worker reports first-player control, fixing
+                    # seat0 and swapping the candidate balances starts exactly.
+                    options = {"first_player": 0} if health.get("firstPlayerControl") else {}
+                    if guard:
+                        options["guard"] = guard
+                    replay = play_game(engine, decks=ordered_pair, seed=seed, policies=policies, max_decisions=max_decisions, **options)
                     replay["evaluationExperiment"] = identifier
+                    replay["trainingEligible"] = False
+                    replay["deckRoles"] = [next(deck.get("role", "main") for deck in registry if deck["id"] == deck_id) for deck_id in ordered_pair]
                     replay_ids.append(store.save_replay(replay))
                     first = replay.get("startingPlayer")
                     first_players.append("unknown" if first is None else "candidateFirst" if first == seat else "opponentFirst")
@@ -107,6 +123,12 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
     summary = confidence_interval(scores)
     matchup_results = {key: confidence_interval(values) for key, values in by_matchup.items()}
     eligible, reasons = promotion_decision(summary, matchup_results, excluded)
+    if not trusted:
+        eligible = False
+        reasons.append("Unverified deck legality or interactions make this a rules-QA experiment; promotion is blocked.")
+    if any("role" in deck for deck in registry) and not any(deck.get("role") == "heldout" for deck in registry):
+        eligible = False
+        reasons.append("Reserved variant coverage is required before promotion.")
     champion_path = settings.data / "models" / "champion.pt"
     if champion_path.exists():
         if opponent in {"random", "heuristic"} or file_digest(Path(opponent)) != file_digest(champion_path):
@@ -130,7 +152,8 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
             promoted = True
     report = {"id": identifier, "type": "paired-evaluation", "status": "completed", "candidate": candidate,
               "opponent": opponent, "models": models, "engine": health, "deckHash": digest(registry),
-              "seedStart": seed_start, "summary": summary, "matchups": matchup_results,
+              "seedStart": seed_start, "protocolHash": digest(protocol), "summary": summary, "matchups": matchup_results,
+              "trustedRulesCoverage": trusted,
               "firstPlayerCounts": first_player_counts,
               "pairs": pair_records, "excludedPairs": excluded, "promotionEligible": eligible,
               "promoted": promoted, "promotionNotes": reasons,

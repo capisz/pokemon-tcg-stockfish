@@ -39,7 +39,8 @@ class EngineClient:
         self.responses = queue.Queue()
         bundle = self.root / "packages/engine/dist/worker.cjs"
         self.build_hash = hashlib.sha256(bundle.read_bytes()).hexdigest() if bundle.exists() else None
-        self.process = subprocess.Popen(self.command, cwd=self.root, stdin=subprocess.PIPE,
+        environment = {**os.environ, "OMP_NUM_THREADS": "2", "MKL_NUM_THREADS": "2", "OPENBLAS_NUM_THREADS": "2"}
+        self.process = subprocess.Popen(self.command, cwd=self.root, env=environment, stdin=subprocess.PIPE,
                                         stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                         text=True, encoding="utf-8", bufsize=1)
         responses, process = self.responses, self.process
@@ -112,8 +113,8 @@ class EngineClient:
 
 class EnginePool:
     def __init__(self, root: Path, size: int = 2, timeout: float = 300):
-        if not 1 <= size <= 2:
-            raise ValueError("Local configuration supports one or two simulation workers")
+        if not 1 <= size <= 8:
+            raise ValueError("Local configuration supports one to eight simulation workers; benchmark before raising the default of two")
         self.clients = [EngineClient(root, timeout) for _ in range(size)]
         self.available: queue.Queue[EngineClient] = queue.Queue()
         for client in self.clients:

@@ -5,6 +5,7 @@ import os
 import random
 import time
 import uuid
+import platform
 from pathlib import Path
 
 import numpy as np
@@ -76,7 +77,8 @@ def _probabilities(logits: np.ndarray, calibration: dict | None) -> np.ndarray:
 
 
 def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu", resume: Path | None = None,
-          max_positions: int = 10000, mlflow: bool = False) -> dict:
+          max_positions: int = 10000, mlflow: bool = False, linked_resume: bool = False,
+          guard=None, warm_start: Path | None = None, run_id: str | None = None) -> dict:
     torch = _torch()
     from .model import PolicyResourceModel
     if not 1 <= epochs <= 100 or not 100 <= max_positions <= 100000:
@@ -106,21 +108,56 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
     optimizer = torch.optim.Adam(model.parameters(), lr=.001)
     start_epoch = 0
     history = []
-    experiment_id = uuid.uuid4().hex
+    experiment_id = run_id or uuid.uuid4().hex
+    parent = None
+    start_batch = 0
+    if resume and warm_start:
+        raise ValueError("Choose resume or warm-start, not both")
+    if warm_start:
+        previous_model, previous_checkpoint = load_model(warm_start)
+        model.load_state_dict(previous_model.state_dict())
+        parent = {"experimentId": previous_checkpoint["experimentId"], "checkpointHash": file_digest(warm_start),
+                  "mode": "warm-start-new-data", "optimizer": "fresh"}
     if resume:
         checkpoint = torch.load(resume, map_location="cpu", weights_only=True)
-        if checkpoint["config"] != config:
+        previous_config = dict(checkpoint["config"])
+        comparable = dict(config)
+        if linked_resume:
+            previous_config.pop("device", None)
+            comparable.pop("device", None)
+        if previous_config != comparable:
             raise ValueError("Resume config/data hash differs from checkpoint; start a new experiment")
         model.load_state_dict(checkpoint["model"])
         optimizer.load_state_dict(checkpoint["optimizer"])
         start_epoch = checkpoint["epoch"]
-        experiment_id = checkpoint["experimentId"]
+        if linked_resume:
+            parent = {"experimentId": checkpoint["experimentId"], "checkpointHash": file_digest(resume),
+                      "platform": checkpoint.get("platform"), "device": checkpoint["config"].get("device")}
+        else:
+            parent = checkpoint.get("parent")
+            experiment_id = checkpoint["experimentId"]
+        start_batch = checkpoint.get("nextBatch", 0)
         history = checkpoint.get("history", [])
-        if start_epoch >= epochs:
+        if start_epoch > epochs:
             raise ValueError("Requested epochs must exceed the completed checkpoint epoch")
     model_dir = store.path / "models"
     model_dir.mkdir(parents=True, exist_ok=True)
     model_path = model_dir / f"{experiment_id}.pt"
+    search_examples = sum(row["policyTargetSource"] == "search-distillation" for row in data["train"])
+    policy_target = "mixed search distillation and recorded legal decisions" if search_examples else "behavior cloning of recorded legal decisions; not search distillation"
+
+    def checkpoint_at(epoch, next_batch=0):
+        return {"schemaVersion": 2, "experimentId": experiment_id, "parent": parent, "platform": platform.platform(),
+                "epoch": epoch, "nextBatch": next_batch, "config": config, "manifest": manifest, "parameters": parameters,
+                "model": {key: value.cpu() for key, value in model.state_dict().items()},
+                "optimizer": optimizer.state_dict(), "calibration": None, "history": history,
+                "searchTargetExamples": search_examples, "policyTarget": policy_target,
+                "rngPolicy": "deterministic epoch shuffle; floating point equivalence across devices is not promised"}
+    checkpoint = checkpoint_at(start_epoch, start_batch)
+    if not resume or linked_resume:
+        _save_checkpoint(store, model_path, checkpoint)
+    store.put("experiments", experiment_id, {"id": experiment_id, "status": "training", "config": config,
+              "epoch": start_epoch, "checkpoint": str(model_path), "parent": parent})
     tracking = None
     if mlflow:
         import mlflow as tracking
@@ -134,27 +171,36 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
             order = np.random.default_rng(seed + epoch).permutation(len(data["train"]))
             model.train()
             losses = []
-            for start in range(0, len(order), 32):
+            last_saved = time.monotonic()
+            for start in range(start_batch if epoch == start_epoch else 0, len(order), 32):
+                if guard:
+                    guard.check(storage=start % 3200 == 0)
                 batch = [data["train"][int(index)] for index in order[start:start + 32]]
                 resources, cards, actions, mask, targets, labels, selected = _batch(batch, device)
                 output = model(resources, cards, actions)
+                policy_log = torch.nn.functional.log_softmax(output["policy"].masked_fill(~mask, -1e9), dim=-1)
+                distribution = torch.zeros_like(policy_log)
+                for index, row in enumerate(batch):
+                    if row["policyDistribution"] is None:
+                        distribution[index, row["selected"]] = 1
+                    else:
+                        distribution[index, :len(row["policyDistribution"])]=torch.tensor(row["policyDistribution"], device=device)
                 loss = (torch.nn.functional.binary_cross_entropy_with_logits(output["logit"], targets)
                         + .5 * torch.nn.functional.cross_entropy(output["outcome_logits"], labels)
-                        + .25 * torch.nn.functional.cross_entropy(output["policy"].masked_fill(~mask, -1e9), selected))
+                        - .25 * (distribution * policy_log).sum(dim=-1).mean())
                 optimizer.zero_grad()
                 loss.backward()
                 torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0)
                 optimizer.step()
                 losses.append(float(loss.detach().cpu()))
-            metric = {"epoch": epoch + 1, "trainingLoss": float(np.mean(losses))}
+                if (start // 32 + 1) % 100 == 0 or time.monotonic() - last_saved >= 60:
+                    _save_checkpoint(store, model_path, checkpoint_at(epoch, start + 32))
+                    last_saved = time.monotonic()
+            metric = {"epoch": epoch + 1, "trainingLoss": float(np.mean(losses)) if losses else None}
             history.append(metric)
-            if tracking:
+            if tracking and metric["trainingLoss"] is not None:
                 tracking.log_metric("training_loss", metric["trainingLoss"], step=epoch + 1)
-            checkpoint = {"schemaVersion": 1, "experimentId": experiment_id, "epoch": epoch + 1,
-                          "config": config, "manifest": manifest, "parameters": parameters,
-                          "model": {key: value.cpu() for key, value in model.state_dict().items()},
-                          "optimizer": optimizer.state_dict(), "calibration": None, "history": history,
-                          "policyTarget": "behavior cloning of recorded legal decisions; not search distillation"}
+            checkpoint = checkpoint_at(epoch + 1)
             _save_checkpoint(store, model_path, checkpoint)
             store.put("experiments", experiment_id, {"id": experiment_id, "status": "training", "config": config,
                       "epoch": epoch + 1, "parameters": parameters, "checkpoint": str(model_path), "history": history})
@@ -172,10 +218,20 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
         report = {"id": experiment_id, "status": "completed", "type": "policy-value-training", "config": config,
                   "parameters": parameters, "checkpoint": str(model_path), "modelHash": file_digest(model_path),
                   "metrics": metrics, "calibration": calibration_status, "history": history,
+                  "parent": parent, "searchTargetExamples": search_examples, "policyTarget": policy_target,
                   "splits": {name: [game["id"] for game in selected] for name, selected in splits.items()},
                   "promotion": "experimental; no champion promotion without held-out playing-strength evaluation"}
         store.put("experiments", experiment_id, report)
         return report
+    except (KeyboardInterrupt, RuntimeError, OSError) as exc:
+        try:
+            store.put("experiments", experiment_id, {"id": experiment_id, "status": "paused",
+                      "config": config, "checkpoint": str(model_path), "parent": parent,
+                      "pauseReason": str(exc) or "Interrupted by user",
+                      "note": "Continue from the last durably saved optimizer and batch checkpoint."})
+        except (RuntimeError, OSError):
+            pass
+        raise
     finally:
         if tracking:
             tracking.end_run()
@@ -183,12 +239,19 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
 
 def _save_checkpoint(store: Store, path: Path, checkpoint: dict) -> None:
     torch = _torch()
-    used = sum(file.stat().st_size for file in store.path.rglob("*") if file.is_file())
+    from .resources import directory_bytes
+    used = directory_bytes(store.path)
     if used > store.max_bytes - 32 * 1024**2:
         raise RuntimeError("Insufficient space under local data cap for training checkpoint")
     temporary = path.with_suffix(".tmp")
     try:
         torch.save(checkpoint, temporary)
+        from .resources import check_storage, volume_free, ResourceLimit
+        check_storage(store.path, store.max_bytes, 0)
+        if volume_free(path) < store.min_free_bytes:
+            raise ResourceLimit("Checkpoint destination free-space reserve reached")
+        with temporary.open("rb") as saved:
+            os.fsync(saved.fileno())
         temporary.replace(path)
     finally:
         temporary.unlink(missing_ok=True)
