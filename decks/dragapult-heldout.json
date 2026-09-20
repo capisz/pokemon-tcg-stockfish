@@ -1,21 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "dragapult",
-  "name": "Dragapult ex / Crushing Hammer",
+  "id": "dragapult-heldout",
+  "name": "Dragapult ex / Crushing Hammer (heldout)",
   "archetype": "dragapult",
-  "role": "main",
+  "role": "heldout",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "private-guide-transcription",
-    "authors": [
-      "Andrew Hedrick"
-    ],
-    "page": 48,
-    "sourceSha256": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
-    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+    "kind": "curated-variant",
+    "parent": "dragapult",
+    "changes": {
+      "MEE-5": -1,
+      "MEE-7": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9",
+  "listHash": "1acad0d38bfca5786d7ef44eb53dbd4933295dbd70c48e9de8fb26aba6a875bf",
   "cards": [
     {
       "cardId": "TWM-128",
@@ -169,7 +169,7 @@
       "regulationMark": "ENERGY",
       "name": "Psychic Energy",
       "engineName": "Psychic Energy MEE-5",
-      "count": 4
+      "count": 3
     },
     {
       "cardId": "MEE-2",
@@ -183,7 +183,7 @@
       "regulationMark": "ENERGY",
       "name": "Darkness Energy",
       "engineName": "Darkness Energy MEE-7",
-      "count": 2
+      "count": 3
     }
   ],
   "validation": {

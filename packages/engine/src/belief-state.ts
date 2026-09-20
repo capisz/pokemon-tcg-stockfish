@@ -6,6 +6,8 @@ import { PokemonCardList } from '../../../vendor/twinleaf/ptcg-server/src/game/s
 import { Marker } from '../../../vendor/twinleaf/ptcg-server/src/game/store/state/card-marker';
 import { CARD_FACTORIES, getDeck, printedId } from './catalog';
 import { SeededRandom } from './random';
+import type { DeckManifest } from './catalog';
+export type DeckHypothesis = string | DeckManifest;
 
 // Deliberately explicit: additions to upstream state do not silently become policy inputs.
 const PLAYER_FIELDS = ['supporterTurn', 'retreatedTurn', 'energyPlayedTurn', 'stadiumPlayedTurn', 'stadiumUsedTurn',
@@ -34,7 +36,7 @@ function copyAllowed(source: any, dest: any, allowed: string[], ignored: Set<str
  * The caller supplies the opponent deck hypothesis. No field consults the original opponent decklist.
  * Stable positions only: callback closures cannot be transplanted into an independently sampled game.
  */
-export function sampleBeliefState(source: State, observer: number, ownDeckId: string, opponentDeckId: string, rng: SeededRandom): State {
+export function sampleBeliefState(source: State, observer: number, ownDeckId: DeckHypothesis, opponentDeckId: DeckHypothesis, rng: SeededRandom): State {
   if (source.phase !== GamePhase.PLAYER_TURN || source.prompts.some(p => p.result === undefined)) throw new Error('Belief search requires a stable player-turn decision.');
   if (source.activePlayer !== observer) throw new Error('Belief search is available only for the current decision player.');
   const state = new State();
@@ -75,7 +77,8 @@ export function sampleBeliefState(source: State, observer: number, ownDeckId: st
     markers.push({old: old.marker, fresh: fresh.marker});
     // Only observer hand card identities are read here. Opponent hand supplies its public count only.
     if (index === observer) fresh.hand.cards = old.hand.cards.map(publicCard);
-    const deck = getDeck(index === observer ? ownDeckId : opponentDeckId);
+    const reference = index === observer ? ownDeckId : opponentDeckId;
+    const deck = typeof reference === 'string' ? getDeck(reference) : reference;
     const available = new Map<string, number>(deck.cards.map(c => [c.cardId, c.count]));
     const known = new Set<Card>([...fresh.active.cards, ...fresh.active.tools, ...fresh.active.energies.cards,
       ...fresh.bench.flatMap(b => [...b.cards, ...b.tools, ...b.energies.cards]), ...fresh.discard.cards,
@@ -115,7 +118,7 @@ export function sampleBeliefState(source: State, observer: number, ownDeckId: st
 }
 
 export interface PublicPosition {
-  version: 1; observer: number; ownDeckId: string; turn: number; activePlayer: number; abilityLockOrderCounter: number;
+  version: 1; observer: number; ownDeckId: string; ownPrizeCards?: string[]; ownDeckTop?: string[]; turn: number; activePlayer: number; abilityLockOrderCounter: number;
   cards: {key: number; cardId: string}[];
   players: any[];
 }
@@ -159,7 +162,7 @@ export function projectPublicPosition(source: State, observer: number, ownDeckId
 }
 
 /** Hydrates only known cards and zone counts, then samples every unknown card from the hypothesis. */
-export function samplePublicPosition(position: PublicPosition, opponentDeckId: string, rng: SeededRandom): State {
+export function samplePublicPosition(position: PublicPosition, opponentDeckId: DeckHypothesis, rng: SeededRandom): State {
   if (position.version !== 1 || ![0, 1].includes(position.observer) || position.players.length !== 2) throw new Error('Invalid search position.');
   const source = new State(); source.phase = GamePhase.PLAYER_TURN; source.turn = position.turn;
   source.activePlayer = position.activePlayer; source.abilityLockOrderCounter = position.abilityLockOrderCounter;
@@ -187,5 +190,22 @@ export function samplePublicPosition(position: PublicPosition, opponentDeckId: s
     fresh.marker.markers = marker(p.markers); fresh.movedToActiveThisTurn = p.movedToActiveThisTurn; fresh.movedFromActiveToBenchThisTurn = p.movedFromActiveToBenchThisTurn;
     return fresh;
   });
-  return sampleBeliefState(source, position.observer, position.ownDeckId, opponentDeckId, rng);
+  const sampled = sampleBeliefState(source, position.observer, position.ownDeckId, opponentDeckId, rng);
+  const own = sampled.players[position.observer];
+  // The supplied identities were inferred from a legal deck search, never read from
+  // the true Prize zone. Randomize their slot allocation rather than inventing it.
+  if (position.ownPrizeCards) {
+    if (position.ownPrizeCards.length !== own.prizes.length) throw new Error('Known Prize counts are stale.');
+    const pool = [...own.deck.cards, ...own.prizes.flatMap(p => p.cards)];
+    const takeKnown = (id: string) => {const i=pool.findIndex(c=>printedId(c)===id);if(i<0)throw new Error('Known Prize identities conflict with own deck.');return pool.splice(i,1)[0];};
+    const prizes=position.ownPrizeCards.map(takeKnown);
+    rng.shuffle(prizes.length).forEach((index, slot)=>{own.prizes[slot].cards=[prizes[index]];});
+    own.deck.cards = rng.shuffle(pool.length).map(i=>pool[i]);
+  }
+  if (position.ownDeckTop?.length) {
+    const pool=[...own.deck.cards];
+    const top=position.ownDeckTop.map(id=>{const i=pool.findIndex(c=>printedId(c)===id);if(i<0)throw new Error('Known deck order conflicts with own deck.');return pool.splice(i,1)[0];});
+    own.deck.cards=[...top,...pool];
+  }
+  return sampled;
 }

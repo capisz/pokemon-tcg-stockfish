@@ -1,0 +1,119 @@
+{
+  "id": "mega-lucario-engineering-v1",
+  "name": "Mega Lucario ex",
+  "archetype": "mega-lucario",
+  "formatDate": "2026-09-17",
+  "version": 1,
+  "source": "Authored engineering baseline; not a tournament list.",
+  "cards": [
+    {
+      "cardId": "MEG-76",
+      "name": "Riolu",
+      "engineName": "Riolu MEG-76",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-77",
+      "name": "Mega Lucario ex",
+      "engineName": "Mega Lucario ex MEG-77",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "TWM-107",
+      "name": "Hawlucha",
+      "engineName": "Hawlucha TWM-107",
+      "regulationMark": "H",
+      "count": 2
+    },
+    {
+      "cardId": "SFA-38",
+      "name": "Fezandipiti ex",
+      "engineName": "Fezandipiti ex SFA-38",
+      "regulationMark": "H",
+      "count": 2
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "engineName": "Ultra Ball MEG-131",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-119",
+      "name": "Lillie's Determination",
+      "engineName": "Lillie's Determination MEG-119",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-116",
+      "name": "Fighting Gong",
+      "engineName": "Fighting Gong MEG-116",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-114",
+      "name": "Boss's Orders",
+      "engineName": "Boss's Orders MEG-114",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "SFA-61",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher SFA-61",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-130",
+      "name": "Switch",
+      "engineName": "Switch MEG-130",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "TWM-145",
+      "name": "Carmine",
+      "engineName": "Carmine TWM-145",
+      "regulationMark": "H",
+      "count": 3
+    },
+    {
+      "cardId": "MEG-121",
+      "name": "Mega Signal",
+      "engineName": "Mega Signal MEG-121",
+      "regulationMark": "I",
+      "count": 2
+    },
+    {
+      "cardId": "MEG-132",
+      "name": "Wally's Compassion",
+      "engineName": "Wally's Compassion MEG-132",
+      "regulationMark": "I",
+      "count": 2
+    },
+    {
+      "cardId": "SVE-6",
+      "name": "Fighting Energy",
+      "engineName": "Fighting Energy SVE-6",
+      "regulationMark": "ENERGY",
+      "count": 19
+    }
+  ],
+  "validation": {
+    "status": "experimental",
+    "notes": [
+      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
+      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+    ],
+    "trainingEligible": false,
+    "legalityVerified": false
+  },
+  "role": "historical",
+  "listHash": "bfa0c57afa7d2df3cbf7a4238f996d6beaeb9049f773422686a38c08510fbb39"
+}

@@ -1,0 +1,728 @@
+{
+  "schemaVersion": 1,
+  "status": "partial-rules-audit",
+  "trustedTrainingEligible": false,
+  "formatDate": "2026-09-17",
+  "scope": "15 competitive lists and five preserved historical fixtures",
+  "evidence": {
+    "construction": "All competitive manifests are hashed 60-card constructions with implemented card factories.",
+    "gameSmoke": "environment.test.ts exercises each competitive list through a complete seed-5 game against Mega Lucario.",
+    "limitations": [
+      "Full games establish execution, not exhaustive rules correctness.",
+      "Per-print provider metadata is independent from official format legality verification.",
+      "Froslass simultaneous knockout ordering, Area Zero shrinking order, Lucario modifier/gust combinations, and all recovery/HP modifier combinations require targeted fixtures.",
+      "Opponent revealed-hand constraints and some state markers explicitly refuse search.",
+      "Unknown variants are nearby observation-constrained hypotheses, not a learned metagame distribution.",
+      "Only own deck-search Prize inference and known top ordering have targeted belief tests; other hidden-zone memory remains unsupported."
+    ]
+  },
+  "cards": [
+    {
+      "cardId": "TWM-128",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/dreepy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-129",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/drakloak",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-130",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/dragapult-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-25",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/teal-mask-ogerpon-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-95",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/munkidori",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-107",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/hawlucha",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-145",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/carmine",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-123",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/raging-bolt-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-144",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/buddy-buddy-poffin",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-150",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/hand-trimmer",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-134",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/marnies-impidimp",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-135",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/marnies-morgrem",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-136",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/marnies-grimmsnarl-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-11",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/dwebble",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-12",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/crustle",
+      "coverage": "focused-fixture",
+      "tests": [
+        "crustle.test.ts",
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-10",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/shaymin",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SFA-61",
+      "implementation": "10-scarlet-and-violet/set-shrouded-fable/nightly-stretcher",
+      "coverage": "focused-fixture",
+      "tests": [
+        "crustle.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "SFA-38",
+      "implementation": "10-scarlet-and-violet/set-shrouded-fable/fezandipiti-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SCR-133",
+      "implementation": "10-scarlet-and-violet/set-stellar-crown/crispin",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SCR-137",
+      "implementation": "10-scarlet-and-violet/set-stellar-crown/gravity-gemstone",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-76",
+      "implementation": "11-mega-evolution/set-mega-evolution/riolu",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-77",
+      "implementation": "11-mega-evolution/set-mega-evolution/mega-lucario-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-119",
+      "implementation": "11-mega-evolution/set-mega-evolution/lillies-determination",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-116",
+      "implementation": "11-mega-evolution/set-mega-evolution/fighting-gong",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-121",
+      "implementation": "11-mega-evolution/set-mega-evolution/mega-signal",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-132",
+      "implementation": "11-mega-evolution/set-mega-evolution/wallys-compassion",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-114",
+      "implementation": "10-scarlet-and-violet/set-paldea-evolved/boss-orders",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-125",
+      "implementation": "03-ex-ruby-and-sapphire/set-ex-holon-phantoms/rare-candy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-130",
+      "implementation": "set-base-set/switch",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-131",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet/ultra-ball",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-115",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet/energy-switch",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-1",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/grass-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-2",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fire-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-4",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/lightning-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-5",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/psychic-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-6",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fighting-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SVE-7",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/darkness-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-62",
+      "implementation": "11-mega-evolution/set-perfect-order/meowth-ex",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "POR-84",
+      "implementation": "11-mega-evolution/set-perfect-order/rosas-encouragement",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-81",
+      "implementation": "11-mega-evolution/set-ascended-heroes/poke-pad",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-76",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet/judge",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-71",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet/crushing-hammer",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-104",
+      "implementation": "11-mega-evolution/set-mega-evolution/mega-kangaskhan-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-75",
+      "implementation": "11-mega-evolution/set-mega-evolution/solrock",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-74",
+      "implementation": "11-mega-evolution/set-mega-evolution/lunatone",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-72",
+      "implementation": "11-mega-evolution/set-mega-evolution/makuhita",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-73",
+      "implementation": "11-mega-evolution/set-mega-evolution/hariyama",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-88",
+      "implementation": "11-mega-evolution/set-mega-evolution/yveltal",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-124",
+      "implementation": "11-mega-evolution/set-mega-evolution/power-protein",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-127",
+      "implementation": "11-mega-evolution/set-mega-evolution/risky-ruins",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "ASC-16",
+      "implementation": "10-scarlet-and-violet/set-prismatic-evolution/budew",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "ASC-46",
+      "implementation": "11-mega-evolution/set-ascended-heroes/snorunt",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "ASC-142",
+      "implementation": "10-scarlet-and-violet/set-shrouded-fable/fezandipiti-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "ASC-181",
+      "implementation": "09-sword-and-shield/set-sword-and-shield/air-balloon",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "ASC-196",
+      "implementation": "10-scarlet-and-violet/set-shrouded-fable/nightly-stretcher",
+      "coverage": "focused-fixture",
+      "tests": [
+        "crustle.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "PBL-78",
+      "implementation": "11-mega-evolution/set-pitch-black/gwynn",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-53",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/froslass",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-141",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/bloodmoon-ursaluna-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-64",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/wellspring-mask-ogerpon-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-163",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/secret-box",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-165",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/unfair-stamp",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-150",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/handy-fan",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-148",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/enhanced-hammer",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-176",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/team-rockets-petrel",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-169",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/spikemuth-gym",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SSP-76",
+      "implementation": "10-scarlet-and-violet/set-surging-sparks/latias-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SSP-56",
+      "implementation": "10-scarlet-and-violet/set-surging-sparks/chien-pao",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SSP-177",
+      "implementation": "10-scarlet-and-violet/set-surging-sparks/gravity-mountain",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SSP-170",
+      "implementation": "10-scarlet-and-violet/set-surging-sparks/cyrano",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "JTG-56",
+      "implementation": "10-scarlet-and-violet/set-journey-together/lillies-clefairy-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "JTG-120",
+      "implementation": "10-scarlet-and-violet/set-journey-together/dunsparce",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "JTG-159",
+      "implementation": "10-scarlet-and-violet/set-journey-together/spiky-energy",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-25",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/iron-leaves-ex",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-129",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/dudunsparce",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-145",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/cryptomaniacs-deciphering",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts (generic known-order/Prize constraint; full card continuation remains unaudited)"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-161",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/mist-energy",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "SCR-131",
+      "implementation": "10-scarlet-and-violet/set-stellar-crown/area-zero-underdepths",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SCR-135",
+      "implementation": "10-scarlet-and-violet/set-stellar-crown/glass-trumpet",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "SFA-64",
+      "implementation": "10-scarlet-and-violet/set-shrouded-fable/xerosics-scheme",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "PFL-91",
+      "implementation": "11-mega-evolution/set-phantasmal-flames/jumbo-ice",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "CRI-82",
+      "implementation": "11-mega-evolution/set-chaos-rising/special-red-card",
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts"
+      ],
+      "certified": false
+    },
+    {
+      "cardId": "CRI-80",
+      "implementation": "11-mega-evolution/set-chaos-rising/prism-tower",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "DRI-173",
+      "implementation": "10-scarlet-and-violet/set-destined-rivals/team-rockets-factory",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-146",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/eri",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TEF-152",
+      "implementation": "10-scarlet-and-violet/set-temporal-forces/heros-cape",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "WHT-84",
+      "implementation": "10-scarlet-and-violet/set-black-bolt-white-flare/hilda",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-77",
+      "implementation": "11-mega-evolution/set-perfect-order/lumioise-city",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "POR-86",
+      "implementation": "11-mega-evolution/set-perfect-order/grow-grass-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-1",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/grass-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-2",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fire-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-3",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/water-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-4",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/lightning-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-5",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/psychic-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-6",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fighting-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEE-7",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet-energy/darkness-energy",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "TWM-149",
+      "implementation": "10-scarlet-and-violet/set-twilight-masquerade/festival-plaza",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "BLK-84",
+      "implementation": "10-scarlet-and-violet/set-scarlet-and-violet/pokegear-30",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    },
+    {
+      "cardId": "MEG-123",
+      "implementation": "07-x-and-y/set-flashfire/pokemon-center-lady",
+      "coverage": "mapped-game-smoke-only",
+      "tests": [],
+      "certified": false
+    }
+  ]
+}

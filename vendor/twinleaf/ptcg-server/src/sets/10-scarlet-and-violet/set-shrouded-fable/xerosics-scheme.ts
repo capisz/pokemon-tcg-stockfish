@@ -5,7 +5,7 @@ import { StoreLike } from '../../../game/store/store-like';
 import { Player } from '../../../game/store/state/player';
 import { TrainerCard } from '../../../game/store/card/trainer-card';
 import { TrainerType } from '../../../game/store/card/card-types';
-import { ChooseCardsPrompt, GameError, GameMessage, StateUtils } from '../../..';
+import { ChooseCardsPrompt, GameError, GameMessage, StateUtils } from '../../../game';
 import { MOVE_CARDS } from '../../../game/store/prefabs/prefabs';
 
 export class XerosicsScheme extends TrainerCard {

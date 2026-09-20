@@ -4,7 +4,7 @@ import { StoreLike } from '../../../game/store/store-like';
 import { State, GamePhase } from '../../../game/store/state/state';
 import { Effect } from '../../../game/store/effects/effect';
 import { StateUtils } from '../../../game';
-import { DealDamageEffect, PutCountersEffect } from '../../../game/store/effects/attack-effects';
+import { AfterDamageEffect } from '../../../game/store/effects/attack-effects';
 import { IS_SPECIAL_ENERGY_BLOCKED } from '../../../game/store/prefabs/prefabs';
 
 
@@ -33,7 +33,7 @@ export class SpikyEnergy extends EnergyCard {
 
   public reduceEffect(store: StoreLike, state: State, effect: Effect): State {
 
-    if (effect instanceof DealDamageEffect && effect.target.cards.includes(this) && state.phase === GamePhase.ATTACK) {
+    if (effect instanceof AfterDamageEffect && effect.target.cards.includes(this) && effect.damage > 0 && state.phase === GamePhase.ATTACK) {
       const player = StateUtils.findOwner(state, effect.target);
       const opponent = effect.player;
       if (player === opponent || player.active !== effect.target)
@@ -42,9 +42,9 @@ export class SpikyEnergy extends EnergyCard {
       if (IS_SPECIAL_ENERGY_BLOCKED(store, state, effect.player, this, effect.target)) {
         return state;
       }
-      const putCountersEffect = new PutCountersEffect(effect, 20);
-      putCountersEffect.target = effect.source;
-      store.reduceEffect(state, putCountersEffect);
+      // This is an Energy effect after damage actually landed, not an attack
+      // effect. In particular, Mist Energy on the attacker does not prevent it.
+      effect.source.damage += 20;
     }
     return state;
   }

@@ -9,6 +9,11 @@ export function chooseAction(observation: Observation, policy: 'random' | 'heuri
   const own = observation.players[observation.playerId];
   const opponent = observation.players[1 - observation.playerId];
   const score = (a: LegalAction): number => {
+    if(a.type==='choice'){
+      if(a.choiceOperation==='undo'||a.label==='Cancel')return -20;
+      if(a.choiceOperation==='finish')return observation.prompt?.type==='Choose energy'?20:0;
+      return 5;
+    }
     if (a.type === 'prompt') {
       if (a.label === 'Cancel' || /no cards|no energy|Discard 0/.test(a.label)) return -10;
       if (a.label === 'Yes') return 8;

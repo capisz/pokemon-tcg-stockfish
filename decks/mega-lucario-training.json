@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "mega-lucario",
-  "name": "Mega Lucario ex / Hariyama",
+  "id": "mega-lucario-training",
+  "name": "Mega Lucario ex / Hariyama (training-variant)",
   "archetype": "mega-lucario",
-  "role": "main",
+  "role": "training-variant",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "mega-lucario",
+    "changes": {
+      "SSP-177": -1,
+      "ASC-196": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "4c397dc7b0fbf9b0c40efa879d9c638d4f571e83af28ee1642d4d1c952820b19",
+  "listHash": "1d15601d58d5a0e697ae4100b85af1b316348085faca2063f8c5a0def98d709d",
   "cards": [
     {
       "cardId": "MEG-76",
@@ -150,7 +155,7 @@
       "name": "Gravity Mountain",
       "regulationMark": "H",
       "engineName": "Gravity Mountain SSP-177",
-      "count": 3
+      "count": 2
     },
     {
       "cardId": "MEE-6",
@@ -158,6 +163,13 @@
       "name": "Fighting Energy",
       "engineName": "Fighting Energy MEE-6",
       "count": 11
+    },
+    {
+      "cardId": "ASC-196",
+      "regulationMark": "H",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher ASC-196",
+      "count": 1
     }
   ],
   "validation": {

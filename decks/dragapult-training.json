@@ -1,21 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "dragapult",
-  "name": "Dragapult ex / Crushing Hammer",
+  "id": "dragapult-training",
+  "name": "Dragapult ex / Crushing Hammer (training-variant)",
   "archetype": "dragapult",
-  "role": "main",
+  "role": "training-variant",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "private-guide-transcription",
-    "authors": [
-      "Andrew Hedrick"
-    ],
-    "page": 48,
-    "sourceSha256": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
-    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+    "kind": "curated-variant",
+    "parent": "dragapult",
+    "changes": {
+      "POR-76": -1,
+      "CRI-82": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9",
+  "listHash": "8845ffcc27189b11db7f9a3aa275ac6830dd94266efea310da8d5fdf26dc6a85",
   "cards": [
     {
       "cardId": "TWM-128",
@@ -109,13 +109,6 @@
       "count": 1
     },
     {
-      "cardId": "POR-76",
-      "regulationMark": "J",
-      "name": "Judge",
-      "engineName": "Judge POR-76",
-      "count": 1
-    },
-    {
       "cardId": "POR-81",
       "regulationMark": "J",
       "name": "Pok\u00e9 Pad",
@@ -184,6 +177,13 @@
       "name": "Darkness Energy",
       "engineName": "Darkness Energy MEE-7",
       "count": 2
+    },
+    {
+      "cardId": "CRI-82",
+      "regulationMark": "J",
+      "name": "Special Red Card",
+      "engineName": "Special Red Card CRI-82",
+      "count": 1
     }
   ],
   "validation": {

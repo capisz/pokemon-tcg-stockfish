@@ -4,6 +4,7 @@ import { Effect } from '../../../game/store/effects/effect';
 import { TrainerEffect } from '../../../game/store/effects/play-card-effects';
 import { StateUtils, StoreLike, State, Player } from '../../../game';
 import { GameError, GameMessage } from '../../../game';
+import { ShuffleHandPrompt } from '../../../game/store/prompts/shuffle-hand-prompt';
 import { CardList } from '../../../game/store/state/card-list';
 import {DRAW_CARDS, MOVE_CARDS } from '../../../game/store/prefabs/prefabs';
 
@@ -38,10 +39,13 @@ export class SpecialRedCard extends TrainerCard {
       }
       const cardsInHand = opponent.hand.cards.length;
       if (cardsInHand > 0) {
-        const deckBottom = new CardList();
-        MOVE_CARDS(store, state, opponent.hand, deckBottom, { sourceCard: this });
-        MOVE_CARDS(store, state, deckBottom, opponent.deck, { sourceCard: this });
-        DRAW_CARDS(store, state, opponent, Math.min(3, opponent.deck.cards.length));
+        return store.prompt(state, new ShuffleHandPrompt(opponent.id), order => {
+          opponent.hand.applyOrder(order);
+          const deckBottom = new CardList();
+          MOVE_CARDS(store, state, opponent.hand, deckBottom, { sourceCard: this });
+          MOVE_CARDS(store, state, deckBottom, opponent.deck, { sourceCard: this });
+          DRAW_CARDS(store, state, opponent, Math.min(3, opponent.deck.cards.length));
+        });
       }
     }
     return state;

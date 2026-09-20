@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "grimmsnarl",
-  "name": "Marnie's Grimmsnarl ex / Froslass",
+  "id": "grimmsnarl-training",
+  "name": "Marnie's Grimmsnarl ex / Froslass (training-variant)",
   "archetype": "grimmsnarl",
-  "role": "main",
+  "role": "training-variant",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "grimmsnarl",
+    "changes": {
+      "DRI-169": -1,
+      "ASC-196": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "25e207010b0472e62a7c00c247149fb0ad66fc22d1083647e2535c7ab09a6923",
+  "listHash": "8174c47e3bbb035ec286d5b6cdf5c0527d256b42fb114ee964ffbde2d00c81e0",
   "cards": [
     {
       "cardId": "TWM-95",
@@ -129,7 +134,7 @@
       "regulationMark": "H",
       "name": "Night Stretcher",
       "engineName": "Night Stretcher ASC-196",
-      "count": 3
+      "count": 4
     },
     {
       "cardId": "TWM-163",
@@ -171,7 +176,7 @@
       "name": "Spikemuth Gym",
       "regulationMark": "I",
       "engineName": "Spikemuth Gym DRI-169",
-      "count": 3
+      "count": 2
     },
     {
       "cardId": "MEE-7",

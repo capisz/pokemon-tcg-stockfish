@@ -1,0 +1,789 @@
+{
+  "schemaVersion": 1,
+  "cards": [
+    {
+      "cardId": "TWM-128",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/dreepy",
+      "class": "Dreepy",
+      "name": "Dreepy",
+      "regulationMark": "H",
+      "engineName": "Dreepy TWM-128"
+    },
+    {
+      "cardId": "TWM-129",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/drakloak",
+      "class": "Drakloak",
+      "name": "Drakloak",
+      "regulationMark": "H",
+      "engineName": "Drakloak TWM-129"
+    },
+    {
+      "cardId": "TWM-130",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/dragapult-ex",
+      "class": "Dragapultex",
+      "name": "Dragapult ex",
+      "regulationMark": "H",
+      "engineName": "Dragapult ex TWM-130"
+    },
+    {
+      "cardId": "TWM-25",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/teal-mask-ogerpon-ex",
+      "class": "TealMaskOgerponex",
+      "name": "Teal Mask Ogerpon ex",
+      "regulationMark": "H",
+      "engineName": "Teal Mask Ogerpon ex TWM-25"
+    },
+    {
+      "cardId": "TWM-95",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/munkidori",
+      "class": "Munkidori",
+      "name": "Munkidori",
+      "regulationMark": "H",
+      "engineName": "Munkidori TWM-95"
+    },
+    {
+      "cardId": "TWM-107",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/hawlucha",
+      "class": "Hawlucha",
+      "name": "Hawlucha",
+      "regulationMark": "H",
+      "engineName": "Hawlucha TWM-107"
+    },
+    {
+      "cardId": "TWM-145",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/carmine",
+      "class": "Carmine",
+      "name": "Carmine",
+      "regulationMark": "H",
+      "engineName": "Carmine TWM-145"
+    },
+    {
+      "cardId": "TEF-123",
+      "path": "10-scarlet-and-violet/set-temporal-forces/raging-bolt-ex",
+      "class": "RagingBoltex",
+      "name": "Raging Bolt ex",
+      "regulationMark": "H",
+      "engineName": "Raging Bolt ex TEF-123"
+    },
+    {
+      "cardId": "TEF-144",
+      "path": "10-scarlet-and-violet/set-temporal-forces/buddy-buddy-poffin",
+      "class": "BuddyBuddyPoffin",
+      "name": "Buddy-Buddy Poffin",
+      "regulationMark": "H",
+      "engineName": "Buddy-Buddy Poffin TEF-144"
+    },
+    {
+      "cardId": "TEF-150",
+      "path": "10-scarlet-and-violet/set-temporal-forces/hand-trimmer",
+      "class": "HandTrimmer",
+      "name": "Hand Trimmer",
+      "regulationMark": "H",
+      "engineName": "Hand Trimmer TEF-150"
+    },
+    {
+      "cardId": "DRI-134",
+      "path": "10-scarlet-and-violet/set-destined-rivals/marnies-impidimp",
+      "class": "MarniesImpidimp",
+      "name": "Marnie's Impidimp",
+      "regulationMark": "I",
+      "engineName": "Marnie's Impidimp DRI-134"
+    },
+    {
+      "cardId": "DRI-135",
+      "path": "10-scarlet-and-violet/set-destined-rivals/marnies-morgrem",
+      "class": "MarniesMorgrem",
+      "name": "Marnie's Morgrem",
+      "regulationMark": "I",
+      "engineName": "Marnie's Morgrem DRI-135"
+    },
+    {
+      "cardId": "DRI-136",
+      "path": "10-scarlet-and-violet/set-destined-rivals/marnies-grimmsnarl-ex",
+      "class": "MarniesGrimmsnarlex",
+      "name": "Marnie's Grimmsnarl ex",
+      "regulationMark": "I",
+      "engineName": "Marnie's Grimmsnarl ex DRI-136"
+    },
+    {
+      "cardId": "DRI-11",
+      "path": "10-scarlet-and-violet/set-destined-rivals/dwebble",
+      "class": "Dwebble",
+      "name": "Dwebble",
+      "regulationMark": "I",
+      "engineName": "Dwebble DRI-11"
+    },
+    {
+      "cardId": "DRI-12",
+      "path": "10-scarlet-and-violet/set-destined-rivals/crustle",
+      "class": "Crustle",
+      "name": "Crustle",
+      "regulationMark": "I",
+      "engineName": "Crustle DRI-12"
+    },
+    {
+      "cardId": "DRI-10",
+      "path": "10-scarlet-and-violet/set-destined-rivals/shaymin",
+      "class": "Shaymin",
+      "name": "Shaymin",
+      "regulationMark": "I",
+      "engineName": "Shaymin DRI-10"
+    },
+    {
+      "cardId": "SFA-61",
+      "path": "10-scarlet-and-violet/set-shrouded-fable/nightly-stretcher",
+      "class": "NightlyStretcher",
+      "name": "Night Stretcher",
+      "regulationMark": "H",
+      "engineName": "Night Stretcher SFA-61"
+    },
+    {
+      "cardId": "SFA-38",
+      "path": "10-scarlet-and-violet/set-shrouded-fable/fezandipiti-ex",
+      "class": "Fezandipitiex",
+      "name": "Fezandipiti ex",
+      "regulationMark": "H",
+      "engineName": "Fezandipiti ex SFA-38"
+    },
+    {
+      "cardId": "SCR-133",
+      "path": "10-scarlet-and-violet/set-stellar-crown/crispin",
+      "class": "Crispin",
+      "name": "Crispin",
+      "regulationMark": "H",
+      "engineName": "Crispin SCR-133"
+    },
+    {
+      "cardId": "SCR-137",
+      "path": "10-scarlet-and-violet/set-stellar-crown/gravity-gemstone",
+      "class": "GravityGemstone",
+      "name": "Gravity Gemstone",
+      "regulationMark": "H",
+      "engineName": "Gravity Gemstone SCR-137"
+    },
+    {
+      "cardId": "MEG-76",
+      "path": "11-mega-evolution/set-mega-evolution/riolu",
+      "class": "Riolu",
+      "name": "Riolu",
+      "regulationMark": "I",
+      "engineName": "Riolu MEG-76"
+    },
+    {
+      "cardId": "MEG-77",
+      "path": "11-mega-evolution/set-mega-evolution/mega-lucario-ex",
+      "class": "MegaLucarioex",
+      "name": "Mega Lucario ex",
+      "regulationMark": "I",
+      "engineName": "Mega Lucario ex MEG-77"
+    },
+    {
+      "cardId": "MEG-119",
+      "path": "11-mega-evolution/set-mega-evolution/lillies-determination",
+      "class": "LilliesDetermination",
+      "name": "Lillie's Determination",
+      "regulationMark": "I",
+      "engineName": "Lillie's Determination MEG-119"
+    },
+    {
+      "cardId": "MEG-116",
+      "path": "11-mega-evolution/set-mega-evolution/fighting-gong",
+      "class": "FightingGong",
+      "name": "Fighting Gong",
+      "regulationMark": "I",
+      "engineName": "Fighting Gong MEG-116"
+    },
+    {
+      "cardId": "MEG-121",
+      "path": "11-mega-evolution/set-mega-evolution/mega-signal",
+      "class": "MegaSignal",
+      "name": "Mega Signal",
+      "regulationMark": "I",
+      "engineName": "Mega Signal MEG-121"
+    },
+    {
+      "cardId": "MEG-132",
+      "path": "11-mega-evolution/set-mega-evolution/wallys-compassion",
+      "class": "WallysCompassion",
+      "name": "Wally's Compassion",
+      "regulationMark": "I",
+      "engineName": "Wally's Compassion MEG-132"
+    },
+    {
+      "cardId": "MEG-114",
+      "path": "10-scarlet-and-violet/set-paldea-evolved/boss-orders",
+      "class": "BossOrders",
+      "name": "Boss's Orders",
+      "regulationMark": "I",
+      "engineName": "Boss's Orders MEG-114"
+    },
+    {
+      "cardId": "MEG-125",
+      "path": "03-ex-ruby-and-sapphire/set-ex-holon-phantoms/rare-candy",
+      "class": "RareCandy",
+      "name": "Rare Candy",
+      "regulationMark": "I",
+      "engineName": "Rare Candy MEG-125"
+    },
+    {
+      "cardId": "MEG-130",
+      "path": "set-base-set/switch",
+      "class": "Switch",
+      "name": "Switch",
+      "regulationMark": "I",
+      "engineName": "Switch MEG-130"
+    },
+    {
+      "cardId": "MEG-131",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet/ultra-ball",
+      "class": "UltraBall",
+      "name": "Ultra Ball",
+      "regulationMark": "I",
+      "engineName": "Ultra Ball MEG-131"
+    },
+    {
+      "cardId": "MEG-115",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet/energy-switch",
+      "class": "EnergySwitch",
+      "name": "Energy Switch",
+      "regulationMark": "I",
+      "engineName": "Energy Switch MEG-115"
+    },
+    {
+      "cardId": "SVE-1",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/grass-energy",
+      "class": "GrassEnergy",
+      "name": "Grass Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Grass Energy SVE-1"
+    },
+    {
+      "cardId": "SVE-2",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fire-energy",
+      "class": "FireEnergy",
+      "name": "Fire Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Fire Energy SVE-2"
+    },
+    {
+      "cardId": "SVE-4",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/lightning-energy",
+      "class": "LightningEnergy",
+      "name": "Lightning Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Lightning Energy SVE-4"
+    },
+    {
+      "cardId": "SVE-5",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/psychic-energy",
+      "class": "PsychicEnergy",
+      "name": "Psychic Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Psychic Energy SVE-5"
+    },
+    {
+      "cardId": "SVE-6",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fighting-energy",
+      "class": "FightingEnergy",
+      "name": "Fighting Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Fighting Energy SVE-6"
+    },
+    {
+      "cardId": "SVE-7",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/darkness-energy",
+      "class": "DarknessEnergy",
+      "name": "Darkness Energy",
+      "regulationMark": "ENERGY",
+      "engineName": "Darkness Energy SVE-7"
+    },
+    {
+      "cardId": "POR-62",
+      "path": "11-mega-evolution/set-perfect-order/meowth-ex",
+      "class": "Meowthex",
+      "regulationMark": "J",
+      "name": "Meowth ex",
+      "engineName": "Meowth ex POR-62"
+    },
+    {
+      "cardId": "POR-84",
+      "path": "11-mega-evolution/set-perfect-order/rosas-encouragement",
+      "class": "RosasEncouragement",
+      "regulationMark": "J",
+      "name": "Rosa's Encouragement",
+      "engineName": "Rosa's Encouragement POR-84"
+    },
+    {
+      "cardId": "POR-81",
+      "path": "11-mega-evolution/set-ascended-heroes/poke-pad",
+      "class": "PokePad",
+      "regulationMark": "J",
+      "name": "Pok\u00e9 Pad",
+      "engineName": "Pok\u00e9 Pad POR-81"
+    },
+    {
+      "cardId": "POR-76",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet/judge",
+      "class": "Judge",
+      "regulationMark": "J",
+      "name": "Judge",
+      "engineName": "Judge POR-76"
+    },
+    {
+      "cardId": "POR-71",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet/crushing-hammer",
+      "class": "CrushingHammer",
+      "regulationMark": "J",
+      "name": "Crushing Hammer",
+      "engineName": "Crushing Hammer POR-71"
+    },
+    {
+      "cardId": "MEG-104",
+      "path": "11-mega-evolution/set-mega-evolution/mega-kangaskhan-ex",
+      "class": "MegaKangaskhanex",
+      "name": "Mega Kangaskhan ex",
+      "regulationMark": "I",
+      "engineName": "Mega Kangaskhan ex MEG-104"
+    },
+    {
+      "cardId": "MEG-75",
+      "path": "11-mega-evolution/set-mega-evolution/solrock",
+      "class": "Solrock",
+      "name": "Solrock",
+      "regulationMark": "I",
+      "engineName": "Solrock MEG-75"
+    },
+    {
+      "cardId": "MEG-74",
+      "path": "11-mega-evolution/set-mega-evolution/lunatone",
+      "class": "Lunatone",
+      "name": "Lunatone",
+      "regulationMark": "I",
+      "engineName": "Lunatone MEG-74"
+    },
+    {
+      "cardId": "MEG-72",
+      "path": "11-mega-evolution/set-mega-evolution/makuhita",
+      "class": "Makuhita",
+      "name": "Makuhita",
+      "regulationMark": "I",
+      "engineName": "Makuhita MEG-72"
+    },
+    {
+      "cardId": "MEG-73",
+      "path": "11-mega-evolution/set-mega-evolution/hariyama",
+      "class": "Hariyama",
+      "name": "Hariyama",
+      "regulationMark": "I",
+      "engineName": "Hariyama MEG-73"
+    },
+    {
+      "cardId": "MEG-88",
+      "path": "11-mega-evolution/set-mega-evolution/yveltal",
+      "class": "Yveltal",
+      "name": "Yveltal",
+      "regulationMark": "I",
+      "engineName": "Yveltal MEG-88"
+    },
+    {
+      "cardId": "MEG-124",
+      "path": "11-mega-evolution/set-mega-evolution/power-protein",
+      "class": "PowerProtein",
+      "name": "Premium Power Pro",
+      "regulationMark": "I",
+      "engineName": "Premium Power Pro MEG-124"
+    },
+    {
+      "cardId": "MEG-127",
+      "path": "11-mega-evolution/set-mega-evolution/risky-ruins",
+      "class": "DangerousRuins",
+      "name": "Risky Ruins",
+      "regulationMark": "I",
+      "engineName": "Risky Ruins MEG-127"
+    },
+    {
+      "cardId": "ASC-16",
+      "path": "10-scarlet-and-violet/set-prismatic-evolution/budew",
+      "class": "Budew",
+      "regulationMark": "H",
+      "name": "Budew",
+      "engineName": "Budew ASC-16"
+    },
+    {
+      "cardId": "ASC-46",
+      "path": "11-mega-evolution/set-ascended-heroes/snorunt",
+      "class": "Snorunt",
+      "regulationMark": "I",
+      "name": "Snorunt",
+      "engineName": "Snorunt ASC-46"
+    },
+    {
+      "cardId": "ASC-142",
+      "path": "10-scarlet-and-violet/set-shrouded-fable/fezandipiti-ex",
+      "class": "Fezandipitiex",
+      "regulationMark": "H",
+      "name": "Fezandipiti ex",
+      "engineName": "Fezandipiti ex ASC-142"
+    },
+    {
+      "cardId": "ASC-181",
+      "path": "09-sword-and-shield/set-sword-and-shield/air-balloon",
+      "class": "AirBalloon",
+      "regulationMark": "I",
+      "name": "Air Balloon",
+      "engineName": "Air Balloon ASC-181"
+    },
+    {
+      "cardId": "ASC-196",
+      "path": "10-scarlet-and-violet/set-shrouded-fable/nightly-stretcher",
+      "class": "NightlyStretcher",
+      "regulationMark": "H",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher ASC-196"
+    },
+    {
+      "cardId": "PBL-78",
+      "path": "11-mega-evolution/set-pitch-black/gwynn",
+      "class": "Gwynn",
+      "name": "Gwynn",
+      "regulationMark": "J",
+      "engineName": "Gwynn PBL-78"
+    },
+    {
+      "cardId": "TWM-53",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/froslass",
+      "class": "Froslass",
+      "name": "Froslass",
+      "regulationMark": "H",
+      "engineName": "Froslass TWM-53"
+    },
+    {
+      "cardId": "TWM-141",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/bloodmoon-ursaluna-ex",
+      "class": "BloodmoonUrsalunaex",
+      "name": "Bloodmoon Ursaluna ex",
+      "regulationMark": "H",
+      "engineName": "Bloodmoon Ursaluna ex TWM-141"
+    },
+    {
+      "cardId": "TWM-64",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/wellspring-mask-ogerpon-ex",
+      "class": "WellspringMaskOgerponex",
+      "name": "Wellspring Mask Ogerpon ex",
+      "regulationMark": "H",
+      "engineName": "Wellspring Mask Ogerpon ex TWM-64"
+    },
+    {
+      "cardId": "TWM-163",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/secret-box",
+      "class": "SecretBox",
+      "name": "Secret Box",
+      "regulationMark": "H",
+      "engineName": "Secret Box TWM-163"
+    },
+    {
+      "cardId": "TWM-165",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/unfair-stamp",
+      "class": "UnfairStamp",
+      "name": "Unfair Stamp",
+      "regulationMark": "H",
+      "engineName": "Unfair Stamp TWM-165"
+    },
+    {
+      "cardId": "TWM-150",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/handy-fan",
+      "class": "HandyFan",
+      "name": "Handheld Fan",
+      "regulationMark": "H",
+      "engineName": "Handheld Fan TWM-150"
+    },
+    {
+      "cardId": "TWM-148",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/enhanced-hammer",
+      "class": "EnhancedHammer",
+      "name": "Enhanced Hammer",
+      "regulationMark": "H",
+      "engineName": "Enhanced Hammer TWM-148"
+    },
+    {
+      "cardId": "DRI-176",
+      "path": "10-scarlet-and-violet/set-destined-rivals/team-rockets-petrel",
+      "class": "TeamRocketsPetrel",
+      "name": "Team Rocket's Petrel",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Petrel DRI-176"
+    },
+    {
+      "cardId": "DRI-169",
+      "path": "10-scarlet-and-violet/set-destined-rivals/spikemuth-gym",
+      "class": "SpikemuthGym",
+      "name": "Spikemuth Gym",
+      "regulationMark": "I",
+      "engineName": "Spikemuth Gym DRI-169"
+    },
+    {
+      "cardId": "SSP-76",
+      "path": "10-scarlet-and-violet/set-surging-sparks/latias-ex",
+      "class": "Latiasex",
+      "name": "Latias ex",
+      "regulationMark": "H",
+      "engineName": "Latias ex SSP-76"
+    },
+    {
+      "cardId": "SSP-56",
+      "path": "10-scarlet-and-violet/set-surging-sparks/chien-pao",
+      "class": "ChienPao",
+      "name": "Chien-Pao",
+      "regulationMark": "H",
+      "engineName": "Chien-Pao SSP-56"
+    },
+    {
+      "cardId": "SSP-177",
+      "path": "10-scarlet-and-violet/set-surging-sparks/gravity-mountain",
+      "class": "GravityMountain",
+      "name": "Gravity Mountain",
+      "regulationMark": "H",
+      "engineName": "Gravity Mountain SSP-177"
+    },
+    {
+      "cardId": "SSP-170",
+      "path": "10-scarlet-and-violet/set-surging-sparks/cyrano",
+      "class": "Cyrano",
+      "name": "Cyrano",
+      "regulationMark": "H",
+      "engineName": "Cyrano SSP-170"
+    },
+    {
+      "cardId": "JTG-56",
+      "path": "10-scarlet-and-violet/set-journey-together/lillies-clefairy-ex",
+      "class": "LilliesClefairyex",
+      "name": "Lillie's Clefairy ex",
+      "regulationMark": "I",
+      "engineName": "Lillie's Clefairy ex JTG-56"
+    },
+    {
+      "cardId": "JTG-120",
+      "path": "10-scarlet-and-violet/set-journey-together/dunsparce",
+      "class": "Dunsparce",
+      "name": "Dunsparce",
+      "regulationMark": "I",
+      "engineName": "Dunsparce JTG-120"
+    },
+    {
+      "cardId": "JTG-159",
+      "path": "10-scarlet-and-violet/set-journey-together/spiky-energy",
+      "class": "SpikyEnergy",
+      "name": "Spiky Energy",
+      "regulationMark": "I",
+      "engineName": "Spiky Energy JTG-159"
+    },
+    {
+      "cardId": "TEF-25",
+      "path": "10-scarlet-and-violet/set-temporal-forces/iron-leaves-ex",
+      "class": "IronLeavesex",
+      "name": "Iron Leaves ex",
+      "regulationMark": "H",
+      "engineName": "Iron Leaves ex TEF-25"
+    },
+    {
+      "cardId": "TEF-129",
+      "path": "10-scarlet-and-violet/set-temporal-forces/dudunsparce",
+      "class": "Dudunsparce",
+      "name": "Dudunsparce",
+      "regulationMark": "H",
+      "engineName": "Dudunsparce TEF-129"
+    },
+    {
+      "cardId": "TEF-145",
+      "path": "10-scarlet-and-violet/set-temporal-forces/cryptomaniacs-deciphering",
+      "class": "CiphermaniacsCodebreaking",
+      "name": "Ciphermaniac's Codebreaking",
+      "regulationMark": "H",
+      "engineName": "Ciphermaniac's Codebreaking TEF-145"
+    },
+    {
+      "cardId": "TEF-161",
+      "path": "10-scarlet-and-violet/set-temporal-forces/mist-energy",
+      "class": "MistEnergy",
+      "name": "Mist Energy",
+      "regulationMark": "H",
+      "engineName": "Mist Energy TEF-161"
+    },
+    {
+      "cardId": "SCR-131",
+      "path": "10-scarlet-and-violet/set-stellar-crown/area-zero-underdepths",
+      "class": "AreaZeroUnderdepths",
+      "name": "Area Zero Underdepths",
+      "regulationMark": "H",
+      "engineName": "Area Zero Underdepths SCR-131"
+    },
+    {
+      "cardId": "SCR-135",
+      "path": "10-scarlet-and-violet/set-stellar-crown/glass-trumpet",
+      "class": "GlassTrumpet",
+      "name": "Glass Trumpet",
+      "regulationMark": "H",
+      "engineName": "Glass Trumpet SCR-135"
+    },
+    {
+      "cardId": "SFA-64",
+      "path": "10-scarlet-and-violet/set-shrouded-fable/xerosics-scheme",
+      "class": "XerosicsScheme",
+      "name": "Xerosic's Machinations",
+      "regulationMark": "H",
+      "engineName": "Xerosic's Machinations SFA-64"
+    },
+    {
+      "cardId": "PFL-91",
+      "path": "11-mega-evolution/set-phantasmal-flames/jumbo-ice",
+      "class": "JumboIce",
+      "name": "Jumbo Ice Cream",
+      "regulationMark": "I",
+      "engineName": "Jumbo Ice Cream PFL-91"
+    },
+    {
+      "cardId": "CRI-82",
+      "path": "11-mega-evolution/set-chaos-rising/special-red-card",
+      "class": "SpecialRedCard",
+      "regulationMark": "J",
+      "name": "Special Red Card",
+      "engineName": "Special Red Card CRI-82"
+    },
+    {
+      "cardId": "CRI-80",
+      "path": "11-mega-evolution/set-chaos-rising/prism-tower",
+      "class": "PrismTower",
+      "regulationMark": "J",
+      "name": "Prism Tower",
+      "engineName": "Prism Tower CRI-80"
+    },
+    {
+      "cardId": "DRI-173",
+      "path": "10-scarlet-and-violet/set-destined-rivals/team-rockets-factory",
+      "class": "TeamRocketsFactory",
+      "name": "Team Rocket's Factory",
+      "regulationMark": "I",
+      "engineName": "Team Rocket's Factory DRI-173"
+    },
+    {
+      "cardId": "TEF-146",
+      "path": "10-scarlet-and-violet/set-temporal-forces/eri",
+      "class": "Eri",
+      "name": "Eri",
+      "regulationMark": "H",
+      "engineName": "Eri TEF-146"
+    },
+    {
+      "cardId": "TEF-152",
+      "path": "10-scarlet-and-violet/set-temporal-forces/heros-cape",
+      "class": "HerosCape",
+      "name": "Hero's Cape",
+      "regulationMark": "H",
+      "engineName": "Hero's Cape TEF-152"
+    },
+    {
+      "cardId": "WHT-84",
+      "path": "10-scarlet-and-violet/set-black-bolt-white-flare/hilda",
+      "class": "Hilda",
+      "name": "Hilda",
+      "regulationMark": "I",
+      "engineName": "Hilda WHT-84"
+    },
+    {
+      "cardId": "POR-77",
+      "path": "11-mega-evolution/set-perfect-order/lumioise-city",
+      "class": "LumioiseCity",
+      "regulationMark": "J",
+      "name": "Lumiose City",
+      "engineName": "Lumiose City POR-77"
+    },
+    {
+      "cardId": "POR-86",
+      "path": "11-mega-evolution/set-perfect-order/grow-grass-energy",
+      "class": "GrowGrassEnergy",
+      "regulationMark": "J",
+      "name": "Growing [G] Energy",
+      "engineName": "Growing [G] Energy POR-86"
+    },
+    {
+      "cardId": "MEE-1",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/grass-energy",
+      "class": "GrassEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Grass Energy",
+      "engineName": "Grass Energy MEE-1"
+    },
+    {
+      "cardId": "MEE-2",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fire-energy",
+      "class": "FireEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Fire Energy",
+      "engineName": "Fire Energy MEE-2"
+    },
+    {
+      "cardId": "MEE-3",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/water-energy",
+      "class": "WaterEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Water Energy",
+      "engineName": "Water Energy MEE-3"
+    },
+    {
+      "cardId": "MEE-4",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/lightning-energy",
+      "class": "LightningEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Lightning Energy",
+      "engineName": "Lightning Energy MEE-4"
+    },
+    {
+      "cardId": "MEE-5",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/psychic-energy",
+      "class": "PsychicEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Psychic Energy",
+      "engineName": "Psychic Energy MEE-5"
+    },
+    {
+      "cardId": "MEE-6",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/fighting-energy",
+      "class": "FightingEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Fighting Energy",
+      "engineName": "Fighting Energy MEE-6"
+    },
+    {
+      "cardId": "MEE-7",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet-energy/darkness-energy",
+      "class": "DarknessEnergy",
+      "regulationMark": "ENERGY",
+      "name": "Darkness Energy",
+      "engineName": "Darkness Energy MEE-7"
+    },
+    {
+      "cardId": "TWM-149",
+      "path": "10-scarlet-and-violet/set-twilight-masquerade/festival-plaza",
+      "class": "FestivalGrounds",
+      "name": "Festival Grounds",
+      "engineName": "Festival Grounds TWM-149",
+      "regulationMark": "H"
+    },
+    {
+      "cardId": "BLK-84",
+      "path": "10-scarlet-and-violet/set-scarlet-and-violet/pokegear-30",
+      "class": "Pokegear30",
+      "name": "Pok\u00e9gear 3.0",
+      "engineName": "Pok\u00e9gear 3.0 BLK-84",
+      "regulationMark": "I"
+    },
+    {
+      "cardId": "MEG-123",
+      "path": "07-x-and-y/set-flashfire/pokemon-center-lady",
+      "class": "PokemonCenterLady",
+      "name": "Pok\u00e9mon Center Lady",
+      "engineName": "Pok\u00e9mon Center Lady MEG-123",
+      "regulationMark": "I"
+    }
+  ]
+}
