@@ -92,5 +92,11 @@
     "originalSha256": "06c44084e060c6857e8d26cbd6d31b885a57d33b495055b8f4ab2eff6fdad0de",
     "currentSha256": "f6703c4fd597a6defe86b2a4db73579e24f06e188b03b6185c93cf069a281d9e",
     "reason": "Discarding one eligible Pokemon is sufficient to use the supporter."
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-twilight-masquerade/drakloak.ts",
+    "originalSha256": "6399f27ece195643ae3ea61ab7f2d39e46439e3f6c79bb2e49bb8a371b9678ba",
+    "currentSha256": "8aaa01aded57fc842c8d334137efe337198380622c249e328e2bac45d5682608",
+    "reason": "Recon Directive must put one of the inspected cards into hand; cancelling after viewing cannot bottom both."
   }
 ]

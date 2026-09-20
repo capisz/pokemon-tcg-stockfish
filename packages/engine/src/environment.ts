@@ -250,7 +250,11 @@ export class Environment {
       else if(p.type==='Show mulligan'){cards=prompt.hands.flat();type='mulligan';}
       else if(p.type==='Order cards'){cards=prompt.cards.cards;type='order-choice';}
       else if(p.type==='Choose cards'&&!prompt.options?.isSecret&&this.store.state.players.some(pl=>pl.id!==p.playerId&&pl.hand===prompt.cards)){cards=prompt.cards.cards;type='opponent-hand-reveal';}
-      else if(p.type==='Choose cards'&&!prompt.options?.isSecret&&this.store.state.players.some(pl=>pl.deck===prompt.cards)){cards=prompt.cards.cards;type='deck-search';}
+      else if(p.type==='Choose cards'&&!prompt.options?.isSecret&&this.store.state.players[viewer].deck===prompt.cards){cards=prompt.cards.cards;type='deck-search';}
+      else if(p.type==='Choose cards'&&!prompt.options?.isSecret){
+        const publicZones=this.store.state.players.flatMap(pl=>[pl.hand,pl.discard,pl.lostzone,pl.supporter,pl.stadium,pl.active,pl.active.energies,...pl.bench.flatMap(b=>[b,b.energies])]);
+        if(!publicZones.includes(prompt.cards)){cards=prompt.cards.cards;type='temporary-zone-reveal';}
+      }
       if(cards&&type){this.seenKnowledge.add(p);this.knowledge[viewer].push({decisionIndex:this.decisionIndex,type,cards:cards.map(cardView)});if(type==='deck-search') {
           const owner=this.store.state.players[viewer];
           const known=[...owner.hand.cards,...owner.deck.cards,...owner.discard.cards,...owner.lostzone.cards,...owner.supporter.cards,...owner.stadium.cards,...owner.active.cards,...owner.active.tools,...owner.active.energies.cards,...owner.bench.flatMap(b=>[...b.cards,...b.tools,...b.energies.cards])];

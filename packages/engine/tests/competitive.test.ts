@@ -33,7 +33,7 @@ function board(source='TWM-107') {
   state.players=[a,b];state.phase=GamePhase.PLAYER_TURN;state.turn=3;store.state=state;
   return {state,store,a,b};
 }
-function ready(){const e=new Environment();e.reset(5,['crustle','mega-lucario'],0);const r=new SeededRandom(5);for(let i=0;i<100&&!e.observe().searchPosition;i++)e.step(chooseAction(e.observe(),'heuristic',r).id);assert.ok(e.observe().searchPosition);return e;}
+function ready(decks:[string,string]=['crustle','mega-lucario']){const e=new Environment();e.reset(5,decks,0);const r=new SeededRandom(5);for(let i=0;i<100&&!e.observe().searchPosition;i++)e.step(chooseAction(e.observe(),'heuristic',r).id);assert.ok(e.observe().searchPosition);return e;}
 
 test('staged selections reach a combination beyond the former cap, with reversible prefixes',()=>{
   const {state,a}=board();a.hand.cards=Array.from({length:24},()=>F['MEE-1']());
@@ -162,4 +162,27 @@ test('Meowth Last-Ditch Catch is shared across copies and resets at turn end',()
   store.dispatch(new PlayCardAction(1,a.hand.cards.indexOf(second),{player:PlayerType.BOTTOM_PLAYER,slot:SlotType.BENCH,index:1}));
   assert.ok(!state.prompts.some(p=>p.result===undefined));
   store.reduceEffect(state,new EndTurnEffect(a));assert.ok(!a.marker.hasMarker('TRUMP_CARD_MARKER'));
+});
+
+
+test('Recon Directive requires taking one card and refuses search that would forget the known bottom card',()=>{
+  const e=ready(['dragapult','mega-lucario']), actor=e.actor, player=e.store.state.players[actor];
+  assert.equal(actor,0);
+  // Construct an evolution fixture using actual cards from the registered list.
+  const drakIndex=player.deck.cards.findIndex(c=>c.name==='Drakloak');assert.ok(drakIndex>=0);
+  const drak=player.deck.cards.splice(drakIndex,1)[0];
+  const old=player.active.cards.splice(0,player.active.cards.length);player.hand.cards.push(...old);player.active.cards.push(drak);
+  const before=[...player.deck.cards], handCount=player.hand.cards.length;
+  e.store.reduceEffect(e.store.state,new PowerEffect(player,(drak as any).powers[0],drak as any));(e as any).candidates=null;
+  let o=e.observe();assert.equal(o.prompt?.type,'Choose cards');
+  assert.ok(!o.legalActions.some(a=>a.label==='Cancel'||a.choiceOperation==='finish'));
+  assert.ok(o.knowledge?.some(k=>k.type==='temporary-zone-reveal'));
+  assert.ok(!e.observe(1-actor).knowledge?.some(k=>k.type==='temporary-zone-reveal'));
+  e.step(o.legalActions.find(a=>a.choiceOperation==='append')!.id);
+  o=e.observe();assert.ok(!o.legalActions.some(a=>a.label==='Cancel'));
+  e.step(o.legalActions.find(a=>a.choiceOperation==='finish')!.id);
+  assert.equal(player.hand.cards.length,handCount+1);
+  assert.deepEqual(player.deck.cards,[...before.slice(2),before[1]]);
+  assert.equal(e.observe().searchPosition,undefined);
+  assert.match(e.observe().searchUnavailableReason!,/revealed-card or known-order/);
 });

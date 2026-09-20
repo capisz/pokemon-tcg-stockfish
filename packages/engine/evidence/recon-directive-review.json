@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-19",
+  "engineBuild": "twinleaf-adapter-0.1.0+18568aeb24a557c5",
+  "findings": [
+    "Recon Directive exposed Cancel after inspecting cards, incorrectly bottoming both.",
+    "Temporary deck-top peeks were not captured by knowledge history; search could forget the known bottom card and Prize exclusions."
+  ],
+  "resolution": "Mandatory Recon Directive selection; record temporary-zone information privately and explicitly refuse unmodeled search. Only a search of the viewer's own deck may infer their Prize identities.",
+  "verification": {
+    "focusedCompetitiveTests": 13,
+    "failures": 0,
+    "actualCardFixture": true,
+    "typecheck": "passed",
+    "build": "passed",
+    "fullSuiteRerun": false
+  },
+  "remaining": "Bottom-order and partial-peek constraints still need a belief representation; no new training eligibility."
+}
