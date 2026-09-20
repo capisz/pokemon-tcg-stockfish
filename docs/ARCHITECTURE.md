@@ -14,6 +14,9 @@ flowchart LR
   Eval --> Champion[Conservative promotion gate]
   Guides[Attributed local guides] --> Retrieval[Local retrieval and optional Ollama]
   Retrieval --> Review[Human-reviewed strategy fixtures]
+  Review --> Demonstrations[Audited multi-action demonstrations]
+  Demonstrations --> Train
+  Train --> Search
 ```
 
 ## Simulator
@@ -26,17 +29,17 @@ Builds fingerprint the local source and deck definitions. Record this fingerprin
 
 ## Information boundaries and search
 
-Agents receive only one player's observation. Opponent hand identities, private prizes, and hidden deck order never enter that policy input. Replays deliberately retain separate private observations for research; only the selected view enters analysis. Private opponent prompt labels are redacted in the UI. Saved positions contain a single observation.
+Agents receive only one player's observation. Opponent hand identities, private prizes, and hidden deck order never enter that policy input. Replays deliberately retain separate private observations on the server. Browser replay retrieval and ordered frame feeds project one selected perspective, remove research reconstruction fields, and redact private opponent choices before transmission. Saved positions contain a single observation.
 
 Stable turn observations may include a whitelisted `searchPosition`: public Pokémon evolution stacks, damage, public flags/markers, visible zones, zone counts, and our known hand. Belief reconstruction creates a fresh state and samples hidden hands, prizes, and decks from compatible deck hypotheses. It does not clone the real hidden game. Live callbacks and effects that cannot be reconstructed safely cause an explicit unsupported result.
 
-Flat rollouts allocate samples across legal candidates. The experimental ISMCTS implementation uses observation-keyed nodes with independently sampled hidden states and can receive learned root-action priors. Both methods retain heuristic leaf evaluation. Search estimates mix genuine terminal results with labeled heuristic cutoffs; uncertainty is sample standard error, not a calibrated confidence interval or proof of optimality. Strategy fusion, unsupported knowledge/effect reconstruction, prompt coverage, and compute budgets remain material limitations. A wall-clock budget bounds work between steps; one indivisible engine step can overrun it.
+Flat rollouts allocate samples across legal candidates. The experimental ISMCTS implementation uses observation-keyed nodes with independently sampled hidden states and can receive learned root-action priors. Outcome-trained checkpoints can supply a checksummed portable value network for search cutoffs; other searches retain heuristic leaves. Python and TypeScript feature/token parity and network outputs are tested. Deeper rollout policies remain heuristic. Search estimates mix genuine terminal results with explicitly labeled cutoff estimates; uncertainty is sample standard error, not a calibrated confidence interval or proof of optimality. Strategy fusion, unsupported knowledge/effect reconstruction, prompt coverage, and compute budgets remain material limitations. A wall-clock budget bounds work between steps; one indivisible engine step can overrun it.
 
 Listed hypotheses exclude reserved and historical exact lists. A bounded unknown-variant component uses supported training-pool cards and revealed evidence. Explicit known-list laboratory mode is separate. Search preserves supported own-deck searches and known top order, and refuses knowledge it cannot safely reconstruct. The displayed Python composition prior is labeled separately from the simulator search posterior.
 
 ## Durable play
 
-Private best-of-three journals hold seeds, exact lists, frozen policy hashes, engine fingerprints, accepted actions, idempotency receipts, and shared turn-budget consumption. Live responses expose only the human observation and redacted session metadata. Restart reconstructs accepted actions and pauses incompatible or failed sessions. Benchmark mode blocks analysis and private research routes until the match ends. Concessions are recorded human outcomes; interrupted simulations never become fabricated losses or draws.
+Private best-of-three journals hold seeds, exact lists, frozen policy hashes, engine fingerprints, accepted actions, idempotency receipts, and shared turn-budget consumption. A reserved worker retains the active game between decisions; restart or worker replacement reconstructs the accepted journal. Live responses expose only the human observation and redacted session metadata. Append-only private frame streams are published only through the durable owner's committed cursor; readers ignore orphaned crash tails. Simulation playback does not control computation. Restart pauses sessions, and incompatible engine/policy identities prevent unsafe continuation. Benchmark mode blocks analysis and private research routes until the match ends. Concessions are recorded human outcomes; interrupted simulations never become fabricated losses or draws.
 
 Public cards revealed in previous games can constrain later list beliefs. Full private research replays are published only through the explicit completed-match operation. Card art is an optional browser request to verified TCGdex URLs; text remains available offline. No card image files are bundled.
 
@@ -44,7 +47,7 @@ Public cards revealed in previous games can constrain later list beliefs. Full p
 
 The small network uses visible-card embeddings, semantic action features, nonlinear additive resource terms, a learned baseline, and a context interaction term. Its summed outcome logit is divided by ln(2) for engine advantage units. The UI exposes terms separately. Feature schemas are versioned; old checkpoints cannot silently load into incompatible feature definitions.
 
-Final results provide the main supervised target: win 1, true draw 0.5, loss 0. Truncated and errored games are excluded. Behavior cloning remains a baseline. Sufficiently sampled search decisions provide soft policy targets tied to a pre-decision observation hash. Population cycles mix baselines, champion and historical checkpoints. Teaching records expose eligibility only for reviewed concrete training-family positions with verified rules; a measured guide-imitation training stage still needs implementation. Avoid confusing imitation loss improvement with stronger play.
+Final results provide the main supervised target: win 1, true draw 0.5, loss 0. Truncated and errored games are excluded. Sufficiently sampled search decisions provide soft policy targets tied to a pre-decision observation hash. Population cycles mix baselines, champion and historical checkpoints. Teaching admission separately requires immutable mechanics receipts, position identity, completed strategic review, and the correct family partition. Policy-only training minimizes negative log probability mass over all acceptable actions and freezes value heads; tactical examples without outcomes supply no value labels. Checkpoints retain immutable review snapshots, optimizer state and cumulative lineage. Outcome training can warm-start from that policy and mix admitted demonstrations. Behavior cloning and guide agreement remain baselines to compare, not evidence of stronger play.
 
 Train/calibration/test splits keep complete seed-and-deck families together. Calibration is separate from fitting the model. This implementation withholds W/D/L predictions when calibration requirements are unmet. The first tiny datasets cannot establish calibration, tactical quality, or improvement. Data generated by held-out evaluation is marked and excluded from training by default.
 

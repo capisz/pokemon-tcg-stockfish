@@ -98,5 +98,29 @@
     "originalSha256": "6399f27ece195643ae3ea61ab7f2d39e46439e3f6c79bb2e49bb8a371b9678ba",
     "currentSha256": "8aaa01aded57fc842c8d334137efe337198380622c249e328e2bac45d5682608",
     "reason": "Recon Directive must put one of the inspected cards into hand; cancelling after viewing cannot bottom both."
+  },
+  {
+    "path": "ptcg-server/src/game/store/state/state.ts",
+    "originalSha256": "a990690778977905c22e5b7f77f995ffbcd0666a6b95513a77417be6bea3e979",
+    "reason": "Preserve Area Zero original-owner Bench discard order across Stadium replacement and MoveCardsEffect removal.",
+    "currentSha256": "fb486f5702eb47c33336a5bb849245079dd95f1301867383d157a4fc2204aa06"
+  },
+  {
+    "path": "ptcg-server/src/game/store/effect-reducers/check-effect.ts",
+    "originalSha256": "f5c275b1f57dd8aae23fe745561f9982bfcd786c74e810b9756e7ea20acdd47d",
+    "reason": "Preserve Area Zero original-owner Bench discard order across Stadium replacement and MoveCardsEffect removal.",
+    "currentSha256": "815dc60d47a60451fbedad8ddc74162db3fb40c71c9ea37f488549dbd7b1fc66"
+  },
+  {
+    "path": "ptcg-server/src/game/store/effect-reducers/game-effect.ts",
+    "originalSha256": "59123586dc46bb1610126cfeb23812e9e31196e688d8f5f73d55f1b6e60dee5a",
+    "reason": "Preserve Area Zero original-owner Bench discard order across Stadium replacement and MoveCardsEffect removal.",
+    "currentSha256": "12f067e5a3a69dffe6caafa48a6cab8bd05902f8f8b4c79fd6782bb7e92e431e"
+  },
+  {
+    "path": "ptcg-server/src/game/store/effect-reducers/play-trainer-effect.ts",
+    "originalSha256": "2f35f747da7915063adf2402a7e609a90eaecde46e0b99ecb065bda1f8502754",
+    "reason": "Preserve Area Zero original-owner Bench discard order across Stadium replacement and MoveCardsEffect removal.",
+    "currentSha256": "7128d839061d141a1e6b16d90e1c44557c151781c2a688aa112fad3cccd0da17"
   }
 ]

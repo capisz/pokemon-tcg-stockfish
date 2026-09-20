@@ -79,7 +79,11 @@ def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budg
     if prior_revealed_cards is not None:
         params["priorRevealedCards"] = list(prior_revealed_cards)
     if fallback.loaded is not None:
-        from .training import predict
+        from .training import predict, export_portable_value
+        if not hasattr(fallback, "portable_value"):
+            fallback.portable_value = export_portable_value(Path(fallback.policy), fallback.loaded)
+        if fallback.portable_value is not None:
+            params["leafModel"] = fallback.portable_value
         _, scores = predict(Path(fallback.policy), observation, fallback.loaded)
         if scores and all(math.isfinite(score) for score in scores):
             maximum = max(scores)

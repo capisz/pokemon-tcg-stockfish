@@ -52,6 +52,8 @@ export class State {
   public isSuddenDeath?: boolean;
 
   public benchSizeChangeHandled: boolean = false;
+  /** Pending Stadium-removal ordering; consumed by the next table-state check. */
+  public benchDiscardOrder?: number[];
 
   public gameSettings: GameSettings = new GameSettings();
 

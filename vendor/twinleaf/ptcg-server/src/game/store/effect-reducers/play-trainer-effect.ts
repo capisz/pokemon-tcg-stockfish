@@ -130,6 +130,10 @@ export function playTrainerReducer(store: StoreLike, state: State, effect: Effec
     }
 
     return withOptionalCoinFlipCancelTrainer(store, state, player, effect.trainerCard, () => {
+      if(stadiumCard?.name==='Area Zero Underdepths'){
+        const owner=state.players.findIndex(p=>p.stadium.cards.includes(stadiumCard));
+        if(owner>=0)state.benchDiscardOrder=[owner,1-owner];
+      }
       // Handle player's existing stadium
       if (player.stadium.cards.length > 0) {
         if (stadiumCard && stadiumCard.tags.includes(CardTag.PRISM_STAR)) {

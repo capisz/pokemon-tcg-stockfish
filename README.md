@@ -2,7 +2,7 @@
 
 A local Pokémon TCG simulator, playable card table, and reproducible learning laboratory. The competitive pool contains Dragapult, Crustle, Mega Lucario, Marnie's Grimmsnarl, and Raging Bolt / Mega Kangaskhan: one main, one training variant, and one reserved test variant each.
 
-**Current checkpoint:** competitive play and research infrastructure are implemented, with rules audits still in progress. All fifteen competitive lists remain experimental and excluded from trusted training. This is not a completed strength study or a claim of regional-level play. See [implementation evidence](docs/IMPLEMENTATION_STATUS.md) and [remaining assignments](docs/handoffs/).
+**Current checkpoint:** competitive play and research infrastructure are implemented, with rules audits still in progress. All fifteen competitive lists remain experimental and excluded from trusted outcome training. This is not a completed strength study or a claim of regional-level play. See [implementation evidence](docs/IMPLEMENTATION_STATUS.md) and [remaining assignments](docs/handoffs/).
 
 ## Install and play
 
@@ -17,7 +17,7 @@ On macOS, use `python3` if that is your Python 3.10+ command. The installer crea
 
 The Play tab provides a 2D table with simulator-generated choices, inspectable cards, durable best-of-three sessions, bookmarks and a shared engine turn budget up to two minutes. Closed lists are the default. Practice allows hints; benchmark play freezes its policy and locks research assistance until completion. Choose known-list laboratory mode explicitly when you want both lists available.
 
-The replay view retains the original step-through and saved-position workflow. Research replays contain both private perspectives; live matches expose only the human view. Publish completed matches explicitly before examining their private research replay.
+Replay analysis now watches simulations live on the same playmat, with pause, speed, decision/turn stepping, and saved positions. Browser responses contain only the selected player's information; private research replays remain server-side. Publish completed matches explicitly before opening their projected replays. [Watch, play and teaching instructions](docs/WATCH_AND_LEARN.md) cover the complete workflow.
 
 To use the already imported private guides in this Mac checkout, set the data directory before launching:
 
@@ -60,7 +60,7 @@ The small policy/value model exposes learned baseline, resource and interaction 
 
 ## Guides and review
 
-Supplied PDFs remain private under ignored local storage. `research/curriculum.json` records twenty attributed guide families with sixty controlled variations and permanent family partitions. These are draft tactical specifications, not yet reviewed simulator demonstrations. The review workflow can bind a family to a real saved position and record acceptable actions, rejected actions and conditional reasoning. Only reviewed, legal, rules-verified training-family positions may become demonstrations.
+Supplied PDFs remain private under ignored local storage. `research/curriculum.json` records twenty attributed guide families with sixty variations and permanent family partitions. Twelve positions from the first four families now have reproducible simulator recipes and scoped transition audits; their strategy labels await your review. The other sixteen families remain specifications. Only reviewed, rules-checked training-family choices may train a policy. `prepare-teaching` creates the review queue, and `train-policy` learns acceptable-action sets without inventing outcome labels. Running a simulation does not train a model.
 
 Local lexical retrieval works without model downloads. Optional Sentence Transformers requires an already installed local model. The optional Ollama/Qwen adapter drafts cited hypotheses; it cannot establish rules or numerical labels. Run language-model work separately from heavy training. These optional model runtimes have not been validated here.
 

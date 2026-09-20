@@ -6,6 +6,15 @@ Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and th
 
 ## Ownership
 
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md` and
+`packages/engine/COMPETITIVE_STATUS.md`. Structured board bindings, twelve
+mechanically checked teaching positions, retained-worker support, ordinary
+Drakloak/Pokégear knowledge and portable learned search leaves are implemented.
+Finish the remaining per-print legality and interaction closure, including
+Special Red Card's unordered bottom knowledge and final-Prize simultaneous
+terminals. Preserve engine-bound tactical receipts when changing mechanics.
+Every competitive deck remains outcome-training-ineligible.
+
 Own the TypeScript environment/search, vendor patches and provenance, deck/format manifests, catalogue/build scripts, and engine tests. The learning assignment owns Python transport/storage/training. The play assignment owns FastAPI, live sessions, guides/teaching, and React. The lead owns shared contracts and combined verification. Communicate contract changes before relying on them.
 
 ## Required behavior

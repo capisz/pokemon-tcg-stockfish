@@ -856,6 +856,11 @@ export function gameReducer(store: StoreLike, state: State, effect: Effect): Sta
   if (effect instanceof MoveCardsEffect) {
     const source = effect.source;
     const destination = effect.destination;
+    const stadiumOwner=state.players.findIndex(p=>p.stadium===source);
+    if(stadiumOwner>=0&&source!==destination){
+      const leaving=effect.cards??source.cards.slice(0,effect.count??source.cards.length);
+      if(leaving.some(card=>card.name==='Area Zero Underdepths'))state.benchDiscardOrder=[stadiumOwner,1-stadiumOwner];
+    }
     const isPartialMove = effect.cards !== undefined || effect.count !== undefined;
 
     // moveTo() does not move tools; attach them before a full-stack move.

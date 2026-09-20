@@ -3,6 +3,7 @@ import { Environment, ENGINE_VERSION, getDecks } from './environment';
 import { chooseAction } from './policies';
 import { SeededRandom } from './random';
 import { search } from './search';
+import { tacticalFixture } from './tactical-fixtures';
 
 // stdout is protocol only, even when upstream logs diagnostics.
 console.log = (...args: unknown[]) => console.error(...args);
@@ -14,10 +15,18 @@ export function request(method: string, params: any = {}): any {
     case 'decks': return getDecks(params);
     case 'reset': environment = new Environment(); return environment.reset(params.seed, params.decks, params.firstPlayer);
     case 'observe': return current().observe(params.playerId);
+    case 'choose': {
+      const policy=params.policy??'heuristic';
+      if(!['random','heuristic'].includes(policy))throw new Error('Unknown policy.');
+      const seed=params.seed??((current().seed^current().decisionIndex^0x13579bdf)>>>0);
+      if(!Number.isSafeInteger(seed)||seed<0||seed>0xffffffff)throw new Error('Seed must be a uint32 integer.');
+      return chooseAction(current().observe(),policy,new SeededRandom(seed));
+    }
     case 'step': return current().step(params.actionId);
     case 'replay': return current().replay();
     case 'branch': environment = current().branch(); return {observation: environment.observe(), status: environment.status, decisionIndex: environment.decisionIndex};
     case 'search': return search(params);
+    case 'fixture': return tacticalFixture(params);
     case 'run': {
       const max = params.maxDecisions ?? 500;
       if (!Number.isSafeInteger(max) || max < 1 || max > 10000) throw new Error('maxDecisions must be 1..10000.');

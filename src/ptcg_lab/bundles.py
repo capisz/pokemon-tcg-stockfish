@@ -9,10 +9,10 @@ from pathlib import Path, PurePosixPath
 
 from .resources import ResourceLimit, check_storage, volume_free
 from .storage import Store, digest, file_digest
+from .features import FEATURE_VERSION
 
 BUNDLE_VERSION = 1
-FEATURE_VERSION = "owned-zone-semantic-actions-v2"
-CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols", "evaluation-models"}
+CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols", "evaluation-models", "teaching", "teaching-families", "fixture-receipts", "teaching-reviews"}
 
 
 def compatibility(root: Path) -> dict:

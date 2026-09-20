@@ -1,0 +1,131 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-19",
+  "branch": "codex/competitive-integration",
+  "engineVersion": "twinleaf-adapter-0.1.0+c01ee150cbe47377",
+  "checks": {
+    "engine": {
+      "command": "npm run test:engine",
+      "passed": 53,
+      "failed": 0,
+      "seconds": 164.962,
+      "completeListGames": 15
+    },
+    "python": {
+      "command": ".venv/bin/python -m pytest tests/python -q",
+      "passed": 99,
+      "failed": 0,
+      "seconds": 5.51,
+      "dependencyWarnings": 2
+    },
+    "typescript": {
+      "command": "npm run typecheck",
+      "status": "passed"
+    },
+    "web": {
+      "command": "npm run web:build",
+      "status": "passed"
+    },
+    "liveReplayBrowser": {
+      "command": "PTCG_BROWSER_URL=http://127.0.0.1:5174 node tests/browser/smoke.mjs",
+      "passed": true,
+      "replayId": "d939582c464001a40d91",
+      "frames": 92,
+      "evaluation": "heuristic",
+      "livePlayback": true,
+      "pauseIndependentOfComputation": true,
+      "perspectiveProjection": true,
+      "reloadRestoresSource": true,
+      "mobileOverflow": false,
+      "pageErrors": []
+    },
+    "playBrowser": {
+      "command": "PTCG_BROWSER_URL=http://127.0.0.1:5174 node tests/browser/play-smoke.mjs",
+      "passed": true,
+      "scope": [
+        "real legal setup",
+        "ordered player-only frames",
+        "history action guard",
+        "pause and reload",
+        "resume",
+        "two concession outcomes and BO3 progression",
+        "bookmarks",
+        "explicit publication",
+        "synthetic QA annotation"
+      ],
+      "note": "UI integration before the final knowledge-copy patch; final natural API probe uses the final build."
+    },
+    "layoutAndBindings": {
+      "commands": [
+        "tests/browser/watch-layout.mjs",
+        "tests/browser/board-bindings.mjs",
+        "tests/browser/card-resilience.mjs"
+      ],
+      "passed": true,
+      "desktop": [
+        1440,
+        900
+      ],
+      "narrowWidth": 390,
+      "sparseBench": true,
+      "expandedBench": 8,
+      "reducedMotion": true,
+      "artFallback": true
+    },
+    "naturalLiveGame": {
+      "matchId": "d17ce665a27e48c7981150a3f9b3b73f",
+      "purpose": "product-integration-only",
+      "engineTurnBudgetMs": 1,
+      "humanSeat": "observation-only heuristic proxy",
+      "naturalOutcome": {
+        "winner": 1,
+        "reason": "rules-terminal"
+      },
+      "nextGameVerified": true,
+      "score": [
+        0,
+        1
+      ],
+      "seconds": 40.306,
+      "finalStatus": "abandoned",
+      "revision": 274,
+      "error": null
+    },
+    "teachingDiagnostics": {
+      "syntheticOnly": true,
+      "selectedActionChangeVerified": true,
+      "multiAcceptableLossVerified": true,
+      "fixedBaselineOnResume": true,
+      "linkedBundleResume": true,
+      "outcomeLabelsInvented": false
+    },
+    "portableValue": {
+      "pythonTypeScriptInputsEqual": true,
+      "outputAbsoluteTolerance": 2e-06,
+      "checksumRejection": true,
+      "policyOnlyExportUnavailable": true,
+      "note": "Numerical test network, not an admitted competitive model."
+    },
+    "actualApp": {
+      "url": "http://127.0.0.1:5173/#review",
+      "readOnlyBrowserCheck": "passed",
+      "materializedPositions": 12,
+      "queued": 10,
+      "reviewed": 0,
+      "eligibleDemonstrations": 0,
+      "models": 0,
+      "engineVersion": "twinleaf-adapter-0.1.0+c01ee150cbe47377",
+      "oldMatchPaused": true,
+      "oldActionsObservationBudgetAndScorePreserved": true
+    }
+  },
+  "limitations": [
+    "No actual user strategic review or guide-trained checkpoint yet. Raw guides and QA annotations remain private.",
+    "All fifteen lists remain ineligible for trusted outcome training pending full rules and per-print legality admission.",
+    "Only four of twenty curriculum families are concrete audited positions.",
+    "Special Red Card unordered bottom knowledge and other documented reconstruction gaps refuse affected search.",
+    "Readiness/protection features are limited visible capabilities, not a full tactical oracle.",
+    "No superior playing strength, calibrated competitive outcomes or discovered strategy is established.",
+    "Native Windows execution and aggregate accounting of independently launched workloads remain unverified."
+  ]
+}

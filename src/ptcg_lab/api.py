@@ -1,20 +1,22 @@
 from __future__ import annotations
 
 import threading
+import math
 import uuid
 from pathlib import Path
 from datetime import datetime, timezone
 from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, model_validator
 
 from .analysis import analyze_observation, review_decision, select_frame, selected_action_id
 from .config import Settings
 from .engine import EngineError, EnginePool
-from .storage import Store
+from .storage import Store, file_digest
+from .presentation import FrameStream, project_replay
 from .matches import MatchService, MatchConflict
 from . import teaching, guides
 
@@ -25,6 +27,7 @@ class MatchRequest(BaseModel):
     mode: str = Field(default="practice", pattern="^(practice|benchmark)$")
     knownList: bool = False
     budgetMs: int = Field(default=120000, ge=1, le=120000)
+    modelId: str | None = Field(default="heuristic", pattern=r"^[A-Za-z0-9_-]{1,160}$")
 
 
 class MatchActionRequest(BaseModel):
@@ -61,7 +64,15 @@ class GameRequest(BaseModel):
     decks: tuple[str, str]
     seed: int = Field(default=42, ge=0, le=2**32 - 1)
     maxDecisions: int = Field(default=1000, ge=1, le=3000)
-    policy: str = Field(default="heuristic", pattern="^(random|heuristic)$")
+    policy: str = Field(default="heuristic", pattern="^(random|heuristic|model)$")
+    modelId: str | None = Field(default=None, pattern=r"^[A-Za-z0-9_-]{1,160}$")
+    laboratory: bool = False
+
+    @model_validator(mode="after")
+    def model_selection(self):
+        if (self.policy == "model") != bool(self.modelId):
+            raise ValueError("Select a modelId exactly when policy is model")
+        return self
 
 
 class AnalysisRequest(BaseModel):
@@ -94,6 +105,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     # The research Store adds a reserve while preserving the legacy constructor.
     store = Store(settings.data, settings.max_disk_bytes, settings.min_free_bytes) if hasattr(settings, "min_free_bytes") else Store(settings.data, settings.max_disk_bytes)
     pool = EnginePool(settings.root, settings.workers, settings.engine_timeout)
+    streams = FrameStream(store)
     executor = ThreadPoolExecutor(max_workers=settings.workers, thread_name_prefix="ptcg-job")
     capacity = threading.BoundedSemaphore(settings.max_jobs)
     deck_cache: list[dict] = []
@@ -153,7 +165,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/matches", status_code=201)
     def create_match(request: MatchRequest):
-        return match_call(matches.create, request.deckId, request.opponentArchetype, request.mode, request.knownList, request.budgetMs)
+        return match_call(matches.create, request.deckId, request.opponentArchetype, request.mode, request.knownList, request.budgetMs, request.modelId)
 
     @app.get("/api/matches")
     def list_matches():
@@ -162,6 +174,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/matches/{identifier}")
     def get_match(identifier: str):
         return match_call(matches.get, identifier)
+
+    @app.get("/api/matches/{identifier}/frames")
+    def match_frames(identifier: str, after: int = Query(-1, ge=-1), limit: int = Query(100, ge=1, le=100)):
+        return match_call(matches.frames, identifier, after, limit)
 
     @app.post("/api/matches/{identifier}/actions")
     def match_action(identifier: str, request: MatchActionRequest):
@@ -242,22 +258,55 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"status": "ok", "engineBuilt": settings.worker.exists(), "version": "0.1.0", "workers": settings.workers,
                 "limits": {"maxDecisions": settings.max_decisions, "maxJobs": settings.max_jobs,
                            "maxDiskBytes": settings.max_disk_bytes},
-                "warnings": ["Research replays contain both players' private views; serve on loopback only."]}
+                "warnings": ["Private research data is stored locally; serve on loopback only."]}
 
     @app.get("/api/decks")
     def get_decks():
         return {"decks": decks()}
 
-    def run_job(identifier: str, request: GameRequest) -> None:
-        job = {"id": identifier, "status": "running", "configuration": request.model_dump()}
+    @app.get("/api/models")
+    def get_models():
+        from .model_registry import list_models
+        return {"models": list_models(store)}
+
+    def run_job(identifier: str, request: GameRequest, model_path: Path | None = None) -> None:
+        job = {"id": identifier, "status": "running", "configuration": request.model_dump(), "frameCursor": -1,
+               "policyContext": {"policy": request.policy, "modelVersion": file_digest(model_path) if model_path else f"{request.policy}-v1",
+                                 "trainingStatus": "frozen-checkpoint" if model_path else "handwritten-baseline", "learnsDuringRun": False}}
+        job["policyContext"].update(opponentPopulation="Selected experimental deck pair", computeBudget="One direct policy decision; no search")
         try:
             store.put("jobs", identifier, job)
             with pool.lease() as engine:
-                replay = engine.request("run", request.model_dump())
+                from .resources import ResourceGuard
+                from .selfplay import Agent
+                agent = Agent(str(model_path), request.seed) if model_path else None
+                engine.request("reset", {"seed": request.seed, "decks": request.decks})
+                prior_action, prior_actor = None, 0
+                with ResourceGuard(settings) as guard:
+                    for index in range(request.maxDecisions + 1):
+                        guard.check()
+                        observations = [engine.request("observe", {"playerId": player}) for player in (0, 1)]
+                        actor = observations[0]["decisionPlayer"]
+                        job["frameCursor"] = streams.append(identifier, {
+                            "decisionIndex": index, "actor": prior_actor if prior_action else actor,
+                            "priorAction": prior_action, "observations": observations}, job["frameCursor"])
+                        job["progress"] = index
+                        store.put("jobs", identifier, job)
+                        if observations[0]["status"] != "running" or index == request.maxDecisions:
+                            break
+                        if agent:
+                            action_id = agent.choose(observations[actor])
+                            action = next(a for a in observations[actor]["legalActions"] if a["id"] == action_id)
+                        else:
+                            action = engine.request("choose", {"policy": request.policy, "seed": (request.seed ^ 0x13579bdf) + index & 0xffffffff})
+                        engine.request("step", {"actionId": action["id"]})
+                        prior_action, prior_actor = action, actor
+                replay = engine.request("replay")
             # Interactive research runs may include lists still under audit.
             # They are explicit QA data, never silently admitted to training.
             replay["trainingEligible"] = False
             replay["dataPurpose"] = "interactive-qa"
+            replay["policyContext"] = job["policyContext"]
             replay_id = store.save_replay(replay)
             store.put("jobs", identifier, {**job, "status": "completed", "replayId": replay_id,
                                           "resultStatus": replay["status"]})
@@ -272,15 +321,27 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/games", status_code=202)
     def create_game(request: GameRequest):
+        protect_benchmark()
+        if request.maxDecisions > settings.max_decisions:
+            raise HTTPException(422, "Decision limit exceeds this machine's configured limit")
         if not capacity.acquire(blocking=False):
             raise HTTPException(429, "The bounded local job queue is full")
         identifier = uuid.uuid4().hex
         try:
-            known = {deck["id"] for deck in decks()}
+            registry = decks()
+            known = {deck["id"] for deck in registry}
             if any(deck not in known for deck in request.decks):
                 raise HTTPException(422, "Unknown deck id")
+            if not request.laboratory and any(d["id"] in request.decks and d.get("role") in {"heldout", "historical"} for d in registry):
+                raise HTTPException(422, "Reserved and historical lists require explicit laboratory mode")
+            model_path = None
+            if request.modelId:
+                from .model_registry import resolve_model
+                from .checkpoint_files import freeze_checkpoint
+                model_path = match_call(resolve_model, store, request.modelId)
+                model_path = freeze_checkpoint(store, model_path)
             store.put("jobs", identifier, {"id": identifier, "status": "queued", "configuration": request.model_dump()})
-            executor.submit(run_job, identifier, request)
+            executor.submit(run_job, identifier, request, model_path)
         except Exception:
             capacity.release()
             raise
@@ -288,17 +349,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/jobs/{identifier}")
     def get_job(identifier: str):
+        protect_benchmark()
         return load("jobs", identifier)
+
+    @app.get("/api/jobs/{identifier}/frames")
+    def job_frames(identifier: str, playerId: int = Query(0, ge=0, le=1), after: int = Query(-1, ge=-1), limit: int = Query(100, ge=1, le=100)):
+        protect_benchmark()
+        job = load("jobs", identifier)
+        result = match_call(streams.read, identifier, after=after, limit=limit, committed=job.get("frameCursor", -1),
+                            player_id=playerId, status=job["status"])
+        if job.get("replayId"):
+            result["replayId"] = job["replayId"]
+        if job["status"] == "failed":
+            # Engine diagnostics can mention concealed cards; the frame feed
+            # exposes only a public interruption message.
+            result["error"] = "Simulation stopped before completion. Accepted positions remain available."
+        result["policyContext"] = job.get("policyContext")
+        return result
 
     @app.get("/api/replays")
     def get_replays():
         protect_benchmark()
-        return {"replays": store.list("replay-index")}
+        return {"replays": [{**item, "decks": [deck if index == 0 else "opponent" for index, deck in enumerate(item.get("decks", []))]}
+                            for item in store.list("replay-index")]}
 
     @app.get("/api/replays/{identifier}")
-    def get_replay(identifier: str):
+    def get_replay(identifier: str, playerId: int = Query(0, ge=0, le=1)):
         protect_benchmark()
-        return load("replays", identifier)
+        return project_replay(load("replays", identifier), playerId)
 
     @app.post("/api/analyze")
     def analyze(request: AnalysisRequest):
@@ -316,16 +394,41 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             champion = settings.data / "models" / "champion.pt"
             if model_path is not None and not model_path.exists():
                 raise ValueError("PTCG_ANALYSIS_MODEL does not point to an existing local checkpoint")
+            if model_path is None and request.replayId:
+                context = replay.get("policyContext", {})
+                fingerprint = context.get("modelVersion", "")
+                if context.get("policy") == "model" and len(fingerprint) == 64 and all(c in "0123456789abcdef" for c in fingerprint):
+                    frozen = settings.data / "private-models" / f"{fingerprint}.pt"
+                    if frozen.exists():
+                        if file_digest(frozen) != fingerprint:
+                            raise ValueError("Replay checkpoint checksum differs from its frozen policy")
+                        model_path = frozen
             if model_path is None and champion.exists():
                 model_path = champion
             result = analyze_observation(observation, hypothesis_decks(), model_path)
             if settings.analysis_model is not None:
                 result["warnings"].append("Explicit experimental analysis checkpoint; training does not establish superior playing strength or champion status.")
             try:
+                params = {"observation": observation, "budgetMs": request.budgetMs, "method": "rollout", "seed": 42}
+                if model_path:
+                    from .training import export_portable_value, load_model, predict
+                    loaded = load_model(model_path)
+                    _, scores = predict(model_path, observation, loaded)
+                    legal = observation.get("legalActions", [])
+                    if legal:
+                        if len(scores) != len(legal) or not all(math.isfinite(score) for score in scores):
+                            raise ValueError("Analysis policy produced invalid action preferences")
+                        weights = [math.exp(score - max(scores)) for score in scores]
+                        total = sum(weights)
+                        params.update(method="ismcts", rootPriors=[{"actionId": action["id"], "probability": weight / total}
+                                                                 for action, weight in zip(legal, weights)])
+                    leaf_model = export_portable_value(model_path, loaded)
+                    if leaf_model:
+                        params["leafModel"] = leaf_model
                 with pool.lease(wait_timeout=.1) as engine:
-                    search = engine.request("search", {"observation": observation, "budgetMs": request.budgetMs,
-                                                       "method": "rollout", "seed": 42})
+                    search = engine.request("search", params)
                 result["search"] = {key: search.get(key) for key in ("status", "method", "iterations", "elapsedMs")}
+                result["search"]["valueContext"] = search.get("valueContext")
                 result["warnings"].extend(search.get("warnings", []))
                 if search.get("status") == "complete" and search.get("alternatives"):
                     result["alternatives"] = search["alternatives"]

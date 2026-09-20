@@ -1,4 +1,4 @@
-import { chromium } from '@playwright/test';
+import { chromium, expect } from '@playwright/test';
 import assert from 'node:assert/strict';
 import { mkdir } from 'node:fs/promises';
 
@@ -46,6 +46,17 @@ try {
   const bookmarked=page.waitForResponse(r=>r.url().endsWith('/bookmarks'));
   await page.getByRole('button',{name:'Bookmark decision',exact:true}).click();
   const bookmark=await (await bookmarked).json();
+  const feed=await (await page.request.get(url(`/matches/${match.id}/frames?after=-1&limit=100`))).json();
+  assert.ok(feed.frames.length>1);
+  assert.ok(feed.frames.every((frame,i)=>frame.observations===undefined&&frame.observation.players[1].hand.length===0&&(i===0||frame.cursor>feed.frames[i-1].cursor)));
+  const timeline=page.getByRole('slider',{name:'Replay position'});
+  await timeline.fill('0');
+  await expect(page.getByText('Reviewing earlier position',{exact:true})).toBeVisible();
+  await expect(page.getByRole('button',{name:'Bookmark decision',exact:true})).toBeDisabled();
+  await expect(page.getByRole('button',{name:'Evaluate position',exact:true})).toBeDisabled();
+  assert.equal(await page.locator('.legal-moves button').count(),0);
+  await page.getByRole('button',{name:'Return to live position',exact:true}).first().click();
+  await expect(page.getByRole('button',{name:'Bookmark decision',exact:true})).toBeEnabled();
   const pausedResponse=page.waitForResponse(r=>r.url().endsWith('/control/pause'));
   await page.getByRole('button',{name:'Pause',exact:true}).click();
   const paused=await (await pausedResponse).json();
@@ -101,5 +112,5 @@ try {
   assert.equal(reviewed.reviewStatus,'reviewed');
   assert.equal(reviewed.trainingEligible,false);
   assert.deepEqual(errors,[]);
-  console.log(JSON.stringify({passed:true,matchId:match.id,bookmarkId:bookmark.id,replays:published.replayIds,privateView:true,mobileOverflow:false,pageErrors:errors}));
+  console.log(JSON.stringify({passed:true,matchId:match.id,bookmarkId:bookmark.id,replays:published.replayIds,privateView:true,orderedFeed:true,historySubmissionGuard:true,mobileOverflow:false,pageErrors:errors}));
 } finally {await browser.close();}

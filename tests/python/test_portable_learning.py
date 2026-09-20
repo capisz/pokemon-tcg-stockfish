@@ -256,6 +256,7 @@ def test_learned_search_sends_only_normalized_legal_root_priors(observation, mon
     fallback = Agent("heuristic", 1)
     fallback.loaded, fallback.policy = object(), "model.pt"
     monkeypatch.setattr(training, "predict", lambda *args: ({}, [1., 2.]))
+    monkeypatch.setattr(training, "export_portable_value", lambda *args: None)
     received = {}
     class Engine:
         def request(self, method, params):

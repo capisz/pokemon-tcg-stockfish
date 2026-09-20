@@ -81,7 +81,10 @@ function handleBenchSizeChange(store: StoreLike, state: State, benchSizes: numbe
     return state;
   }
 
-  state.players.forEach((player, index) => {
+  const order=state.benchDiscardOrder??state.players.map((_,index)=>index);
+  state.benchDiscardOrder=undefined;
+  order.forEach(index => {
+    const player=state.players[index];
     const benchSize = benchSizes[index];
     // Add empty slots if bench is smaller
     while (player.bench.length < benchSize) {

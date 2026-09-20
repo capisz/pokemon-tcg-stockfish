@@ -118,9 +118,9 @@ export function sampleBeliefState(source: State, observer: number, ownDeckId: De
 }
 
 export interface PublicPosition {
-  version: 1; observer: number; ownDeckId: string; ownPrizeCards?: string[]; ownDeckTop?: string[]; turn: number; activePlayer: number; abilityLockOrderCounter: number;
+  version: 1; observer: number; ownDeckId: string; ownPrizeCards?: string[]; ownDeckTop?: string[]; ownDeckBottom?:string[]; ownDeckKnown?:string[]; knownOpponentHand?:string[]; opponentRevealedCounts?:Record<string,number>; turn: number; activePlayer: number; abilityLockOrderCounter: number;
   cards: {key: number; cardId: string}[];
-  players: any[];
+  players: any[]; knowledgeHistory?:any[];
 }
 /** Transportable whitelist. Contains no true hidden hand, prize identities, or deck order. */
 export function projectPublicPosition(source: State, observer: number, ownDeckId: string): PublicPosition {
@@ -192,20 +192,34 @@ export function samplePublicPosition(position: PublicPosition, opponentDeckId: D
   });
   const sampled = sampleBeliefState(source, position.observer, position.ownDeckId, opponentDeckId, rng);
   const own = sampled.players[position.observer];
-  // The supplied identities were inferred from a legal deck search, never read from
-  // the true Prize zone. Randomize their slot allocation rather than inventing it.
-  if (position.ownPrizeCards) {
-    if (position.ownPrizeCards.length !== own.prizes.length) throw new Error('Known Prize counts are stale.');
-    const pool = [...own.deck.cards, ...own.prizes.flatMap(p => p.cards)];
-    const takeKnown = (id: string) => {const i=pool.findIndex(c=>printedId(c)===id);if(i<0)throw new Error('Known Prize identities conflict with own deck.');return pool.splice(i,1)[0];};
-    const prizes=position.ownPrizeCards.map(takeKnown);
-    rng.shuffle(prizes.length).forEach((index, slot)=>{own.prizes[slot].cards=[prizes[index]];});
-    own.deck.cards = rng.shuffle(pool.length).map(i=>pool[i]);
+  // Sample jointly: a card seen in the deck cannot be reallocated to a Prize.
+  // Top/bottom constraints are subsets of the known deck multiset, not extra copies.
+  const takeId=(pool:Card[],id:string)=>{const i=pool.findIndex(c=>printedId(c)===id);if(i<0)throw new Error('Known card constraints conflict with the deck hypothesis.');return pool.splice(i,1)[0];};
+  const pool=[...own.deck.cards,...own.prizes.flatMap(p=>p.cards)];
+  const knownIds=[...(position.ownDeckKnown??[])];
+  const ordered=[...(position.ownDeckTop??[]),...(position.ownDeckBottom??[])];
+  const counts=new Map<string,number>();for(const id of ordered)counts.set(id,(counts.get(id)??0)+1);
+  for(const[id,n]of counts){const present=knownIds.filter(c=>c===id).length;for(let i=present;i<n;i++)knownIds.push(id);}
+  const known=knownIds.map(id=>takeId(pool,id));
+  let prizes:Card[];
+  if(position.ownPrizeCards){
+    if(position.ownPrizeCards.length!==own.prizes.length)throw new Error('Known Prize counts are stale.');
+    prizes=position.ownPrizeCards.map(id=>takeId(pool,id));
+  }else{
+    const shuffled=rng.shuffle(pool.length).map(i=>pool[i]);pool.splice(0,pool.length,...shuffled);prizes=pool.splice(0,own.prizes.length);
+    if(prizes.length!==own.prizes.length)throw new Error('Known deck cards exceed its public count.');
   }
-  if (position.ownDeckTop?.length) {
-    const pool=[...own.deck.cards];
-    const top=position.ownDeckTop.map(id=>{const i=pool.findIndex(c=>printedId(c)===id);if(i<0)throw new Error('Known deck order conflicts with own deck.');return pool.splice(i,1)[0];});
-    own.deck.cards=[...top,...pool];
+  rng.shuffle(prizes.length).forEach((index,slot)=>{own.prizes[slot].cards=[prizes[index]];});
+  const deck=[...known,...pool],top=(position.ownDeckTop??[]).map(id=>takeId(deck,id)),bottom=(position.ownDeckBottom??[]).map(id=>takeId(deck,id));
+  own.deck.cards=[...top,...rng.shuffle(deck.length).map(i=>deck[i]),...bottom];
+  if(own.deck.cards.length!==position.players[position.observer].deckCount)throw new Error('Known own deck constraints violate zone counts.');
+  if(position.knownOpponentHand?.length){
+    const opponent=sampled.players[1-position.observer],unknown=[...opponent.hand.cards,...opponent.deck.cards,...opponent.prizes.flatMap(p=>p.cards)];
+    const hand=position.knownOpponentHand.map(id=>takeId(unknown,id)),count=position.players[1-position.observer].handCount;
+    if(hand.length>count)throw new Error('Known opponent hand exceeds public hand count.');
+    const rest=rng.shuffle(unknown.length).map(i=>unknown[i]);hand.push(...rest.splice(0,count-hand.length));
+    opponent.hand.cards=rng.shuffle(hand.length).map(i=>hand[i]);
+    for(const prize of opponent.prizes)prize.cards=[rest.shift()!];opponent.deck.cards=rest;
   }
   return sampled;
 }

@@ -129,14 +129,15 @@ test('Special Red Card shuffles the opponent hand before bottom-decking and draw
   store.dispatch(new ResolvePromptAction(p.id,[2,0,1]));assert.deepEqual(b.hand.cards,oldTop);assert.deepEqual(b.deck.cards,[oldHand[2],oldHand[0],oldHand[1]]);
 });
 
-test('opponent hand revelation refuses search and never becomes the other player\'s knowledge',()=>{
+test('opponent hand revelation constrains samples and never becomes the other player\'s knowledge',()=>{
   const e=ready(), actor=e.actor,player=e.store.state.players[actor],other=e.store.state.players[1-actor];
   const p=new ChooseCardsPrompt(player,GameMessage.CHOOSE_CARDS,other.hand,{}, {min:0,max:0,allowCancel:false});
   e.store.prompt(e.store.state,p,()=>{});(e as any).candidates=null;
   assert.ok(e.observe().knowledge?.some(k=>k.type==='opponent-hand-reveal'));
   assert.ok(!e.observe(1-actor).knowledge?.some(k=>k.type==='opponent-hand-reveal'));
   e.step(e.observe().legalActions.find(a=>a.choiceOperation==='finish')!.id);
-  assert.equal(e.observe().searchPosition,undefined);assert.match(e.observe().searchUnavailableReason!,/revealed-card/);
+  const position=e.observe().searchPosition!;assert.ok(position);assert.deepEqual(position.knownOpponentHand?.sort(),other.hand.cards.map(c=>`${c.set}-${c.setNumber}`).sort());
+  for(const seed of[2,19,33]){const sample=Environment.fromPublicPosition(position,seed,'mega-lucario');assert.deepEqual(sample.store.state.players[1-actor].hand.cards.map(c=>`${c.set}-${c.setNumber}`).sort(),position.knownOpponentHand);assert.deepEqual(sample.observe().knowledge,e.observe().knowledge);}
 });
 
 test('learned root priors guide information-set search without claiming learned leaf values',()=>{
@@ -165,7 +166,7 @@ test('Meowth Last-Ditch Catch is shared across copies and resets at turn end',()
 });
 
 
-test('Recon Directive requires taking one card and refuses search that would forget the known bottom card',()=>{
+test('Recon Directive requires taking one card and preserves known bottom and Prize exclusions in samples',()=>{
   const e=ready(['dragapult','mega-lucario']), actor=e.actor, player=e.store.state.players[actor];
   assert.equal(actor,0);
   // Construct an evolution fixture using actual cards from the registered list.
@@ -173,7 +174,7 @@ test('Recon Directive requires taking one card and refuses search that would for
   const drak=player.deck.cards.splice(drakIndex,1)[0];
   const old=player.active.cards.splice(0,player.active.cards.length);player.hand.cards.push(...old);player.active.cards.push(drak);
   const before=[...player.deck.cards], handCount=player.hand.cards.length;
-  e.store.reduceEffect(e.store.state,new PowerEffect(player,(drak as any).powers[0],drak as any));(e as any).candidates=null;
+  (e as any).candidates=null;e.step(e.observe().legalActions.find(a=>a.type==='ability'&&a.cardId==='TWM-129')!.id);
   let o=e.observe();assert.equal(o.prompt?.type,'Choose cards');
   assert.ok(!o.legalActions.some(a=>a.label==='Cancel'||a.choiceOperation==='finish'));
   assert.ok(o.knowledge?.some(k=>k.type==='temporary-zone-reveal'));
@@ -183,6 +184,6 @@ test('Recon Directive requires taking one card and refuses search that would for
   e.step(o.legalActions.find(a=>a.choiceOperation==='finish')!.id);
   assert.equal(player.hand.cards.length,handCount+1);
   assert.deepEqual(player.deck.cards,[...before.slice(2),before[1]]);
-  assert.equal(e.observe().searchPosition,undefined);
-  assert.match(e.observe().searchUnavailableReason!,/revealed-card or known-order/);
+  const position=e.observe().searchPosition!;assert.ok(position);const bottom=`${before[1].set}-${before[1].setNumber}`;assert.deepEqual(position.ownDeckBottom,[bottom]);
+  for(const seed of[1,2,3,30]){const sample=Environment.fromPublicPosition(position,seed,'mega-lucario');assert.equal(`${sample.store.state.players[actor].deck.cards.at(-1)!.set}-${sample.store.state.players[actor].deck.cards.at(-1)!.setNumber}`,bottom);assert.deepEqual(sample.observe().knowledge,e.observe().knowledge);}
 });

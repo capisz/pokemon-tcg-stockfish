@@ -12,6 +12,8 @@ export function opponentHypotheses(position:PublicPosition, priorRevealedCards:s
     ...other.bench.flatMap((b:any)=>[...b.cards,...b.tools,...b.energies]),...other.discard,...other.lostzone,...other.stadium,...other.supporter]);
   const required=new Map<string,number>();
   for(const key of keys){const id=cards.get(key);if(!id)throw new Error('Unknown observed card reference.');required.set(id,(required.get(id)??0)+1);}
+  for(const id of position.knownOpponentHand??[]){if(!CARD_FACTORIES[id])throw new Error('Unsupported known opponent hand card.');required.set(id,(required.get(id)??0)+1);}
+  for(const[id,n]of Object.entries(position.opponentRevealedCounts??{})){if(!CARD_FACTORIES[id]||!Number.isInteger(n)||n<0||n>60)throw new Error('Invalid revealed copy constraint.');required.set(id,Math.max(n,required.get(id)??0));}
   // Cross-game reveals establish presence, not additive copy counts across games.
   for(const id of new Set(priorRevealedCards)){if(!CARD_FACTORIES[id])throw new Error('Unsupported prior revealed card.');required.set(id,Math.max(1,required.get(id)??0));}
   const fits=(d:DeckManifest)=>[...required].every(([id,n])=>(d.cards.find(c=>c.cardId===id)?.count??0)>=n);

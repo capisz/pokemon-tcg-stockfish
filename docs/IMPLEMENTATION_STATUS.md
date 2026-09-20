@@ -1,57 +1,127 @@
-# Competitive implementation checkpoint — September 19, 2026
+# Watch, play, and learning checkpoint — September 19, 2026
 
-The three implementation assignments are integrated on `codex/competitive-integration`. This is a playable research checkpoint, not completion of the six-week strength study. Fifteen competitive manifests replace the five engineering starters for play; historical starters are preserved separately. **Every competitive manifest remains experimental and training-ineligible until its legality and interaction audit passes.** No champion, calibrated competitive evaluator, regional-level strength or discovered superior strategy is claimed.
+The three assignments are integrated on `codex/competitive-integration`. Real
+simulations, saved replays, human play and teaching review share a card table.
+The guide-to-policy pipeline is implemented, but the user's twelve initial
+positions remain **drafts awaiting strategic review**. No competitive checkpoint,
+strength improvement, calibrated probability or superior strategy is claimed.
+All fifteen competitive lists remain experimental and outcome-training-ineligible.
 
-## What works
+## Implemented in this checkpoint
 
-- **Rules:** 98 registered printings, immutable 60-card manifests, staged choices, deterministic action/chance reconstruction, controlled first player, player observations, and complete execution for all fifteen lists. Focused fixes address Crustle/Spiky/Mist, Hammer tails, Munkidori selection, Meowth restrictions, Special Red Card, reused prompt IDs and compressed Prize choices. Recon Directive must take a card; unsupported temporary-zone knowledge explicitly blocks search.
-- **Search:** rollout and information-set methods consume a selected player's information. Reserved exact lists stay out of default hypotheses. A bounded unknown-variant component and prior-game public reveals constrain opponent possibilities. Own Prize inference and supported known top order constrain sampled states. Learned root priors are accepted; leaves and deeper policies remain heuristic.
-- **Play:** a 2D table, optional verified art, card inspection, staged actions, durable untimed best-of-three, concessions, restart recovery, idempotent submission, shared turn budget, public knowledge across games and bookmarks. Practice and frozen-policy benchmark modes are separate. Abandonment preserves an incomplete journal after an incompatible build without inventing a result.
-- **Teaching:** private guide retrieval, twenty attributed draft families and sixty variations, fixed family partitions, saved-position binding, review annotations and a queue capped at ten. Raw PDFs and extracted passages stay outside Git. Draft prose is never an automatic training label.
-- **Research:** portable setup/profiles, diagnostics, bounded manual cycles, population opponents, sufficiently sampled search targets, periodic optimizer checkpoints, streaming compressed Parquet, bounded replay loading and atomic checksummed bundles with linked continuation.
-- **Integrity:** explicit replay/checkpoint admission; persistent benchmark-family quarantine; cumulative ancestor data lineage; frozen evaluation weight snapshots; complete registry coverage before promotion. Legacy smoke models and incomplete/subset comparisons cannot bypass those gates.
+- **Watch and play:** observable card zones, expanded/sparse Benches, card art/text,
+  attachments, damage, conditions, inspection and simulator-bound source/target
+  choices. Staged prompts retain Finish/Undo and keyboard action choices. Live
+  follow, pause, speed, decision/turn navigation and seeking share immutable frames.
+  Pausing playback leaves simulation computation running.
+- **Durability and privacy:** ordered cursor feeds publish only durably committed
+  decisions, ignore orphaned crash tails and redact other-player private choices
+  before transmission. Browser replay schema 2 selects one perspective; legacy
+  private replay files remain readable. Accepted human actions and engine choices
+  remain journaled, with revision and idempotency checks. A retained match worker
+  avoids rebuilding every prior decision; restart/replacement reconstructs it.
+- **Human sessions:** untimed best-of-three, shared engine turn budget, practice
+  assistance, frozen benchmark policies, bookmarks, concessions, restart recovery
+  and explicit incomplete abandonment. Historical playback cannot submit a move
+  or grade a different current position. Benchmark research access remains locked.
+- **Rules and knowledge:** new focused checks for Froslass, Area Zero, Lucario and
+  the twelve teaching positions. Area Zero replacement now preserves the original
+  Stadium owner's Bench-reduction priority. Revealed hands, own deck membership,
+  supported top/bottom order and movement/shuffle invalidation constrain beliefs.
+  Ordinary Recon Directive and Pokégear resolution have search regressions.
+  Unsupported information states still refuse search rather than discard knowledge.
+- **Teaching:** four existing guide families now have three concrete variations
+  each. Receipts identify the exact engine, recipe, observation and mechanically
+  checked root actions. Review remains separate. Immutable review snapshots,
+  permanent family partitions and contamination quarantine gate demonstrations.
+  The queue is capped at ten; the other sixteen families remain unmaterialized.
+- **Learning:** multiple acceptable actions share a policy-only loss with no
+  invented outcome label. Policy training, optimizer resume, linked continuation,
+  checksummed bundle transfer and model selection are implemented. Policy-only
+  checkpoints cannot supply a value score. Verified outcome training can warm-start
+  from an admitted guide policy and mix demonstrations with game/search targets.
+- **Evaluation:** learned root preferences and a checksummed portable value network
+  can enter search. Python/TypeScript features, card tokens and numerical outputs
+  have parity tests. Deeper rollout policies remain heuristic. The UI distinguishes
+  heuristic resource index, learned outcome logit contributions and independently
+  calibrated W/D/L availability. No actual competitive outcome model exists yet.
 
 ## Verification and evidence
 
-The integrated engine fingerprint is `6dae18d12adf6214`. Rules/browser checks used `310ae24b3cc8cbbc`; the final change advertises the already implemented first-player control to Python. Actual JSON-lines probes verified both requested starting players on the final build. Replays retain their actual build identity; earlier branch fixtures have earlier fingerprints. The metadata-only artwork map is part of the fingerprint.
+`docs/evidence/watch-and-learn.json` records the final tested engine identity,
+commands and results. Earlier evidence retains its original build fingerprints;
+it is not relabeled as testing this build.
 
-| Check | Observed result |
-|---|---|
-| Integrated TypeScript engine suite | 31 passed, including complete seed-5 games for all fifteen competitive lists against Mega Lucario |
-| Final Drakloak / knowledge changes | 13 focused competitive tests passed after the full suite; build and typecheck passed |
-| Integrated Python suite | 76 passed, two upstream dependency deprecation warnings |
-| Web | TypeScript and Vite production build passed |
-| Real match browser | Legal setup action, bookmark, pause/reload/resume, card inspection, two concession outcomes with next-game choice, explicit replay publication and reviewed annotation passed |
-| Actual API crash/restart | A durably acknowledged decision survived SIGKILL; restart paused the session, preserved identical player observation and budget, and reconstructed on resume |
-| Real replay browser | Competitive Crustle vs Lucario seed 17 finished; selected-player view, saved-position roundtrip and uncalibrated analysis passed; unsupported search correctly withheld |
-| Browser layout | 1440px desktop and 390px narrow checks; no JavaScript errors or horizontal page overflow |
-| Recovery / bundles | Two-game starter smoke paused and resumed; 3.66 MB / five-artifact bundle roundtrip. Unit integration additionally trains a tiny model, transfers its checkpoint and continues optimizer progress |
-| Device probe | Small-model CPU approximately 702 vs MPS 303 steps/sec on this Mac; CPU is the measured starting choice. Windows hardware remains untested |
-| Card metadata | All 98 names and available regulation marks matched provider metadata; 85 art URLs available, thirteen Basic Energy printings require text fallback |
+- Engine fixtures cover complete games across all fifteen lists, legal bindings,
+  knowledge constraints and the new mechanical interaction groups. They do not
+  constitute exhaustive card or matchup certification.
+- Python checks cover admission, multiple-action learning, quarantine, resume,
+  portable value parity, bundles, private projection, cursor recovery and retained
+  match workers. Two dependency deprecation warnings are upstream.
+- Real browser checks exercise a live simulation while playback is paused,
+  exact saved-position seeking, private perspectives, legal human setup, history
+  guards, pause/reload/resume, bookmarks, two concession games and teaching review.
+  Isolated synthetic annotations are not user strategy approvals.
+- A real live-API game reached a natural rules terminal and started game two with
+  the correct score. The human seat was an observation-only heuristic proxy and
+  the engine budget was 1 ms. This verifies product execution, not human play or
+  competitive strength. Game two's unfinished journal was preserved without
+  assigning a match result.
+- Browser checks include 1440×900 and 390px layouts, reduced motion, no horizontal
+  overflow, failed/slow artwork, sparse targets and an eight-Pokémon Bench.
 
-A longer live-API probe exposed a Python baseline selection/undo loop. The fix gives staged controls explicit priorities and has two regression tests. The corrected 180-second live API probe advanced through eleven turns and ended incomplete with no assigned result; a full natural-outcome live best-of-three is still unverified. The browser best-of-three concession test verifies product state transitions, not strategic playing strength. Full simulator games and natural terminal reasons are tested separately. Engine test counts are not an assertion of exhaustive card coverage.
+Reproduction and local evidence:
 
-Evidence and reproduction:
+- `docs/WATCH_AND_LEARN.md`: launch, teaching materialization and training commands.
+- `contracts/WATCH_AND_LEARN_V1.md`: private projection, action references and feeds.
+- `packages/engine/COMPETITIVE_STATUS.md` and `formats/rules-coverage.json`: exact
+  mechanics coverage and remaining gaps.
+- `tests/browser/{smoke,play-smoke,watch-layout,board-bindings,card-resilience}.mjs`:
+  real integration and separately labeled component checks.
+- `scripts/check-natural-match.py`: bounded natural-outcome product probe; use an
+  isolated server with no ongoing match.
+- `artifacts/browser/` and `artifacts/natural-match.json`: ignored local captures
+  and integration evidence; QA journals stay in `data/watch-play-qa/`.
+- `docs/evidence/competitive-integration.json`: preserved previous checkpoint,
+  including actual SIGKILL/restart recovery evidence and device measurements.
 
-- `packages/engine/evidence/competitive-verification.json` and `recon-directive-review.json`: branch rules checks and source identities.
-- `formats/rules-coverage.json`: per-printing coverage and unresolved interactions.
-- `docs/evidence/card-metadata.json`: provider cross-check and missing art; no artwork files downloaded.
-- `docs/PORTABLE_RESEARCH.md`: setup, profiles, pause/resume, bundle commands and resource limits.
-- `tests/browser/play-smoke.mjs`, `tests/browser/smoke.mjs`, and `card-resilience.mjs`: actual UI/API integration scripts. Use isolated local data with no active match.
-- `artifacts/browser/`: ignored local screenshots; private integration replays stay in `data/integration-ui/`.
-- `docs/BASELINE_EVIDENCE_2026-09-17.md`: preserved historical starter experiments. Their model/data cannot silently enter the new trusted corpus.
+## Remaining acceptance gates
 
-## Remaining acceptance gates, in order
+1. **Strategic review and the first real policy experiment.** Review the prepared
+   positions, accepting all sound alternatives and recording conditions/resources.
+   Then run `train-policy` and examine its decision comparison. Test-only reviews
+   cannot stand in for the user's review. No additional guides or hardware are
+   needed. Whole held-out teaching families remain separate.
+2. **Complete rules and legality admission.** Finish per-print legality/reprint
+   evidence and full interaction closure, including suppression, protection/HP/
+   recovery combinations, item-lock timing, final-Prize simultaneous terminals
+   and exhaustion. Format-level sources are not per-print certification. Admission
+   must match engine, deck and covered mechanics; all mains and variants are gated.
+3. **Close information gaps.** Special Red Card's unordered known bottom segment,
+   unfamiliar reveal destinations, unsupported markers and ambiguous inferred
+   Prize changes still block affected searches. Continue equal-information tests.
+   Authored unknown-list priors are approximations, not learned opponent plans.
+4. **Measure actual strength and calibration.** After admission, run bounded
+   self-play, balanced held-out matchup comparisons and guide-initialization
+   ablations. Promote only through the predeclared improvement/regression gate.
+   Current static Energy coverage and Crustle protection capability features do
+   not resolve all actual readiness/suppression/remaining-answer conditions.
+   More contextual features and fresh tactical review remain necessary.
+5. **Finish curriculum and broader product workflows.** Materialize the other
+   sixteen families, add practice study branches and complete video/transcript
+   intake and reviewed-match test retirement. Optional local LLM/retrieval models
+   are not installed or verified; their prose cannot establish numeric labels.
+6. **Complete machine acceptance.** Native Windows setup, sustained operation,
+   crash recovery and cross-device continuation need the actual Ryzen desktop.
+   Monitors cover one Python process tree and managed artifacts, not independently
+   launched heavy processes or external model caches. Keep heavy jobs separate.
 
-1. **Finish competitive rules certification.** Highest-risk fixtures are Froslass checkup/simultaneous knockouts; Area Zero expansion/shrinking; Lucario damage modifiers and evolution-triggered gust; item-lock timing; recovery, healing and HP combinations; genuine exhaustion lines. Complete official per-print/reprint legality evidence. All fifteen lists must pass, including Crustle and reserved variants.
-2. **Complete information tracking.** Opponent hand reveals, generic peeks and known bottom order currently refuse search. Drakloak and Pokégear make this a material search-coverage limitation. Preserve every legally acquired constraint and prove indistinguishable hidden worlds give identical seeded decisions. Unknown-list priors are authored approximations, not learned opponent plans.
-3. **Materialize and review guide fixtures.** The twenty families are not yet twenty legal simulator positions. Build concrete variants, validate their mechanics, obtain strategic review, then implement a measured guide-imitation stage. Current training does not yet consume guide demonstrations.
-4. **Measure strength and evaluation quality.** Run the complete held-out matchup matrix with baselines, historical checkpoints and balanced starts after admission passes. Add contextual defensive-answer/recovery features, learned search leaves, matched-compute ablations and sufficient calibration. A deployed Stockfish-like bar must document its opponent population and compute context; the present untrained display is a labeled resource index.
-5. **Complete platform/operational acceptance.** Run native Windows install, long self-play, crash recovery and cross-device continuation on the actual Ryzen desktop. Current monitors cover one Python process tree and managed data, not separately launched heavy processes or external model caches. Add shared accounting before claiming an aggregate project quota. Interrupted evaluations restart their bounded matrix. Live actions currently reconstruct prior accepted actions, so long-match latency needs profiling and worker-state reuse before scaling.
-6. **Complete product research workflow.** Practice study branches, full video/transcript intake and reviewed-match test-set retirement need fuller implementation. Optional Sentence Transformers/Ollama inference is not installed or verified. Keep generated explanations subordinate to simulator/model evidence.
+The next user contribution is review in **Teaching review**. Existing guide files,
+earlier replays and incomplete human journals are preserved. An incompatible old
+match stays paused; use explicit incomplete abandonment before starting another.
 
-The next useful user contribution is strategic review of reproducible Crustle and Dragapult positions once their rules fixtures are verified. The existing guides and supplied lists are already preserved; no repeated upload is needed.
+## Integration boundaries
 
-## Review and handoffs
-
-Commits and feature branches are preserved; the integration is submitted as a draft PR. Merges and deployment remain user-controlled. Start additional work from the current integration commit, not the original `f6e9ac1` foundation. The three scoped assignments in `docs/handoffs/` remain the ownership boundaries.
+Commits, pushes to `codex/` branches and the existing draft PR are authorized.
+Merges and deployment remain user-controlled. Future assignments start from the
+latest integration commit and read this checkpoint plus `docs/handoffs/`.

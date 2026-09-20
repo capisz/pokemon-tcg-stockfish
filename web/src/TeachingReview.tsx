@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { api, errorMessage } from './api';
-import { CardInspector, CardTable } from './Play';
+import { CardInspector, CardTable, promptInstruction } from './Board';
 import type { Card, PositionSummary, Teaching } from './types';
 
 type Family = {id?:string; familyId?:string; title?:string; partition?:string; hypothesis?:string};
@@ -56,9 +56,9 @@ export function TeachingReview(){
    <h2>{selected.title}</h2><p className="small-copy">{selected.partition} · {selected.reviewStatus} · Player {(selected.playerId??0)+1} information only</p>
    {selected.source?.author&&<p className="small-copy">{selected.source.title} · {selected.source.author}{selected.source.pages?.length?` · Pages ${selected.source.pages.join(', ')}`:selected.source.page?` · Page ${selected.source.page}`:''}</p>}
    {selected.observation&&<CardTable observation={selected.observation} inspect={setInspect}/>}
-   {selected.observation?.prompt&&<div className="move-body"><p>{selected.observation.prompt.message}</p>{selected.observation.prompt.cards?.map((card,i)=><button type="button" key={i} onClick={()=>setInspect(card)}>{card.name}</button>)}</div>}
+   {selected.observation?.prompt&&<div className="move-body"><p>{promptInstruction(selected.observation.prompt.message)}</p>{selected.observation.prompt.cards?.map((card,i)=><button type="button" key={i} onClick={()=>setInspect(card)}>{card.name}</button>)}</div>}
    {inspect&&<CardInspector card={inspect} close={()=>setInspect(null)}/>}
-   <form onSubmit={review}><p className="small-copy">Accept all sound alternatives. Explain the condition that changes your choice.</p>
+   <form onSubmit={review}>{selected.mechanicsAudit&&<p className="small-copy">Only {selected.mechanicsAudit.validatedActionIds?.length??0} of {selected.observation?.legalActions.length??0} choices have checked continuations; selecting another keeps this example out of training.</p>}<p className="small-copy">Accept all sound alternatives. Explain the condition that changes your choice.</p>
     <fieldset><legend>Acceptable legal actions</legend>{selected.observation?.legalActions.map(action=><label className="checkbox-label" key={action.id}><input type="checkbox" checked={accepted.includes(action.id)} onChange={e=>setAccepted(e.target.checked?[...accepted,action.id]:accepted.filter(a=>a!==action.id))}/>{action.label}</label>)}</fieldset>
     {!selected.observation?.legalActions.length&&<p>This bookmark was taken while the other player was deciding. Bookmark your own decision to annotate legal alternatives.</p>}
     <label>Conditional reasoning<textarea required value={reason} onChange={e=>setReason(e.target.value)} rows={5}/></label>

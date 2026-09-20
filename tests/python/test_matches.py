@@ -176,6 +176,7 @@ def test_frozen_model_supplies_live_policy_and_learned_search_priors(service, mo
     monkeypatch.setattr(module, "Agent", Policy)
     import ptcg_lab.training as training
     monkeypatch.setattr(training, "predict", lambda path, observation, loaded: (0, [3, 1]))
+    monkeypatch.setattr(training, "export_portable_value", lambda path, loaded: None)
     match = act(service, create(service))
     model.write_bytes(b"new-champion")
     state = engine_turn(service, match["id"])

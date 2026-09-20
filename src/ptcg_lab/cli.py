@@ -111,6 +111,14 @@ def main(argv: list[str] | None = None) -> int:
     training.add_argument("--mlflow", action="store_true")
     training.add_argument("--linked-resume", action="store_true", help="Create a child experiment when continuing on another device")
     training.add_argument("--warm-start", type=Path, help="Initialize weights for new data with a fresh optimizer")
+    prepare = commands.add_parser("prepare-teaching", help="Materialize twelve audited guide positions for human review")
+    policy_training = commands.add_parser("train-policy", help="Train only policy preferences from reviewed tactical examples")
+    policy_training.add_argument("--epochs", type=int, default=3)
+    policy_training.add_argument("--seed", type=int, default=42)
+    policy_training.add_argument("--device", choices=["cpu", "mps"], default="cpu")
+    policy_training.add_argument("--max-positions", type=int, default=10000)
+    policy_training.add_argument("--resume", type=Path)
+    policy_training.add_argument("--linked-resume", action="store_true", help="Continue transferred optimizer state in a linked child experiment")
     evaluation = commands.add_parser("evaluate", help="All 25 candidate/opponent deck assignments with paired seeds and swapped seats")
     evaluation.add_argument("--candidate", default="heuristic")
     evaluation.add_argument("--opponent", default="random")
@@ -166,6 +174,23 @@ def main(argv: list[str] | None = None) -> int:
                               opponents=population(store) if arguments.population else None,
                               search_budget_ms=arguments.search_budget_ms, search_method=arguments.search_method,
                               allow_unverified=arguments.allow_unverified)
+        elif arguments.command == "prepare-teaching":
+            from .fixtures import from_fixture
+            families = ("crustle-delay-prize", "crustle-energy-function", "dragapult-information-order", "dragapult-hammer-target")
+            items = []
+            with EngineClient(settings.root, settings.engine_timeout) as engine:
+                for family in families:
+                    for variation in range(1, 4):
+                        receipt = engine.request("fixture", {"fixtureId": family, "variationId": f"{family}-{variation}"})
+                        item = from_fixture(store, settings.root, receipt)
+                        items.append({key: item[key] for key in ("id", "familyId", "variationId", "reviewStatus", "trainingEligible")})
+            result = {"positions": items, "next": "Review acceptable actions and reasoning in Teaching review. No guide labels have been approved automatically."}
+        elif arguments.command == "train-policy":
+            from .training import train_policy
+            from .resources import ResourceGuard
+            with ResourceGuard(settings) as guard:
+                result = train_policy(store, epochs=arguments.epochs, seed=arguments.seed, device=arguments.device,
+                                      max_positions=arguments.max_positions, resume=arguments.resume, linked_resume=arguments.linked_resume, guard=guard)
         elif arguments.command == "train":
             from .training import train
             from .resources import ResourceGuard

@@ -10,13 +10,38 @@ from pathlib import Path
 from .storage import digest
 
 
-def eligible(record: dict) -> bool:
+def review_hash(record: dict) -> str:
+    """Bind the human annotation to its exact information set and audit receipt."""
+    fields = ("familyId", "partition", "positionHash", "engineVersion", "source", "rulesAuditStatus",
+              "mechanicsAudit", "fixtureReceiptHash", "acceptableActionIds", "rejectedActionIds",
+              "conditionalReasoning", "reviewStatus", "reviewedAt")
+    return digest({key: record.get(key) for key in fields})
+
+
+def eligible(record: dict, *, partition: str = "train") -> bool:
     legal = {action["id"] for action in record.get("observation", {}).get("legalActions", [])}
     accepted = record.get("acceptableActionIds", [])
     return bool(record.get("reviewStatus") == "reviewed" and record.get("rulesValidation") == "legal-position"
+                and not record.get("superseded")
                 and record.get("rulesAuditStatus") == "verified"
-                and record.get("partition") == "train" and record.get("positionHash") == digest(record.get("observation"))
-                and accepted and set(accepted) <= legal and record.get("conditionalReasoning", "").strip())
+                and record.get("partition") == partition and record.get("positionHash") == digest(record.get("observation"))
+                and accepted and set(accepted) <= legal and record.get("conditionalReasoning", "").strip()
+                and record.get("reviewHash") == review_hash(record)
+                and (not record.get("fixtureReceiptHash")
+                     or set(accepted) <= set(record.get("mechanicsAudit", {}).get("validatedActionIds", []))))
+
+
+def bind_family(store, family_id: str, partition: str) -> None:
+    """Once a family is assigned, later imports cannot turn a test into training."""
+    if partition not in {"train", "validation", "test"}:
+        raise ValueError("The curriculum family has no valid fixed partition.")
+    identifier = digest({"teachingFamily": family_id})
+    path = store.location("teaching-families", identifier)
+    if path.exists():
+        if store.get("teaching-families", identifier)["partition"] != partition:
+            raise ValueError("Teaching family partition is immutable; use the original partition.")
+    else:
+        store.put("teaching-families", identifier, {"id": identifier, "familyId": family_id, "partition": partition})
 
 
 def from_position(store, root: Path, position_id: str, family_id: str) -> dict:
@@ -33,8 +58,7 @@ def from_position(store, root: Path, position_id: str, family_id: str) -> dict:
     partition = family.get("partition", "test")
     if replay.get("evaluationExperiment") or replay.get("humanMatch"):
         partition = "test"
-    if partition not in {"train", "validation", "test"}:
-        raise ValueError("The curriculum family has no valid fixed partition.")
+    bind_family(store, family_id, family.get("partition", "test"))
     observation = copy.deepcopy(position["observation"])
     record = {"id": uuid.uuid4().hex, "schemaVersion": 1, "familyId": family_id,
               "title": position["title"], "partition": partition, "observation": observation,
@@ -63,7 +87,7 @@ def curriculum(root: Path) -> list[dict]:
 
 def queue(store, limit: int = 10) -> list[dict]:
     # Recent user bookmarks take priority; stable ordering makes weekly review reproducible.
-    records = [r for r in store.list("teaching") if r.get("reviewStatus") == "draft"]
+    records = [r for r in store.list("teaching") if r.get("reviewStatus") == "draft" and not r.get("superseded")]
     priority = {"rules-issue": 0, "disagreement": 1, "discovery": 2, "human-bookmark": 3}
     records.sort(key=lambda r: (priority.get(r.get("reason"), 4), r.get("createdAt", ""), r["id"]))
     return [{k: v for k, v in record.items() if k != "observation"} for record in records[:min(10, max(1, limit))]]
@@ -85,6 +109,11 @@ def review(store, identifier: str, *, review_status: str, acceptable_action_ids:
                   rejectedActionIds=rejected, conditionalReasoning=reasoning.strip(),
                   criticalResources=critical_resources.strip(), confidence=confidence)
     record["reviewedAt"] = datetime.now(timezone.utc).isoformat()
+    record["reviewHash"] = review_hash(record)
     record["trainingEligible"] = eligible(record)
+    # A later correction updates the queue entry, but cannot erase the exact
+    # annotation that supplied a prior checkpoint's demonstration provenance.
+    if not store.location("teaching-reviews", record["reviewHash"]).exists():
+        store.put("teaching-reviews", record["reviewHash"], copy.deepcopy(record))
     store.put("teaching", identifier, record)
     return record

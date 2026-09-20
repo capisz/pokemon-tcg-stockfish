@@ -120,19 +120,25 @@ class EnginePool:
         for client in self.clients:
             self.available.put(client)
 
-    @contextlib.contextmanager
-    def lease(self, wait_timeout: float = 310) -> Iterator[EngineClient]:
+    def acquire(self, wait_timeout: float = 310) -> EngineClient:
         try:
-            client = self.available.get(timeout=wait_timeout)
+            return self.available.get(timeout=wait_timeout)
         except queue.Empty as exc:
             raise EngineError("All local simulation workers are busy") from exc
+
+    def release(self, client: EngineClient) -> None:
+        self.available.put(client)
+
+    @contextlib.contextmanager
+    def lease(self, wait_timeout: float = 310) -> Iterator[EngineClient]:
+        client = self.acquire(wait_timeout)
         try:
             yield client
         except EngineError:
             client.close()
             raise
         finally:
-            self.available.put(client)
+            self.release(client)
 
     def close(self) -> None:
         for client in self.clients:

@@ -6,6 +6,15 @@ Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, and cu
 
 ## Ownership
 
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md`,
+`docs/WATCH_AND_LEARN.md` and `research/GUIDE_POLICY_MILESTONE.md`. Audited
+multi-action policy training, immutable review lineage, linked resume, safe
+checkpoint selection and portable learned leaves are implemented. Twelve actual
+positions await user review; no actual guide checkpoint exists. Run the first
+policy experiment only after those reviews, then compare changed decisions and
+plan the matched guide-initialization ablation. Outcome training remains gated
+on rules admission. Do not turn test-only annotations into user approvals.
+
 Own Python transport, configuration, storage, self-play, datasets, features/models, training, evaluation, CLI, portable execution scripts and research tests. Preserve transport/storage service compatibility. FastAPI, live sessions, guides, teaching and React belong to assignment 3. Rules, registry and search belong to assignment 1. Shared dependency and interface changes go through the lead.
 
 ## Required behavior

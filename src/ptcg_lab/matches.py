@@ -8,12 +8,13 @@ import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
-from contextlib import nullcontext
+from contextlib import nullcontext, contextmanager
 from datetime import datetime, timezone
 from pathlib import Path
 
 from .selfplay import Agent
 from .storage import digest, file_digest, terminal_score
+from .presentation import FrameStream, player_observation
 
 
 class MatchConflict(ValueError):
@@ -31,9 +32,51 @@ class MatchService:
         self.lock = threading.RLock()
         self.executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="ptcg-match")
         self.pending: set[str] = set()
+        self.stream = FrameStream(store)
+        self.worker = None
+        self.worker_key = None
 
     def close(self):
         self.executor.shutdown(wait=True)
+        self._release_worker()
+
+    def _release_worker(self):
+        if self.worker is not None:
+            self.pool.release(self.worker)
+        self.worker = self.worker_key = None
+
+    @contextmanager
+    def _lease(self):
+        # Test transports and one-worker configurations retain ordinary leases.
+        # Production's two-worker default reserves one worker for the live game.
+        if not hasattr(self.pool, "acquire") or len(self.pool.clients) < 2:
+            with self.pool.lease() as engine:
+                yield engine
+            return
+        if self.worker is None:
+            self.worker = self.pool.acquire(wait_timeout=10)
+            self.worker_key = None
+        try:
+            yield self.worker
+        except Exception:
+            self.worker_key = None
+            raise
+
+    def _remember_worker(self, engine, record):
+        if engine is self.worker:
+            self.worker_key = (record["id"], record["gameNumber"], len(record["actions"]), getattr(engine, "process", None))
+
+    def _append_frame(self, record, action=None, actor=0):
+        record["frameCursor"] = self.stream.append(record["id"], {
+            "decisionIndex": len(record["actions"]), "actor": actor, "priorAction": action,
+            "observation": record["observation"], "revision": record["revision"], "gameNumber": record["gameNumber"],
+        }, record.get("frameCursor", -1))
+
+    def frames(self, identifier, after=-1, limit=100):
+        with self.lock:
+            record = self.get_private(identifier)
+            return self.stream.read(identifier, after=after, limit=limit, committed=record.get("frameCursor", -1),
+                                    player_id=0, status=record["status"])
 
     def recover(self):
         for record in self.store.list("private-matches"):
@@ -58,8 +101,9 @@ class MatchService:
                       knownList=record["knownList"], ownDeckId=record["decks"][0],
                       error=record.get("error"), nextStarterChooser=record.get("nextStarterChooser"),
                       gameResult=record.get("gameResult"))
+        result["frameCursor"] = record.get("frameCursor", -1)
         if not summary:
-            result["observation"] = copy.deepcopy(record["observation"])
+            result["observation"] = player_observation(record["observation"])
             result["matchKnowledge"] = copy.deepcopy(record.get("publicKnowledge", []))
             if record["knownList"]:
                 result["opponentList"] = next(d for d in self.registry() if d["id"] == record["decks"][1])["cards"]
@@ -75,7 +119,7 @@ class MatchService:
         with self.lock:
             return [self._public(r, summary=True) for r in self.store.list("private-matches")]
 
-    def create(self, deck_id, opponent_archetype, mode="practice", known_list=False, budget_ms=120000):
+    def create(self, deck_id, opponent_archetype, mode="practice", known_list=False, budget_ms=120000, model_id=None):
         with self.lock:
             if mode not in {"practice", "benchmark"} or not 1 <= budget_ms <= 120000:
                 raise ValueError("Use practice or benchmark mode and a turn budget between 1 and 120000 ms.")
@@ -91,7 +135,12 @@ class MatchService:
             identifier = uuid.uuid4().hex
             selected = secrets.choice(candidates)
             model = self.settings.analysis_model
-            if model is None and (self.settings.data / "models/champion.pt").exists():
+            if model_id == "heuristic":
+                model = None
+            elif model_id:
+                from .model_registry import resolve_model
+                model = resolve_model(self.store, model_id)
+            if model_id is None and model is None and (self.settings.data / "models/champion.pt").exists():
                 model = self.settings.data / "models/champion.pt"
             policy, model_version = "heuristic", "heuristic-rollout-v1"
             if model is not None:
@@ -128,10 +177,12 @@ class MatchService:
                       "A turn's exhausted thinking budget uses a legal heuristic fallback to finish mandatory choices.",
                       "Cross-game beliefs retain cards seen on the public boards and in discards; private prior-game hands are never used.",
                       "Guide-derived competitive lists remain experimental until their rules and legality audit passes."], "replayIds": []}
-            with self.pool.lease() as engine:
+            with self._lease() as engine:
                 record["engineIdentity"] = engine.request("health")
                 engine.request("reset", {"seed": record["seed"], "decks": record["decks"]})
                 record["observation"] = engine.request("observe", {"playerId": 0})
+                self._remember_worker(engine, record)
+            self._append_frame(record)
             self._save(record)
             return self._public(record)
 
@@ -145,6 +196,9 @@ class MatchService:
 
     def _restore(self, engine, record):
         self._verify_identity(engine, record)
+        expected = (record["id"], record["gameNumber"], len(record["actions"]), getattr(engine, "process", None))
+        if engine is self.worker and self.worker_key == expected:
+            return
         params = {"seed": record["seed"], "decks": record["decks"]}
         if record.get("firstPlayer") is not None:
             params["firstPlayer"] = record["firstPlayer"]
@@ -154,6 +208,7 @@ class MatchService:
         current = engine.request("observe", {"playerId": 0})
         if current != record["observation"]:
             raise ValueError("Reconstruction differs from the durable observation; the match is paused.")
+        self._remember_worker(engine, record)
 
     def _check(self, record, revision, request_id, payload):
         previous = record["requests"].get(request_id)
@@ -167,11 +222,14 @@ class MatchService:
             raise MatchConflict("The engine is thinking; wait for the accepted decision.")
         return None
 
-    def _ack(self, record, request_id, payload):
+    def _ack(self, record, request_id, payload, action=None):
         record["revision"] += 1
+        self._append_frame(record, action)
         response = self._public(record)
         record["requests"][request_id] = {"payload": payload, "response": response}
         self._save(record)
+        if record["status"] in {"paused", "completed", "abandoned", "between-games"}:
+            self._release_worker()
         return response
 
     def _capture_knowledge(self, record):
@@ -197,6 +255,9 @@ class MatchService:
             replay.update(status="truncated", outcome=None, concession={"playerId": 0, "reason": "human-concession"})
         replay["humanMatch"] = {"matchId": record["id"], "gameNumber": record["gameNumber"], "mode": record["mode"],
                                 "modelVersion": record["modelVersion"], "reviewed": False}
+        replay["policyContext"] = {"policy": "heuristic" if record["policy"] == "heuristic" else "model",
+                                   "modelVersion": record["modelVersion"], "learnsDuringRun": False,
+                                   "opponentPopulation": "Human practice/benchmark match", "computeBudgetMsPerTurn": record["budgetMs"]}
         # Excluded from automatic training, even after later review.
         replay["evaluationExperiment"] = f"human-{record['id']}"
         record["games"].append(replay)
@@ -222,6 +283,7 @@ class MatchService:
             if operation == "next-game" and record["status"] == "between-games" and record.get("nextStarterChooser") == 0 and arguments.get("firstPlayer") not in (0, 1):
                 raise ValueError("Choose who starts the next game.")
             try:
+                applied_action = None
                 if operation == "abandon":
                     if record["status"] not in {"paused", "between-games"}:
                         raise MatchConflict("Pause the match before ending it as incomplete.")
@@ -232,7 +294,7 @@ class MatchService:
                     record["status"] = "paused"
                 elif operation == "resume":
                     if record["status"] != "paused": raise MatchConflict("The game is not paused.")
-                    with self.pool.lease() as engine:
+                    with self._lease() as engine:
                         self._restore(engine, record)
                     record.update(status="active", error=None)
                 elif operation == "next-game":
@@ -243,33 +305,37 @@ class MatchService:
                     if record.get("nextStarterChooser") == 1: first = 1
                     record.update(gameNumber=record["gameNumber"] + 1, seed=secrets.randbits(32), actions=[],
                                   firstPlayer=first, budgetTurn=None, spentMs=0, status="active", gameResult=None)
-                    with self.pool.lease() as engine:
+                    with self._lease() as engine:
                         self._verify_identity(engine, record)
                         params = {"seed": record["seed"], "decks": record["decks"]}
                         if first is not None: params["firstPlayer"] = first
                         engine.request("reset", params)
                         record["observation"] = engine.request("observe", {"playerId": 0})
+                        self._remember_worker(engine, record)
                 elif operation in {"action", "concede"}:
                     if record["status"] != "active": raise MatchConflict("Resume the active game before acting.")
                     if operation == "action":
                         observation = record["observation"]
                         if observation["decisionPlayer"] != 0 or arguments["actionId"] not in {a["id"] for a in observation["legalActions"]}:
                             raise MatchConflict("This is not a legal action in the current position.")
-                    with self.pool.lease() as engine:
+                    with self._lease() as engine:
                         self._restore(engine, record)
                         if operation == "action":
+                            applied_action = next(a for a in record["observation"]["legalActions"] if a["id"] == arguments["actionId"])
                             engine.request("step", {"actionId": arguments["actionId"]})
                             record["actions"].append({"actionId": arguments["actionId"], "playerId": 0})
                             record["observation"] = engine.request("observe", {"playerId": 0})
+                            self._remember_worker(engine, record)
                         if operation == "concede" or record["observation"]["status"] == "finished":
                             self._finish_game(record, engine, operation == "concede")
                 else:
                     raise ValueError("Unknown match operation.")
                 self._capture_knowledge(record)
-                return self._ack(record, request_id, payload)
+                return self._ack(record, request_id, payload, applied_action)
             except MatchConflict:
                 raise
             except Exception as exc:
+                self._release_worker()
                 # Do not persist the in-memory action if durable acceptance failed.
                 saved = self.get_private(identifier)
                 saved.update(status="paused" if saved["status"] == "active" else saved["status"], error=str(exc)[:1000])
@@ -291,11 +357,12 @@ class MatchService:
         try:
             from .resources import ResourceGuard
             guard_context = ResourceGuard(self.settings) if hasattr(self.settings, "max_memory_bytes") else nullcontext()
-            with self.pool.lease() as engine, guard_context as guard:
+            with self._lease() as engine, guard_context as guard:
                 with self.lock:
                     record = self.get_private(identifier)
                     self._restore(engine, record)
                 agent = None
+                leaf_model = None
                 # A bounded batch protects against accidental endless effect loops.
                 for _ in range(256):
                     if guard is not None:
@@ -316,6 +383,9 @@ class MatchService:
                     else:
                         if agent is None:
                             agent = Agent(record["policy"], record["searchSeed"] + len(record["actions"]))
+                            if record["policy"] != "heuristic":
+                                from .training import export_portable_value
+                                leaf_model = export_portable_value(Path(record["policy"]), agent.loaded)
                         if hasattr(agent, "rng"):
                             agent.rng.seed(record["searchSeed"] + len(record["actions"]))
                         action_id = agent.choose(observation)
@@ -337,6 +407,8 @@ class MatchService:
                                                     for action, weight in zip(observation["legalActions"], weights)]
                         if record["knownList"]:
                             params["knownOpponentDeckId"] = record["decks"][0]
+                        if leaf_model:
+                            params["leafModel"] = leaf_model
                         search = engine.request("search", params)
                         alternatives = search.get("alternatives", []) if search.get("status") == "complete" else []
                         legal = {a["id"] for a in observation["legalActions"]}
@@ -345,13 +417,17 @@ class MatchService:
                         if measured:
                             action_id = max(measured, key=lambda a: a["score"])["actionId"]
                     record["spentMs"] += math.ceil((time.monotonic() - started) * 1000)
+                    applied_action = next(a for a in observation["legalActions"] if a["id"] == action_id)
                     engine.request("step", {"actionId": action_id})
                     record["actions"].append({"actionId": action_id, "playerId": 1})
                     record["observation"] = engine.request("observe", {"playerId": 0})
                     record["revision"] += 1
+                    self._remember_worker(engine, record)
                     self._capture_knowledge(record)
                     if record["observation"]["status"] == "finished": self._finish_game(record, engine)
-                    with self.lock: self._save(record)
+                    with self.lock:
+                        self._append_frame(record, applied_action, actor=1)
+                        self._save(record)
                     if record["status"] != "active": break
                 else:
                     raise ValueError("Engine decision batch limit reached; resume to continue, no result assigned.")
@@ -362,7 +438,10 @@ class MatchService:
                 try: self._save(record)
                 except Exception: pass
         finally:
-            with self.lock: self.pending.discard(identifier)
+            with self.lock:
+                self.pending.discard(identifier)
+                if self.get_private(identifier)["status"] != "active":
+                    self._release_worker()
 
     def bookmark(self, identifier, title):
         with self.lock:

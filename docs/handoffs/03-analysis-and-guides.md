@@ -6,6 +6,15 @@ Read `contracts/COMPETITIVE_V2.md`, `docs/COMPETITIVE_IMPLEMENTATION.md`, `PRODU
 
 ## Ownership
 
+Current continuation: read `contracts/WATCH_AND_LEARN_V1.md` and
+`docs/WATCH_AND_LEARN.md`. One card table now supports live/saved playback,
+human matches and teaching; cursor feeds and source/target selection are wired
+to the simulator. Preserve that table and its privacy boundary. The first twelve
+positions are materialized with mechanics receipts and await strategic review.
+Remaining work includes the other sixteen fixture families, practice study
+branches, video/transcript intake and reviewed-match test retirement. Keep the
+evaluation status honest while no admitted competitive outcome model exists.
+
 Own React, FastAPI, live-match persistence/session modules, guide/teaching modules and browser/session tests. Assignment 2 supplies transport/storage/training services; assignment 1 supplies legal rules, observations and search. The lead owns common contracts, integration, and attributed `research/curriculum.json`.
 
 ## Required behavior
