@@ -29,7 +29,7 @@ def analyze_observation(observation: dict, decks: list[dict], model_path: Path |
                       "modelVersion": "resource-heuristic-v1", "calibrated": False,
                       "components": [{"name": name, "value": round(float(value), 4)} for name, value in zip(FEATURE_NAMES, contributions)],
                       "description": "Untrained resource index. These hand-set contributions are not advantage units or probabilities; opponent private resources are unknown."}
-        scores = [heuristic_action_score(action) for action in observation.get("legalActions", [])]
+        scores = [heuristic_action_score(action, observation) for action in observation.get("legalActions", [])]
         label = "Static action heuristic; no simulation visits, expected-result estimate, or optimality claim."
     alternatives = [{"actionId": action["id"], "label": action["label"], "score": round(float(score), 4),
                      "visits": 0, "description": label}

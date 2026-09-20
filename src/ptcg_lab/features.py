@@ -105,7 +105,15 @@ def action_features(action: dict) -> np.ndarray:
     return np.array(features, dtype=np.float32)
 
 
-def heuristic_action_score(action: dict) -> float:
+def heuristic_action_score(action: dict, observation: dict | None = None) -> float:
+    # Staged selection controls are operations, not card names. Scoring an Undo
+    # containing "Energy" by keyword alone can select/undo forever.
+    if action.get("type") == "choice":
+        if action.get("choiceOperation") == "undo" or action.get("label") == "Cancel":
+            return -100.0
+        if action.get("choiceOperation") == "finish":
+            return 20.0 if (observation or {}).get("prompt", {}).get("type") == "Choose energy" else 0.0
+        return 10.0
     weights = np.array([3, 2, 2.5, 1.2, 1, .5, 1.3, -.8, -2, -2, .1, -.5, 1, .7, .1, -.3] + [0] * 16)
     return float(action_features(action) @ weights)
 

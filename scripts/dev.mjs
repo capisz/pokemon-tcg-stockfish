@@ -14,7 +14,7 @@ const children = [
     stdio: 'inherit',
     env: {...process.env, PYTHONPATH: [resolve('src'), process.env.PYTHONPATH].filter(Boolean).join(delimiter)},
   }),
-  spawn(process.execPath, [vite], {cwd: resolve('web'), stdio: 'inherit'}),
+  spawn(process.execPath, [vite, '--host', '127.0.0.1', '--port', '5173', '--strictPort'], {cwd: resolve('web'), stdio: 'inherit'}),
 ];
 let stopping = false;
 function stop(code = 0) {

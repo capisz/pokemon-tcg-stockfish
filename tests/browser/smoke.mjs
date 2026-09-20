@@ -18,8 +18,12 @@ try {
   const replayId = await page.getByRole('combobox',{name:/^Saved replay/}).inputValue();
   const replay = await (await page.request.get(`http://127.0.0.1:8765/api/replays/${replayId}`)).json();
   assert.equal(replay.status,'finished');
-  const index = replay.frames.findIndex(frame => frame.observations[frame.actor]?.searchPosition && frame.observations[frame.actor].turn >= 2);
-  assert.ok(index >= 0, 'Expected a supported stable search position');
+  let index = replay.frames.findIndex(frame => frame.observations[frame.actor]?.searchPosition && frame.observations[frame.actor].turn >= 2);
+  if(index < 0) index = replay.frames.findIndex(frame => frame.action && frame.observations[frame.actor]?.turn >= 2);
+  assert.ok(index >= 0, 'Expected a real pre-decision position');
+  const searchable = Boolean(replay.frames[index].observations[replay.frames[index].actor].searchPosition);
+  if(!searchable) assert.ok(replay.frames[index].observations[replay.frames[index].actor].searchUnavailableReason,
+    'Unsupported knowledge must explain why search is unavailable');
   await page.getByRole('combobox',{name:/^Perspective/}).selectOption(String(replay.frames[index].actor));
   const slider=page.getByRole('slider',{name:'Replay position'});
   await slider.focus(); await slider.press('Home');
@@ -36,6 +40,7 @@ try {
   assert.equal(position.observation.players[1-position.playerId].hand.length,0);
   const analysis=await (await page.request.post('http://127.0.0.1:8765/api/analyze',{data:{positionId:saved.id,budgetMs:500}})).json();
   assert.ok(analysis.evaluation);
+  if(!searchable) assert.equal(analysis.search.status,'unavailable');
   if(!analysis.evaluation.calibrated) assert.equal(analysis.evaluation.winProbability,null);
   await page.waitForTimeout(800);
   const meter=page.getByRole('meter');

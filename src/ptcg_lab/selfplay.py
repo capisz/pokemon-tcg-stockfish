@@ -27,7 +27,7 @@ class Agent:
         if self.policy == "random":
             return self.rng.choice(legal)["id"]
         if self.policy == "heuristic":
-            scores = [heuristic_action_score(action) for action in legal]
+            scores = [heuristic_action_score(action, observation) for action in legal]
         else:
             from .training import predict
             _, scores = predict(Path(self.policy), observation, self.loaded)

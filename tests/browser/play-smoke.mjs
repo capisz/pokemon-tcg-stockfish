@@ -18,7 +18,9 @@ try {
   });
   await page.goto(`${base}/#play`);
   await page.getByRole('heading',{name:'Play a best-of-three'}).waitFor();
-  await page.getByLabel('Your deck',{exact:true}).locator('option').first().waitFor();
+  await page.getByRole('combobox',{name:'Your deck',exact:true}).locator('option').first().waitFor({state:'attached'});
+  await page.getByRole('combobox',{name:'Your deck',exact:true}).selectOption('crustle');
+  await page.getByRole('combobox',{name:'Opponent archetype',exact:true}).selectOption('mega-lucario');
   const created = page.waitForResponse(r=>r.url().endsWith('/api/matches')&&r.request().method()==='POST');
   await page.getByRole('button',{name:'Start match',exact:true}).click();
   const match=await (await created).json();
@@ -80,7 +82,7 @@ try {
     assert.deepEqual(state.score,[0,game+1]);
     if(!game){
       assert.equal(state.status,'between-games');
-      await page.getByLabel('Starting player',{exact:true}).selectOption('0');
+      await page.getByRole('combobox',{name:'Starting player',exact:true}).selectOption('0');
       await page.getByRole('button',{name:'Start next game',exact:true}).click();
     }else assert.equal(state.status,'completed');
   }
