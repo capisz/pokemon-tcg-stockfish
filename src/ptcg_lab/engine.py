@@ -13,6 +13,10 @@ from pathlib import Path
 from typing import Any, Iterator
 
 
+# Match worker.ts. Count the complete JSON envelope as UTF-8, without its newline.
+MAX_REQUEST_BYTES = 32 * 1024**2
+
+
 class EngineError(RuntimeError):
     pass
 
@@ -64,16 +68,28 @@ class EngineClient:
 
     def request(self, method: str, params: dict | None = None) -> Any:
         with self.lock:
-            self.start()
             request_id = uuid.uuid4().hex
             try:
-                self.process.stdin.write(json.dumps({"id": request_id, "method": method, "params": params or {}}) + "\n")
+                payload = json.dumps({"id": request_id, "method": method, "params": params or {}},
+                                     ensure_ascii=False, separators=(",", ":"), allow_nan=False)
+                request_bytes = len(payload.encode("utf-8"))
+            except (ValueError, TypeError, UnicodeError) as exc:
+                raise EngineError(f"Cannot encode engine request: {exc}") from exc
+            if request_bytes > MAX_REQUEST_BYTES:
+                raise EngineError(f"Engine request is {request_bytes} bytes; exceeds 32 MiB UTF-8 protocol limit before sending")
+            self.start()
+            try:
+                self.process.stdin.write(payload + "\n")
                 self.process.stdin.flush()
                 raw = self.responses.get(timeout=self.timeout)
                 if isinstance(raw, Exception):
                     raise raw
                 response = json.loads(raw)
                 if response.get("id") != request_id:
+                    # A worker cannot echo the request ID when JSON parsing or
+                    # the pre-parse size guard failed. Preserve that diagnostic.
+                    if response.get("id") is None and isinstance(response.get("error"), dict):
+                        raise EngineError(str(response["error"].get("message", response["error"])))
                     raise EngineError("Engine protocol request id mismatch")
                 if "error" in response:
                     raise EngineError(str(response["error"].get("message", response["error"])))

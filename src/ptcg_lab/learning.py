@@ -87,7 +87,9 @@ class LearningService:
                                  for identifier in record.get("pendingGames", [])]
         if result.get("error"):
             safe = ("Aggregate project", "Local data disk", "Destination free-space", "Implementation changed", "Engine build changed", "Too many truncated")
-            if not result["error"].startswith(safe):
+            if "request" in result["error"].lower() and ("exceeds" in result["error"].lower() or "exceeded" in result["error"].lower()):
+                result["error"] = "A simulator message exceeded the supported size. Update the app before resuming; retrying alone cannot fix this."
+            elif not result["error"].startswith(safe):
                 result["error"] = "Learning paused after a local failure. Inspect its private run journal and resume after resolving the cause."
         result["dataTier"] = "experimental"
         return result

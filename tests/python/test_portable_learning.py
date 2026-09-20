@@ -155,6 +155,7 @@ def test_heldout_and_unverified_decks_cannot_train(observation):
 
 
 def test_search_targets_require_complete_legal_coverage_and_same_information(observation):
+    observation["searchPosition"] = {"supportedFixture": True}
     class Engine:
         alternatives = [{"actionId": "action-0", "score": .4, "visits": 2}, {"actionId": "action-1", "score": .8, "visits": 3}]
         def request(self, method, params):
@@ -170,6 +171,20 @@ def test_search_targets_require_complete_legal_coverage_and_same_information(obs
     assert examples([replay])[0]["policyTargetSource"] == "behavior-cloning"
     engine.alternatives = [engine.alternatives[0], engine.alternatives[0]]
     assert search_choice(engine, observation, Agent("heuristic", 1), seed=2, budget_ms=10)[1] is None
+
+
+def test_unavailable_search_skips_worker_and_model_export_without_inventing_targets(observation, monkeypatch):
+    import ptcg_lab.training as training
+    observation.pop("searchPosition", None)
+    observation["searchUnavailableReason"] = "Known-order reconstruction is unavailable"
+    fallback = Agent("heuristic", 42)
+    fallback.loaded, fallback.policy = object(), "model.pt"
+    monkeypatch.setattr(training, "predict", lambda *args: ({}, [1., 2.]))
+    monkeypatch.setattr(training, "export_portable_value", lambda *args: pytest.fail("No model export for unavailable search"))
+    class Engine:
+        def request(self, *args):
+            pytest.fail("Unavailable search must not send a worker request")
+    assert search_choice(Engine(), observation, fallback, seed=2, budget_ms=200) == ("action-1", None)
 
 
 def test_streamed_parquet_excludes_heldout_games_and_keeps_splits(tmp_path, observation, monkeypatch):
@@ -252,6 +267,7 @@ def test_replay_buffer_is_bounded_by_source_bytes(tmp_path, observation):
 
 
 def test_learned_search_sends_only_normalized_legal_root_priors(observation, monkeypatch):
+    observation["searchPosition"] = {"supportedFixture": True}
     import ptcg_lab.training as training
     fallback = Agent("heuristic", 1)
     fallback.loaded, fallback.policy = object(), "model.pt"
@@ -342,6 +358,7 @@ def test_promotion_requires_all_registered_lists_and_five_archetypes():
 
 
 def test_search_forwards_lab_knowledge_and_rejects_unfinished_scores(observation):
+    observation["searchPosition"] = {"supportedFixture": True}
     received = {}
     class Engine:
         def request(self, method, params):

@@ -133,9 +133,11 @@ def run_game(service, run_id, game_id, worker_index, guard):
                 # Reload only committed decisions after a failed/partial request.
                 game = service.store.get("learning-games", game_id)
                 game["workerFailures"] = attempt + 1
+                game["workerError"] = {"message": str(exc)[:2000], "attempt": attempt + 1,
+                                       "decisionIndex": len(game["actions"])}
                 service.save_game(game)
                 if attempt:
-                    raise EngineError("Worker failed twice; the accepted game journal is preserved") from exc
+                    raise EngineError(f"Worker failed twice; the accepted game journal is preserved. Cause: {exc}") from exc
     finally:
         engine.timeout = previous_timeout
         service.pool.release(engine)

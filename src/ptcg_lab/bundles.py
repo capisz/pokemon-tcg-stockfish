@@ -12,7 +12,7 @@ from .storage import Store, digest, file_digest
 from .features import FEATURE_VERSION
 
 BUNDLE_VERSION = 1
-CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols", "evaluation-models", "teaching", "teaching-families", "fixture-receipts", "teaching-reviews", "teaching-audits", "datasets", "dataset-rows", "teaching-snapshots", "experimental-partitions", "search-targets", "position-bank", "learning-runs", "learning-games", "comparisons", "incumbents", "comparison-protocols", "comparison-seeds", "private-models", "private-streams"}
+CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols", "evaluation-models", "teaching", "teaching-families", "fixture-receipts", "teaching-reviews", "teaching-audits", "datasets", "dataset-rows", "teaching-snapshots", "experimental-partitions", "search-targets", "position-bank", "learning-runs", "learning-games", "comparisons", "incumbents", "comparison-protocols", "comparison-seeds", "learning-recoveries", "private-models", "private-streams"}
 
 
 def compatibility(root: Path) -> dict:

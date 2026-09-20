@@ -74,6 +74,10 @@ def population(store: Store, limit: int = 4) -> list[str]:
 
 def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budget_ms: int, method: str = "ismcts",
                   known_opponent_deck_id: str | None = None, prior_revealed_cards: list[str] | None = None):
+    # Unsupported information reconstruction already requires policy fallback.
+    # Do not serialize a model or send a growing history just to rediscover it.
+    if not observation.get("searchPosition"):
+        return fallback.choose(observation), None
     params = {"observation": observation, "seed": seed, "budgetMs": budget_ms,
               "method": method, "iterations": 100, "maxRolloutDecisions": 16}
     if known_opponent_deck_id is not None:

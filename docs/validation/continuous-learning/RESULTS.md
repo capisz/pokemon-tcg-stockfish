@@ -1,7 +1,10 @@
 # Continuous learning verification — September 20, 2026
 
-The bounded real integration completed the learning loop. A normal-budget run and
-24-hour observer are now running locally; the soak is **not yet complete**.
+The bounded real integration completed the learning loop. The first normal-budget
+run collected 50 games, trained a candidate, and recorded 50 comparison results
+before a deterministic transport failure paused it. The 24-hour acceptance gate
+remains open. See [the request-size repair](REQUEST_SIZE_REPAIR.md) for diagnosis,
+regression verification and preservation of its experimental evidence.
 
 ## Real bounded cycle
 

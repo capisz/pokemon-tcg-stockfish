@@ -145,6 +145,9 @@ def test_second_worker_failure_never_becomes_outcome(service):
     with pytest.raises(EngineError,match='twice'):run_game(service,run_id,game_id,0,None)
     record=service.store.get('learning-games',game_id)
     assert record['workerFailures']==2 and not record['actions'] and not record['replayAvailable']
+    assert record['workerError'] == {'message': 'Crashed after applying unacknowledged step',
+                                      'attempt': 2, 'decisionIndex': 0}
+    assert 'workerError' not in service.game_summary(record)
     assert not service.store.list('replays')
 
 
@@ -155,6 +158,14 @@ def test_truncation_never_fabricates_outcome(service):
     replay=service.store.get('replays',record['replayId'])
     assert replay['dataTier']=='experimental' and replay['trainingEligible'] is False
     assert replay['outcome'] is None
+
+
+def test_request_size_failure_has_actionable_public_message_without_private_detail(service):
+    run_id,_=game(service)
+    service.update(run_id,error='Worker failed twice. Cause: Request exceeds 32 MiB. private sentinel')
+    message=service.get(run_id)['error']
+    assert 'Update the app before resuming' in message
+    assert 'private sentinel' not in message
 
 
 def test_controls_retries_and_recovery_are_manual(service):

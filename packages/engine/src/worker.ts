@@ -8,6 +8,9 @@ import { auditTeachingFixture } from './teaching-audit';
 
 // stdout is protocol only, even when upstream logs diagnostics.
 console.log = (...args: unknown[]) => console.error(...args);
+// Match Python's MAX_REQUEST_BYTES. The bound applies to the UTF-8 JSON
+// envelope, excluding its newline; portable weights share it with observations.
+export const MAX_REQUEST_BYTES = 32 * 1024 * 1024;
 let environment: Environment | null = null;
 function current(): Environment { if (!environment) throw new Error('Call reset first.'); return environment; }
 export function request(method: string, params: any = {}): any {
@@ -46,15 +49,18 @@ export function request(method: string, params: any = {}): any {
     default: throw new Error(`Unknown method: ${method}`);
   }
 }
-const lines = createInterface({input: process.stdin, crlfDelay: Infinity});
-lines.on('line', line => {
+export function handleLine(line: string) {
   let id: any = null;
   try {
-    if (line.length > 1024 * 1024) throw new Error('Request exceeds 1 MB.');
+    if (Buffer.byteLength(line, 'utf8') > MAX_REQUEST_BYTES) throw new Error('Request exceeds 32 MiB UTF-8 protocol limit.');
     const parsed = JSON.parse(line); id = parsed.id;
     const result = request(parsed.method, parsed.params);
-    process.stdout.write(JSON.stringify({id, result}) + '\n');
+    return {id, result};
   } catch (error) {
-    process.stdout.write(JSON.stringify({id, error: {code: 'ENGINE_ERROR', message: String(error)}}) + '\n');
+    return {id, error: {code: 'ENGINE_ERROR', message: String(error)}};
   }
+}
+const lines = createInterface({input: process.stdin, crlfDelay: Infinity});
+lines.on('line', line => {
+  process.stdout.write(JSON.stringify(handleLine(line)) + '\n');
 });

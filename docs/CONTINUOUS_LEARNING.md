@@ -85,6 +85,19 @@ once from its last acknowledged journal; a repeated failure pauses with an error
 Different engine or runner builds require a new run. An incomplete game remains
 incomplete and supplies neither a win/loss label nor a fabricated draw.
 
+If Resume stops repeatedly at the same decision, leave learning paused: repeating
+the request cannot repair a deterministic worker failure. The private game journal
+retains the underlying worker error and the last accepted decision. Search falls
+back to the frozen policy without sending a model when information reconstruction
+is unavailable, and simulator requests have a bounded 32 MiB UTF-8 transport limit.
+
+For a repaired build, an explicit offline recovery can link a new experiment to a
+paused comparison. It preserves the parent journal, collected games, pinned
+training inputs and frozen policies. The successor starts paused and requires
+Resume; its comparison starts afresh with separately reserved seeds. Earlier
+comparison evidence remains archived and cannot be mixed into the new adoption
+decision. Ordinary Resume still refuses incompatible builds.
+
 The training buffer is capped by position count and input bytes. New experimental
 replay frames use checksummed gzip compression and decode transparently for viewing
 and training; legacy files remain readable. Redundant completed
