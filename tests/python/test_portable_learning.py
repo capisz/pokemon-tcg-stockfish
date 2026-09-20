@@ -389,3 +389,74 @@ def test_warm_start_keeps_ancestor_families_out_of_heldout_evaluation(tmp_path, 
     torch.save(checkpoint, unsupported)
     with pytest.raises(ValueError, match="cumulative data lineage"):
         load_model(unsupported)
+
+
+def test_evaluation_freezes_source_before_games_and_promotes_only_frozen_bytes(tmp_path, observation, monkeypatch):
+    pytest.importorskip("torch")
+    from ptcg_lab.training import train
+    from ptcg_lab.storage import file_digest
+    import ptcg_lab.evaluation as evaluation
+    store = Store(tmp_path / "data")
+    for index in range(12):
+        store.save_replay(make_replay(observation, index))
+    trained = train(store, epochs=1, max_positions=100)
+    source = Path(trained["checkpoint"])
+    expected_hash = file_digest(source)
+    calls = []
+    class Engine:
+        def __init__(self, *args):
+            pass
+        def __enter__(self):
+            return self
+        def __exit__(self, *args):
+            pass
+        def request(self, method):
+            if method == "decks":
+                return [{"id": "crustle", "archetype": "crustle", "role": "heldout", "validation": {"trainingEligible": True}}]
+            return {"firstPlayerControl": True}
+    def play(engine, *, decks, seed, policies, max_decisions, **kwargs):
+        frozen = next(policy for policy in policies if policy != "heuristic")
+        assert Path(frozen) != source
+        assert file_digest(Path(frozen)) == expected_hash
+        # The actual policy loader still sees valid original weights after the
+        # public source checkpoint has been replaced by another process.
+        assert Agent(frozen, seed).choose(observation) in {"action-0", "action-1"}
+        calls.append(frozen)
+        source.write_bytes(b"concurrent training replaced the source checkpoint")
+        replay = make_replay(observation, len(calls))
+        replay["seed"], replay["decks"], replay["startingPlayer"] = seed, decks, 0
+        replay["outcome"]["winner"] = policies.index(frozen)
+        return replay
+    monkeypatch.setattr(evaluation, "EngineClient", Engine)
+    monkeypatch.setattr(evaluation, "play_game", play)
+    # Isolate artifact freezing/publication from the separately tested sample
+    # size and complete-registry gates; two fake games do not prove strength.
+    monkeypatch.setattr(evaluation, "coverage_failures", lambda *args: [])
+    monkeypatch.setattr(evaluation, "promotion_decision", lambda *args: (True, []))
+    report = evaluation.evaluate(Settings(tmp_path, store.path, min_free_bytes=0), candidate=str(source),
+                                 opponent="heuristic", seeds=1, seed_start=2000, promote=True)
+    assert len(calls) == 2 and calls[0] == calls[1]
+    assert report["promoted"] is True
+    assert report["candidate"] == str(source)
+    assert report["models"]["candidate"] == expected_hash
+    assert file_digest(store.path / "models/champion.pt") == expected_hash
+    assert file_digest(source) != expected_hash
+    assert (store.path / report["checkpointSnapshots"]["candidate"]["path"]).exists()
+
+
+def test_evaluation_copy_rejects_changed_bytes_before_publication(tmp_path, monkeypatch):
+    from ptcg_lab.storage import file_digest
+    import ptcg_lab.evaluation as evaluation
+    store = Store(tmp_path / "data")
+    source = tmp_path / "candidate.pt"
+    source.write_bytes(b"original checkpoint")
+    target = store.path / "evaluation-models/snapshot.pt"
+    real_copy = evaluation.shutil.copyfile
+    def corrupted_copy(source, destination):
+        real_copy(source, destination)
+        Path(destination).write_bytes(b"different checkpoint")
+    monkeypatch.setattr(evaluation.shutil, "copyfile", corrupted_copy)
+    with pytest.raises(ValueError, match="changed during evaluation copy"):
+        evaluation._verified_checkpoint_copy(store, source, target, file_digest(source))
+    assert not target.exists()
+    assert not list(target.parent.glob("*.tmp"))

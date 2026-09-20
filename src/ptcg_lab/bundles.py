@@ -12,7 +12,7 @@ from .storage import Store, digest, file_digest
 
 BUNDLE_VERSION = 1
 FEATURE_VERSION = "owned-zone-semantic-actions-v2"
-CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols"}
+CATEGORIES = {"replays", "replay-index", "models", "experiments", "selfplay", "cycles", "partitions", "population", "evaluation-protocols", "evaluation-models"}
 
 
 def compatibility(root: Path) -> dict:
