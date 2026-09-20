@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "raging-bolt",
-  "name": "Raging Bolt ex / Mega Kangaskhan ex",
+  "id": "raging-bolt-heldout",
+  "name": "Raging Bolt ex / Mega Kangaskhan ex (heldout)",
   "archetype": "raging-bolt",
-  "role": "main",
+  "role": "heldout",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "raging-bolt",
+    "changes": {
+      "SSP-170": -1,
+      "MEG-119": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "88e020aa588a1d65c9f34fe146ea1a6a346711b8a354477e6e79187728c60292",
+  "listHash": "50c5e57aa6a26c8176b92a812df6f82ab8e66179a2f6255bee7809d9ae091579",
   "cards": [
     {
       "cardId": "MEG-104",
@@ -101,7 +106,7 @@
       "name": "Cyrano",
       "regulationMark": "H",
       "engineName": "Cyrano SSP-170",
-      "count": 2
+      "count": 1
     },
     {
       "cardId": "TEF-145",
@@ -115,7 +120,7 @@
       "name": "Lillie's Determination",
       "regulationMark": "I",
       "engineName": "Lillie's Determination MEG-119",
-      "count": 1
+      "count": 2
     },
     {
       "cardId": "MEG-131",

@@ -1,0 +1,133 @@
+{
+  "id": "crustle-engineering-v1",
+  "name": "Crustle",
+  "archetype": "crustle",
+  "formatDate": "2026-09-17",
+  "version": 1,
+  "source": "Authored engineering baseline; not a tournament list.",
+  "cards": [
+    {
+      "cardId": "DRI-11",
+      "name": "Dwebble",
+      "engineName": "Dwebble DRI-11",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "DRI-12",
+      "name": "Crustle",
+      "engineName": "Crustle DRI-12",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "DRI-10",
+      "name": "Shaymin",
+      "engineName": "Shaymin DRI-10",
+      "regulationMark": "I",
+      "count": 2
+    },
+    {
+      "cardId": "TWM-95",
+      "name": "Munkidori",
+      "engineName": "Munkidori TWM-95",
+      "regulationMark": "H",
+      "count": 2
+    },
+    {
+      "cardId": "TEF-144",
+      "name": "Buddy-Buddy Poffin",
+      "engineName": "Buddy-Buddy Poffin TEF-144",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-131",
+      "name": "Ultra Ball",
+      "engineName": "Ultra Ball MEG-131",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-119",
+      "name": "Lillie's Determination",
+      "engineName": "Lillie's Determination MEG-119",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-114",
+      "name": "Boss's Orders",
+      "engineName": "Boss's Orders MEG-114",
+      "regulationMark": "I",
+      "count": 4
+    },
+    {
+      "cardId": "SFA-61",
+      "name": "Night Stretcher",
+      "engineName": "Night Stretcher SFA-61",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "MEG-130",
+      "name": "Switch",
+      "engineName": "Switch MEG-130",
+      "regulationMark": "I",
+      "count": 3
+    },
+    {
+      "cardId": "SCR-133",
+      "name": "Crispin",
+      "engineName": "Crispin SCR-133",
+      "regulationMark": "H",
+      "count": 2
+    },
+    {
+      "cardId": "TWM-145",
+      "name": "Carmine",
+      "engineName": "Carmine TWM-145",
+      "regulationMark": "H",
+      "count": 2
+    },
+    {
+      "cardId": "SCR-137",
+      "name": "Gravity Gemstone",
+      "engineName": "Gravity Gemstone SCR-137",
+      "regulationMark": "H",
+      "count": 3
+    },
+    {
+      "cardId": "TEF-150",
+      "name": "Hand Trimmer",
+      "engineName": "Hand Trimmer TEF-150",
+      "regulationMark": "H",
+      "count": 4
+    },
+    {
+      "cardId": "SVE-1",
+      "name": "Grass Energy",
+      "engineName": "Grass Energy SVE-1",
+      "regulationMark": "ENERGY",
+      "count": 10
+    },
+    {
+      "cardId": "SVE-7",
+      "name": "Darkness Energy",
+      "engineName": "Darkness Energy SVE-7",
+      "regulationMark": "ENERGY",
+      "count": 4
+    }
+  ],
+  "validation": {
+    "status": "experimental",
+    "notes": [
+      "60 cards; H/I regulation marks or basic Energy. Required effects are implemented but the entire interaction space is not certified.",
+      "Starter ratios prioritize simulation coverage. Expert matchup and tournament-list review remain pending."
+    ],
+    "trainingEligible": false,
+    "legalityVerified": false
+  },
+  "role": "historical",
+  "listHash": "6c2f6453650869fc9a2e8d49ef8553db9766a6cb5322fefa2c24f797b778332a"
+}

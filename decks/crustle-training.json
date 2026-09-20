@@ -1,22 +1,23 @@
 {
   "schemaVersion": 2,
-  "id": "crustle",
-  "name": "Crustle / Mega Kangaskhan ex",
+  "id": "crustle-training",
+  "name": "Crustle / Mega Kangaskhan ex (training-variant)",
   "archetype": "crustle",
-  "role": "main",
+  "role": "training-variant",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "private-guide-transcription",
-    "authors": [
-      "Rahul Reddy",
-      "Carter Malnaik"
-    ],
-    "page": 27,
-    "sourceSha256": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
-    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+    "kind": "curated-variant",
+    "parent": "crustle",
+    "changes": {
+      "WHT-84": -1,
+      "CRI-80": -1,
+      "TWM-148": 1,
+      "TWM-149": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095",
+  "listHash": "352c586d10bc1a59697df08d713d3528776d9fbd77569f36640392afcbd15a5f",
   "cards": [
     {
       "cardId": "MEG-104",
@@ -72,7 +73,7 @@
       "name": "Hilda",
       "regulationMark": "I",
       "engineName": "Hilda WHT-84",
-      "count": 3
+      "count": 2
     },
     {
       "cardId": "SFA-64",
@@ -159,13 +160,6 @@
       "count": 1
     },
     {
-      "cardId": "CRI-80",
-      "regulationMark": "J",
-      "name": "Prism Tower",
-      "engineName": "Prism Tower CRI-80",
-      "count": 1
-    },
-    {
       "cardId": "TEF-161",
       "name": "Mist Energy",
       "regulationMark": "H",
@@ -191,6 +185,20 @@
       "regulationMark": "ENERGY",
       "name": "Grass Energy",
       "engineName": "Grass Energy MEE-1",
+      "count": 1
+    },
+    {
+      "cardId": "TWM-148",
+      "name": "Enhanced Hammer",
+      "regulationMark": "H",
+      "engineName": "Enhanced Hammer TWM-148",
+      "count": 1
+    },
+    {
+      "cardId": "TWM-149",
+      "name": "Festival Grounds",
+      "engineName": "Festival Grounds TWM-149",
+      "regulationMark": "H",
       "count": 1
     }
   ],

@@ -29,6 +29,7 @@ function* playCard(next: Function, store: StoreLike, state: State, effect: Train
 
   // We will discard this card after prompt confirmation
   effect.preventDefault = true;
+  MOVE_CARDS(store, state, player.hand, player.discard, { cards: [effect.trainerCard], sourceCard: effect.trainerCard });
 
   let coinResult: boolean = false;
   yield COIN_FLIP_PROMPT(store, state, player, result => {

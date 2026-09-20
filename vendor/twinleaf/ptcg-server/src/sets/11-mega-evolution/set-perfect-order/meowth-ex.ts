@@ -60,7 +60,7 @@ export class Meowthex extends PokemonCard {
       }
 
       if (player.marker.hasMarker(this.TRUMP_CARD_MARKER)) {
-        throw new GameError(GameMessage.POWER_ALREADY_USED);
+        return state;
       }
 
       // Try to reduce PowerEffect, to check if something is blocking our ability

@@ -12,7 +12,8 @@
   {
     "path": "ptcg-server/src/game/store/prompts/shuffle-hand-prompt.ts",
     "originalSha256": "5f790f67ceb3895297771b946ccfddae1cff69429fa4b302df903cfbbb2d8b0f",
-    "currentSha256": "29307b2aaaeed6f09ce58c391b9aa3e15fc18a671fe5cbf3f51088e602b73cdb"
+    "currentSha256": "db8614df06e8fdfdb6a919934d2212aa18862eacfec417b331c7fdf436ae5184",
+    "reason": "Validate hand-size permutations, not deck size."
   },
   {
     "path": "ptcg-server/src/game/store/prompts/shuffle-prizes-prompt.ts",
@@ -43,5 +44,53 @@
     "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-temporal-forces/hand-trimmer.ts",
     "originalSha256": "eb7c37fa511e2d2586f666dbeb9124a2848e23eb742c608729a07cd659b1a96f",
     "currentSha256": "1c0c2ffffe44280d7e65548697d610acca162a548025881649dad706778728c4"
+  },
+  {
+    "path": "ptcg-server/src/game/store/prompts/remove-damage-prompt.ts",
+    "originalSha256": "b8864012db1ef6f0e04b5feccf269d0f467680e005b96b3f7ea672f405b1e9b6",
+    "currentSha256": "0b8c97a04a287adccbdd85028ef72950c682dd71ed2294433ddfa7d7e066e0b4",
+    "reason": "Optional single-source selection restriction for effects such as Adrena-Brain."
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-journey-together/spiky-energy.ts",
+    "originalSha256": "6a14839d801631ea25a07800cb3637b01b167674380e64944c65f8e64e7fec29",
+    "currentSha256": "3c955e118ea6d48801d2ff3aac4b05f456d08da7ed282cd3ff2324872bea1398",
+    "reason": "Retaliate after actual damage only; Energy counters are not prevented as attack effects."
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-scarlet-and-violet/crushing-hammer.ts",
+    "originalSha256": "a577c81975d81c49f28e0b789e7f6566e6ed6bb7e0fe1fde5a70091b2f7e51ad",
+    "currentSha256": "f4c1c870bc359381360cae125f9c8970506ce9876bd19deadb1e0f3e652192a2",
+    "reason": "Discard the Item even when the coin flip fails."
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-shrouded-fable/xerosics-scheme.ts",
+    "originalSha256": "a5b8759caa277d1970e3eb5e6f7d69894d1e6847e1b918b5af28cade2730f155",
+    "currentSha256": "c7647bb9bc2a9e2dcb5d31c60649ee71cef4735797d288e5817bc3aae715bc82",
+    "reason": "Correct supporter selection minimum to the available hand size."
+  },
+  {
+    "path": "ptcg-server/src/sets/10-scarlet-and-violet/set-twilight-masquerade/munkidori.ts",
+    "originalSha256": "08621760011769f3b867b5769779853b7222708c0dda797830e7a34c8fa9d7b3",
+    "currentSha256": "d0410ef59c2f4a6afed350e0dd59184c4c1a5e5802dacf8c659694fb49ba5290",
+    "reason": "Adrena-Brain moves counters from exactly one friendly Pokemon."
+  },
+  {
+    "path": "ptcg-server/src/sets/11-mega-evolution/set-chaos-rising/special-red-card.ts",
+    "originalSha256": "2b875039da9f792e34d03510db6d11ac02f0bcbfd6c9d7550008bdb3a100bb40",
+    "currentSha256": "b4b4220314de69c818870df59c518ca827a8fb256e732baa9824bb86774673a3",
+    "reason": "Randomize the opponent hand before placing it on the deck bottom."
+  },
+  {
+    "path": "ptcg-server/src/sets/11-mega-evolution/set-perfect-order/meowth-ex.ts",
+    "originalSha256": "6e43c1d1b3f9d2e380cd8803eccf6f7119e06500d14cb697e3ca9c7d08fbcf66",
+    "currentSha256": "aa8b966a79093147a0d29e32b90a050c4893c5c0050bb5c4eb28c8996462f1fe",
+    "reason": "Last-Ditch ability lock is shared across copies of Meowth."
+  },
+  {
+    "path": "ptcg-server/src/sets/11-mega-evolution/set-pitch-black/gwynn.ts",
+    "originalSha256": "06c44084e060c6857e8d26cbd6d31b885a57d33b495055b8f4ab2eff6fdad0de",
+    "currentSha256": "f6703c4fd597a6defe86b2a4db73579e24f06e188b03b6185c93cf069a281d9e",
+    "reason": "Discarding one eligible Pokemon is sufficient to use the supporter."
   }
 ]

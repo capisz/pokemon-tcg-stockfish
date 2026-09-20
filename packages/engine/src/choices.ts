@@ -5,8 +5,7 @@ import { StateUtils } from '../../../vendor/twinleaf/ptcg-server/src/game/store/
 import { matchesPromptFilter } from '../../../vendor/twinleaf/ptcg-server/src/game/store/prompts/prompt-card-filter';
 import { SuperType } from '../../../vendor/twinleaf/ptcg-server/src/game/store/card/card-types';
 
-export interface PromptChoice { raw: any; label: string }
-export const CHOICE_LIMIT = 256;
+export interface PromptChoice { raw: any; label: string; stage?: {selection: any[]; operation: 'append'|'undo'}; finish?: boolean }
 const same = (a: unknown, b: unknown) => JSON.stringify(a) === JSON.stringify(b);
 
 export function targetsFor(state: State, prompt: any): CardTarget[] {
@@ -28,23 +27,19 @@ export function targetLabel(state: State, prompt: any, target: CardTarget): stri
   return `${target.player === PlayerType.BOTTOM_PLAYER ? 'own' : 'opponent'} ${target.slot === SlotType.ACTIVE ? 'active' : `bench ${target.index + 1}`} ${card?.name ?? ''}`.trim();
 }
 
-/** Bounded combinator; reports restricted action coverage, never pretends exhaustive search. */
+/** Small, naturally bounded prompts are enumerated; combinatorial prompts use stagedChoices. */
 export function promptChoices(prompt: Prompt<any>, state: State): {choices: PromptChoice[]; warnings: string[]} {
   const p: any = prompt;
   const choices: PromptChoice[] = [];
   const warnings: string[] = [];
-  let overflow = false;
   const add = (raw: any, label: string) => {
-    if (choices.length >= CHOICE_LIMIT) { overflow = true; return; }
     try {
       const decoded = p.decode(raw, state);
       if (p.validate(decoded, state) && !choices.some(c => same(c.raw, raw))) choices.push({raw, label});
     } catch { /* rejected candidates are never presented as legal */ }
   };
-  let work = 0;
   const subsets = <T>(items: T[], min: number, max: number, cb: (xs: T[]) => void) => {
     const visit = (start: number, count: number, chosen: T[]) => {
-      if (choices.length >= CHOICE_LIMIT || ++work > 20000) { overflow = true; return; }
       if (chosen.length === count) { cb(chosen); return; }
       for (let i = start; i <= items.length - (count - chosen.length); i++) visit(i + 1, count, [...chosen, items[i]]);
     };
@@ -87,8 +82,7 @@ export function promptChoices(prompt: Prompt<any>, state: State): {choices: Prom
     case 'Order cards': {
       const indexes = p.cards.cards.map((_: any, i: number) => i);
       const permute = (rest: number[], chosen: number[]) => {
-        if (choices.length >= CHOICE_LIMIT) { overflow = true; return; }
-        if (!rest.length) { add(chosen, `Order ${chosen.map(i => p.cards.cards[i].name).join(', ')}`); return; }
+            if (!rest.length) { add(chosen, `Order ${chosen.map(i => p.cards.cards[i].name).join(', ')}`); return; }
         rest.forEach((x, i) => permute(rest.filter((_, j) => i !== j), [...chosen, x]));
       }; permute(indexes, []); cancel(); break;
     }
@@ -101,8 +95,7 @@ export function promptChoices(prompt: Prompt<any>, state: State): {choices: Prom
         const emit = (assign: any[]) => add(assign, `Attach ${selected.length} energy: ${assign.map(a => `${p.cardList.cards[a.index].name} to ${targetLabel(state, p, a.to)}`).join('; ')}`);
         for (const t of ts) emit(selected.map(e => ({index: e.i, to: t})));
         const assign = (index: number, assigned: any[]) => {
-          if (choices.length >= CHOICE_LIMIT || ++work > 20000) { overflow = true; return; }
-          if (index === selected.length) { emit(assigned); return; }
+              if (index === selected.length) { emit(assigned); return; }
           ts.forEach(t => assign(index + 1, [...assigned, {index: selected[index].i, to: t}]));
         };
         if (!opts.sameTarget) assign(0, []);
@@ -160,8 +153,7 @@ export function promptChoices(prompt: Prompt<any>, state: State): {choices: Prom
       const ts = targetsFor(state, p).filter(t => !opts.blocked?.some((b: any) => same(t, b)));
       const unit = opts.damageMultiple ?? 10;
       const allocate = (index: number, left: number, assigned: any[]) => {
-        if (choices.length >= CHOICE_LIMIT) { overflow = true; return; }
-        if (index === ts.length) {
+            if (index === ts.length) {
           if (left === 0 || opts.allowPlacePartialDamage) add(assigned, `Place counters: ${assigned.map(a => `${a.damage} on ${targetLabel(state, p, a.target)}`).join('; ') || 'none'}`);
           return;
         }
@@ -172,7 +164,87 @@ export function promptChoices(prompt: Prompt<any>, state: State): {choices: Prom
     }
     default: throw new Error(`Unsupported prompt type '${p.type}'; game must stop for implementation, not fabricate a result.`);
   }
-  if (overflow) warnings.push(`Action enumeration for ${p.type} is selective (maximum ${CHOICE_LIMIT} candidates).`);
   if (!choices.length) throw new Error(`No validated choice for '${p.type}' (${p.message ?? ''}).`);
   return {choices, warnings};
+}
+
+export const STAGED_PROMPTS = new Set(['Choose cards','Choose energy','Attach energy','Discard energy','Move energy','Order cards','Put damage','Move damage','Remove damage']);
+/**
+ * A bounded-width selection UI, not an action-space cutoff. Every permitted completion can
+ * be reached by append choices, and undo never dispatches an effect. Only Finish resolves
+ * the original prompt. Prefixes and Finish are journaled so live callbacks replay exactly.
+ */
+export function stagedChoices(prompt: Prompt<any>, state: State, selected: any[]): PromptChoice[] {
+  const p:any=prompt, opts=p.options??{}, out:PromptChoice[]=[];
+  const valid=(raw:any, partial=false)=>{
+    const min=opts.min;
+    try {if(partial&&min!==undefined)opts.min=0;return p.validate(p.decode(raw,state),state);}
+    catch{return false;}
+    finally{if(min!==undefined)opts.min=min;}
+  };
+  const add=(value:any,label:string,unique:(x:any)=>boolean=()=>false,partialCheck=true)=>{
+    if(selected.some(unique))return;
+    const next=[...selected,value];
+    if(partialCheck&&!valid(next,true))return;
+    out.push({raw:undefined,label,stage:{selection:next,operation:'append'}});
+  };
+  const count=(predicate:(x:any)=>boolean)=>selected.filter(predicate).length;
+  const ts=()=>targetsFor(state,p);
+  const blocked=(xs:any[]|undefined,t:any)=>xs?.some(b=>same(b,t));
+  const owner=state.players.find(pl=>pl.id===p.getPerspectivePlayerId())!;
+  switch(p.type){
+    case 'Choose cards':
+      if(selected.length<opts.max)p.cards.cards.forEach((card:any,i:number)=>{
+        if(!opts.blocked?.includes(i)&&matchesPromptFilter(card,p.filter))add(i,`Select ${opts.isSecret?'hidden card '+(i+1):card.name}`,x=>x===i);
+      });break;
+    case 'Order cards':
+      p.cards.cards.forEach((card:any,i:number)=>add(i,`Next in order: ${card.name}`,x=>x===i,false));break;
+    case 'Choose energy':
+      p.energy.forEach((e:any,i:number)=>add(i,`Pay with ${e.card.name}`,x=>x===i,false));break;
+    case 'Attach energy':
+      if(selected.length<opts.max)p.cardList.cards.forEach((card:any,index:number)=>{
+        if(card.superType!==SuperType.ENERGY||opts.blocked?.includes(index)||!matchesPromptFilter(card,p.filter))return;
+        for(const to of ts().filter(t=>!blocked(opts.blockedTo,t)))add({index,to},`Attach ${card.name} to ${targetLabel(state,p,to)}`,x=>x.index===index);
+      });break;
+    case 'Discard energy':case 'Move energy':
+      if(selected.length<(opts.max??60))for(const from of ts().filter(t=>!blocked(opts.blockedFrom,t))){
+        const source=StateUtils.getTarget(state,owner,from);
+        source.cards.forEach((card,index)=>{
+          if(card.superType!==SuperType.ENERGY||!matchesPromptFilter(card,p.filter))return;
+          if(opts.blockedMap?.find((m:any)=>same(m.source,from))?.blocked.includes(index))return;
+          const duplicate=(x:any)=>x.index===index&&same(x.from,from);
+          if(p.type==='Discard energy')add({from,index},`Discard ${card.name} from ${targetLabel(state,p,from)}`,duplicate);
+          else for(const to of ts().filter(t=>!same(t,from)&&!blocked(opts.blockedTo,t)))add({from,to,index},`Move ${card.name} from ${targetLabel(state,p,from)} to ${targetLabel(state,p,to)}`,duplicate);
+        });
+      }break;
+    case 'Put damage':{
+      const unit=opts.damageMultiple??10,total=selected.reduce((n,a)=>n+a.damage,0);
+      if(total+unit<=p.damage)for(const target of ts().filter(t=>!blocked(opts.blocked,t))){
+        const assigned=selected.filter(x=>same(x.target,target)).reduce((n,a)=>n+a.damage,0);
+        const cap=p.maxAllowedDamage?.find((x:any)=>same(x.target,target))?.damage??p.damage;
+        if(assigned+unit<=cap)add({target,damage:unit},`Place ${unit} damage on ${targetLabel(state,p,target)}`,()=>false,false);
+      }break;
+    }
+    case 'Move damage':case 'Remove damage':{
+      const unit=opts.damageMultiple??10;
+      if(selected.length<(opts.max??60))for(const from of ts().filter(t=>!blocked(opts.blockedFrom,t))){
+        const available=Math.floor(StateUtils.getTarget(state,owner,from).damage/unit);
+        const used=count(x=>same(x.from,from));if(used>=available)continue;
+        const cap=p.maxAllowedDamage?.find((x:any)=>same(x.target,from))?.damage;
+        if(cap!==undefined&&(used+1)*unit>cap)continue;
+        for(const to of ts().filter(t=>!same(t,from)&&!blocked(opts.blockedTo,t)))add({from,to},`Move ${unit} damage from ${targetLabel(state,p,from)} to ${targetLabel(state,p,to)}`);
+      }break;
+    }
+    default:throw new Error('Not a staged prompt: '+p.type);
+  }
+  let finish=selected;
+  if(p.type==='Put damage'){
+    finish=[];
+    for(const item of selected){const existing=finish.find(x=>same(x.target,item.target));if(existing)existing.damage+=item.damage;else finish.push({...item});}
+  }
+  if(valid(finish))out.push({raw:finish,label:`Finish selection (${selected.length})`,finish:true});
+  if(opts.allowCancel&&valid(null))out.push({raw:null,label:'Cancel',finish:true});
+  if(selected.length)out.push({raw:undefined,label:'Undo last selection',stage:{selection:selected.slice(0,-1),operation:'undo'}});
+  if(!out.length)throw new Error(`No valid selection stage for ${p.type} (${p.message}).`);
+  return out;
 }

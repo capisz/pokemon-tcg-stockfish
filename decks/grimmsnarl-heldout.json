@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "grimmsnarl",
-  "name": "Marnie's Grimmsnarl ex / Froslass",
+  "id": "grimmsnarl-heldout",
+  "name": "Marnie's Grimmsnarl ex / Froslass (heldout)",
   "archetype": "grimmsnarl",
-  "role": "main",
+  "role": "heldout",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "grimmsnarl",
+    "changes": {
+      "PBL-78": -1,
+      "POR-76": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "25e207010b0472e62a7c00c247149fb0ad66fc22d1083647e2535c7ab09a6923",
+  "listHash": "bf283325b944981272257d6fa0b5a2b27d1ed0cba19610fd8ec1f478ac1b78e9",
   "cards": [
     {
       "cardId": "TWM-95",
@@ -104,13 +109,6 @@
       "count": 3
     },
     {
-      "cardId": "PBL-78",
-      "name": "Gwynn",
-      "regulationMark": "J",
-      "engineName": "Gwynn PBL-78",
-      "count": 1
-    },
-    {
       "cardId": "POR-81",
       "regulationMark": "J",
       "name": "Pok\u00e9 Pad",
@@ -179,6 +177,13 @@
       "name": "Darkness Energy",
       "engineName": "Darkness Energy MEE-7",
       "count": 9
+    },
+    {
+      "cardId": "POR-76",
+      "regulationMark": "J",
+      "name": "Judge",
+      "engineName": "Judge POR-76",
+      "count": 1
     }
   ],
   "validation": {

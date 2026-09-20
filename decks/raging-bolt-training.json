@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "raging-bolt",
-  "name": "Raging Bolt ex / Mega Kangaskhan ex",
+  "id": "raging-bolt-training",
+  "name": "Raging Bolt ex / Mega Kangaskhan ex (training-variant)",
   "archetype": "raging-bolt",
-  "role": "main",
+  "role": "training-variant",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "raging-bolt",
+    "changes": {
+      "SSP-76": -1,
+      "MEE-1": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "88e020aa588a1d65c9f34fe146ea1a6a346711b8a354477e6e79187728c60292",
+  "listHash": "213abd7e1cbec566f181353c7e66e48145d26aa61fcabf6bd69ee2715dadda77",
   "cards": [
     {
       "cardId": "MEG-104",
@@ -45,7 +50,7 @@
       "name": "Latias ex",
       "regulationMark": "H",
       "engineName": "Latias ex SSP-76",
-      "count": 2
+      "count": 1
     },
     {
       "cardId": "JTG-56",
@@ -164,7 +169,7 @@
       "regulationMark": "ENERGY",
       "name": "Grass Energy",
       "engineName": "Grass Energy MEE-1",
-      "count": 7
+      "count": 8
     },
     {
       "cardId": "MEE-4",

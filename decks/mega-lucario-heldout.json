@@ -1,16 +1,21 @@
 {
   "schemaVersion": 2,
-  "id": "mega-lucario",
-  "name": "Mega Lucario ex / Hariyama",
+  "id": "mega-lucario-heldout",
+  "name": "Mega Lucario ex / Hariyama (heldout)",
   "archetype": "mega-lucario",
-  "role": "main",
+  "role": "heldout",
   "formatDate": "2026-09-17",
   "version": 2,
   "source": {
-    "kind": "user-supplied-list",
-    "received": "2026-09-17"
+    "kind": "curated-variant",
+    "parent": "mega-lucario",
+    "changes": {
+      "POR-76": -1,
+      "MEG-114": 1
+    },
+    "note": "Research variation; not an attributed tournament list."
   },
-  "listHash": "4c397dc7b0fbf9b0c40efa879d9c638d4f571e83af28ee1642d4d1c952820b19",
+  "listHash": "63acc1c1d900c023abe37c9414bcb61d80d59fa8598d6b438ab0ce294c8dc6a7",
   "cards": [
     {
       "cardId": "MEG-76",
@@ -73,14 +78,14 @@
       "regulationMark": "J",
       "name": "Judge",
       "engineName": "Judge POR-76",
-      "count": 2
+      "count": 1
     },
     {
       "cardId": "MEG-114",
       "name": "Boss's Orders",
       "regulationMark": "I",
       "engineName": "Boss's Orders MEG-114",
-      "count": 2
+      "count": 3
     },
     {
       "cardId": "DRI-176",

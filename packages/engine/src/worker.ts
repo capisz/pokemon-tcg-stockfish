@@ -11,8 +11,8 @@ function current(): Environment { if (!environment) throw new Error('Call reset 
 export function request(method: string, params: any = {}): any {
   switch (method) {
     case 'health': return {ok: true, protocolVersion: 1, engineVersion: ENGINE_VERSION, warnings: ['Experimental rules adapter; learned strength is not established.']};
-    case 'decks': return getDecks();
-    case 'reset': environment = new Environment(); return environment.reset(params.seed, params.decks);
+    case 'decks': return getDecks(params);
+    case 'reset': environment = new Environment(); return environment.reset(params.seed, params.decks, params.firstPlayer);
     case 'observe': return current().observe(params.playerId);
     case 'step': return current().step(params.actionId);
     case 'replay': return current().replay();
@@ -22,7 +22,7 @@ export function request(method: string, params: any = {}): any {
       const max = params.maxDecisions ?? 500;
       if (!Number.isSafeInteger(max) || max < 1 || max > 10000) throw new Error('maxDecisions must be 1..10000.');
       if (!['random', 'heuristic'].includes(params.policy ?? 'heuristic')) throw new Error('Unknown policy.');
-      environment = new Environment(); environment.reset(params.seed, params.decks);
+      environment = new Environment(); environment.reset(params.seed, params.decks, params.firstPlayer);
       const rng = new SeededRandom((params.seed ^ 0x13579bdf) >>> 0);
       try {
         for (let i = 0; i < max && environment.status === 'running'; i++) {
