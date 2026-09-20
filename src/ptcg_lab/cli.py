@@ -6,6 +6,8 @@ import json
 import platform
 import sys
 import time
+import os
+import shutil
 from pathlib import Path
 
 from .config import Settings
@@ -14,15 +16,39 @@ from .storage import Store
 
 
 def doctor(settings: Settings, benchmark: bool = False) -> dict:
+    from .resources import process_memory, directory_bytes, volume_free
     result = {"python": platform.python_version(), "platform": platform.platform(), "root": str(settings.root),
               "data": str(settings.data), "engineBuilt": settings.worker.exists(),
               "optional": {name: importlib.util.find_spec(name) is not None for name in ("torch", "sklearn", "pyarrow", "mlflow", "sentence_transformers")},
               "limits": {"simulationWorkers": settings.workers, "maxDecisions": settings.max_decisions,
-                         "maxDiskBytes": settings.max_disk_bytes}}
+                         "maxDiskBytes": settings.max_disk_bytes, "maxMemoryBytes": settings.max_memory_bytes,
+                         "minFreeBytes": settings.min_free_bytes, "profile": settings.profile,
+                         "workerTuningLimit": settings.worker_tuning_limit},
+              "hardware": {"logicalCpus": os.cpu_count(), "processor": platform.processor(),
+                           "processTreeRssBytes": process_memory(), "dataBytes": directory_bytes(settings.data),
+                           "destinationFreeBytes": volume_free(settings.data)},
+              "node": shutil.which("node"), "recommendedDevice": "cpu",
+              "gpuPolicy": "CPU baseline on Windows; AMD acceleration requires a separate validated experiment"}
+    import psutil
+    result["hardware"]["physicalMemoryBytes"] = psutil.virtual_memory().total
     if settings.worker.exists():
         try:
             with EngineClient(settings.root, timeout=20) as engine:
                 result["engine"] = engine.request("health")
+                if benchmark:
+                    from .selfplay import admitted_decks
+                    registry = engine.request("decks")
+                    registry = registry.get("decks", []) if isinstance(registry, dict) else registry
+                    decks = admitted_decks(registry, allow_unverified=True)
+                    started = time.perf_counter()
+                    replay = engine.request("run", {"seed": 4181, "decks": [decks[0]["id"], decks[-1]["id"]],
+                                                    "maxDecisions": 100, "policy": "heuristic"})
+                    seconds = time.perf_counter() - started
+                    decisions = max(0, len(replay.get("frames", [])) - 1)
+                    result["simulationBenchmark"] = {"seconds": seconds, "decisions": decisions,
+                                                      "decisionsPerSecond": decisions / seconds,
+                                                      "status": replay.get("status"),
+                                                      "note": "Bounded rules-QA probe, not playing strength or a worker-tuning result"}
         except Exception as exc:
             result["engineError"] = str(exc)
     if result["optional"]["torch"]:
@@ -72,6 +98,10 @@ def main(argv: list[str] | None = None) -> int:
     play.add_argument("--policy", default="heuristic", help="random, heuristic, or a local model checkpoint path")
     play.add_argument("--resume", help="Run id; repeat the original configuration arguments")
     play.add_argument("--stop-after", type=int, help="Pause after this many new completed/truncated games")
+    play.add_argument("--population", action="store_true", help="Mix baselines, champion and historical checkpoints")
+    play.add_argument("--search-budget-ms", type=int, default=0)
+    play.add_argument("--search-method", choices=["rollout", "ismcts"], default="ismcts")
+    play.add_argument("--allow-unverified", action="store_true", help="Rules QA only; never supplies trusted training labels")
     training = commands.add_parser("train", help="Train only from completed games with whole-game splits")
     training.add_argument("--epochs", type=int, default=3)
     training.add_argument("--seed", type=int, default=42)
@@ -79,6 +109,8 @@ def main(argv: list[str] | None = None) -> int:
     training.add_argument("--resume", type=Path)
     training.add_argument("--max-positions", type=int, default=10000)
     training.add_argument("--mlflow", action="store_true")
+    training.add_argument("--linked-resume", action="store_true", help="Create a child experiment when continuing on another device")
+    training.add_argument("--warm-start", type=Path, help="Initialize weights for new data with a fresh optimizer")
     evaluation = commands.add_parser("evaluate", help="All 25 candidate/opponent deck assignments with paired seeds and swapped seats")
     evaluation.add_argument("--candidate", default="heuristic")
     evaluation.add_argument("--opponent", default="random")
@@ -86,6 +118,20 @@ def main(argv: list[str] | None = None) -> int:
     evaluation.add_argument("--seed-start", type=int, default=1_000_000_000)
     evaluation.add_argument("--max-decisions", type=int, default=1000)
     evaluation.add_argument("--promote", action="store_true", help="Install learned champion only if all statistical gates pass")
+    evaluation.add_argument("--allow-unverified", action="store_true", help="Rules QA evaluation; blocks promotion")
+    continuous = commands.add_parser("continuous", help="Manually run resumable self-play/train/evaluate batches")
+    continuous.add_argument("--batches", type=int, default=1, help="0 runs until stopped; default is one bounded batch")
+    continuous.add_argument("--games", type=int, default=50)
+    continuous.add_argument("--seed", type=int, default=42)
+    continuous.add_argument("--max-decisions", type=int, default=1000)
+    continuous.add_argument("--search-budget-ms", type=int, default=200)
+    continuous.add_argument("--device", choices=["cpu", "mps"], default="cpu")
+    continuous.add_argument("--resume")
+    continuous.add_argument("--max-positions", type=int, default=10000)
+    continuous.add_argument("--evaluate-every", type=int, default=1)
+    for name in ("export-bundle", "import-bundle"):
+        bundle = commands.add_parser(name, help="Atomically transfer a checksummed research directory; no live tracker or guide source")
+        bundle.add_argument("path", type=Path)
     guide = commands.add_parser("import-guide", help="Import attributed UTF-8 text or Markdown")
     guide.add_argument("path", type=Path)
     for name in ("title", "author", "source", "matchup"):
@@ -104,7 +150,7 @@ def main(argv: list[str] | None = None) -> int:
     if arguments.data:
         from dataclasses import replace
         settings = replace(settings, data=arguments.data.resolve())
-    store = Store(settings.data, settings.max_disk_bytes)
+    store = Store(settings.data, settings.max_disk_bytes, settings.min_free_bytes)
     try:
         if arguments.command == "doctor":
             result = doctor(settings, arguments.benchmark)
@@ -114,17 +160,36 @@ def main(argv: list[str] | None = None) -> int:
             uvicorn.run(create_app(settings), host="127.0.0.1", port=arguments.port)
             return 0
         elif arguments.command == "selfplay":
-            from .selfplay import selfplay
+            from .selfplay import selfplay, population
             result = selfplay(settings, games=arguments.games, seed=arguments.seed, max_decisions=arguments.max_decisions,
-                              policy=arguments.policy, resume=arguments.resume, stop_after=arguments.stop_after)
+                              policy=arguments.policy, resume=arguments.resume, stop_after=arguments.stop_after,
+                              opponents=population(store) if arguments.population else None,
+                              search_budget_ms=arguments.search_budget_ms, search_method=arguments.search_method,
+                              allow_unverified=arguments.allow_unverified)
         elif arguments.command == "train":
             from .training import train
-            result = train(store, epochs=arguments.epochs, seed=arguments.seed, device=arguments.device,
-                           resume=arguments.resume, max_positions=arguments.max_positions, mlflow=arguments.mlflow)
+            from .resources import ResourceGuard
+            with ResourceGuard(settings) as guard:
+                result = train(store, epochs=arguments.epochs, seed=arguments.seed, device=arguments.device,
+                               resume=arguments.resume, max_positions=arguments.max_positions, mlflow=arguments.mlflow,
+                               linked_resume=arguments.linked_resume, warm_start=arguments.warm_start, guard=guard)
         elif arguments.command == "evaluate":
             from .evaluation import evaluate
-            result = evaluate(settings, candidate=arguments.candidate, opponent=arguments.opponent, seeds=arguments.seeds,
-                              seed_start=arguments.seed_start, max_decisions=arguments.max_decisions, promote=arguments.promote)
+            from .resources import ResourceGuard
+            with ResourceGuard(settings) as guard:
+                result = evaluate(settings, candidate=arguments.candidate, opponent=arguments.opponent, seeds=arguments.seeds,
+                                  seed_start=arguments.seed_start, max_decisions=arguments.max_decisions, promote=arguments.promote,
+                                  allow_unverified=arguments.allow_unverified, guard=guard)
+        elif arguments.command == "continuous":
+            from .cycles import continuous
+            result = continuous(settings, batches=arguments.batches, games=arguments.games, seed=arguments.seed,
+                                max_decisions=arguments.max_decisions, search_budget_ms=arguments.search_budget_ms,
+                                resume=arguments.resume, device=arguments.device, max_positions=arguments.max_positions,
+                                evaluate_every=arguments.evaluate_every)
+        elif arguments.command in {"export-bundle", "import-bundle"}:
+            from .bundles import compatibility, export_bundle, import_bundle
+            function = export_bundle if arguments.command == "export-bundle" else import_bundle
+            result = function(store, arguments.path, compatibility(settings.root), min_free=settings.min_free_bytes)
         elif arguments.command == "import-guide":
             from .guides import import_guide
             result = import_guide(store, arguments.path, title=arguments.title, author=arguments.author,

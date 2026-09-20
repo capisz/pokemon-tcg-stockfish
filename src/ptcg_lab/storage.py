@@ -37,8 +37,9 @@ def terminal_score(replay: dict, player_id: int) -> float:
 
 
 class Store:
-    def __init__(self, path: Path, max_bytes: int = 2 * 1024**3):
+    def __init__(self, path: Path, max_bytes: int = 25 * 1024**3, min_free_bytes: int = 0):
         self.path, self.max_bytes = path, max_bytes
+        self.min_free_bytes = min_free_bytes
         self.lock = threading.Lock()
 
     def location(self, category: str, identifier: str) -> Path:
@@ -51,10 +52,15 @@ class Store:
         target = self.location(category, identifier)
         content = json.dumps(value, ensure_ascii=False, separators=(",", ":"), allow_nan=False).encode()
         with self.lock:
-            current = sum(p.stat().st_size for p in self.path.rglob("*") if p.is_file()) if self.path.exists() else 0
+            from .resources import directory_bytes
+            current = directory_bytes(self.path)
             existing = target.stat().st_size if target.exists() else 0
             if current - existing + len(content) > self.max_bytes:
                 raise RuntimeError("Local data disk cap reached; archive data before continuing")
+            if self.min_free_bytes:
+                from .resources import volume_free, ResourceLimit
+                if volume_free(target) - len(content) < self.min_free_bytes:
+                    raise ResourceLimit("Destination free-space reserve reached")
             target.parent.mkdir(parents=True, exist_ok=True)
             temporary = target.with_suffix(f".{uuid.uuid4().hex}.tmp")
             try:
@@ -70,14 +76,16 @@ class Store:
         return json.loads(self.location(category, identifier).read_text())
 
     def list(self, category: str) -> list[dict]:
+        return list(self.iter_records(category))
+
+    def iter_records(self, category: str):
+        """Stream records; callers can bound resident replay memory."""
         self.location(category, "validation")
         directory = self.path / category
         if not directory.exists():
-            return []
-        records = []
+            return
         for path in sorted(directory.glob("*.json"), key=lambda p: p.stat().st_mtime, reverse=True):
-            records.append(json.loads(path.read_text()))
-        return records
+            yield json.loads(path.read_text())
 
     def save_replay(self, replay: dict) -> str:
         if replay.get("status") not in {"finished", "truncated", "error"}:
