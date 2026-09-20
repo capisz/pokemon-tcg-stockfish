@@ -24,6 +24,10 @@ A local research tool for understanding Pokémon TCG decisions. The first interf
 
 ## Local surface
 
+The Play tab adds a real 2D card table, private server-journaled best-of-three sessions, and separate practice and benchmark modes. Engine decisions share one turn budget; accepted actions survive browser reconnects and server restart. The selected model is copied to an immutable private checkpoint at match creation. Analysis and research views are locked during an unfinished benchmark, including paused matches. Full research replays require explicit publication after the entire match ends.
+
+Teaching review shows the bookmarked player view and legal choices, accepts multiple sound actions with conditional reasoning, and caps each queue at ten positions. Saved replay positions can be attached to a fixed guide family. Human benchmark records stay in the test partition; unaudited rules, prose lessons, and unreviewed annotations cannot become demonstrations. Local guide retrieval displays attributed passages and page/timestamp references.
+
 The Vite development server serves `/` on `127.0.0.1:5173` and proxies `/api` to the local backend at `127.0.0.1:8765`. The REST boundary is defined in `contracts/PROTOCOL.md`. Production files build into `web/dist`; deployment is not part of this interface work.
 
 The browser shows connection recovery, simulation progress, failed job recovery, unreadable replay recovery, and analysis loading/error/empty states. On a failed status poll, Retry checks the existing job; it does not start a duplicate game.

@@ -3,10 +3,13 @@ export type Card = {
   name: string;
   kind: 'pokemon' | 'trainer' | 'energy';
   types?: string[];
+  text?: string;
+  imageUrl?: string;
+  powers?: {name: string; text: string}[];
   hp?: number;
   stage?: string;
   prizeValue?: number;
-  attacks?: { name: string; damage: number | string; cost: string[] }[];
+  attacks?: { name: string; damage: number | string; cost: string[]; text?: string }[];
 };
 
 export type Pokemon = {
@@ -41,7 +44,8 @@ export type Observation = {
   ownDeck: { cardId: string; name: string; count: number }[];
   legalActions: Action[];
   history: string[];
-  prompt?: { type: string; message: string };
+  stadium?: {owner: number; card: Card} | null;
+  prompt?: { type: string; message: string; cards?: Card[]; hands?: Card[][] };
   warnings: string[];
 };
 
@@ -74,6 +78,7 @@ export type Deck = {
   name: string;
   archetype: string;
   formatDate: string;
+  role?: string;
   cards: { cardId: string; name: string; count: number }[];
   validation: { status: string; notes: string[] };
   playable?: boolean;
@@ -114,3 +119,18 @@ export type Analysis = {
 };
 
 export type Job = { id: string; status: string; progress?: number | string; error?: string | { message?: string }; replayId?: string };
+
+export type Match = {
+  id: string; schemaVersion: number; revision: number; mode: 'practice'|'benchmark';
+  status: 'active'|'paused'|'between-games'|'completed'|'abandoned'; gameNumber: number; score: [number,number];
+  observation: Observation; thinking: boolean; knownList: boolean; ownDeckId: string; modelVersion: string;
+  engineTurnRemainingMs: number; engineTurnBudgetMs: number; error?: string; warnings: string[];
+  nextStarterChooser?: number|null; gameResult?: {winner:number|null;reason:string}; replayIds?: string[];
+  opponentList?: {cardId:string; name:string; count:number}[];
+};
+export type Teaching = {
+  id: string; title: string; familyId: string; partition: string; reviewStatus: string; trainingEligible: boolean;
+  playerId?: number; rulesAuditStatus?: string;
+  source?: {title?:string; author?:string; pages?:number[]; page?:number; contentHash?:string; kind?:string};
+  observation?: Observation; acceptableActionIds?: string[]; conditionalReasoning?: string; criticalResources?: string;
+};
