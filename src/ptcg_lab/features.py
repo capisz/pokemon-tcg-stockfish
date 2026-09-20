@@ -111,6 +111,9 @@ def heuristic_action_score(action: dict) -> float:
 
 
 def deck_beliefs(observation: dict, decks: list[dict]) -> tuple[list[dict], list[str]]:
+    # The registry also serves the experiment runner. Its withheld lists must
+    # never become an inference oracle merely because the API passed that registry.
+    decks = [deck for deck in decks if deck.get("role", "main") not in {"heldout", "historical"}]
     opponent = next((p for p in observation.get("players", []) if p["id"] != observation["playerId"]), None)
     warnings = ["Opponent beliefs are conditional on the supported five-deck pool, not the full metagame."]
     if opponent is None or not decks:
@@ -130,5 +133,12 @@ def deck_beliefs(observation: dict, decks: list[dict]) -> tuple[list[dict], list
         return [], warnings + ["Visible cards are inconsistent with all frozen decklists; unsupported deck or variant."]
     weights = [math.exp(value - max(finite)) if math.isfinite(value) else 0 for value in log_weights]
     total = sum(weights)
-    return [{"archetype": deck.get("archetype", deck["id"]), "probability": weight / total}
-            for deck, weight in zip(decks, weights)], warnings + ["Beliefs use visible card composition; action likelihoods are not yet modeled."]
+    grouped: dict[str, float] = {}
+    for deck, weight in zip(decks, weights):
+        archetype = deck.get("archetype", deck["id"])
+        grouped[archetype] = grouped.get(archetype, 0.) + weight / total
+    return [{"archetype": archetype, "probability": probability}
+            for archetype, probability in sorted(grouped.items()) if probability > 0], warnings + [
+                "Composition-only reference-list prior; strategic action likelihoods and unknown-variant mass are not modeled here.",
+                "Held-out and historical exact lists are excluded. These priors are separate from sampled search hypotheses.",
+            ]
