@@ -27,6 +27,7 @@ class ScenarioEngine:
     def __init__(self, base):
         self.base = base
         self.index = 0
+        self.seed = 0
         self.calls = []
         self.identity = {"engineVersion": "test-engine", "engineBuildHash": "test-build"}
         self.fail_step = False
@@ -38,6 +39,7 @@ class ScenarioEngine:
         if method == "decks": return copy.deepcopy(REGISTRY)
         if method == "reset":
             self.index = 0
+            self.seed = params["seed"]
             return {"observation": self.request("observe", {"playerId": 0})}
         if method == "observe":
             observation = copy.deepcopy(self.base)
@@ -62,7 +64,7 @@ class ScenarioEngine:
         if method == "search":
             return {"status": "complete", "alternatives": [{"actionId": f"other-{self.index}"}]}
         if method == "replay":
-            return {"id": f"fake-replay-{len(self.calls)}", "status": "finished" if self.index == 4 else "truncated",
+            return {"id": f"fake-replay-{len(self.calls)}", "seed": self.seed, "status": "finished" if self.index == 4 else "truncated",
                     "outcome": {"winner": 0, "reason": "rules-terminal"} if self.index == 4 else None,
                     "frames": [], "decks": ["human", "engine-private-list"]}
         raise AssertionError(method)
@@ -76,9 +78,13 @@ class ScenarioPool:
 
 
 @pytest.fixture
-def service(tmp_path, observation):
+def service(tmp_path, observation, monkeypatch):
+    # The simulator is a transport double with no child processes. Control the
+    # OS measurement while retaining the real ResourceGuard checks and pausing.
+    import ptcg_lab.resources as resources
+    monkeypatch.setattr(resources, "process_memory", lambda: 1024**2)
     engine = ScenarioEngine(observation)
-    settings = Settings(root=tmp_path, data=tmp_path / "data")
+    settings = Settings(root=tmp_path, data=tmp_path / "data", min_free_bytes=0)
     result = MatchService(settings, Store(settings.data), ScenarioPool(engine), lambda: copy.deepcopy(REGISTRY))
     yield result
     result.close()
@@ -194,6 +200,16 @@ def test_worker_failure_pauses_without_accepting_move_or_inventing_result(servic
     assert state["revision"] == 0 and state["actions"] == [] and state["score"] == [0, 0]
 
 
+def test_resource_limit_pauses_engine_without_result_or_new_decision(service, monkeypatch):
+    import ptcg_lab.resources as resources
+    match = act(service, create(service))
+    monkeypatch.setattr(resources, "process_memory", lambda: service.settings.max_memory_bytes + 1)
+    state = engine_turn(service, match["id"])
+    assert state["status"] == "paused" and "memory target" in state["error"]
+    assert state["revision"] == match["revision"] and state["score"] == [0, 0]
+    assert len(service.get_private(match["id"])["actions"]) == 1
+
+
 def test_polling_is_read_only_and_repeated_advance_does_not_duplicate_work(service, monkeypatch):
     match = act(service, create(service))
     started, release, finished = threading.Event(), threading.Event(), threading.Event()
@@ -299,7 +315,7 @@ def test_api_benchmark_locks_all_research_analysis_routes(tmp_path, observation,
     import ptcg_lab.api as module
     engine = ScenarioEngine(observation)
     monkeypatch.setattr(module, "EnginePool", lambda *args: ScenarioPool(engine))
-    app = module.create_app(Settings(root=tmp_path, data=tmp_path / "data"))
+    app = module.create_app(Settings(root=tmp_path, data=tmp_path / "data", min_free_bytes=0))
     with TestClient(app) as client:
         created = client.post("/api/matches", json={"deckId": "human", "opponentArchetype": "Dragapult", "mode": "benchmark"})
         assert created.status_code == 201
