@@ -13,7 +13,8 @@
       "Froslass simultaneous knockout ordering, Area Zero shrinking order, Lucario modifier/gust combinations, and all recovery/HP modifier combinations require targeted fixtures.",
       "Opponent revealed-hand constraints and some state markers explicitly refuse search.",
       "Unknown variants are nearby observation-constrained hypotheses, not a learned metagame distribution.",
-      "Only own deck-search Prize inference and known top ordering have targeted belief tests; other hidden-zone memory remains unsupported."
+      "Only own deck-search Prize inference and known top ordering have targeted belief tests; other hidden-zone memory remains unsupported.",
+      "Temporary-zone peeks, including Recon Directive and Pokegear, are recorded for the entitled player and explicitly refuse later search until their knowledge constraints are modeled."
     ]
   },
   "cards": [
@@ -27,8 +28,10 @@
     {
       "cardId": "TWM-129",
       "implementation": "10-scarlet-and-violet/set-twilight-masquerade/drakloak",
-      "coverage": "mapped-game-smoke-only",
-      "tests": [],
+      "coverage": "focused-fixture",
+      "tests": [
+        "competitive.test.ts (mandatory Recon Directive selection; explicit search refusal for unmodeled bottom order)"
+      ],
       "certified": false
     },
     {

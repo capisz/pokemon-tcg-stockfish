@@ -16,7 +16,7 @@ The default registry is the ten main/training lists. Bounded unknown hypotheses 
 
 Information-set search can use normalized learned root priors through PUCT; deeper choices and leaf evaluation still use the baseline heuristic. Rollout scores are not calibrated outcome probabilities. Equal-budget test calls do not establish stronger play.
 
-A player's legal deck search infers the multiset of their remaining Prizes; only their own hand and publicly known zones are subtracted from their own decklist. Ordered top cards constrain independent sampled decks. Resolved own prize pickups reconcile the inferred multiset when the transition is unambiguous. Stale Prize knowledge, opponent hand revelations, unsupported markers, and other unmodeled knowledge refuse search explicitly. Search needs more knowledge-history coverage before broad research claims are justified.
+A player's legal deck search infers the multiset of their remaining Prizes; only their own hand and publicly known zones are subtracted from their own decklist. Ordered top cards constrain independent sampled decks. Resolved own prize pickups reconcile the inferred multiset when the transition is unambiguous. Stale Prize knowledge, opponent hand revelations, temporary-zone peeks (including Drakloak Recon Directive and Pokégear), unsupported markers, and other unmodeled knowledge refuse search explicitly. Recon Directive requires taking one card before putting the other on the bottom; it cannot be cancelled after inspecting the cards. Search needs more knowledge-history coverage before broad research claims are justified.
 
 ## Verification commands
 
