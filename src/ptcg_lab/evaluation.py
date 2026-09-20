@@ -38,6 +38,25 @@ def promotion_decision(overall: dict, matchups: dict, excluded: int) -> tuple[bo
     return not reasons, reasons
 
 
+REQUIRED_ARCHETYPES = {"dragapult", "raging-bolt", "grimmsnarl", "mega-lucario", "crustle"}
+REQUIRED_ROLES = {"main", "training-variant", "heldout"}
+
+
+def coverage_failures(registered: list[dict], admitted: list[dict]) -> list[str]:
+    """The denominator is the frozen registry, never its eligible subset."""
+    required = [deck for deck in registered if deck.get("role") in REQUIRED_ROLES]
+    missing_lists = {deck["id"] for deck in required} - {deck["id"] for deck in admitted}
+    missing_groups = {(archetype, role) for archetype in REQUIRED_ARCHETYPES for role in REQUIRED_ROLES} - {
+        (deck.get("archetype"), deck.get("role")) for deck in admitted}
+    reasons = []
+    if missing_lists:
+        reasons.append("Promotion requires every registered competitive list; omitted: " + ", ".join(sorted(missing_lists)))
+    if missing_groups:
+        reasons.append("Promotion requires all five archetypes and all main/training/heldout roles; missing: " +
+                       ", ".join(f"{archetype}:{role}" for archetype, role in sorted(missing_groups)))
+    return reasons
+
+
 def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str = "random", seeds: int = 2,
              seed_start: int = 1_000_000_000, max_decisions: int = 1000, promote: bool = False,
              allow_unverified: bool = False, guard=None) -> dict:
@@ -53,9 +72,8 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
             from .training import load_model
             _, checkpoint = load_model(Path(policy))
             models[name] = file_digest(Path(policy))
-            for group in checkpoint["manifest"].values():
-                for game in group:
-                    excluded_seeds.add(store.get("replays", game["id"])["seed"])
+            from .training import checkpoint_lineage
+            excluded_seeds.update(checkpoint_lineage(checkpoint)["seenSeeds"])
         else:
             models[name] = policy
     identifier = uuid.uuid4().hex
@@ -67,12 +85,15 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
     with EngineClient(settings.root, settings.engine_timeout) as engine:
         registry = engine.request("decks")
         registry = registry["decks"] if isinstance(registry, dict) else registry
+        registered = registry
         registry = admitted_decks(registry, allow_unverified, evaluation=True)
+        coverage_reasons = coverage_failures(registered, registry)
         deck_ids = [deck["id"] for deck in registry]
         health = engine.request("health")
         trusted = not allow_unverified and all("role" not in deck or deck.get("validation", {}).get("trainingEligible") is True for deck in registry)
         protocol = {"candidate": models["candidate"], "opponent": models["opponent"], "seeds": seeds,
-                    "seedStart": seed_start, "deckHash": digest(registry), "engine": health,
+                    "seedStart": seed_start, "deckHash": digest(registered),
+                    "admittedDeckHash": digest(registry), "omittedCoverage": coverage_reasons, "engine": health,
                     "maxDecisions": max_decisions, "gate": "95% lower expected-result bound >0.5, >=30pairs, >=5/matchup, no excluded pairs or supported regressions"}
         store.put("evaluation-protocols", identifier, {"id": identifier, "protocol": protocol, "hash": digest(protocol)})
         # The candidate must pilot EACH deck against EACH opponent deck. Merely
@@ -123,6 +144,9 @@ def evaluate(settings: Settings, *, candidate: str = "heuristic", opponent: str 
     summary = confidence_interval(scores)
     matchup_results = {key: confidence_interval(values) for key, values in by_matchup.items()}
     eligible, reasons = promotion_decision(summary, matchup_results, excluded)
+    if coverage_reasons:
+        eligible = False
+        reasons.extend(coverage_reasons)
     if not trusted:
         eligible = False
         reasons.append("Unverified deck legality or interactions make this a rules-QA experiment; promotion is blocked.")

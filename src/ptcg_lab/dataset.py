@@ -21,13 +21,35 @@ def family_partition(game: dict) -> str:
 
 
 def training_eligible(game: dict) -> bool:
-    if "evaluationExperiment" in game or game.get("benchmarkMatch") or game.get("trainingEligible") is False:
+    if "evaluationExperiment" in game or game.get("benchmarkMatch") or game.get("trainingEligible") is not True:
         return False
-    return not any(role in {"heldout", "historical"} for role in game.get("deckRoles", []))
+    roles = game.get("deckRoles")
+    return isinstance(roles, list) and len(roles) == 2 and all(role in {"main", "training-variant"} for role in roles)
+
+
+def quarantined_families(store: Store) -> set[str]:
+    """Persist one-way exclusion markers, including legacy records on first read.
+
+    A trusted-looking copy never rehabilitates a family used for benchmark/QA.
+    Markers travel in bundles and survive replay-buffer eviction or source archival.
+    """
+    excluded = {item["familyId"] for item in store.iter_records("partitions")
+                if item.get("excludedFromTraining") is True}
+    for entry in store.iter_records("replay-index"):
+        if "familyKey" in entry and "trainingEligible" in entry:
+            key, eligible = entry["familyKey"], entry["trainingEligible"] is True
+        else:
+            game = store.get("replays", entry["id"])
+            key, eligible = family_key(game), training_eligible(game)
+        if not eligible and key not in excluded:
+            store.put("partitions", f"excluded-{key}", {"familyId": key, "excludedFromTraining": True})
+            excluded.add(key)
+    return excluded
 
 
 def complete_games(store: Store, max_games: int = 2000, max_source_bytes: int = 256 * 1024**2) -> list[dict]:
     """Bounded recent replay buffer. Permanent source files/partitions stay intact."""
+    excluded = quarantined_families(store)
     unique, source_bytes = {}, 0
     if max_games <= 0 or max_source_bytes <= 0:
         return []
@@ -38,7 +60,7 @@ def complete_games(store: Store, max_games: int = 2000, max_source_bytes: int = 
         if source_bytes + size > max_source_bytes:
             continue
         game = store.get("replays", entry["id"])
-        if not training_eligible(game) or game.get("status") != "finished" or not game.get("outcome"):
+        if family_key(game) in excluded or not training_eligible(game) or game.get("status") != "finished" or not game.get("outcome"):
             continue
         terminal_score(game, 0)
         content_key = digest({key: value for key, value in game.items() if key not in {"id", "createdAt"}})
@@ -52,9 +74,10 @@ def complete_games(store: Store, max_games: int = 2000, max_source_bytes: int = 
 
 def game_split(games: list[dict]) -> dict[str, list[dict]]:
     """Immutable whole-family hash split, unchanged when the buffer grows."""
+    excluded = {family_key(game) for game in games if not training_eligible(game)}
     assignment = {"train": [], "calibration": [], "test": []}
     for game in games:
-        if not training_eligible(game):
+        if family_key(game) in excluded or not training_eligible(game):
             continue
         assignment[family_partition(game)].append(game)
     if any(not selected for selected in assignment.values()):
@@ -129,13 +152,14 @@ def export_parquet(store: Store, destination: Path, limit: int = 100000) -> dict
                         ("actions", pa.list_(pa.list_(pa.float64()))), ("selected", pa.int64()),
                         ("expectedResult", pa.float64()), ("outcomeClass", pa.int64()),
                         ("policyDistribution", pa.list_(pa.float64())), ("policyTargetSource", pa.string()), ("split", pa.string())])
+    excluded = quarantined_families(store)
     try:
         writer = pq.ParquetWriter(temporary, schema, compression="zstd")
         for entry in store.iter_records("replay-index"):
             if entry["status"] != "finished":
                 continue
             game = store.get("replays", entry["id"])
-            if not training_eligible(game):
+            if family_key(game) in excluded or not training_eligible(game):
                 continue
             split = family_partition(game)
             selected[split].append(game["id"])

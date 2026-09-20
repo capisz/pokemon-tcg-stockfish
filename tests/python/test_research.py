@@ -163,7 +163,7 @@ def test_evaluation_provenance_cannot_overwrite_training_replay(tmp_path, observ
     assert original_id != held_out_id
     assert "evaluationExperiment" not in store.get("replays", original_id)
     assert store.get("replays", held_out_id)["evaluationExperiment"] == "new-evaluation"
-    assert len(complete_games(store)) == 1
+    assert len(complete_games(store)) == 0  # Entire family remains quarantined after evaluation.
 
 
 def test_game_family_split_prevents_seat_pair_leakage(observation):
@@ -209,7 +209,8 @@ def test_evaluation_covers_both_deck_assignments_and_seats(tmp_path, observation
             pass
 
         def request(self, method):
-            return [{"id": "crustle"}, {"id": "dragapult"}] if method == "decks" else {"version": "test"}
+            return [{"id": "crustle", "role": "main", "validation": {"trainingEligible": True}},
+                    {"id": "dragapult", "role": "main", "validation": {"trainingEligible": True}}] if method == "decks" else {"version": "test"}
 
     def fake_play(engine, *, decks, seed, policies, max_decisions):
         calls.append((tuple(decks), policies))
