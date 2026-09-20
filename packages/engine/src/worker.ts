@@ -10,7 +10,7 @@ let environment: Environment | null = null;
 function current(): Environment { if (!environment) throw new Error('Call reset first.'); return environment; }
 export function request(method: string, params: any = {}): any {
   switch (method) {
-    case 'health': return {ok: true, protocolVersion: 1, engineVersion: ENGINE_VERSION, warnings: ['Experimental rules adapter; learned strength is not established.']};
+    case 'health': return {ok: true, protocolVersion: 1, engineVersion: ENGINE_VERSION, firstPlayerControl: true, warnings: ['Experimental rules adapter; learned strength is not established.']};
     case 'decks': return getDecks(params);
     case 'reset': environment = new Environment(); return environment.reset(params.seed, params.decks, params.firstPlayer);
     case 'observe': return current().observe(params.playerId);

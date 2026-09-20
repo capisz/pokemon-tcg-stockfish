@@ -13,7 +13,7 @@ The three implementation assignments are integrated on `codex/competitive-integr
 
 ## Verification and evidence
 
-The integrated engine fingerprint is `310ae24b3cc8cbbc`. Replays retain their actual build identity; earlier branch fixtures have earlier fingerprints. The metadata-only artwork map is part of the fingerprint.
+The integrated engine fingerprint is `6dae18d12adf6214`. Rules/browser checks used `310ae24b3cc8cbbc`; the final change advertises the already implemented first-player control to Python. Actual JSON-lines probes verified both requested starting players on the final build. Replays retain their actual build identity; earlier branch fixtures have earlier fingerprints. The metadata-only artwork map is part of the fingerprint.
 
 | Check | Observed result |
 |---|---|
