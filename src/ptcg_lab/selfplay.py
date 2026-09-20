@@ -14,11 +14,12 @@ from .storage import Store, digest, file_digest
 
 
 class Agent:
-    def __init__(self, policy: str, seed: int):
+    def __init__(self, policy: str, seed: int, *, allow_experimental: bool = False):
         self.policy, self.rng, self.loaded = policy, random.Random(seed), None
+        self.allow_experimental = allow_experimental
         if policy not in {"random", "heuristic"}:
             from .training import load_model
-            self.loaded = load_model(Path(policy))
+            self.loaded = load_model(Path(policy), **({"allow_experimental": True} if allow_experimental else {}))
 
     def choose(self, observation: dict) -> str:
         legal = observation.get("legalActions", [])
@@ -30,7 +31,8 @@ class Agent:
             scores = [heuristic_action_score(action, observation) for action in legal]
         else:
             from .training import predict
-            _, scores = predict(Path(self.policy), observation, self.loaded)
+            _, scores = predict(Path(self.policy), observation, self.loaded,
+                                **({"allow_experimental": True} if self.allow_experimental else {}))
         best = max(scores)
         return self.rng.choice([action for action, score in zip(legal, scores) if score == best])["id"]
 
@@ -81,10 +83,12 @@ def search_choice(engine, observation: dict, fallback: Agent, *, seed: int, budg
     if fallback.loaded is not None:
         from .training import predict, export_portable_value
         if not hasattr(fallback, "portable_value"):
-            fallback.portable_value = export_portable_value(Path(fallback.policy), fallback.loaded)
+            fallback.portable_value = export_portable_value(Path(fallback.policy), fallback.loaded,
+                **({"allow_experimental": True} if getattr(fallback, "allow_experimental", False) else {}))
         if fallback.portable_value is not None:
             params["leafModel"] = fallback.portable_value
-        _, scores = predict(Path(fallback.policy), observation, fallback.loaded)
+        _, scores = predict(Path(fallback.policy), observation, fallback.loaded,
+                           **({"allow_experimental": True} if getattr(fallback, "allow_experimental", False) else {}))
         if scores and all(math.isfinite(score) for score in scores):
             maximum = max(scores)
             weights = [math.exp(score - maximum) for score in scores]

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { api, errorMessage } from './api';
 import type { FrameFeed, PolicyContext, ViewFrame } from './types';
 
-const ended=(status:string)=>['finished','completed','truncated','error','failed','abandoned','interrupted'].includes(status);
+const ended=(status:string)=>['finished','completed','truncated','error','failed','abandoned','interrupted','stopped'].includes(status);
 /** Feeds carry immutable snapshots: priorAction produced this frame. Cursor is the resume token. */
 export function useFrameFeed(path:string|null) {
  const [frames,setFrames]=useState<ViewFrame[]>([]),[status,setStatus]=useState('queued'),[error,setError]=useState(''),[replayId,setReplayId]=useState<string|undefined>();
@@ -34,10 +34,10 @@ export function useFrameFeed(path:string|null) {
  },[path,retry]);
  return {frames,status,error,replayId,policyContext,retry:()=>setRetry(v=>v+1)};
 }
-export function usePlayback(frames:ViewFrame[],key:string,live:boolean) {
+export function usePlayback(frames:ViewFrame[],key:string,live:boolean,autoplay?:boolean) {
  const [index,setIndex]=useState(0),[playing,setPlaying]=useState(live),[speed,setSpeed]=useState(1),[animate,setAnimate]=useState(false);
  const count=frames.length;
- useEffect(()=>{setIndex(0);setPlaying(live);setAnimate(false);},[key]);
+ useEffect(()=>{setIndex(0);setPlaying(autoplay??live);setAnimate(false);},[key]);
  useEffect(()=>{if(index>=count&&count)setIndex(count-1);},[count,index]);
  useEffect(()=>{
   if(!playing)return;

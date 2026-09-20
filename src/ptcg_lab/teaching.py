@@ -18,7 +18,8 @@ def review_hash(record: dict) -> str:
     return digest({key: record.get(key) for key in fields})
 
 
-def eligible(record: dict, *, partition: str = "train") -> bool:
+def valid_review(record: dict, *, partition: str = "train") -> bool:
+    """Validate the unchanged human review, independently of root audit coverage."""
     legal = {action["id"] for action in record.get("observation", {}).get("legalActions", [])}
     accepted = record.get("acceptableActionIds", [])
     return bool(record.get("reviewStatus") == "reviewed" and record.get("rulesValidation") == "legal-position"
@@ -26,9 +27,13 @@ def eligible(record: dict, *, partition: str = "train") -> bool:
                 and record.get("rulesAuditStatus") == "verified"
                 and record.get("partition") == partition and record.get("positionHash") == digest(record.get("observation"))
                 and accepted and set(accepted) <= legal and record.get("conditionalReasoning", "").strip()
-                and record.get("reviewHash") == review_hash(record)
+                and record.get("reviewHash") == review_hash(record))
+
+
+def eligible(record: dict, *, partition: str = "train") -> bool:
+    return bool(valid_review(record, partition=partition)
                 and (not record.get("fixtureReceiptHash")
-                     or set(accepted) <= set(record.get("mechanicsAudit", {}).get("validatedActionIds", []))))
+                     or set(record["acceptableActionIds"]) <= set(record.get("mechanicsAudit", {}).get("validatedActionIds", []))))
 
 
 def bind_family(store, family_id: str, partition: str) -> None:

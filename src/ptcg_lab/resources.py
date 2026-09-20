@@ -36,7 +36,10 @@ def directory_bytes(path: Path) -> int:
     # Explicitly prune POSIX links and Windows reparse points (including
     # junctions); pathlib traversal behavior differs between Python versions.
     def linked(item: Path) -> bool:
-        metadata = item.lstat()
+        try:
+            metadata = item.lstat()
+        except FileNotFoundError:
+            return True
         return item.is_symlink() or bool(getattr(metadata, "st_file_attributes", 0) & 0x400)
 
     total = 0
@@ -47,7 +50,10 @@ def directory_bytes(path: Path) -> int:
         for name in files:
             item = Path(directory) / name
             if not linked(item) and item.is_file():
-                total += item.stat().st_size
+                try:
+                    total += item.stat().st_size
+                except FileNotFoundError:
+                    pass
     return total
 
 

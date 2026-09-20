@@ -101,6 +101,7 @@ class MatchService:
                       knownList=record["knownList"], ownDeckId=record["decks"][0],
                       error=record.get("error"), nextStarterChooser=record.get("nextStarterChooser"),
                       gameResult=record.get("gameResult"))
+        result["dataTier"] = record.get("dataTier", "verified")
         result["frameCursor"] = record.get("frameCursor", -1)
         if not summary:
             result["observation"] = player_observation(record["observation"])
@@ -132,6 +133,9 @@ class MatchService:
             candidates = [d for d in available if d["archetype"] == opponent_archetype]
             if not candidates:
                 raise ValueError("No playable deck for the selected opponent archetype.")
+            experimental = bool(model_id and model_id.startswith("experimental-"))
+            if experimental and mode == "benchmark":
+                raise ValueError("Experimental learning checkpoints are available only in practice matches")
             identifier = uuid.uuid4().hex
             selected = secrets.choice(candidates)
             model = self.settings.analysis_model
@@ -172,6 +176,7 @@ class MatchService:
                       "spentMs": 0, "budgetTurn": None, "seed": secrets.randbits(32), "searchSeed": secrets.randbits(32),
                       "actions": [], "requests": {}, "games": [], "publicKnowledge": [],
                       "publicKnowledgeByPlayer": [[], []], "policy": policy,
+                      "modelId": model_id, "dataTier": "experimental" if experimental else "verified",
                       "policyImplementation": policy_implementation(),
                       "modelVersion": model_version, "warnings": ["Experimental playing strength. Search may use untrained cutoff values.",
                       "A turn's exhausted thinking budget uses a legal heuristic fallback to finish mandatory choices.",
@@ -256,8 +261,10 @@ class MatchService:
         replay["humanMatch"] = {"matchId": record["id"], "gameNumber": record["gameNumber"], "mode": record["mode"],
                                 "modelVersion": record["modelVersion"], "reviewed": False}
         replay["policyContext"] = {"policy": "heuristic" if record["policy"] == "heuristic" else "model",
-                                   "modelVersion": record["modelVersion"], "learnsDuringRun": False,
+                                   "modelVersion": record["modelVersion"], "learnsDuringRun": False, "dataTier": record.get("dataTier", "verified"),
                                    "opponentPopulation": "Human practice/benchmark match", "computeBudgetMsPerTurn": record["budgetMs"]}
+        if record.get("dataTier") == "experimental":
+            replay.update(dataTier="experimental", trainingEligible=False, experimentalAncestry={"modelId": record.get("modelId"), "modelVersion": record["modelVersion"]})
         # Excluded from automatic training, even after later review.
         replay["evaluationExperiment"] = f"human-{record['id']}"
         record["games"].append(replay)
@@ -382,10 +389,12 @@ class MatchService:
                         action_id = Agent("heuristic", record["searchSeed"] + len(record["actions"])).choose(observation)
                     else:
                         if agent is None:
-                            agent = Agent(record["policy"], record["searchSeed"] + len(record["actions"]))
+                            agent = Agent(record["policy"], record["searchSeed"] + len(record["actions"]),
+                                          **({"allow_experimental": True} if record.get("dataTier") == "experimental" else {}))
                             if record["policy"] != "heuristic":
                                 from .training import export_portable_value
-                                leaf_model = export_portable_value(Path(record["policy"]), agent.loaded)
+                                leaf_model = export_portable_value(Path(record["policy"]), agent.loaded,
+                                                                   **({"allow_experimental": True} if record.get("dataTier") == "experimental" else {}))
                         if hasattr(agent, "rng"):
                             agent.rng.seed(record["searchSeed"] + len(record["actions"]))
                         action_id = agent.choose(observation)
@@ -398,7 +407,8 @@ class MatchService:
                             "priorRevealedCards": record.get("publicKnowledgeByPlayer", [[], []])[0]}
                         if record["policy"] != "heuristic":
                             from .training import predict
-                            _, scores = predict(Path(record["policy"]), observation, agent.loaded)
+                            _, scores = predict(Path(record["policy"]), observation, agent.loaded,
+                                                **({"allow_experimental": True} if record.get("dataTier") == "experimental" else {}))
                             if len(scores) != len(observation["legalActions"]) or not all(math.isfinite(score) for score in scores):
                                 raise ValueError("Frozen policy produced invalid action scores; the match is paused.")
                             weights = [math.exp(score - max(scores)) for score in scores]
@@ -449,6 +459,7 @@ class MatchService:
             item = {"id": uuid.uuid4().hex, "schemaVersion": 1, "familyId": f"human-{identifier}",
                     "partition": "test", "title": title, "sourceMatchId": identifier, "gameNumber": record["gameNumber"],
                     "revision": record["revision"], "observation": record["observation"], "playerId": 0,
+                    "dataTier": record.get("dataTier", "verified"),
                     "engineVersion": record["engineIdentity"].get("engineVersion"), "reviewStatus": "draft",
                     "deckVersion": record["registryHash"], "formatDate": "2026-09-17",
                     "source": {"kind": "human-match", "matchId": identifier, "modelVersion": record["modelVersion"]},

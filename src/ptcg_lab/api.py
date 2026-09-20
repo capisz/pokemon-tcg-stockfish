@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from .analysis import analyze_observation, review_decision, select_frame, selected_action_id
 from .config import Settings
@@ -18,7 +18,30 @@ from .engine import EngineError, EnginePool
 from .storage import Store, file_digest
 from .presentation import FrameStream, project_replay
 from .matches import MatchService, MatchConflict
+from .learning import LearningService
 from . import teaching, guides
+
+
+class LearningRequest(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+    seed: int = Field(default=42, ge=0, le=2**32 - 1)
+    keepAwake: bool = True
+    gamesPerBatch: int = Field(default=50, ge=10, le=500)
+    searchBudgetMs: int = Field(default=200, ge=0, le=2000)
+    investigationPositions: int = Field(default=20, ge=0, le=100)
+    investigationBudgetMs: int = Field(default=2000, ge=1, le=5000)
+    maxPositions: int = Field(default=20000, ge=100, le=20000)
+    comparisonSeeds: int = Field(default=2, ge=1, le=10)
+    # Nonzero values deliberately leave comparison incomplete, so diagnostic
+    # runs cannot qualify a candidate for adoption.
+    comparisonGameLimit: int = Field(default=0, ge=0, le=2000)
+    maxDecisions: int = Field(default=3000, ge=1, le=3000)
+    maxCycles: int = Field(default=0, ge=0, le=100000)
+
+
+class LearningControlRequest(BaseModel):
+    revision: int = Field(ge=0)
+    requestId: str = Field(pattern=r"^[A-Za-z0-9_-]{1,160}$")
 
 
 class MatchRequest(BaseModel):
@@ -118,7 +141,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if job["status"] in {"queued", "running"}:
                 store.put("jobs", job["id"], {**job, "status": "interrupted", "error": "Server restarted; rerun the recorded seed and configuration."})
         matches.recover()
+        learning.recover()
         yield
+        learning.close()
         matches.close()
         executor.shutdown(wait=True, cancel_futures=False)
         pool.close()
@@ -143,6 +168,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     matches = MatchService(settings, store, pool, decks)
     app.state.matches = matches
+    # Read durable status directly: the supervisor must never acquire the Match
+    # lock while a foreground request is waiting for a simulation worker.
+    learning = LearningService(settings, store, pool, decks,
+                               interactive_busy=lambda: any(record.get("status") == "active"
+                                   for record in store.list("private-matches")))
+    app.state.learning = learning
 
     def hypothesis_decks():
         return [deck for deck in decks() if deck.get("role") not in {"heldout", "historical"}]
@@ -163,9 +194,51 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except (EngineError, RuntimeError, OSError) as exc:
             raise HTTPException(503, "Local match operation failed; the durable position is preserved. Check local diagnostics and resume.") from exc
 
+    def foreground_call(fn, *args, **kwargs):
+        with learning.priority():
+            return match_call(fn, *args, **kwargs)
+
+    @app.get("/api/learning/runs")
+    def learning_runs():
+        protect_benchmark()
+        return {"runs": match_call(learning.list)}
+
+    @app.post("/api/learning/runs", status_code=201)
+    def start_learning(request: LearningRequest):
+        protect_benchmark()
+        return match_call(learning.create, request.model_dump())
+
+    @app.get("/api/learning/runs/{identifier}")
+    def learning_run(identifier: str):
+        protect_benchmark()
+        return match_call(learning.get, identifier)
+
+    @app.post("/api/learning/runs/{identifier}/control/{operation}")
+    def control_learning(identifier: str, operation: str, request: LearningControlRequest):
+        protect_benchmark()
+        if operation not in {"pause", "resume", "stop"}:
+            raise HTTPException(404, "Unknown learning control")
+        return match_call(learning.control, identifier, operation, request.revision, request.requestId)
+
+    @app.get("/api/learning/runs/{identifier}/games")
+    def learning_games(identifier: str):
+        protect_benchmark()
+        match_call(learning.get, identifier)
+        return {"games": match_call(learning.games, identifier)}
+
+    @app.get("/api/learning/games/{identifier}/frames")
+    def learning_frames(identifier: str, playerId: int = Query(0, ge=0, le=1), after: int = Query(-1, ge=-1), limit: int = Query(100, ge=1, le=100)):
+        protect_benchmark()
+        return match_call(learning.frames, identifier, playerId, after, limit)
+
+    @app.get("/api/learning/games/{identifier}/replay")
+    def learning_replay(identifier: str, playerId: int = Query(0, ge=0, le=1)):
+        protect_benchmark()
+        return match_call(learning.replay, identifier, playerId)
+
     @app.post("/api/matches", status_code=201)
     def create_match(request: MatchRequest):
-        return match_call(matches.create, request.deckId, request.opponentArchetype, request.mode, request.knownList, request.budgetMs, request.modelId)
+        return foreground_call(matches.create, request.deckId, request.opponentArchetype, request.mode, request.knownList, request.budgetMs, request.modelId)
 
     @app.get("/api/matches")
     def list_matches():
@@ -182,17 +255,17 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/matches/{identifier}/actions")
     def match_action(identifier: str, request: MatchActionRequest):
         if request.actionId is None: raise HTTPException(422, "actionId is required")
-        return match_call(matches.command, identifier, "action", request.revision, request.requestId, actionId=request.actionId)
+        return foreground_call(matches.command, identifier, "action", request.revision, request.requestId, actionId=request.actionId)
 
     @app.post("/api/matches/{identifier}/advance", status_code=202)
     def advance_match(identifier: str):
-        return match_call(matches.advance, identifier)
+        return foreground_call(matches.advance, identifier)
 
     @app.post("/api/matches/{identifier}/control/{operation}")
     def control_match(identifier: str, operation: str, request: MatchActionRequest):
         if operation not in {"pause", "resume", "concede", "next-game", "abandon"}: raise HTTPException(404, "Unknown match operation")
         arguments = {"firstPlayer": request.firstPlayer} if operation == "next-game" else {}
-        return match_call(matches.command, identifier, operation, request.revision, request.requestId, **arguments)
+        return foreground_call(matches.command, identifier, operation, request.revision, request.requestId, **arguments)
 
     @app.post("/api/matches/{identifier}/bookmarks", status_code=201)
     def bookmark_match(identifier: str, request: BookmarkRequest):
@@ -207,7 +280,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def analyze_match(identifier: str):
         protect_benchmark()
         record = match_call(matches.get_private, identifier)
-        return analyze_observation(record["observation"], hypothesis_decks(), Path(record["policy"]) if record["policy"] != "heuristic" else None)
+        with learning.priority():
+            return analyze_observation(record["observation"], hypothesis_decks(), Path(record["policy"]) if record["policy"] != "heuristic" else None,
+                                       **({"allow_experimental": True} if record.get("dataTier") == "experimental" else {}))
 
     @app.get("/api/teaching/curriculum")
     def get_curriculum():
@@ -249,6 +324,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     def load(category: str, identifier: str) -> dict:
         try:
+            if category == "replays" and identifier.startswith("experimental-"):
+                game = learning.store.get("learning-games", identifier[len("experimental-"):])
+                if not game.get("replayAvailable"):
+                    raise FileNotFoundError("Learning game replay is incomplete")
+                return learning.store.get("replays", game["replayId"])
             return store.get(category, identifier)
         except (FileNotFoundError, ValueError) as exc:
             raise HTTPException(404, "Record not found") from exc
@@ -262,7 +342,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/decks")
     def get_decks():
-        return {"decks": decks()}
+        with learning.priority():
+            return {"decks": decks()}
 
     @app.get("/api/models")
     def get_models():
@@ -270,16 +351,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"models": list_models(store)}
 
     def run_job(identifier: str, request: GameRequest, model_path: Path | None = None) -> None:
+        with learning.priority():
+            run_job_foreground(identifier, request, model_path)
+
+    def run_job_foreground(identifier: str, request: GameRequest, model_path: Path | None = None) -> None:
+        experimental = bool(request.modelId and request.modelId.startswith("experimental-"))
         job = {"id": identifier, "status": "running", "configuration": request.model_dump(), "frameCursor": -1,
                "policyContext": {"policy": request.policy, "modelVersion": file_digest(model_path) if model_path else f"{request.policy}-v1",
-                                 "trainingStatus": "frozen-checkpoint" if model_path else "handwritten-baseline", "learnsDuringRun": False}}
+                                 "trainingStatus": "experimental-frozen-checkpoint" if experimental else "frozen-checkpoint" if model_path else "handwritten-baseline",
+                                 "dataTier": "experimental" if experimental else "verified", "learnsDuringRun": False}}
         job["policyContext"].update(opponentPopulation="Selected experimental deck pair", computeBudget="One direct policy decision; no search")
         try:
             store.put("jobs", identifier, job)
             with pool.lease() as engine:
                 from .resources import ResourceGuard
                 from .selfplay import Agent
-                agent = Agent(str(model_path), request.seed) if model_path else None
+                agent = Agent(str(model_path), request.seed, **({"allow_experimental": True} if experimental else {})) if model_path else None
                 engine.request("reset", {"seed": request.seed, "decks": request.decks})
                 prior_action, prior_actor = None, 0
                 with ResourceGuard(settings) as guard:
@@ -307,6 +394,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             replay["trainingEligible"] = False
             replay["dataPurpose"] = "interactive-qa"
             replay["policyContext"] = job["policyContext"]
+            if experimental:
+                replay.update(dataTier="experimental", experimentalAncestry={"modelId": request.modelId, "modelVersion": job["policyContext"]["modelVersion"]})
             replay_id = store.save_replay(replay)
             store.put("jobs", identifier, {**job, "status": "completed", "replayId": replay_id,
                                           "resultStatus": replay["status"]})
@@ -319,8 +408,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         finally:
             capacity.release()
 
-    @app.post("/api/games", status_code=202)
-    def create_game(request: GameRequest):
+    def create_game_impl(request: GameRequest):
         protect_benchmark()
         if request.maxDecisions > settings.max_decisions:
             raise HTTPException(422, "Decision limit exceeds this machine's configured limit")
@@ -346,6 +434,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             capacity.release()
             raise
         return {"id": identifier, "status": "queued"}
+
+    @app.post("/api/games", status_code=202)
+    def create_game(request: GameRequest):
+        with learning.priority():
+            return create_game_impl(request)
 
     @app.get("/api/jobs/{identifier}")
     def get_job(identifier: str):
@@ -376,44 +469,71 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/replays/{identifier}")
     def get_replay(identifier: str, playerId: int = Query(0, ge=0, le=1)):
         protect_benchmark()
-        return project_replay(load("replays", identifier), playerId)
+        result = project_replay(load("replays", identifier), playerId)
+        if identifier.startswith("experimental-"):
+            result.update(id=identifier, dataTier="experimental")
+        return result
 
-    @app.post("/api/analyze")
-    def analyze(request: AnalysisRequest):
+    def analyze_impl(request: AnalysisRequest):
         protect_benchmark()
         try:
             if request.positionId:
-                observation = load("positions", request.positionId)["observation"]
+                position = load("positions", request.positionId)
+                observation = position["observation"]
+                source_id = position.get("sourceReplayId", "")
                 played_action_id = None
             else:
+                source_id = request.replayId
                 replay = load("replays", request.replayId)
                 observation = select_frame(replay, request.decisionIndex, request.playerId)
                 played_action_id = selected_action_id(replay, request.decisionIndex, request.playerId)
-            # A champion pointer is only installed after a conclusive evaluation.
-            model_path = settings.analysis_model
-            champion = settings.data / "models" / "champion.pt"
-            if model_path is not None and not model_path.exists():
-                raise ValueError("PTCG_ANALYSIS_MODEL does not point to an existing local checkpoint")
-            if model_path is None and request.replayId:
-                context = replay.get("policyContext", {})
-                fingerprint = context.get("modelVersion", "")
-                if context.get("policy") == "model" and len(fingerprint) == 64 and all(c in "0123456789abcdef" for c in fingerprint):
-                    frozen = settings.data / "private-models" / f"{fingerprint}.pt"
-                    if frozen.exists():
-                        if file_digest(frozen) != fingerprint:
-                            raise ValueError("Replay checkpoint checksum differs from its frozen policy")
+            # Learning analysis always uses the policy that actually occupied
+            # this player seat. A later incumbent or environment override cannot
+            # retroactively grade its earlier decisions.
+            experimental_game = source_id.startswith("experimental-")
+            experimental = False
+            model_path = None
+            if experimental_game:
+                from .learning_games import validate_policy
+                game = learning.store.get("learning-games", source_id[len("experimental-"):])
+                policy = game["policies"][observation["playerId"]]
+                validate_policy(policy)
+                if policy["path"] not in {"heuristic", "random"}:
+                    model_path = Path(policy["path"])
+                experimental = True
+            else:
+                # A champion pointer is installed only after conclusive evaluation.
+                model_path = settings.analysis_model
+                champion = settings.data / "models" / "champion.pt"
+                if model_path is not None and not model_path.exists():
+                    raise ValueError("PTCG_ANALYSIS_MODEL does not point to an existing local checkpoint")
+                source_replay = replay if request.replayId else None
+                if source_replay is None and request.positionId and position.get("dataTier") == "experimental" and source_id:
+                    source_replay = load("replays", source_id)
+                if model_path is None and source_replay:
+                    context = source_replay.get("policyContext", {})
+                    fingerprint = context.get("modelVersion", "")
+                    if context.get("policy") == "model" and len(fingerprint) == 64 and all(c in "0123456789abcdef" for c in fingerprint):
+                        frozen = settings.data / "private-models" / f"{fingerprint}.pt"
+                        if not frozen.exists() or file_digest(frozen) != fingerprint:
+                            raise ValueError("Replay checkpoint is missing or differs from its frozen policy")
                         model_path = frozen
-            if model_path is None and champion.exists():
-                model_path = champion
-            result = analyze_observation(observation, hypothesis_decks(), model_path)
-            if settings.analysis_model is not None:
+                        experimental = context.get("dataTier") == "experimental"
+                if model_path is None and champion.exists():
+                    model_path = champion
+            inference_flags = {"allow_experimental": True} if experimental else {}
+            result = analyze_observation(observation, hypothesis_decks(), model_path, **inference_flags)
+            if experimental:
+                result["dataTier"] = "experimental"
+                result["warnings"].append("Quarantined experimental policy and rules; this analysis does not establish trusted strength or calibrated probabilities.")
+            elif settings.analysis_model is not None:
                 result["warnings"].append("Explicit experimental analysis checkpoint; training does not establish superior playing strength or champion status.")
             try:
                 params = {"observation": observation, "budgetMs": request.budgetMs, "method": "rollout", "seed": 42}
                 if model_path:
                     from .training import export_portable_value, load_model, predict
-                    loaded = load_model(model_path)
-                    _, scores = predict(model_path, observation, loaded)
+                    loaded = load_model(model_path, **inference_flags)
+                    _, scores = predict(model_path, observation, loaded, **inference_flags)
                     legal = observation.get("legalActions", [])
                     if legal:
                         if len(scores) != len(legal) or not all(math.isfinite(score) for score in scores):
@@ -422,10 +542,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                         total = sum(weights)
                         params.update(method="ismcts", rootPriors=[{"actionId": action["id"], "probability": weight / total}
                                                                  for action, weight in zip(legal, weights)])
-                    leaf_model = export_portable_value(model_path, loaded)
+                    leaf_model = export_portable_value(model_path, loaded, **inference_flags)
                     if leaf_model:
                         params["leafModel"] = leaf_model
-                with pool.lease(wait_timeout=.1) as engine:
+                # Keep foreground priority asserted while learning reaches a
+                # bounded decision checkpoint and releases its workers.
+                with pool.lease(wait_timeout=10) as engine:
                     search = engine.request("search", params)
                 result["search"] = {key: search.get(key) for key in ("status", "method", "iterations", "elapsedMs")}
                 result["search"]["valueContext"] = search.get("valueContext")
@@ -445,6 +567,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(422, str(exc)) from exc
         except ImportError as exc:
             raise HTTPException(503, "Install the training extra to load the selected model") from exc
+        except (OSError, KeyError) as exc:
+            raise HTTPException(422, "The recorded analysis policy or provenance is unavailable; restore its immutable artifact") from exc
+
+    @app.post("/api/analyze")
+    def analyze(request: AnalysisRequest):
+        with learning.priority():
+            return analyze_impl(request)
 
     @app.post("/api/positions", status_code=201)
     def save_position(request: PositionRequest):
@@ -465,6 +594,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     "observation": {key: value for key, value in observation.items() if key in allowed}}
         if not position["title"]:
             raise HTTPException(422, "Position title cannot contain only whitespace")
+        if request.replayId.startswith("experimental-") or replay.get("dataTier") == "experimental":
+            position.update(dataTier="experimental", trainingEligible=False,
+                            experimentalAncestry={"sourceReplayId": request.replayId, "learningRun": replay.get("learningRun"),
+                                                  "policyContext": replay.get("policyContext")})
         store.put("positions", position["id"], position)
         return {key: value for key, value in position.items() if key != "observation"}
 

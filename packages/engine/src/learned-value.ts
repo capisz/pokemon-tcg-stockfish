@@ -65,13 +65,14 @@ export function valueCardTokens(o:Observation):number[] {
   return result.slice(0,128).concat(Array(Math.max(0,128-result.length)).fill(0));
 }
 export interface LeafEnvelope {schemaVersion:1;payload:string;hash:string}
-export interface LeafModel {modelVersion:string;checkpointHash:string;evaluate:(o:Observation)=>number}
+export interface LeafModel {modelVersion:string;checkpointHash:string;dataTier:'experimental'|'verified';evaluate:(o:Observation)=>number}
 export function loadLeafModel(envelope:LeafEnvelope):LeafModel {
   if(envelope?.schemaVersion!==1||typeof envelope.payload!=='string'||envelope.payload.length>950000
     ||createHash('sha256').update(envelope.payload).digest('hex')!==envelope.hash)throw new Error('Invalid learned-value checksum or envelope.');
   const payload=JSON.parse(envelope.payload);
   if(payload.featureVersion!==VALUE_FEATURE_VERSION||JSON.stringify(payload.featureNames)!==JSON.stringify(names)
-    ||payload.cardBuckets!==2048||payload.maxVisibleCards!==128||payload.valueTrained!==true||!payload.checkpointHash||!payload.modelVersion)
+    ||payload.cardBuckets!==2048||payload.maxVisibleCards!==128||payload.valueTrained!==true||!payload.checkpointHash||!payload.modelVersion
+    ||!['experimental','verified'].includes(payload.dataTier))
     throw new Error('Incompatible learned-value features.');
   const weights=payload.weights;
   const vector=(name:string,length:number):number[]=>{
@@ -89,7 +90,7 @@ export function loadLeafModel(envelope:LeafEnvelope):LeafModel {
   const w0=matrix('context.0.weight',64,32), b0=vector('context.0.bias',64);
   const w2=matrix('context.2.weight',32,64), b2=vector('context.2.bias',32), interaction=matrix('interaction.weight',1,32)[0];
   const dot=(a:number[],b:number[])=>a.reduce((n,v,i)=>n+v*b[i],0);
-  return {modelVersion:payload.modelVersion,checkpointHash:payload.checkpointHash,evaluate(o){
+  return {modelVersion:payload.modelVersion,checkpointHash:payload.checkpointHash,dataTier:payload.dataTier,evaluate(o){
     const features=valueFeatures(o), tokens=valueCardTokens(o).filter(Boolean), pool=Array(16).fill(0);
     for(const token of tokens)for(let i=0;i<16;i++)pool[i]+=embedding[token][i]/Math.max(1,tokens.length);
     const input=features.concat(pool), hidden=w0.map((w,i)=>Math.tanh(dot(w,input)+b0[i]));

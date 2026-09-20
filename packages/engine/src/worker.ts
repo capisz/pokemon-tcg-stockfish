@@ -4,6 +4,7 @@ import { chooseAction } from './policies';
 import { SeededRandom } from './random';
 import { search } from './search';
 import { tacticalFixture } from './tactical-fixtures';
+import { auditTeachingFixture } from './teaching-audit';
 
 // stdout is protocol only, even when upstream logs diagnostics.
 console.log = (...args: unknown[]) => console.error(...args);
@@ -27,6 +28,7 @@ export function request(method: string, params: any = {}): any {
     case 'branch': environment = current().branch(); return {observation: environment.observe(), status: environment.status, decisionIndex: environment.decisionIndex};
     case 'search': return search(params);
     case 'fixture': return tacticalFixture(params);
+    case 'auditFixture': return auditTeachingFixture(params);
     case 'run': {
       const max = params.maxDecisions ?? 500;
       if (!Number.isSafeInteger(max) || max < 1 || max > 10000) throw new Error('maxDecisions must be 1..10000.');

@@ -134,7 +134,7 @@ def demonstration_records(store: Store, *, partition: str = "train", limit: int 
     A guide, generated annotation, untested transition, changed review, or a family
     assigned to validation/test cannot silently enter the training partition.
     """
-    from .teaching import eligible
+    from .teaching_audits import composed_admission
     if partition not in {"train", "validation", "test"} or limit < 1:
         raise ValueError("Choose a teaching partition and a positive record limit.")
     family_records = {item["familyId"]: item for item in store.iter_records("teaching-families")}
@@ -151,8 +151,10 @@ def demonstration_records(store: Store, *, partition: str = "train", limit: int 
     conflicting.update(family for family, item in family_records.items() if item.get("quarantined"))
     records = []
     for record in candidates:
-        if (record.get("familyId") in conflicting or families.get(record.get("familyId")) != partition
-                or not eligible(record, partition=partition)):
+        if record.get("familyId") in conflicting or families.get(record.get("familyId")) != partition:
+            continue
+        admitted = composed_admission(store, record, partition=partition)
+        if admitted is None:
             continue
         if record.get("fixtureReceiptHash"):
             try:
@@ -161,7 +163,7 @@ def demonstration_records(store: Store, *, partition: str = "train", limit: int 
                 continue
             if digest(receipt) != record["fixtureReceiptHash"] or digest(receipt.get("observation")) != record["positionHash"]:
                 continue
-        records.append(record)
+        records.append(admitted)
         if len(records) >= limit:
             break
     return sorted(records, key=lambda record: record["id"])
@@ -185,7 +187,10 @@ def demonstration_manifest(records: list[dict]) -> list[dict]:
     return [{"id": record["id"], "familyId": record["familyId"], "partition": record["partition"],
              "positionHash": record["positionHash"], "reviewHash": record["reviewHash"],
              "sourceHash": digest(record.get("source")), "engineVersion": record["engineVersion"],
-             "recordHash": digest(record)} for record in records]
+             "recordHash": record.get("sourceRecordHash", digest(record)),
+             **({"mechanicsAttestationHash": record["mechanicsAttestationHash"],
+                 "fixtureReceiptHash": record["fixtureReceiptHash"]} if record.get("mechanicsAttestationHash") else {})}
+            for record in records]
 
 
 def export_parquet(store: Store, destination: Path, limit: int = 100000) -> dict:

@@ -1,5 +1,7 @@
 # Watch, play, and learning checkpoint — September 19, 2026
 
+Latest milestone: [continuous experimental learning](validation/continuous-learning/RESULTS.md) now has a completed bounded real cycle and a manually started normal-budget soak. Trusted deck admission and champion promotion remain locked.
+
 The three assignments are integrated on `codex/competitive-integration`. Real
 simulations, saved replays, human play and teaching review share a card table.
 The guide-to-policy pipeline is implemented, but the user's twelve initial

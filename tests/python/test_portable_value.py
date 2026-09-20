@@ -9,7 +9,8 @@ import numpy as np
 import pytest
 
 
-def test_portable_value_inputs_and_outputs_match_pytorch(observation):
+@pytest.mark.parametrize("data_tier", ["verified", "experimental"])
+def test_portable_value_inputs_and_outputs_match_pytorch(observation, data_tier):
     torch = pytest.importorskip("torch")
     from ptcg_lab.model import PolicyResourceModel
     from ptcg_lab.features import FEATURE_NAMES, FEATURE_VERSION, resource_features, card_tokens
@@ -19,7 +20,7 @@ def test_portable_value_inputs_and_outputs_match_pytorch(observation):
                if key == "baseline" or key.startswith(("card_embedding.", "resource_terms.", "context.", "interaction."))}
     payload = json.dumps({"featureVersion": FEATURE_VERSION, "featureNames": list(FEATURE_NAMES), "cardBuckets": 2048,
                           "maxVisibleCards": 128, "modelVersion": "numerical-test-only", "checkpointHash": "a" * 64,
-                          "valueTrained": True, "weights": weights}, separators=(",", ":"), allow_nan=False)
+                          "valueTrained": True, "dataTier": data_tier, "weights": weights}, separators=(",", ":"), allow_nan=False)
     envelope = {"schemaVersion": 1, "payload": payload, "hash": hashlib.sha256(payload.encode()).hexdigest()}
     examples = []
     for player_id in (0, 1):
@@ -40,13 +41,14 @@ let text='';for await(const part of process.stdin)text+=part;
 const {envelope,examples}=JSON.parse(text),model=loadLeafModel(envelope);
 const rows=examples.map(o=>({features:valueFeatures(o),tokens:valueCardTokens(o),value:model.evaluate(o)}));
 let rejected=false;try{loadLeafModel({...envelope,hash:'incorrect'});}catch{rejected=true;}
-process.stdout.write(JSON.stringify({rows,rejected}));
+process.stdout.write(JSON.stringify({rows,rejected,dataTier:model.dataTier}));
 """
     completed = subprocess.run(["node", "--import", "tsx", "--input-type=module", "-e", source],
                                input=json.dumps({"envelope": envelope, "examples": examples}), text=True,
                                capture_output=True, cwd=Path(__file__).resolve().parents[2], timeout=30, check=True)
     result = json.loads(completed.stdout)
     assert result["rejected"]
+    assert result["dataTier"] == data_tier
     assert len(json.dumps({"method": "search", "params": {"observation": observation, "leafModel": envelope}})) < 1024**2
     with torch.no_grad():
         for row, example in zip(result["rows"], examples):

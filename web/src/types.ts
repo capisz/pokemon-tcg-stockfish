@@ -145,5 +145,19 @@ export type Teaching = {
 
 export type ViewFrame = { cursor?:number; decisionIndex:number; actor:number; action?:Action|null; priorAction?:Action|null; observation:Observation; revision?:number; gameNumber?:number };
 export type PolicyContext = {policy?:string;modelVersion?:string;trainingStatus?:string;learnsDuringRun?:boolean;opponentPopulation?:string;computeBudget?:string};
-export type FrameFeed = { schemaVersion:number; frames:ViewFrame[]; nextCursor:number; status:string; hasMore:boolean; replayId?:string;policyContext?:PolicyContext;error?:string|{message?:string} };
-export type ModelOption = {id:string; name:string; modelKind:string; modelHash:string; status:string; description:string; valueTrained:boolean; calibrated:boolean; parameters?:number; featureVersion?:string};
+export type FrameFeed = { schemaVersion:number; frames:ViewFrame[]; nextCursor:number; status:string; hasMore:boolean; replayId?:string;runId?:string;gameId?:string;policyContext?:PolicyContext;error?:string|{message?:string} };
+export type ModelOption = {dataTier?:string;id:string; name:string; modelKind:string; modelHash:string; status:string; description:string; valueTrained:boolean; calibrated:boolean; parameters?:number; featureVersion?:string};
+
+export type LearningGame = {id:string; workerIndex:number; status:string; purpose:'collection'|'comparison'; archetypes:[string,string]; decisionIndex:number; turn:number; frameCursor:number; replayAvailable?:boolean; createdAt?:string};
+export type LearningPolicy = {version:string; name:string};
+export type LearningRun = {
+ schemaVersion:1; id:string; revision:number; status:'running'|'pausing'|'paused'|'stopped'|'waiting-for-play'|'failed';
+ phase:'initializing'|'collecting'|'investigating'|'training'|'comparing'|'checkpointed'; cycle:number;
+ incumbent:LearningPolicy; candidate?:LearningPolicy; guidePolicy?:LearningPolicy;
+ configuration:{seed?:number;keepAwake?:boolean;[key:string]:unknown}; activeGames:LearningGame[]; error?:string; pauseReason?:string;
+ metrics:{completedGames:number;errors:number;truncatedGames:number;searchDecisions:number;searchTargets:number;peakMemoryBytes:number;managedBytes:number;freeBytes?:number;loss?:number|null;
+ coverage?:{scheduledPairs:number;totalPairs:number;completedPairs:number;archetypes:number};
+ comparison?:{status:'running'|'completed'|'unavailable';completedGames:number;totalGames:number;mean:number|null;lower:number|null;upper:number|null;adopted:boolean;notes:string[]};
+ guideAgreement?:{status:'measured'|'unavailable';positions:number;acceptableActionAccuracy:number|null};
+ };
+};

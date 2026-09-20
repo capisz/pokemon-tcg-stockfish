@@ -157,6 +157,7 @@ def train(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
                   "mode": "warm-start-new-data", "optimizer": "fresh"}
     if resume:
         checkpoint = torch.load(resume, map_location="cpu", weights_only=True)
+        _check_model_tier(checkpoint, False)
         previous_lineage = checkpoint_lineage(checkpoint)
         seen_seeds.update(previous_lineage["seenSeeds"])
         seen_families.update(previous_lineage["familyIds"])
@@ -384,7 +385,8 @@ def _teaching_comparison(model, records, baseline, device, total_positions):
 
 
 def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str = "cpu",
-                 max_positions: int = 10000, resume: Path | None = None, guard=None, linked_resume: bool = False) -> dict:
+                 max_positions: int = 10000, resume: Path | None = None, guard=None, linked_resume: bool = False,
+                 run_id: str | None = None, data_tier: str = "verified") -> dict:
     """Imitation warm-start from reviewed tactical decisions; no outcome targets.
 
     The result is an experimental policy. It cannot produce a learned evaluation
@@ -394,6 +396,8 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
     from .model import PolicyResourceModel
     if not 1 <= epochs <= 100 or not 1 <= max_positions <= 100000:
         raise ValueError("Bound policy training to 1..100 epochs and 1..100000 positions")
+    if data_tier not in {"verified", "experimental"}:
+        raise ValueError("Unknown policy training data tier")
     if device not in {"cpu", "mps"} or (device == "mps" and not torch.backends.mps.is_available()):
         raise ValueError("Requested local device is unavailable")
     torch.set_num_threads(2)
@@ -406,7 +410,7 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
     config = {"seed": seed, "device": device, "maxPositions": max_positions, "batchSize": 32,
               "learningRate": .001, "features": list(FEATURE_NAMES), "actionDimensions": ACTION_DIM,
               "featureVersion": FEATURE_VERSION, "splitPolicy": "immutable-teaching-families-v1",
-              "datasetHash": digest(manifest), "eligibilityPolicy": "reviewed-audited-demonstrations-v1"}
+              "datasetHash": digest(manifest), "eligibilityPolicy": "reviewed-audited-demonstrations-v1", "dataTier": data_tier}
     model = PolicyResourceModel().to(device)
     # These heads have no target and remain frozen. The shared context can learn
     # policy preferences; no resulting random value head is exposed to consumers.
@@ -414,10 +418,11 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
         if name.startswith(("resource_terms.", "baseline", "interaction.", "outcomes.")):
             parameter.requires_grad_(False)
     optimizer = torch.optim.Adam([parameter for parameter in model.parameters() if parameter.requires_grad], lr=.001)
-    identifier, epoch_start, batch_start, history = uuid.uuid4().hex, 0, 0, []
+    identifier, epoch_start, batch_start, history = run_id or uuid.uuid4().hex, 0, 0, []
+    store.location("experiments", identifier)  # Validate externally supplied run ID.
     parent, teaching_baseline = None, None
     if resume:
-        previous_model, previous = load_model(resume)
+        previous_model, previous = load_model(resume, allow_experimental=data_tier == "experimental")
         previous_config, comparable = dict(previous["config"]), dict(config)
         if linked_resume:
             previous_config.pop("device", None)
@@ -450,6 +455,8 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
     lineage = {"schemaVersion": 2, "seenSeeds": [],
                "familyIds": sorted(digest({"teachingFamily": family}) for family in families),
                "teachingFamilyIds": families, "teachingReviewHashes": sorted({record["reviewHash"] for record in records})}
+    if data_tier == "experimental":
+        lineage["experimentalAncestry"] = True
     lineage["hash"] = digest(lineage)
     path = store.path / "models" / f"{identifier}.pt"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -458,6 +465,7 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
     def checkpoint_at(epoch, next_batch=0):
         return {"schemaVersion": 3, "experimentId": identifier, "parent": parent, "platform": platform.platform(),
                 "modelKind": "policy-only", "valueTrained": False, "epoch": epoch, "nextBatch": next_batch,
+                "dataTier": data_tier,
                 "config": config, "manifest": {}, "teachingManifest": manifest, "parameters": parameters,
                 "teachingBaseline": teaching_baseline,
                 "dataLineage": lineage, "model": {key: value.cpu() for key, value in model.state_dict().items()},
@@ -516,6 +524,7 @@ def train_policy(store: Store, *, epochs: int = 3, seed: int = 42, device: str =
         checkpoint["teachingDiagnostic"] = diagnostic
         _save_checkpoint(store, path, checkpoint)
         report = {"id": identifier, "status": "completed", "type": "policy-only-training", "modelKind": "policy-only",
+                  "dataTier": data_tier,
                   "valueTrained": False, "config": config, "parameters": parameters, "checkpoint": str(path),
                   "modelHash": file_digest(path), "dataLineageHash": lineage["hash"], "demonstrationExamples": len(records),
                   "demonstrationFamilies": families, "history": history, "metrics": metrics,
@@ -556,17 +565,36 @@ def checkpoint_lineage(checkpoint: dict) -> dict:
     return lineage
 
 
-def load_model(path: Path):
+def _check_model_tier(checkpoint: dict, allow_experimental: bool) -> bool:
+    experimental = (checkpoint.get("dataTier") == "experimental"
+                    or checkpoint.get("dataLineage", {}).get("experimentalAncestry") is True
+                    or checkpoint.get("config", {}).get("eligibilityPolicy") == "experimental-simulator-v1")
+    if experimental and not allow_experimental:
+        raise ValueError("Experimental checkpoint is quarantined; this caller must explicitly opt in")
+    if experimental and (checkpoint.get("dataTier") != "experimental"
+                         or checkpoint.get("dataLineage", {}).get("experimentalAncestry") is not True):
+        raise ValueError("Experimental checkpoint is missing permanent ancestry provenance")
+    return experimental
+
+
+def load_model(path: Path, *, allow_experimental: bool = False):
     torch = _torch()
     from .model import PolicyResourceModel
     checkpoint = torch.load(path, map_location="cpu", weights_only=True)
+    experimental = _check_model_tier(checkpoint, allow_experimental)
     policy = checkpoint.get("config", {}).get("eligibilityPolicy")
-    if policy not in {"explicit-verified-roles-v1", "reviewed-audited-demonstrations-v1"}:
+    if policy not in {"explicit-verified-roles-v1", "reviewed-audited-demonstrations-v1", "experimental-simulator-v1"}:
         raise ValueError("Historical checkpoint lacks verified training provenance; preserve it as evidence and train a new eligible model")
     if (checkpoint.get("config", {}).get("featureVersion") != FEATURE_VERSION
             or checkpoint.get("config", {}).get("actionDimensions") != ACTION_DIM):
         raise ValueError("Checkpoint feature schema is incompatible with this engine lab version; train a fresh checkpoint. Historical artifacts are preserved.")
     checkpoint_lineage(checkpoint)
+    if policy == "experimental-simulator-v1":
+        manifest = checkpoint.get("manifest")
+        if (not experimental or not isinstance(manifest, dict)
+                or digest(manifest) != checkpoint["config"].get("datasetHash")
+                or manifest.get("dataTier") != "experimental" or checkpoint.get("calibration") is not None):
+            raise ValueError("Experimental checkpoint lacks an intact quarantined dataset manifest")
     if policy == "reviewed-audited-demonstrations-v1":
         manifest = checkpoint.get("teachingManifest")
         if (checkpoint.get("modelKind") != "policy-only" or checkpoint.get("valueTrained") is not False
@@ -582,9 +610,10 @@ def load_model(path: Path):
     return model, checkpoint
 
 
-def predict(path: Path, observation: dict, loaded=None):
+def predict(path: Path, observation: dict, loaded=None, *, allow_experimental: bool = False):
     torch = _torch()
-    model, checkpoint = loaded or load_model(path)
+    model, checkpoint = loaded or load_model(path, allow_experimental=allow_experimental)
+    experimental = _check_model_tier(checkpoint, allow_experimental)
     legal = observation.get("legalActions", [])
     with torch.no_grad():
         resources = torch.tensor(resource_features(observation)[None, :])
@@ -597,12 +626,13 @@ def predict(path: Path, observation: dict, loaded=None):
                       "modelVersion": checkpoint["experimentId"], "components": [], "calibrated": False,
                       "valueTrained": False, "resourceCoverage": resource_coverage(observation),
                       "description": "Policy trained on reviewed tactical demonstrations. No outcome target was used; evaluation scores and probabilities are unavailable."}
+        evaluation["dataTier"] = "experimental" if experimental else "verified"
         return evaluation, output["policy"][0].tolist() if legal else []
     scale = math.log(2)
     components = [{"name": name, "value": float(value) / scale} for name, value in zip(FEATURE_NAMES, output["components"][0])]
     components.extend([{"name": "baseline", "value": float(output["baseline"][0].detach()) / scale},
                        {"name": "interaction", "value": float(output["interaction"][0]) / scale}])
-    calibrated = checkpoint.get("calibration") is not None
+    calibrated = not experimental and checkpoint.get("calibration") is not None
     probabilities = _probabilities(output["outcome_logits"].numpy(), checkpoint.get("calibration"))[0] if calibrated else None
     evaluation = {"status": "trained", "score": float(output["logit"][0]) / scale,
                   "expectedResult": float(probabilities[2] + .5 * probabilities[1]) if calibrated else None,
@@ -613,10 +643,14 @@ def predict(path: Path, observation: dict, loaded=None):
                   "valueTrained": True, "resourceCoverage": resource_coverage(observation),
                   "description": "Learned outcome logit / ln(2); one unit doubles raw expected-result odds. Resource contributions are model terms, not causal card values."
                                  + (" Probabilities use held-out calibration." if calibrated else " Insufficient calibration data; probabilities are withheld.")}
+    if experimental:
+        evaluation.update(dataTier="experimental", label="Experimental learned", expectedResult=None,
+                          winProbability=None, drawProbability=None, lossProbability=None, calibrated=False,
+                          description="Experimental learned simulator-result logit / ln(2). Rules coverage is unverified; this is not a trusted advantage, calibrated probability, or established playing-strength result.")
     return evaluation, output["policy"][0].tolist() if legal else []
 
 
-def export_portable_value(path: Path, loaded=None) -> dict | None:
+def export_portable_value(path: Path, loaded=None, *, allow_experimental: bool = False) -> dict | None:
     """Verified raw expected-result leaf evaluator, never a policy-only value head.
 
     Hash exact JSON bytes rather than relying on cross-language float formatting.
@@ -625,7 +659,8 @@ def export_portable_value(path: Path, loaded=None) -> dict | None:
     import hashlib
     import json
     from .features import CARD_BUCKETS, MAX_VISIBLE_CARDS
-    model, checkpoint = loaded or load_model(path)
+    model, checkpoint = loaded or load_model(path, allow_experimental=allow_experimental)
+    experimental = _check_model_tier(checkpoint, allow_experimental)
     if checkpoint.get("modelKind") == "policy-only" or checkpoint.get("valueTrained") is False:
         return None
     names = ("card_embedding.", "resource_terms.", "baseline", "context.", "interaction.")
@@ -634,6 +669,7 @@ def export_portable_value(path: Path, loaded=None) -> dict | None:
                           "modelVersion": checkpoint["experimentId"], "checkpointHash": file_digest(path),
                           "featureNames": list(FEATURE_NAMES), "cardBuckets": CARD_BUCKETS,
                           "maxVisibleCards": MAX_VISIBLE_CARDS, "weights": weights, "valueTrained": True,
-                          "valueSemantics": "uncalibrated-expected-result-logit"},
+                          "dataTier": "experimental" if experimental else "verified",
+                          "valueSemantics": "experimental-simulator-result-logit" if experimental else "uncalibrated-expected-result-logit"},
                          separators=(",", ":"), ensure_ascii=True, allow_nan=False)
     return {"schemaVersion": 1, "payload": payload, "hash": hashlib.sha256(payload.encode()).hexdigest()}

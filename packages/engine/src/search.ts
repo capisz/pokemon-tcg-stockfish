@@ -126,7 +126,7 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
   if ([...roots.values()].some(e => !e.visits)) warnings.add('Budget did not visit every legal candidate; unvisited moves have null scores.');
   return {
     status: iterations ? 'complete' as const : 'unavailable' as const, method, iterations, elapsedMs: performance.now() - start,
-    valueContext: learned?{kind:'learned',modelVersion:learned.modelVersion,checkpointHash:learned.checkpointHash,calibrated:false}:{kind:'heuristic',calibrated:false},
+    valueContext: learned?{kind:'learned',dataTier:learned.dataTier,label:learned.dataTier==='experimental'?'Experimental learned':'Learned',modelVersion:learned.modelVersion,checkpointHash:learned.checkpointHash,calibrated:false}:{kind:'heuristic',calibrated:false},
     hypotheses: hypotheses.map(h=>h.id), hypothesisWeights:hypotheses.map(({id,archetype,kind,weight})=>({id,archetype,kind,weight})), treeNodes: tree.size, warnings: [...warnings],
     alternatives: [...roots.values()].map(e => {
       const mean = e.visits ? e.total / e.visits : null;

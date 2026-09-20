@@ -2,7 +2,7 @@
 
 A local Pokémon TCG simulator, playable card table, and reproducible learning laboratory. The competitive pool contains Dragapult, Crustle, Mega Lucario, Marnie's Grimmsnarl, and Raging Bolt / Mega Kangaskhan: one main, one training variant, and one reserved test variant each.
 
-**Current checkpoint:** competitive play and research infrastructure are implemented, with rules audits still in progress. All fifteen competitive lists remain experimental and excluded from trusted outcome training. This is not a completed strength study or a claim of regional-level play. See [implementation evidence](docs/IMPLEMENTATION_STATUS.md) and [remaining assignments](docs/handoffs/).
+**Current checkpoint:** manually started, watchable experimental learning now connects reviewed positions, self-play, training, and gated candidate comparisons. Rules audits remain in progress. All fifteen competitive lists remain experimental and excluded from trusted outcome training. This is not a completed strength study or a claim of regional-level play. See [implementation evidence](docs/IMPLEMENTATION_STATUS.md) and [remaining assignments](docs/handoffs/).
 
 ## Install and play
 
@@ -34,6 +34,25 @@ npm run dev
 
 Artwork is loaded optionally by the browser from [TCGdex](https://tcgdex.dev/assets); offline or missing images retain readable card details. No artwork files are bundled. Card data and artwork do not establish rules correctness.
 
+## Continuous experimental learning
+
+On **Replay analysis**, use **Continuous learning → Start learning**. Both workers'
+real games appear on the existing table. Playback pause is independent of learning;
+Pause/Resume/Stop control the runner. Browser closure does not stop the local API.
+An application restart restores progress paused and requires explicit resume.
+
+This separately authorized lane learns from unverified simulator outcomes and keeps
+all descendants quarantined under `data/competitive/experimental`. It never alters
+the trusted champion. Default comparisons require 400 complete games and regression
+checks before automatic experimental adoption. Five saved reviews now supply
+admitted policy examples with their original review evidence preserved.
+
+See [operating instructions](docs/CONTINUOUS_LEARNING.md),
+[experimental research semantics](research/EXPERIMENTAL_LEARNING.md), and
+[bounded integration evidence](docs/validation/continuous-learning/RESULTS.md).
+A completed loop demonstrates the learning process, not stronger play. The full
+24-hour soak and complete candidate comparison remain separately recorded gates.
+
 ## Reproducible research
 
 Use `.venv/bin/python` on macOS or `.venv\Scripts\python.exe` in PowerShell. Examples below abbreviate that interpreter as `python`.
@@ -60,7 +79,7 @@ The small policy/value model exposes learned baseline, resource and interaction 
 
 ## Guides and review
 
-Supplied PDFs remain private under ignored local storage. `research/curriculum.json` records twenty attributed guide families with sixty variations and permanent family partitions. Twelve positions from the first four families now have reproducible simulator recipes and scoped transition audits; their strategy labels await your review. The other sixteen families remain specifications. Only reviewed, rules-checked training-family choices may train a policy. `prepare-teaching` creates the review queue, and `train-policy` learns acceptable-action sets without inventing outcome labels. Running a simulation does not train a model.
+Supplied PDFs remain private under ignored local storage. `research/curriculum.json` records twenty attributed guide families with sixty variations and permanent family partitions. Twelve positions from the first four families now have reproducible simulator recipes and scoped transition audits; five saved reviews currently supply admitted policy examples; the remaining positions await review. The other sixteen families remain specifications. Only reviewed, rules-checked training-family choices may train a policy. `prepare-teaching` creates the review queue, and `train-policy` learns acceptable-action sets without inventing outcome labels. Running a simulation does not train a model.
 
 Local lexical retrieval works without model downloads. Optional Sentence Transformers requires an already installed local model. The optional Ollama/Qwen adapter drafts cited hypotheses; it cannot establish rules or numerical labels. Run language-model work separately from heavy training. These optional model runtimes have not been validated here.
 

@@ -10,7 +10,7 @@ from .features import FEATURE_NAMES, deck_beliefs, heuristic_action_score, resou
 HEURISTIC_WEIGHTS = np.array([2.5, .8, .4, .9, .25, .1, .4, .8, .15, .15, .1, .2, -.5, .2, .3, -.1])
 
 
-def analyze_observation(observation: dict, decks: list[dict], model_path: Path | None = None) -> dict:
+def analyze_observation(observation: dict, decks: list[dict], model_path: Path | None = None, *, allow_experimental: bool = False) -> dict:
     """Only a single player's view enters the analysis boundary.
 
     In particular this function has no replay, future frames, RNG state, or hidden
@@ -20,7 +20,7 @@ def analyze_observation(observation: dict, decks: list[dict], model_path: Path |
     warnings.extend(observation.get("warnings", []))
     if model_path and model_path.exists():
         from .training import predict
-        evaluation, scores = predict(model_path, observation)
+        evaluation, scores = predict(model_path, observation, **({"allow_experimental": True} if allow_experimental else {}))
         label = "Learned policy preference, not a searched continuation or mistake estimate."
     else:
         contributions = resource_features(observation) * HEURISTIC_WEIGHTS
