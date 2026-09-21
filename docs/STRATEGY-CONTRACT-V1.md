@@ -1,12 +1,12 @@
 # Strategy Contract v1
 
-Status: draft awaiting human review. This milestone defines strategy; it does not change the engine, run training, assign win probabilities, or promote a model.
+Status: user-approved strategy contract. This milestone defines strategy; it does not change the engine, run training, assign win probabilities, or promote a model.
 
 ## Frozen scope
 
 The first strategic system contains two specialists:
 
-- `crustle-v1`, tied to `decks/crustle.json` version 2 and its exact `listHash`.
+- `crustle-v1`, tied to corrected `decks/crustle.json` version 3 and its exact `listHash` (two Eri and two Xerosic's Machinations).
 - `dragapult-v1`, tied to `decks/dragapult.json` version 2 and its exact `listHash`.
 
 Only four perspectives are in the initial benchmark contract: Crustle into Dragapult, Dragapult into Crustle, and each mirror. Training and held-out variants are not strategy authorities.
@@ -58,7 +58,7 @@ Learning produces candidate specialists. Promotion requires a scenario regressio
 
 `research/curriculum.json` contains 20 families and 60 variations. Four families (12 variations) have reproducible engine positions; all remain unreviewed. Sixteen families still need legal positions and human strategy review. Several are outside the newly approved four-perspective scope, so they remain evidence for later work rather than v1 acceptance tests.
 
-The curriculum is not rewritten by this milestone. The playbooks sit above it: playbook principles describe the strategy to review, while curriculum records hold eventual position-level evidence.
+The curriculum is not rewritten by this milestone. The playbooks sit above it: playbook principles describe the approved strategy, while curriculum records hold eventual position-level evidence.
 
 ## Validation
 

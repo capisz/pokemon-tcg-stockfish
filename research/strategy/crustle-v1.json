@@ -1,11 +1,11 @@
 {
   "schemaVersion": 1,
   "id": "crustle-v1",
-  "status": "draft-awaiting-human-review",
+  "status": "approved",
   "referenceDeck": {
     "id": "crustle",
-    "version": 2,
-    "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095",
+    "version": 3,
+    "listHash": "f454a2c2f3bd329f6d75bb8344ba09000db93e220e8a07c3e0502e5a7ddd8343",
     "sourceSha256": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7"
   },
   "source": {
@@ -35,7 +35,7 @@
       "triggers": ["opening choice is available", "Mega Kangaskhan ex is an opening option"],
       "avoid": ["Benching extra liabilities without a matchup reason", "Treating the early Kangaskhan prize value as automatically fatal"],
       "sourcePages": [1, 2, 27],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "crustle-one-fortress",
@@ -44,7 +44,7 @@
       "triggers": ["one Crustle can cover the opponent's represented answers", "bench space or gust liability is material"],
       "avoid": ["Splitting protective Energy without a two-attacker plan", "Creating a vulnerable gust or retreat target"],
       "sourcePages": [1, 4, 5, 14],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "crustle-energy-has-jobs",
@@ -53,7 +53,7 @@
       "triggers": ["multiple Energy types are available", "the opponent represents effect-based or return-damage counterplay"],
       "avoid": ["Spending the only relevant protection on a nonessential target", "Assuming all attached Energy are interchangeable"],
       "sourcePages": [3, 4, 5],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "crustle-delay-first-prize",
@@ -62,7 +62,7 @@
       "triggers": ["taking a prize enables hand disruption", "one additional attachment or heal changes the response threshold"],
       "avoid": ["Passing without comparing both players' clocks", "Taking a prize solely because damage is available"],
       "sourcePages": [4, 5],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "crustle-target-answers",
@@ -71,7 +71,7 @@
       "triggers": ["an answer is publicly committed", "the opponent cannot rebuild the answer in one turn"],
       "avoid": ["Spending Boss's Orders on a target that does not advance the active win condition", "Claiming a hidden answer is present without evidence"],
       "sourcePages": [2, 4, 6],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "crustle-pivot-after-commitment",
@@ -80,7 +80,7 @@
       "triggers": ["opponent resources are committed to Crustle", "Mega Kangaskhan ex can become ready before the next required attack"],
       "avoid": ["A surprise pivot without sufficient attachments", "Committing Hero's Cape before the attacker choice is settled"],
       "sourcePages": [5, 6, 29, 30],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     }
   ],
   "matchups": [
@@ -106,35 +106,41 @@
         "Would one more setup turn change the credible response set?"
       ],
       "sourcePages": [4, 5],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "perspectiveId": "crustle-mirror",
       "opponentArchetype": "crustle",
-      "openingPlan": "Develop the minimum protected board, track hand and deck resources, and avoid giving the opposing specialist a profitable forced switch from a stable active.",
+      "openingPlan": "Keep Crustle alive, track both deck clocks, and repeatedly promote the opposing Mega Kangaskhan ex when possible so it cannot deal meaningful damage while the opponent spends cards escaping or rebuilding.",
       "winConditions": [
-        "Win the resource and deck clock while keeping the chosen attacker alive.",
-        "Convert to prize pressure only when healing, Energy and disruption counts make the exchange favorable."
+        "Win by strategic deck-out while keeping the protected Crustle alive.",
+        "Use the two Xerosic's Machinations at the point where hand reduction prevents Lillie's Determination from recycling the opponent's small deck.",
+        "When the opponent has three cards in deck, reduce its hand to three so Lillie's Determination cannot be used to reset the deck count.",
+        "Convert to prize pressure only when healing, Energy and disruption counts make the exchange safer than the deck-out line."
       ],
       "threats": [
-        "Poorly timed hand disruption improving the opponent's hand cycle",
+        "Using Xerosic's Machinations before it closes the Lillie's Determination escape window",
         "Overbuilding multiple attackers and losing the resource contest",
-        "Using a finite supporter or gust effect without changing the clock"
+        "Failing to promote Mega Kangaskhan ex when doing so would deny damage and consume opposing mobility",
+        "Losing the protected Crustle before the deck-out lock is established"
       ],
       "decisionChecks": [
         "Which player wins if both sides stop attacking?",
-        "Does the action change the healing or deck-out clock?",
-        "Is a second Crustle necessary or merely another liability?"
+        "Can Boss's Orders strand Mega Kangaskhan ex without risking Crustle?",
+        "Will this Xerosic's Machinations stop Lillie's Determination from resetting the deck clock?",
+        "Does the action preserve Crustle through the remaining damage and healing sequence?"
       ],
       "sourcePages": [14],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "corrected"
     }
   ],
   "versionConflicts": [
     {
       "id": "crustle-missing-guide-cards",
       "detail": "Earlier guide advice references Crushing Hammer, Psyduck, Cornerstone Ogerpon ex, Bianca's Devotion and Hand Trimmer, none of which appears in the frozen v1 manifest.",
-      "resolution": "Do not create executable card-specific instructions for absent cards. Preserve only transferable strategic concepts until a different list is explicitly versioned."
+      "resolution": "Do not create executable card-specific instructions for absent cards. Preserve their transferable strategic concepts until a different list is explicitly versioned.",
+      "reviewStatus": "approved",
+      "reviewNote": "The user confirmed that these guide sections are outdated but their underlying strategic ideas remain applicable."
     }
   ]
 }

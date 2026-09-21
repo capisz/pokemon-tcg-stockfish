@@ -32,6 +32,8 @@ No engine, search, heuristic, model, trusted admission, champion, replay or UI b
 
 The Crustle PDF is an evolving guide. The frozen v1 manifest does not contain Crushing Hammer, Psyduck, Cornerstone Ogerpon ex, Bianca's Devotion or Hand Trimmer, although earlier guide sections and draft curriculum entries reference them. The playbook excludes unavailable-card instructions and retains only compatible strategic principles. The Dragapult frozen list aligns with the later post-Worlds section, so later list-specific guidance takes precedence over earlier count assumptions.
 
-## Next gate
+## User corrections and approval
 
-The user must review `docs/STRATEGY-CONTRACT-V1-REVIEW.md`. After corrections and approval, the next separate task should build an honest baseline showing how the existing policy behaves against approved guide scenarios. Do not begin search optimization until that baseline is reported.
+The contract is now approved. The Crustle main manifest was corrected to the user-confirmed post-Worlds count of two Eri and two Xerosic's Machinations. The Crustle mirror plan now explicitly preserves Crustle, promotes the opposing Mega Kangaskhan ex to suppress damage, and times Xerosic so a three-card hand with three cards left in deck cannot use Lillie's Determination to reset the deck clock.
+
+The next separate task should build an honest baseline showing how the existing policy behaves against these approved guide scenarios. Do not begin search optimization until that baseline is reported.

@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "id": "dragapult-v1",
-  "status": "draft-awaiting-human-review",
+  "status": "approved",
   "referenceDeck": {
     "id": "dragapult",
     "version": 2,
@@ -36,7 +36,7 @@
       "triggers": ["multiple draw or search effects are available", "a known out or deck-bottom fact changes the preferred order"],
       "avoid": ["Searching a specific card before exhausting a higher-value information action without reason", "Using hidden future information to justify the sequence"],
       "sourcePages": [9, 10, 11],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "dragapult-stay-ahead-on-energy",
@@ -45,7 +45,7 @@
       "triggers": ["an attachment choice is available", "the active attacker is likely to be removed"],
       "avoid": ["Spending an attachment on a low-impact retreat when it breaks the next Phantom Dive", "Developing one attacker without a recovery route"],
       "sourcePages": [11, 12],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "dragapult-conditional-budew",
@@ -54,7 +54,7 @@
       "triggers": ["the opponent materially depends on items", "Budew can survive or force a costly answer"],
       "avoid": ["Automatic item lock into an immediate knockout", "Losing the next Phantom Dive solely to reach Budew"],
       "sourcePages": [12, 13, 14, 16],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "dragapult-initiate-with-a-chain",
@@ -63,7 +63,7 @@
       "triggers": ["a Phantom Dive is available", "both boards are developing toward an exchange"],
       "avoid": ["Being first to attack a fully developed board without a follow-up", "Taking a low-value prize that improves the opponent's response"],
       "sourcePages": [16, 17],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "dragapult-place-damage-for-prizes",
@@ -72,7 +72,7 @@
       "triggers": ["Phantom Dive or Adrena-Brain damage can be allocated", "a multi-prize route is reachable"],
       "avoid": ["Leaving convenient damage for the opposing Munkidori", "Damaging a potential trap target before the trap line is resolved"],
       "sourcePages": [17, 18, 47],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "id": "dragapult-combine-disruption",
@@ -81,7 +81,7 @@
       "triggers": ["the opponent has a narrow response", "Crushing Hammer or hand disruption can remove a required component"],
       "avoid": ["Using Crushing Hammer on an attachment the opponent can abandon cheaply", "Spending Unfair Stamp without a concrete response denial"],
       "sourcePages": [4, 14, 16, 17, 32, 33],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     }
   ],
   "matchups": [
@@ -106,7 +106,7 @@
         "Does residual damage advance a knockout or enable the opponent's healing and retaliation plan?"
       ],
       "sourcePages": [32, 33],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     },
     {
       "perspectiveId": "dragapult-mirror",
@@ -130,7 +130,7 @@
         "Is Fezandipiti ex a draw solution or a new trap liability in this position?"
       ],
       "sourcePages": [13, 14, 16, 17, 18],
-      "reviewStatus": "needs-human-review"
+      "reviewStatus": "approved"
     }
   ],
   "versionConflicts": [

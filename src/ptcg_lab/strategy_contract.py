@@ -66,6 +66,8 @@ def validate_strategy_contract(root: Path) -> dict:
                 raise ValueError(f"{playbook_path} referenceDeck.{key} does not match the frozen main manifest")
         if playbook.get("id") != specialist["id"]:
             raise ValueError(f"{playbook_path} specialist identity mismatch")
+        if contract.get("status") == "approved" and playbook.get("status") != "approved":
+            raise ValueError(f"{playbook_path} must be approved with the approved contract")
         if playbook.get("source", {}).get("contentHash") != reference["sourceSha256"]:
             raise ValueError(f"{playbook_path} guide source does not match the deck provenance")
         if not playbook.get("principles") or not playbook.get("matchups"):
@@ -79,6 +81,8 @@ def validate_strategy_contract(root: Path) -> dict:
                 raise ValueError(f"{playbook_path} uses unknown strategic concepts: {sorted(unknown)}")
             if principle.get("reviewStatus") not in {"needs-human-review", "approved", "corrected", "rejected"}:
                 raise ValueError(f"{playbook_path} has an invalid principle review status")
+            if playbook.get("status") == "approved" and principle.get("reviewStatus") == "needs-human-review":
+                raise ValueError(f"{playbook_path} retains an unreviewed principle")
             if not principle.get("sourcePages"):
                 raise ValueError(f"{playbook_path} principles require source pages")
         for matchup in playbook["matchups"]:
@@ -86,6 +90,8 @@ def validate_strategy_contract(root: Path) -> dict:
             if perspective not in REQUIRED_PERSPECTIVES or perspective in referenced_perspectives:
                 raise ValueError(f"Duplicate or unknown matchup perspective {perspective}")
             referenced_perspectives.add(perspective)
+            if playbook.get("status") == "approved" and matchup.get("reviewStatus") == "needs-human-review":
+                raise ValueError(f"{playbook_path} retains an unreviewed matchup")
         playbooks[playbook["id"]] = playbook
     if referenced_perspectives != REQUIRED_PERSPECTIVES:
         raise ValueError("Every approved v1 matchup perspective must have one playbook entry")

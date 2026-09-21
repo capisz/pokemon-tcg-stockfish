@@ -33,7 +33,8 @@ def test_strategy_contract_preserves_review_and_abstention_gates():
     assert contract["confidencePolicy"]["gradeable"] == ["high", "medium"]
     assert contract["confidencePolicy"]["abstentionLabel"] == "insufficient-confidence"
     assert contract["correctionsAndPromotion"]["automaticPromotion"] is False
-    assert all(playbook["status"] == "draft-awaiting-human-review" for playbook in result["playbooks"].values())
+    assert contract["status"] == "approved"
+    assert all(playbook["status"] == "approved" for playbook in result["playbooks"].values())
 
 
 def test_playbooks_only_reference_cards_from_frozen_manifests_as_executable_identity():
@@ -41,5 +42,8 @@ def test_playbooks_only_reference_cards_from_frozen_manifests_as_executable_iden
     crustle = result["playbooks"]["crustle-v1"]
     assert any(item["id"] == "crustle-missing-guide-cards" for item in crustle["versionConflicts"])
     assert "Crushing Hammer" not in " ".join(item["statement"] for item in crustle["principles"])
+    deck = json.loads((ROOT / "decks/crustle.json").read_text())
+    counts = {item["cardId"]: item["count"] for item in deck["cards"]}
+    assert deck["version"] == 3 and counts["TEF-146"] == 2 and counts["SFA-64"] == 2
     dragapult = result["playbooks"]["dragapult-v1"]
     assert any(item["id"] == "dragapult-updated-list-precedence" for item in dragapult["versionConflicts"])

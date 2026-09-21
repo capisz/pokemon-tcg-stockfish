@@ -5,7 +5,7 @@
   "archetype": "crustle",
   "role": "main",
   "formatDate": "2026-09-17",
-  "version": 2,
+  "version": 3,
   "source": {
     "kind": "private-guide-transcription",
     "authors": [
@@ -14,9 +14,9 @@
     ],
     "page": 27,
     "sourceSha256": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
-    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private."
+    "note": "Card identities normalized to supported international printings with identical effects. Raw guide remains private. User-confirmed post-Worlds correction: two Eri and two Xerosic's Machinations."
   },
-  "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095",
+  "listHash": "f454a2c2f3bd329f6d75bb8344ba09000db93e220e8a07c3e0502e5a7ddd8343",
   "cards": [
     {
       "cardId": "MEG-104",
@@ -65,7 +65,7 @@
       "name": "Eri",
       "regulationMark": "H",
       "engineName": "Eri TEF-146",
-      "count": 3
+      "count": 2
     },
     {
       "cardId": "WHT-84",
@@ -79,7 +79,7 @@
       "name": "Xerosic's Machinations",
       "regulationMark": "H",
       "engineName": "Xerosic's Machinations SFA-64",
-      "count": 1
+      "count": 2
     },
     {
       "cardId": "MEG-123",
