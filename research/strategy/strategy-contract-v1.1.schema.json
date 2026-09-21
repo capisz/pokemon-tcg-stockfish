@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ptcg-lab/strategy-contract-v1.1.schema.json",
+  "title": "Pokemon TCG strategy contract v1.1 overlay",
+  "oneOf": [
+    {"$ref": "#/$defs/revisionContract"},
+    {"$ref": "#/$defs/playbookOverlay"}
+  ],
+  "$defs": {
+    "status": {"const": "draft-awaiting-human-review"},
+    "cardRef": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": ["cardId", "owner", "executable"],
+          "properties": {
+            "cardId": {"type": "string", "pattern": "^[A-Z0-9]+-[0-9]+$"},
+            "owner": {"enum": ["specialist", "opponent"]},
+            "executable": {"const": true}
+          },
+          "additionalProperties": false
+        },
+        {
+          "type": "object",
+          "required": ["cardName", "owner", "executable", "reason"],
+          "properties": {
+            "cardName": {"type": "string", "minLength": 1},
+            "owner": {"enum": ["specialist", "opponent"]},
+            "executable": {"const": false},
+            "reason": {"type": "string", "minLength": 1}
+          },
+          "additionalProperties": false
+        }
+      ]
+    },
+    "principlePatch": {
+      "type": "object",
+      "required": ["operation", "id", "concepts", "statement", "triggers", "avoid", "sourcePages", "cardRefs"],
+      "properties": {
+        "operation": {"enum": ["add", "replace"]},
+        "id": {"type": "string", "pattern": "^[a-z0-9-]+$"},
+        "concepts": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string"}},
+        "statement": {"type": "string", "minLength": 20},
+        "triggers": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "avoid": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "sourcePages": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "cardRefs": {"type": "array", "items": {"$ref": "#/$defs/cardRef"}}
+      },
+      "additionalProperties": false
+    },
+    "matchupPatch": {
+      "type": "object",
+      "required": ["operation", "perspectiveId", "openingPreference", "plan", "sourcePages", "cardRefs", "unresolved"],
+      "properties": {
+        "operation": {"const": "replace"},
+        "perspectiveId": {"enum": ["crustle-vs-dragapult", "dragapult-vs-crustle", "crustle-mirror", "dragapult-mirror"]},
+        "openingPreference": {"type": "object"},
+        "plan": {"type": "string", "minLength": 20},
+        "secondCrustleRule": {"type": "string"},
+        "technicalNote": {"type": "string"},
+        "sourcePages": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "integer", "minimum": 1}},
+        "cardRefs": {"type": "array", "items": {"$ref": "#/$defs/cardRef"}},
+        "unresolved": {"type": "array", "items": {"type": "string"}}
+      },
+      "additionalProperties": false
+    },
+    "playbookOverlay": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "release", "status", "basePlaybook", "specialistDeckId", "defaultOpponentDeckId", "deckCountAssertions", "principlePatches", "matchupPatches"],
+      "properties": {
+        "schemaVersion": {"const": 1},
+        "id": {"enum": ["crustle-v1.1", "dragapult-v1.1"]},
+        "release": {"const": "1.1"},
+        "status": {"$ref": "#/$defs/status"},
+        "basePlaybook": {"enum": ["crustle-v1", "dragapult-v1"]},
+        "specialistDeckId": {"enum": ["crustle", "dragapult"]},
+        "defaultOpponentDeckId": {"enum": ["crustle", "dragapult"]},
+        "deckCountAssertions": {"type": "object", "additionalProperties": {"type": "integer", "minimum": 1}},
+        "principlePatches": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/principlePatch"}},
+        "matchupPatches": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/matchupPatch"}}
+      },
+      "additionalProperties": false
+    },
+    "revisionContract": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "release", "status", "base", "revisionFiles", "openingInformationPolicy", "displayLabels", "cardReferencePolicy", "approvalGate"],
+      "properties": {
+        "schemaVersion": {"const": 1},
+        "id": {"const": "strategy-contract-v1.1"},
+        "release": {"const": "1.1"},
+        "status": {"$ref": "#/$defs/status"},
+        "base": {"type": "object"},
+        "revisionFiles": {"type": "array", "minItems": 2, "maxItems": 2, "uniqueItems": true, "items": {"type": "string"}},
+        "openingInformationPolicy": {"type": "object"},
+        "displayLabels": {"type": "object"},
+        "cardReferencePolicy": {"type": "object"},
+        "approvalGate": {"type": "object"}
+      },
+      "additionalProperties": false
+    }
+  }
+}

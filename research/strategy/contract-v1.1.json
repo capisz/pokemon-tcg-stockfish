@@ -1,0 +1,50 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-contract-v1.1",
+  "release": "1.1",
+  "status": "draft-awaiting-human-review",
+  "base": {
+    "contractId": "strategy-contract-v1",
+    "approvedCommit": "b176362"
+  },
+  "revisionFiles": [
+    "research/strategy/crustle-v1.1.json",
+    "research/strategy/dragapult-v1.1.json"
+  ],
+  "openingInformationPolicy": {
+    "blindChoice": {
+      "preference": "go-first",
+      "confidence": "high",
+      "reason": "Before public matchup information exists, both guides default to going first."
+    },
+    "knownMatchupChoice": {
+      "allowedWhen": [
+        "The opponent archetype was made public by an earlier game in the match",
+        "The lab explicitly labels the run as known-matchup analysis"
+      ],
+      "prohibitedWhen": [
+        "The scheduler knows the opposing list but that fact has not been disclosed to the acting player",
+        "The preference depends on cards revealed only after the opening choice"
+      ]
+    }
+  },
+  "displayLabels": {
+    "critical-error": "Blunder"
+  },
+  "cardReferencePolicy": {
+    "structuredReferencesRequired": true,
+    "executableSpecialistReference": "The card ID must exist in the specialist's frozen main manifest.",
+    "executableOpponentReference": "The card ID must exist in the in-scope opponent's frozen main manifest.",
+    "historicalReference": "A missing or superseded card must be executable=false and include a reason.",
+    "proseScanning": false
+  },
+  "approvalGate": {
+    "automaticPromotion": false,
+    "required": [
+      "Validator and focused tests pass",
+      "Every new principle has guide page citations",
+      "Remaining guide/list conflicts are reported",
+      "Human approval of v1.1"
+    ]
+  }
+}

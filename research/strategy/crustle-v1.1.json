@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "id": "crustle-v1.1",
+  "release": "1.1",
+  "status": "draft-awaiting-human-review",
+  "basePlaybook": "crustle-v1",
+  "specialistDeckId": "crustle",
+  "defaultOpponentDeckId": "dragapult",
+  "deckCountAssertions": {
+    "TEF-146": 2,
+    "SFA-64": 2
+  },
+  "principlePatches": [
+    {
+      "operation": "replace",
+      "id": "crustle-one-fortress",
+      "concepts": ["defense", "prize-race", "resource-plan"],
+      "statement": "Default to one fully protected Crustle against Dragapult because an unnecessary second Crustle can become a gust, item-lock and movable-damage target. Add a second only when the first cannot remain the winning route, the trap resources are publicly exhausted, or both Crustle can be protected and a specific Handheld Fan or late-game route justifies the exposure.",
+      "triggers": [
+        "The first Crustle is lost or cannot be kept alive",
+        "The represented trap route is publicly exhausted",
+        "Both Crustle can receive relevant protection and the second has a named role"
+      ],
+      "avoid": [
+        "Adding a second Crustle merely because bench space is available",
+        "Exposing an underprotected Crustle to Budew, Risky Ruins, Dudunsparce and Munkidori loops"
+      ],
+      "sourcePages": [4, 15],
+      "cardRefs": [
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-150", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-161", "owner": "specialist", "executable": true},
+        {"cardId": "ASC-16", "owner": "opponent", "executable": true},
+        {"cardId": "MEG-127", "owner": "opponent", "executable": true},
+        {"cardId": "TEF-129", "owner": "opponent", "executable": true},
+        {"cardId": "TWM-95", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-fan-kangaskhan",
+      "concepts": ["tempo", "defense", "resource-plan"],
+      "statement": "Against Dragapult, attach Handheld Fan to the Active Mega Kangaskhan ex early when attack damage, a movable Energy and an opposing Bench target make the Tool live. Each successful trigger increases attachment debt while Crustle develops; if Dragapult declines to attack, Kangaskhan can become a pressure attacker and Boss's Orders can target Drakloak.",
+      "triggers": [
+        "Mega Kangaskhan ex is Active and expected to take attack damage",
+        "The attacking Pokemon is expected to retain movable Energy after the attack",
+        "The opponent has a legal Benched Energy destination"
+      ],
+      "avoid": [
+        "Assuming damage counters trigger Handheld Fan",
+        "Treating the Tool as disruption when no legal Energy move exists"
+      ],
+      "sourcePages": [15, 21],
+      "cardRefs": [
+        {"cardId": "MEG-104", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-150", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-114", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-129", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-eri-response-window",
+      "concepts": ["resource-plan", "defense", "information-sequencing"],
+      "statement": "Use Eri when the revealed hand contains Items whose removal changes the next response. Taking the first knockout and playing Eri on the same turn is an alternative to delaying the prize when it can remove Unfair Stamp or another critical response before it becomes usable.",
+      "triggers": [
+        "The opponent's likely Item response determines whether Crustle survives",
+        "A first knockout would activate a comeback Item"
+      ],
+      "avoid": [
+        "Treating Eri as mandatory without valuable revealed Items",
+        "Encoding an outdated three-copy count"
+      ],
+      "sourcePages": [2, 4, 21, 24],
+      "cardRefs": [
+        {"cardId": "TEF-146", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "opponent", "executable": true},
+        {"cardId": "TWM-165", "owner": "opponent", "executable": true},
+        {"cardId": "ASC-196", "owner": "opponent", "executable": true},
+        {"cardId": "POR-81", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-special-red-card-window",
+      "concepts": ["tempo", "defense", "information-sequencing"],
+      "statement": "After the opponent takes Mega Kangaskhan ex and reaches three or fewer Prize cards, evaluate Special Red Card as an immediate hand-reset option. Prefer it only when reducing the current hand is more valuable than preserving the Item for a later disruption turn.",
+      "triggers": [
+        "The opponent has three or fewer Prize cards remaining",
+        "Mega Kangaskhan ex was just removed and the opponent has accumulated a strong hand"
+      ],
+      "avoid": [
+        "Calling Special Red Card legal before its Prize condition is met",
+        "Playing it automatically into a weak or already disrupted hand"
+      ],
+      "sourcePages": [24],
+      "cardRefs": [
+        {"cardId": "CRI-82", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-104", "owner": "specialist", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-lumiose-under-item-lock",
+      "concepts": ["tempo", "win-condition", "resource-plan"],
+      "statement": "When Budew blocks Item-based setup and no Dwebble is in play, Lumiose City can find Dwebble because the Stadium is not an Item, but using it ends the turn. On a later turn, Hilda can find Crustle and an Energy to continue the fortress plan.",
+      "triggers": [
+        "Budew item lock is active",
+        "The board lacks Dwebble",
+        "Ending the current turn does not concede the game"
+      ],
+      "avoid": [
+        "Using Lumiose City without accounting for its turn-ending cost",
+        "Assuming Hilda and evolution occur on the same ended turn"
+      ],
+      "sourcePages": [24],
+      "cardRefs": [
+        {"cardId": "POR-77", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-11", "owner": "specialist", "executable": true},
+        {"cardId": "WHT-84", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "ASC-16", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-preserve-healing-threshold",
+      "concepts": ["defense", "resource-plan", "tempo"],
+      "statement": "Keep at least three attached Energy cards on the Active Crustle when Jumbo Ice Cream is part of the survival plan. A Crushing Hammer heads that reduces the Active to two attached Energy cards can deny healing even when enough attack Energy remains.",
+      "triggers": [
+        "The Active Crustle is damaged",
+        "Jumbo Ice Cream is available or a required future out",
+        "Crushing Hammer can reduce attached-card count below three"
+      ],
+      "avoid": [
+        "Counting provided Energy units when the legality check depends on attached Energy cards",
+        "Assuming an attack-ready Crustle is also heal-ready"
+      ],
+      "sourcePages": [3, 4],
+      "cardRefs": [
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "PFL-91", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-dragapult-energy-priority",
+      "concepts": ["defense", "resource-plan", "prize-race"],
+      "statement": "Against Hammer Dragapult, prioritize Mist Energy and Spiky Energy roles before additional Growing Grass Energy. The guide's resilient target is two Mist plus two Spiky when the game allows it, forcing multiple successful Hammer removals across distinct protection jobs.",
+      "triggers": [
+        "The opponent represents Crushing Hammer, Phantom Dive, Mind Bend or a non-ex attacker",
+        "Multiple special Energy choices are available"
+      ],
+      "avoid": [
+        "Treating the four-Energy target as mandatory when tempo requires an earlier attack",
+        "Treating Energy types as interchangeable"
+      ],
+      "sourcePages": [4, 15],
+      "cardRefs": [
+        {"cardId": "TEF-161", "owner": "specialist", "executable": true},
+        {"cardId": "JTG-159", "owner": "specialist", "executable": true},
+        {"cardId": "POR-86", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "opponent", "executable": true},
+        {"cardId": "TWM-130", "owner": "opponent", "executable": true}
+      ]
+    }
+  ],
+  "matchupPatches": [
+    {
+      "operation": "replace",
+      "perspectiveId": "crustle-vs-dragapult",
+      "openingPreference": {"knownMatchup": "go-first", "confidence": "high"},
+      "plan": "Develop one protected Crustle behind an Active Mega Kangaskhan ex. Use Handheld Fan, Eri, Special Red Card and functional Energy attachments to stretch Dragapult's attack chain without exposing an unnecessary second Crustle.",
+      "secondCrustleRule": "Default no. Add one only when the first route fails, the trap resources are publicly exhausted, or both can be protected and the second has a named Fan, backup or late-game role.",
+      "sourcePages": [4, 5, 15, 21, 24],
+      "cardRefs": [
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-104", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-150", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-146", "owner": "specialist", "executable": true},
+        {"cardId": "CRI-82", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "opponent", "executable": true},
+        {"cardId": "ASC-16", "owner": "opponent", "executable": true}
+      ],
+      "unresolved": []
+    },
+    {
+      "operation": "replace",
+      "perspectiveId": "crustle-mirror",
+      "openingPreference": {"knownMatchup": "go-first", "confidence": "high"},
+      "plan": "If either player has Mega Kangaskhan ex in play, preserve Crustle and play toward deck-out by promoting the opposing Kangaskhan and timing Lillie's Determination before expected Xerosic turns. If both players start Dwebble, prioritize healing, attack with Eri to remove Jumbo Ice Cream, develop two Crustle, and keep the first alive as long as possible.",
+      "technicalNote": "Xerosic does not make Lillie's Determination illegal. When the opponent is reduced to three cards in hand with a nearly empty deck, the post-draw shuffle may be unable to leave a card for the next required draw.",
+      "sourcePages": [14, 15, 21],
+      "cardRefs": [
+        {"cardId": "MEG-104", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-11", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-119", "owner": "specialist", "executable": true},
+        {"cardId": "SFA-64", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-146", "owner": "specialist", "executable": true},
+        {"cardId": "PFL-91", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-114", "owner": "specialist", "executable": true},
+        {"cardId": "CRI-82", "owner": "specialist", "executable": true},
+        {"cardName": "Hand Trimmer", "owner": "specialist", "executable": false, "reason": "The guide discusses an older list; the frozen v3 manifest does not contain this card."},
+        {"cardName": "Bianca's Devotion", "owner": "specialist", "executable": false, "reason": "The guide discusses an older list; the frozen v3 manifest does not contain this card."}
+      ],
+      "unresolved": [
+        "Special Red Card is legal in some mirror states, but no guide-supported default role is approved for the frozen list."
+      ]
+    }
+  ]
+}

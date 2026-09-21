@@ -1,0 +1,141 @@
+{
+  "schemaVersion": 1,
+  "id": "dragapult-v1.1",
+  "release": "1.1",
+  "status": "draft-awaiting-human-review",
+  "basePlaybook": "dragapult-v1",
+  "specialistDeckId": "dragapult",
+  "defaultOpponentDeckId": "crustle",
+  "deckCountAssertions": {},
+  "principlePatches": [
+    {
+      "operation": "add",
+      "id": "dragapult-hammer-committed-crustle",
+      "concepts": ["tempo", "resource-plan", "plan-switch"],
+      "statement": "Against Crustle, normally wait until a Crustle has a second attached Energy before using Crushing Hammer so abandoning that attacker is costly. Use Hammer earlier when removing the only Mist immediately enables attack counters or confusion, removing Spiky protects a planned non-ex attack, or reducing the Active below three attached Energy cards disables Jumbo Ice Cream.",
+      "triggers": [
+        "A Crustle has committed a second Energy",
+        "The only Mist or Spiky Energy blocks the immediate planned line",
+        "One removal denies the three-card Jumbo Ice Cream threshold"
+      ],
+      "avoid": [
+        "Removing the first generic Energy when Crustle can cheaply abandon the target",
+        "Treating all special Energy as equivalent"
+      ],
+      "sourcePages": [32, 33],
+      "cardRefs": [
+        {"cardId": "POR-71", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-161", "owner": "opponent", "executable": true},
+        {"cardId": "JTG-159", "owner": "opponent", "executable": true},
+        {"cardId": "PFL-91", "owner": "opponent", "executable": true},
+        {"cardId": "DRI-12", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "dragapult-race-kangaskhan-opening",
+      "concepts": ["tempo", "offense", "information-sequencing"],
+      "statement": "When Crustle opens Mega Kangaskhan ex, reach Phantom Dive before the protected Crustle is complete. On the second Phantom Dive that knocks out Kangaskhan, Judge can punish the large hand accumulated through Run Errand.",
+      "triggers": [
+        "Mega Kangaskhan ex is the opponent's early Active",
+        "The opponent has accumulated a large public or inferred hand",
+        "The second Phantom Dive can take the knockout"
+      ],
+      "avoid": [
+        "Playing Judge without comparing it to the current hand and other supporter options",
+        "Racing with only one attacker and no credible follow-up"
+      ],
+      "sourcePages": [32, 33],
+      "cardRefs": [
+        {"cardId": "TWM-130", "owner": "specialist", "executable": true},
+        {"cardId": "POR-76", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-104", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "dragapult-pressure-underprotected-crustle",
+      "concepts": ["offense", "win-condition", "prize-race"],
+      "statement": "Place Phantom Dive counters on a benched Crustle that lacks Mist while taking Mega Kangaskhan ex, or use Boss's Orders to expose a different underprotected Crustle. If Dwebble used Ascension on turn one, pressure the evolved Crustle immediately with Mind Bend or Drakloak rather than allowing protection to accumulate.",
+      "triggers": [
+        "A benched Crustle lacks Mist Energy",
+        "A turn-one Ascension publicly identifies the developing fortress",
+        "The active target and residual counters advance one coherent route"
+      ],
+      "avoid": [
+        "Placing counters that do not advance a named knockout route",
+        "Ignoring a more immediate route to prevent the fortress from stabilizing"
+      ],
+      "sourcePages": [32, 33],
+      "cardRefs": [
+        {"cardId": "TWM-130", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-129", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-114", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-11", "owner": "opponent", "executable": true},
+        {"cardId": "DRI-12", "owner": "opponent", "executable": true},
+        {"cardId": "TEF-161", "owner": "opponent", "executable": true},
+        {"cardId": "MEG-104", "owner": "opponent", "executable": true}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "dragapult-dudunsparce-crustle-role",
+      "concepts": ["offense", "prize-race", "plan-switch"],
+      "statement": "Dudunsparce is a high-value non-ex attacker into Crustle because its 140 HP can survive Superb Scissors when Spiky retaliation is not active. Preserve or remove Spiky as needed before committing to that attack route.",
+      "triggers": [
+        "The direct Dragapult route is inefficient into Crustle protection",
+        "Spiky Energy is absent or can be removed",
+        "Dudunsparce can attack without breaking the subsequent Energy plan"
+      ],
+      "avoid": [
+        "Attacking into active Spiky retaliation without accounting for the return damage",
+        "Using Dudunsparce when the Energy commitment breaks the next required attack"
+      ],
+      "sourcePages": [32, 33],
+      "cardRefs": [
+        {"cardId": "TEF-129", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "opponent", "executable": true},
+        {"cardId": "JTG-159", "owner": "opponent", "executable": true}
+      ]
+    }
+  ],
+  "matchupPatches": [
+    {
+      "operation": "replace",
+      "perspectiveId": "dragapult-vs-crustle",
+      "openingPreference": {"knownMatchup": "go-first", "confidence": "high"},
+      "plan": "Race the Kangaskhan opening, disrupt after attachment commitment, and prevent one healthy protected Crustle from stabilizing. Use protection-aware Hammer timing, Judge on the relevant Kangaskhan knockout, underprotected bench pressure, and Dudunsparce when the non-ex route is efficient.",
+      "sourcePages": [32, 33],
+      "cardRefs": [
+        {"cardId": "TWM-130", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-129", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "specialist", "executable": true},
+        {"cardId": "POR-76", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "opponent", "executable": true},
+        {"cardId": "MEG-104", "owner": "opponent", "executable": true}
+      ],
+      "unresolved": []
+    },
+    {
+      "operation": "replace",
+      "perspectiveId": "dragapult-mirror",
+      "openingPreference": {
+        "knownMatchup": "go-second",
+        "confidence": "low",
+        "reason": "The cited preference was written for an older one-Budew, two-Night-Stretcher count; the frozen list has two Budew and three Night Stretcher."
+      },
+      "plan": "Use the guide's mirror sequencing, attachment and initiation principles, but apply the go-second preference only after the opponent archetype is public. A blind game-one choice follows the shared go-first policy.",
+      "sourcePages": [13, 14, 16, 17, 18],
+      "cardRefs": [
+        {"cardId": "ASC-16", "owner": "specialist", "executable": true},
+        {"cardId": "ASC-196", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-130", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "specialist", "executable": true},
+        {"cardId": "TWM-165", "owner": "specialist", "executable": true}
+      ],
+      "unresolved": [
+        "The revised two-Budew, three-Night-Stretcher list may change the magnitude of the guide's go-second preference."
+      ]
+    }
+  ]
+}
