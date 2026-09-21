@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-game-rules-v1.2",
+  "release": "1.2",
+  "status": "draft-awaiting-human-review",
+  "rules": [
+    {"id": "failed-draw-loss", "statement": "A player loses when required to draw from an empty deck, unless the game has already ended."},
+    {"id": "trainer-subtype-tool", "statement": "Pokemon Tools are Trainer cards but are not Item cards under the current rules."},
+    {"id": "stadium-replacement", "statement": "Playing a Stadium discards the Stadium already in play before the new Stadium applies."},
+    {"id": "active-pokemon-vacancy-promotion", "statement": "When an Active Pokemon leaves play, its owner promotes a Benched Pokemon if one is available."},
+    {"id": "evolution-timing", "statement": "A Pokemon normally cannot evolve on the turn it was put into play."}
+  ]
+}

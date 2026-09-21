@@ -40,9 +40,10 @@ export class HandyFan extends TrainerCard {
       if (state.phase === GamePhase.ATTACK) {
         const player = effect.player;
         const opponent = StateUtils.getOpponent(state, player);
-        const hasBench = opponent.bench.some(b => b.cards.length > 0);
+        const hasBench = player.bench.some(b => b.cards.length > 0);
+        const hasMovableEnergy = player.active.energies.cards.some(card => card.superType === SuperType.ENERGY);
 
-        if (hasBench === false) {
+        if (hasBench === false || hasMovableEnergy === false) {
           return state;
         }
 
@@ -53,7 +54,7 @@ export class HandyFan extends TrainerCard {
           PlayerType.TOP_PLAYER,
           [SlotType.BENCH],
           { superType: SuperType.ENERGY },
-          { allowCancel: false, min: 0, max: 1 }
+          { allowCancel: false, min: 1, max: 1 }
         ), transfers => {
           transfers = transfers || [];
           for (const transfer of transfers) {

@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "milestone": "strategy-contract-v1.2-prebaseline",
+  "baseCommit": "f376323",
+  "strategyStatus": "draft-awaiting-human-review",
+  "activeStrategyRevision": "v1.1",
+  "engine": {
+    "oldFingerprint": "5047021bba744f1e",
+    "newFingerprint": "bf3a9a0f133b99bd"
+  },
+  "frozenLists": {
+    "crustle": "f454a2c2f3bd329f6d75bb8344ba09000db93e220e8a07c3e0502e5a7ddd8343",
+    "dragapult": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9"
+  },
+  "rules": {
+    "focusedGroupsPassed": 12,
+    "handheldFanFixes": [
+      "Use the attacker's Bench when deciding whether the Tool can move Energy.",
+      "Require exactly one Energy move when a legal move exists.",
+      "Do not create a mandatory prompt when the attacker has no movable Energy."
+    ],
+    "otherCardDeviationsFound": 1
+  },
+  "teachingCompatibility": {
+    "reviewSnapshots": 8,
+    "uniquePositions": 5,
+    "exactSnapshots": 4,
+    "exactPositions": 2,
+    "allLegalAndAcceptedBindingsEqual": true,
+    "nonExactReason": "Three Crustle fixtures expose the approved v3 2 Eri/2 Xerosic counts instead of their saved 3 Eri/1 Xerosic counts; no records were changed or relabeled."
+  },
+  "historicalEvidenceModified": false
+}

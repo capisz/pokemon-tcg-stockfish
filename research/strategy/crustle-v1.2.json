@@ -1,0 +1,94 @@
+{
+  "schemaVersion": 1,
+  "id": "crustle-v1.2",
+  "release": "1.2",
+  "status": "draft-awaiting-human-review",
+  "basePlaybook": "crustle-v1.1",
+  "specialistDeckId": "crustle",
+  "defaultOpponentDeckId": "dragapult",
+  "principlePatches": [
+    {
+      "operation": "replace",
+      "id": "crustle-lumiose-under-item-lock",
+      "concepts": ["tempo", "win-condition", "resource-plan"],
+      "statement": "When Budew blocks Item-based setup and no Dwebble is in play, Lumiose City can find Dwebble. Complete the turn's Supporter and attachment first, then use Lumiose last because its search ends the turn. If Hilda is the Supporter, take Crustle and an Energy, attach before Lumiose, and evolve the searched Dwebble on a later turn. Replacing Risky Ruins with Lumiose also means the searched Dwebble enters without Risky Ruins damage.",
+      "triggers": ["Budew item lock is active", "The board lacks Dwebble", "Ending the current turn does not concede the game"],
+      "avoid": ["Using Lumiose City without accounting for its turn-ending cost", "Assuming Hilda and evolution occur on the same ended turn"],
+      "cardRefs": [
+        {"cardId": "POR-77", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-11", "owner": "specialist", "executable": true},
+        {"cardId": "WHT-84", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "ASC-16", "owner": "opponent", "executable": true},
+        {"cardId": "MEG-127", "owner": "opponent", "executable": true}
+      ],
+      "sourceClaims": [
+        {"claim": "Lumiose City is the non-Item Dwebble route under Budew, and missing Dwebble is the central failure mode in that matchup family.", "kind": "guide", "pages": [24]},
+        {"claim": "Lumiose City's search ends the turn.", "kind": "card-rule", "cardIds": ["POR-77"]},
+        {"claim": "Hilda can take Crustle and an Energy before Lumiose is used.", "kind": "card-rule", "cardIds": ["WHT-84", "POR-77"]},
+        {"claim": "The searched Dwebble evolves on a later turn.", "kind": "game-rule", "ruleIds": ["evolution-timing"]},
+        {"claim": "Lumiose replaces Risky Ruins, so Risky Ruins does not damage the searched Dwebble.", "kind": "game-rule", "ruleIds": ["stadium-replacement"]},
+        {"claim": "Risky Ruins damages newly played Basic Pokemon while it is in play.", "kind": "card-rule", "cardIds": ["MEG-127"]}
+      ]
+    },
+    {
+      "operation": "add",
+      "id": "crustle-fan-destination",
+      "concepts": ["tempo", "resource-plan", "offense"],
+      "statement": "When Handheld Fan moves Energy, concentrate it on one opposing Benched Pokemon when possible. Later, use Boss's Orders to bring that Pokemon Active and knock it out so the accumulated Energy is discarded. This is especially valuable when Dragapult opens with Budew.",
+      "triggers": ["Handheld Fan moves an Energy from an attacker", "A legal opposing Bench destination exists"],
+      "avoid": ["Scattering moved Energy without a matchup reason", "Assuming damage counters trigger Handheld Fan"],
+      "cardRefs": [
+        {"cardId": "TWM-150", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-114", "owner": "specialist", "executable": true},
+        {"cardId": "ASC-16", "owner": "opponent", "executable": true}
+      ],
+      "sourceClaims": [
+        {"claim": "Stack Fan-moved Energy on one Benched Pokemon and later gust and knock it out to discard the stack.", "kind": "guide", "pages": [15]},
+        {"claim": "Handheld Fan is particularly useful when Dragapult develops through Budew.", "kind": "guide", "pages": [15]},
+        {"claim": "The player who owns Handheld Fan chooses the Energy destination.", "kind": "card-rule", "cardIds": ["TWM-150"]}
+      ]
+    },
+    {
+      "operation": "replace",
+      "id": "crustle-preserve-healing-threshold",
+      "concepts": ["defense", "resource-plan", "tempo"],
+      "statement": "For the frozen Crustle list, keep three attached Energy on the Active Crustle when Jumbo Ice Cream is part of the survival plan. Every Energy card in this frozen list provides one Energy, so the card and provided-Energy counts coincide here.",
+      "triggers": ["The Active Crustle is damaged", "Jumbo Ice Cream is available or a required future out", "Energy removal can reduce the attachment count below three"],
+      "avoid": ["Assuming an attack-ready Crustle is also heal-ready"],
+      "cardRefs": [
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "PFL-91", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "opponent", "executable": true}
+      ],
+      "unresolved": ["For multi-Energy cards, whether 'Energy attached' counts Energy provided or attached Energy cards remains open pending the governing ruling."],
+      "sourceClaims": [
+        {"claim": "Jumbo Ice Cream heals only a damaged Active Pokemon with at least three Energy attached.", "kind": "card-rule", "cardIds": ["PFL-91"]},
+        {"claim": "The guide's survival plan protects the three-Energy healing threshold.", "kind": "guide", "pages": [3, 4]},
+        {"claim": "The multi-Energy interpretation is unresolved and is not generalized from the frozen list.", "kind": "card-rule", "cardIds": ["PFL-91"]}
+      ]
+    }
+  ],
+  "matchupPatches": [
+    {
+      "operation": "replace",
+      "perspectiveId": "crustle-mirror",
+      "plan": "If both players open Mega Kangaskhan ex, evolve one Crustle but do not spend attachments charging it; preserve it for the long deck-out game. If only this player opens Kangaskhan, early aggression can force the opponent to dig and spend resources when the board supports it. Otherwise, develop one large Crustle for the long war.",
+      "technicalNote": "Lillie's Determination shuffles its player's hand into the deck, then draws eight cards at exactly six Prize cards remaining and six otherwise. If the post-play hand plus deck contains no more than that draw amount, resolution empties the deck and, unless the game ends or the deck is replenished, that player loses on the next required draw. Xerosic's Machinations does not make Lillie's illegal; it can make this threshold easier to reach.",
+      "cardRefs": [
+        {"cardId": "MEG-104", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-119", "owner": "specialist", "executable": true},
+        {"cardId": "SFA-64", "owner": "specialist", "executable": true}
+      ],
+      "unresolved": [],
+      "sourceClaims": [
+        {"claim": "The mirror uses different development when both players open Kangaskhan, only this player opens Kangaskhan, or neither does.", "kind": "guide", "pages": [15]},
+        {"claim": "Lillie's Determination shuffles the hand into the deck and then draws eight at exactly six Prizes remaining, otherwise six.", "kind": "card-rule", "cardIds": ["MEG-119"]},
+        {"claim": "A combined post-play hand and deck no larger than the draw amount leaves the deck empty after resolution.", "kind": "card-rule", "cardIds": ["MEG-119"]},
+        {"claim": "A player required to draw from that empty deck loses unless another event intervenes first.", "kind": "game-rule", "ruleIds": ["failed-draw-loss"]},
+        {"claim": "Xerosic reduces a larger opposing hand to three but does not prohibit Lillie's Determination.", "kind": "card-rule", "cardIds": ["SFA-64"]}
+      ]
+    }
+  ]
+}

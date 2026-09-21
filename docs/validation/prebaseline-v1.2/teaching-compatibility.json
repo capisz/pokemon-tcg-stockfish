@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "mode": "read-only-teaching-compatibility",
+  "sourceEngineVersion": "twinleaf-adapter-0.1.0+c01ee150cbe47377",
+  "rebuiltFingerprint": "bf3a9a0f133b99bd",
+  "reviewCount": 8,
+  "uniquePositionHashes": 5,
+  "exactReviewCount": 4,
+  "exactUniquePositionCount": 2,
+  "allLegalBindingsEqual": true,
+  "allAcceptedBindingsEqual": true,
+  "rows": [
+    {"reviewHash": "1e803b1a30c55cf8f61bbe7ee1cc2ec6aca2b5dbaa7f20f416560aeaf84a0510", "teachingId": "61764804475674c00d109495f99e210f", "fixture": "crustle-delay-prize/crustle-delay-prize-2", "positionHash": "9de1e344eeed649a6cab9c9f1f1029b4aa3da84a115a69d047fc3b319afa4b91", "currentPositionHash": "ed65720e43a9446cbb587e84d2d0f1860e1e7b4407a004f8f83114bbaf43fcd3", "observationEqual": false, "legalBindingsEqual": true, "acceptedBindingsEqual": true, "difference": "Frozen own-deck counts changed from 3 Eri/1 Xerosic to approved v3 2 Eri/2 Xerosic."},
+    {"reviewHash": "49f4021acf629bce7b69352b8eee611f490665f771b222c1aa0b042fae6fa36d", "teachingId": "50e983db9d1119c07867e3d7e4cac38c", "fixture": "crustle-energy-function/crustle-energy-function-1", "positionHash": "c4d56d49d0ea8448e5df6e5dd1780687c722817a8772dc91178bdc1ec2f5b2eb", "currentPositionHash": "aff1803a52d445e4495294ac1abf7bf618a2a7b5af9348f101dc63192dfb01a1", "observationEqual": false, "legalBindingsEqual": true, "acceptedBindingsEqual": true, "difference": "Frozen own-deck counts changed from 3 Eri/1 Xerosic to approved v3 2 Eri/2 Xerosic."},
+    {"reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4", "teachingId": "dfc925acc610f803d957d0182fca3c09", "fixture": "dragapult-information-order/dragapult-information-order-3", "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "currentPositionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "observationEqual": true, "legalBindingsEqual": true, "acceptedBindingsEqual": true},
+    {"reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32", "teachingId": "28386376c13d35786c7522eba8eddf09", "fixture": "dragapult-information-order/dragapult-information-order-1", "positionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09", "currentPositionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09", "observationEqual": true, "legalBindingsEqual": true, "acceptedBindingsEqual": true},
+    {"reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c", "teachingId": "dfc925acc610f803d957d0182fca3c09", "fixture": "dragapult-information-order/dragapult-information-order-3", "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "currentPositionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "observationEqual": true, "legalBindingsEqual": true, "acceptedBindingsEqual": true},
+    {"reviewHash": "c0d1cfe46ceda16810fc05b4e2290083685000e9186962350cc33c5e0875ea82", "teachingId": "61764804475674c00d109495f99e210f", "fixture": "crustle-delay-prize/crustle-delay-prize-2", "positionHash": "9de1e344eeed649a6cab9c9f1f1029b4aa3da84a115a69d047fc3b319afa4b91", "currentPositionHash": "ed65720e43a9446cbb587e84d2d0f1860e1e7b4407a004f8f83114bbaf43fcd3", "observationEqual": false, "legalBindingsEqual": true, "acceptedBindingsEqual": true, "difference": "Frozen own-deck counts changed from 3 Eri/1 Xerosic to approved v3 2 Eri/2 Xerosic."},
+    {"reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b", "teachingId": "dfc925acc610f803d957d0182fca3c09", "fixture": "dragapult-information-order/dragapult-information-order-3", "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "currentPositionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6", "observationEqual": true, "legalBindingsEqual": true, "acceptedBindingsEqual": true},
+    {"reviewHash": "f34b1c1bc4182ba857136585dcb3c683b195e59487830308444a1eab3be51260", "teachingId": "ebc3d234551eff3800cf6df183679c38", "fixture": "crustle-energy-function/crustle-energy-function-2", "positionHash": "afe6c22984bb3993d4e605af3ce26283fa1328f79130deabe9cb67720364a4ca", "currentPositionHash": "dee44a4cab7dccb4bf961cabdc495315f7945a46facc095b96c521d071737334", "observationEqual": false, "legalBindingsEqual": true, "acceptedBindingsEqual": true, "difference": "Frozen own-deck counts changed from 3 Eri/1 Xerosic to approved v3 2 Eri/2 Xerosic."}
+  ],
+  "writesToCompetitiveData": 0,
+  "reviewsRelabeled": 0
+}

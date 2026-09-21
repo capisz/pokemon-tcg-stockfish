@@ -185,3 +185,96 @@ def validate_strategy_revision(root: Path) -> dict:
     if perspectives != REQUIRED_PERSPECTIVES:
         raise ValueError("Strategy v1.1 must revise all four approved matchup perspectives")
     return {"approved": approved, "revision": revision, "playbooks": revisions}
+
+
+def _validate_source_claims(path: Path, claims: list[dict], allowed_cards: set[str], rule_ids: set[str]) -> None:
+    if not claims:
+        raise ValueError(f"{path} claim-bearing v1.2 patches require sourceClaims")
+    for claim in claims:
+        if not claim.get("claim"):
+            raise ValueError(f"{path} source claims require nonempty claim text")
+        kind = claim.get("kind")
+        if kind == "guide":
+            pages = claim.get("pages", [])
+            if not pages or any(not isinstance(page, int) or page < 1 for page in pages):
+                raise ValueError(f"{path} guide claims require positive page citations")
+        elif kind == "card-rule":
+            card_ids = claim.get("cardIds", [])
+            if not card_ids or set(card_ids) - allowed_cards:
+                raise ValueError(f"{path} card-rule claims must cite cards in the frozen matchup lists: {card_ids}")
+        elif kind == "game-rule":
+            cited_rules = claim.get("ruleIds", [])
+            if not cited_rules or set(cited_rules) - rule_ids:
+                raise ValueError(f"{path} game-rule claims must cite registered rule IDs: {cited_rules}")
+        else:
+            raise ValueError(f"{path} source claims require guide, card-rule or game-rule kind")
+
+
+def validate_strategy_revision_v12(root: Path) -> dict:
+    """Validate v1.2 in either review state and report the effective active revision."""
+    v11 = validate_strategy_revision(root)
+    strategy = root / "research" / "strategy"
+    revision = read_json(strategy / "contract-v1.2.json")
+    if revision.get("id") != "strategy-contract-v1.2" or revision.get("release") != "1.2":
+        raise ValueError("Unsupported strategy v1.2 identity")
+    if revision.get("base") != {"contractId": "strategy-contract-v1.1", "approvedCommit": "f376323"}:
+        raise ValueError("Strategy v1.2 must identify the approved v1.1 base")
+    if revision.get("approvalGate", {}).get("automaticPromotion") is not False:
+        raise ValueError("Strategy v1.2 may not auto-promote")
+
+    registry_path = root / revision.get("gameRuleRegistry", "")
+    registry = read_json(registry_path)
+    rule_ids = [item.get("id") for item in registry.get("rules", [])]
+    if not rule_ids or len(rule_ids) != len(set(rule_ids)) or any(not item.get("statement") for item in registry.get("rules", [])):
+        raise ValueError("Strategy v1.2 game-rule registry requires unique IDs and one-line statements")
+
+    expected = {
+        "research/strategy/crustle-v1.2.json": ("crustle-v1.1", "crustle", "dragapult"),
+        "research/strategy/dragapult-v1.2.json": ("dragapult-v1.1", "dragapult", "crustle"),
+    }
+    if set(revision.get("revisionFiles", [])) != set(expected):
+        raise ValueError("Strategy v1.2 revision file set changed")
+    statuses = {revision.get("status"), registry.get("status")}
+    playbooks = {}
+    for relative, (base_id, deck_id, opponent_id) in expected.items():
+        path = root / relative
+        playbook = read_json(path)
+        statuses.add(playbook.get("status"))
+        if playbook.get("basePlaybook") != base_id:
+            raise ValueError(f"{path} must overlay {base_id}")
+        if playbook.get("specialistDeckId") != deck_id or playbook.get("defaultOpponentDeckId") != opponent_id:
+            raise ValueError(f"{path} changed its specialist or default opponent")
+        specialist = _deck_cards(root, deck_id)
+        opponent = _deck_cards(root, opponent_id)
+        allowed_cards = set(specialist) | set(opponent)
+        patch_ids = []
+        for patch in playbook.get("principlePatches", []):
+            if patch.get("operation") not in {"add", "replace"} or not patch.get("id"):
+                raise ValueError(f"{path} has a malformed principle patch")
+            patch_ids.append(patch["id"])
+            if set(patch.get("concepts", [])) - REQUIRED_CONCEPTS or "cardRefs" not in patch:
+                raise ValueError(f"{path} principles require known concepts and structured cardRefs")
+            _validate_card_refs(path, patch["cardRefs"], specialist, opponent)
+            _validate_source_claims(path, patch.get("sourceClaims", []), allowed_cards, set(rule_ids))
+        if len(patch_ids) != len(set(patch_ids)):
+            raise ValueError(f"{path} principle patch IDs must be unique")
+        for patch in playbook.get("matchupPatches", []):
+            if patch.get("operation") != "replace" or patch.get("perspectiveId") not in REQUIRED_PERSPECTIVES:
+                raise ValueError(f"{path} has a malformed matchup patch")
+            if "cardRefs" not in patch or "unresolved" not in patch:
+                raise ValueError(f"{path} matchup patches require cardRefs and unresolved entries")
+            matchup_opponent = specialist if patch["perspectiveId"].endswith("mirror") else opponent
+            _validate_card_refs(path, patch["cardRefs"], specialist, matchup_opponent)
+            _validate_source_claims(path, patch.get("sourceClaims", []), set(specialist) | set(matchup_opponent), set(rule_ids))
+        playbooks[playbook["id"]] = playbook
+
+    if statuses not in ({"draft-awaiting-human-review"}, {"approved"}):
+        raise ValueError("All strategy v1.2 documents must share one valid status")
+    status = next(iter(statuses))
+    return {
+        "v11": v11,
+        "revision": revision,
+        "registry": registry,
+        "playbooks": playbooks,
+        "activeRevision": "v1.2" if status == "approved" else "v1.1",
+    }

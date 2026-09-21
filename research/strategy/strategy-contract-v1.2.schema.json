@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "strategy-contract-v1.2.schema.json",
+  "$defs": {
+    "status": {"enum": ["draft-awaiting-human-review", "approved"]},
+    "sourceClaim": {
+      "type": "object",
+      "required": ["claim", "kind"],
+      "properties": {
+        "claim": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["guide", "card-rule", "game-rule"]},
+        "pages": {"type": "array", "minItems": 1, "items": {"type": "integer", "minimum": 1}},
+        "cardIds": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}},
+        "ruleIds": {"type": "array", "minItems": 1, "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "revisionContract": {"type": "object", "required": ["id", "release", "status", "base", "revisionFiles", "gameRuleRegistry"]},
+    "playbookOverlay": {"type": "object", "required": ["id", "release", "status", "basePlaybook", "principlePatches", "matchupPatches"]},
+    "gameRuleRegistry": {"type": "object", "required": ["id", "release", "status", "rules"]}
+  }
+}

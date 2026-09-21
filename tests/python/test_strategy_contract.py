@@ -8,6 +8,7 @@ from ptcg_lab.strategy_contract import (
     REQUIRED_PERSPECTIVES,
     validate_strategy_contract,
     validate_strategy_revision,
+    validate_strategy_revision_v12,
 )
 
 
@@ -21,6 +22,9 @@ def test_strategy_contract_schema_is_valid_json_and_targets_both_document_types(
     revision_schema = json.loads((ROOT / "research/strategy/strategy-contract-v1.1.schema.json").read_text())
     assert revision_schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
     assert {"revisionContract", "playbookOverlay", "cardRef"} <= set(revision_schema["$defs"])
+    v12_schema = json.loads((ROOT / "research/strategy/strategy-contract-v1.2.schema.json").read_text())
+    assert v12_schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
+    assert {"revisionContract", "playbookOverlay", "gameRuleRegistry", "sourceClaim"} <= set(v12_schema["$defs"])
 
 
 def test_strategy_contract_is_scoped_and_cross_referenced():
@@ -87,3 +91,33 @@ def test_v11_keeps_user_confirmed_crustle_counts_and_explicit_unresolved_items()
     assert any("Special Red Card" in item for item in mirror["unresolved"])
     historical = [ref for ref in mirror["cardRefs"] if ref["executable"] is False]
     assert {ref["cardName"] for ref in historical} == {"Hand Trimmer", "Bianca's Devotion"}
+
+
+def test_v12_draft_preserves_approved_revisions_and_is_not_active():
+    result = validate_strategy_revision_v12(ROOT)
+    assert result["v11"]["revision"]["status"] == "approved"
+    assert result["revision"]["status"] == "draft-awaiting-human-review"
+    assert result["activeRevision"] == "v1.1"
+    assert {item["status"] for item in result["playbooks"].values()} == {"draft-awaiting-human-review"}
+    assert result["registry"]["status"] == "draft-awaiting-human-review"
+
+
+def test_v12_uses_claim_level_provenance_for_every_patch():
+    result = validate_strategy_revision_v12(ROOT)
+    for playbook in result["playbooks"].values():
+        for patch in playbook["principlePatches"] + playbook["matchupPatches"]:
+            assert patch["sourceClaims"]
+            assert all(claim["kind"] in {"guide", "card-rule", "game-rule"} for claim in patch["sourceClaims"])
+
+
+def test_v12_records_corrected_thresholds_and_open_questions():
+    result = validate_strategy_revision_v12(ROOT)
+    crustle = result["playbooks"]["crustle-v1.2"]
+    mirror = crustle["matchupPatches"][0]
+    assert "shuffles its player's hand into the deck" in mirror["technicalNote"]
+    assert "eight cards at exactly six Prize" in mirror["technicalNote"]
+    healing = next(item for item in crustle["principlePatches"] if item["id"] == "crustle-preserve-healing-threshold")
+    assert any("multi-Energy" in item for item in healing["unresolved"])
+    dragapult = result["playbooks"]["dragapult-v1.2"]
+    matchup = dragapult["matchupPatches"][0]
+    assert any("Handheld Fan" in item for item in matchup["unresolved"])

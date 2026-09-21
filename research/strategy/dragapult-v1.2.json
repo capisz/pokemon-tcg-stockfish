@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "dragapult-v1.2",
+  "release": "1.2",
+  "status": "draft-awaiting-human-review",
+  "basePlaybook": "dragapult-v1.1",
+  "specialistDeckId": "dragapult",
+  "defaultOpponentDeckId": "crustle",
+  "principlePatches": [
+    {
+      "operation": "replace",
+      "id": "dragapult-dudunsparce-crustle-role",
+      "concepts": ["offense", "prize-race", "plan-switch"],
+      "statement": "Dudunsparce is a non-ex attack route into Crustle, but avoid attacking into active Spiky Energy. Remove Spiky with Crushing Hammer or use Boss's Orders to bring up a Crustle that does not have Spiky. If Boss's Orders instead brings Dudunsparce Active, Run Away Draw can return it and its attachments to the deck before another Active is promoted when the Ability is usable.",
+      "triggers": ["The direct Dragapult route is inefficient into Crustle protection", "Spiky Energy is absent or can be removed or bypassed", "Dudunsparce can attack without breaking the subsequent Energy plan"],
+      "avoid": ["Attacking into active Spiky retaliation", "Using Dudunsparce when the Energy commitment breaks the next required attack"],
+      "cardRefs": [
+        {"cardId": "TEF-129", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-114", "owner": "specialist", "executable": true},
+        {"cardId": "DRI-12", "owner": "opponent", "executable": true},
+        {"cardId": "JTG-159", "owner": "opponent", "executable": true}
+      ],
+      "sourceClaims": [
+        {"claim": "Avoid attacking into Spiky Energy; remove it with Crushing Hammer or gust a Crustle without Spiky.", "kind": "guide", "pages": [33]},
+        {"claim": "Run Away Draw returns Dudunsparce and its attachments to the deck when usable.", "kind": "card-rule", "cardIds": ["TEF-129"]},
+        {"claim": "A new Active is promoted after the Active Dudunsparce leaves play.", "kind": "game-rule", "ruleIds": ["active-pokemon-vacancy-promotion"]},
+        {"claim": "Land Crash into Spiky places two counters on Dudunsparce, allowing Superb Scissors for 120 to knock out its remaining 120 HP; without Spiky it has 20 HP left.", "kind": "card-rule", "cardIds": ["TEF-129", "JTG-159", "DRI-12"]}
+      ]
+    }
+  ],
+  "matchupPatches": [
+    {
+      "operation": "replace",
+      "perspectiveId": "dragapult-vs-crustle",
+      "plan": "Use the approved v1.1 race, disruption and protection-aware attack plan. Handheld Fan on an Active Kangaskhan remains an unresolved attack-planning gap because each qualifying damaging attack can move one of the attacker's Energy to its own Bench.",
+      "cardRefs": [
+        {"cardId": "TWM-130", "owner": "specialist", "executable": true},
+        {"cardId": "TEF-129", "owner": "specialist", "executable": true},
+        {"cardId": "POR-71", "owner": "specialist", "executable": true},
+        {"cardId": "MEG-104", "owner": "opponent", "executable": true},
+        {"cardId": "TWM-150", "owner": "opponent", "executable": true}
+      ],
+      "unresolved": ["The guide gives no supported plan for repeatedly attacking an Active Kangaskhan holding Handheld Fan."],
+      "sourceClaims": [
+        {"claim": "A qualifying attack that damages the Active Handheld Fan holder must move one Energy from the attacker to a legal attacker-side Bench destination when both exist and the Tool remains active.", "kind": "card-rule", "cardIds": ["TWM-150"]},
+        {"claim": "The Dragapult guide's Crustle section does not supply a plan for this Handheld Fan attack loop.", "kind": "guide", "pages": [32, 33]}
+      ]
+    }
+  ]
+}
