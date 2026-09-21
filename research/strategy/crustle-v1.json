@@ -1,0 +1,140 @@
+{
+  "schemaVersion": 1,
+  "id": "crustle-v1",
+  "status": "draft-awaiting-human-review",
+  "referenceDeck": {
+    "id": "crustle",
+    "version": 2,
+    "listHash": "00db1702959041055486960a127a9cde9b7d3c53c2d246c9ed8cd28ea1e77095",
+    "sourceSha256": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7"
+  },
+  "source": {
+    "title": "The Ultimate Crustle Guide",
+    "authors": ["Rahul Reddy", "Carter Malnaik"],
+    "contentHash": "f48de6a46753ee83b3b88be698c513fb7186d85b5ad294e4fc9fe824912327f7",
+    "mainListPage": 27,
+    "usage": "Paraphrased strategic evidence only. Earlier guide sections may describe cards absent from the frozen list."
+  },
+  "identity": {
+    "primaryPlan": "Use Mega Kangaskhan ex to buy setup time while constructing one highly resilient Crustle, then deny the opponent enough effective answers to complete the prize race.",
+    "alternatePlans": [
+      "Pivot into Mega Kangaskhan ex pressure after the opponent commits resources to answering Crustle.",
+      "Win a resource or deck-out contest when taking prizes would improve the opponent's response and the public clocks favor Crustle."
+    ],
+    "failureConditions": [
+      "The only viable Crustle is exposed before its required protection and Energy functions are established.",
+      "Unnecessary bench liabilities give the opponent a cheaper prize or trap route.",
+      "The specialist takes a prize that activates disruption before it can survive the response."
+    ]
+  },
+  "principles": [
+    {
+      "id": "crustle-opening-shell",
+      "concepts": ["tempo", "defense", "win-condition"],
+      "statement": "Prefer going first and use an available Mega Kangaskhan ex as the early active while developing the minimum board needed for the selected Crustle route.",
+      "triggers": ["opening choice is available", "Mega Kangaskhan ex is an opening option"],
+      "avoid": ["Benching extra liabilities without a matchup reason", "Treating the early Kangaskhan prize value as automatically fatal"],
+      "sourcePages": [1, 2, 27],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "crustle-one-fortress",
+      "concepts": ["defense", "prize-race", "resource-plan"],
+      "statement": "Default to one fully protected Crustle; add a second only when a visible answer, trap risk or backup requirement makes the extra liability worthwhile.",
+      "triggers": ["one Crustle can cover the opponent's represented answers", "bench space or gust liability is material"],
+      "avoid": ["Splitting protective Energy without a two-attacker plan", "Creating a vulnerable gust or retreat target"],
+      "sourcePages": [1, 4, 5, 14],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "crustle-energy-has-jobs",
+      "concepts": ["defense", "resource-plan"],
+      "statement": "Value each special Energy by the attack, effect or damage threshold it answers; attachment count alone is not a sufficient readiness measure.",
+      "triggers": ["multiple Energy types are available", "the opponent represents effect-based or return-damage counterplay"],
+      "avoid": ["Spending the only relevant protection on a nonessential target", "Assuming all attached Energy are interchangeable"],
+      "sourcePages": [3, 4, 5],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "crustle-delay-first-prize",
+      "concepts": ["prize-race", "tempo", "defense"],
+      "statement": "Delay a nonterminal first knockout when one more setup turn materially improves survival against the opponent's represented disruption; take the knockout when delay loses the board or ends the game less reliably.",
+      "triggers": ["taking a prize enables hand disruption", "one additional attachment or heal changes the response threshold"],
+      "avoid": ["Passing without comparing both players' clocks", "Taking a prize solely because damage is available"],
+      "sourcePages": [4, 5],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "crustle-target-answers",
+      "concepts": ["offense", "win-condition", "resource-plan"],
+      "statement": "Use gust and hand disruption to remove or exhaust the small set of public attacker and recovery classes that can answer the selected fortress plan.",
+      "triggers": ["an answer is publicly committed", "the opponent cannot rebuild the answer in one turn"],
+      "avoid": ["Spending Boss's Orders on a target that does not advance the active win condition", "Claiming a hidden answer is present without evidence"],
+      "sourcePages": [2, 4, 6],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "crustle-pivot-after-commitment",
+      "concepts": ["plan-switch", "tempo", "offense"],
+      "statement": "When the opponent commits its limited Energy, attacks or protection answers to Crustle, compare the cost of continuing with the cost of transitioning to a prepared Mega Kangaskhan ex.",
+      "triggers": ["opponent resources are committed to Crustle", "Mega Kangaskhan ex can become ready before the next required attack"],
+      "avoid": ["A surprise pivot without sufficient attachments", "Committing Hero's Cape before the attacker choice is settled"],
+      "sourcePages": [5, 6, 29, 30],
+      "reviewStatus": "needs-human-review"
+    }
+  ],
+  "matchups": [
+    {
+      "perspectiveId": "crustle-vs-dragapult",
+      "opponentArchetype": "dragapult",
+      "openingPlan": "Prefer first. Develop one Crustle behind Mega Kangaskhan ex and track the opponent's Energy denial, hand reset and non-ex attack routes.",
+      "winConditions": [
+        "Establish a Crustle whose protection and Energy roles cover the public Dragapult answers before taking a vulnerable first prize.",
+        "Remove key support or recovery targets when doing so collapses the opponent's attack chain.",
+        "Pivot to Mega Kangaskhan ex only after the opponent's commitment makes the attachment cost credible."
+      ],
+      "threats": [
+        "Crushing Hammer plus hand disruption creating attachment debt",
+        "Residual damage that can be moved into a meaningful knockout",
+        "A second underbuilt Crustle becoming a trap or gust liability",
+        "Taking a prize before the board can absorb Unfair Stamp pressure"
+      ],
+      "decisionChecks": [
+        "Which Energy function is lost if Hammer succeeds?",
+        "Does this attack take a necessary knockout or merely create movable damage?",
+        "Can Dragapult create a cheaper prize route around the active?",
+        "Would one more setup turn change the credible response set?"
+      ],
+      "sourcePages": [4, 5],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "perspectiveId": "crustle-mirror",
+      "opponentArchetype": "crustle",
+      "openingPlan": "Develop the minimum protected board, track hand and deck resources, and avoid giving the opposing specialist a profitable forced switch from a stable active.",
+      "winConditions": [
+        "Win the resource and deck clock while keeping the chosen attacker alive.",
+        "Convert to prize pressure only when healing, Energy and disruption counts make the exchange favorable."
+      ],
+      "threats": [
+        "Poorly timed hand disruption improving the opponent's hand cycle",
+        "Overbuilding multiple attackers and losing the resource contest",
+        "Using a finite supporter or gust effect without changing the clock"
+      ],
+      "decisionChecks": [
+        "Which player wins if both sides stop attacking?",
+        "Does the action change the healing or deck-out clock?",
+        "Is a second Crustle necessary or merely another liability?"
+      ],
+      "sourcePages": [14],
+      "reviewStatus": "needs-human-review"
+    }
+  ],
+  "versionConflicts": [
+    {
+      "id": "crustle-missing-guide-cards",
+      "detail": "Earlier guide advice references Crushing Hammer, Psyduck, Cornerstone Ogerpon ex, Bianca's Devotion and Hand Trimmer, none of which appears in the frozen v1 manifest.",
+      "resolution": "Do not create executable card-specific instructions for absent cards. Preserve only transferable strategic concepts until a different list is explicitly versioned."
+    }
+  ]
+}

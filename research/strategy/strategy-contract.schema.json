@@ -1,0 +1,106 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://local.ptcg-lab/strategy-contract.schema.json",
+  "title": "Pokemon TCG specialist strategy contract",
+  "oneOf": [
+    { "$ref": "#/$defs/contract" },
+    { "$ref": "#/$defs/playbook" }
+  ],
+  "$defs": {
+    "status": {
+      "enum": ["draft-awaiting-human-review", "approved", "superseded"]
+    },
+    "source": {
+      "type": "object",
+      "required": ["title", "authors", "contentHash", "mainListPage", "usage"],
+      "properties": {
+        "title": { "type": "string", "minLength": 1 },
+        "authors": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "contentHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+        "mainListPage": { "type": "integer", "minimum": 1 },
+        "usage": { "type": "string", "minLength": 1 }
+      },
+      "additionalProperties": false
+    },
+    "principle": {
+      "type": "object",
+      "required": ["id", "concepts", "statement", "triggers", "avoid", "sourcePages", "reviewStatus"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "concepts": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "string" } },
+        "statement": { "type": "string", "minLength": 20 },
+        "triggers": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "avoid": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "sourcePages": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer", "minimum": 1 } },
+        "reviewStatus": { "enum": ["needs-human-review", "approved", "corrected", "rejected"] }
+      },
+      "additionalProperties": false
+    },
+    "matchup": {
+      "type": "object",
+      "required": ["perspectiveId", "opponentArchetype", "openingPlan", "winConditions", "threats", "decisionChecks", "sourcePages", "reviewStatus"],
+      "properties": {
+        "perspectiveId": { "type": "string" },
+        "opponentArchetype": { "type": "string" },
+        "openingPlan": { "type": "string", "minLength": 20 },
+        "winConditions": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "threats": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "decisionChecks": { "type": "array", "minItems": 1, "items": { "type": "string", "minLength": 1 } },
+        "sourcePages": { "type": "array", "minItems": 1, "uniqueItems": true, "items": { "type": "integer", "minimum": 1 } },
+        "reviewStatus": { "enum": ["needs-human-review", "approved", "corrected", "rejected"] }
+      },
+      "additionalProperties": false
+    },
+    "playbook": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "status", "referenceDeck", "source", "identity", "principles", "matchups", "versionConflicts"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "id": { "type": "string", "pattern": "^[a-z0-9-]+$" },
+        "status": { "$ref": "#/$defs/status" },
+        "referenceDeck": {
+          "type": "object",
+          "required": ["id", "version", "listHash", "sourceSha256"],
+          "properties": {
+            "id": { "type": "string" },
+            "version": { "type": "integer", "minimum": 1 },
+            "listHash": { "type": "string", "pattern": "^[a-f0-9]{64}$" },
+            "sourceSha256": { "type": "string", "pattern": "^[a-f0-9]{64}$" }
+          },
+          "additionalProperties": false
+        },
+        "source": { "$ref": "#/$defs/source" },
+        "identity": {
+          "type": "object",
+          "required": ["primaryPlan", "alternatePlans", "failureConditions"],
+          "properties": {
+            "primaryPlan": { "type": "string", "minLength": 20 },
+            "alternatePlans": { "type": "array", "minItems": 1, "items": { "type": "string" } },
+            "failureConditions": { "type": "array", "minItems": 1, "items": { "type": "string" } }
+          },
+          "additionalProperties": false
+        },
+        "principles": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/principle" } },
+        "matchups": { "type": "array", "minItems": 1, "items": { "$ref": "#/$defs/matchup" } },
+        "versionConflicts": { "type": "array", "items": { "type": "object", "required": ["id", "detail", "resolution"] } }
+      },
+      "additionalProperties": false
+    },
+    "contract": {
+      "type": "object",
+      "required": ["schemaVersion", "id", "status", "scope", "informationPolicy", "strategicConcepts", "actionAssessment", "confidencePolicy", "correctionsAndPromotion"],
+      "properties": {
+        "schemaVersion": { "const": 1 },
+        "id": { "const": "strategy-contract-v1" },
+        "status": { "$ref": "#/$defs/status" },
+        "scope": { "type": "object" },
+        "informationPolicy": { "type": "object" },
+        "strategicConcepts": { "type": "array", "minItems": 8 },
+        "actionAssessment": { "type": "object" },
+        "confidencePolicy": { "type": "object" },
+        "correctionsAndPromotion": { "type": "object" }
+      },
+      "additionalProperties": false
+    }
+  }
+}

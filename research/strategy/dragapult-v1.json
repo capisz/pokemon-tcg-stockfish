@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "id": "dragapult-v1",
+  "status": "draft-awaiting-human-review",
+  "referenceDeck": {
+    "id": "dragapult",
+    "version": 2,
+    "listHash": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9",
+    "sourceSha256": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2"
+  },
+  "source": {
+    "title": "How to Play Crushing Hammer Dragapult",
+    "authors": ["Andrew Hedrick"],
+    "contentHash": "74f84b68a7afb2825c3da2553a099ad94fa6eaf5703a6afc25bfc329565bc4c2",
+    "mainListPage": 48,
+    "usage": "Paraphrased strategic evidence only. Later updates take precedence when they describe the frozen list."
+  },
+  "identity": {
+    "primaryPlan": "Develop a sustainable chain of Dragapult ex attacks, use damage placement to construct the shortest credible prize route, and combine Energy denial with hand disruption to make the opponent miss a response.",
+    "alternatePlans": [
+      "Use Budew when item lock costs the opponent more tempo than the retreat and attachment cost paid by Dragapult.",
+      "Use non-ex attackers, Munkidori and targeted disruption when an opposing protection plan makes direct Dragapult attacks inefficient.",
+      "Delay a knockout to deny a draw trigger or prepare a multi-prize turn."
+    ],
+    "failureConditions": [
+      "The specialist initiates without enough Energy or evolved backup attackers to sustain the exchange.",
+      "Damage placement creates useful counters for the opponent without a concrete knockout route.",
+      "An unnecessary bench liability gives up the intended prize map or consumes required attachments."
+    ]
+  },
+  "principles": [
+    {
+      "id": "dragapult-information-order",
+      "concepts": ["information-sequencing", "resource-plan"],
+      "statement": "Sequence broad draw, selective draw and search according to which action reveals information and which specific outs must remain searchable.",
+      "triggers": ["multiple draw or search effects are available", "a known out or deck-bottom fact changes the preferred order"],
+      "avoid": ["Searching a specific card before exhausting a higher-value information action without reason", "Using hidden future information to justify the sequence"],
+      "sourcePages": [9, 10, 11],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "dragapult-stay-ahead-on-energy",
+      "concepts": ["tempo", "resource-plan", "offense"],
+      "statement": "Plan attachments across the active, backup Dragapult and Munkidori so the deck can attack on schedule after a knockout or Crushing Hammer result.",
+      "triggers": ["an attachment choice is available", "the active attacker is likely to be removed"],
+      "avoid": ["Spending an attachment on a low-impact retreat when it breaks the next Phantom Dive", "Developing one attacker without a recovery route"],
+      "sourcePages": [11, 12],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "dragapult-conditional-budew",
+      "concepts": ["tempo", "defense", "plan-switch"],
+      "statement": "Use Budew when the expected item denial and survival window outweigh the retreat, attachment and delayed-attack cost; benching it for a later free promotion may be stronger than retreating immediately.",
+      "triggers": ["the opponent materially depends on items", "Budew can survive or force a costly answer"],
+      "avoid": ["Automatic item lock into an immediate knockout", "Losing the next Phantom Dive solely to reach Budew"],
+      "sourcePages": [12, 13, 14, 16],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "dragapult-initiate-with-a-chain",
+      "concepts": ["prize-race", "tempo", "offense"],
+      "statement": "Initiate the Dragapult exchange when the attack takes meaningful prizes or forces the opponent in before it is ready and when backup attackers can sustain the resulting prize race.",
+      "triggers": ["a Phantom Dive is available", "both boards are developing toward an exchange"],
+      "avoid": ["Being first to attack a fully developed board without a follow-up", "Taking a low-value prize that improves the opponent's response"],
+      "sourcePages": [16, 17],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "dragapult-place-damage-for-prizes",
+      "concepts": ["offense", "prize-race", "resource-plan"],
+      "statement": "Place damage counters according to a named future knockout or denial route and account for whether the opponent can move, heal or exploit that damage first.",
+      "triggers": ["Phantom Dive or Adrena-Brain damage can be allocated", "a multi-prize route is reachable"],
+      "avoid": ["Leaving convenient damage for the opposing Munkidori", "Damaging a potential trap target before the trap line is resolved"],
+      "sourcePages": [17, 18, 47],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "id": "dragapult-combine-disruption",
+      "concepts": ["tempo", "defense", "resource-plan"],
+      "statement": "Prefer disruption packages that jointly create a missed attack: Energy denial, hand reduction, gust pressure and item lock should be evaluated by the turn they buy rather than their isolated card value.",
+      "triggers": ["the opponent has a narrow response", "Crushing Hammer or hand disruption can remove a required component"],
+      "avoid": ["Using Crushing Hammer on an attachment the opponent can abandon cheaply", "Spending Unfair Stamp without a concrete response denial"],
+      "sourcePages": [4, 14, 16, 17, 32, 33],
+      "reviewStatus": "needs-human-review"
+    }
+  ],
+  "matchups": [
+    {
+      "perspectiveId": "dragapult-vs-crustle",
+      "opponentArchetype": "crustle",
+      "openingPlan": "Prefer first. Establish attack pressure before Crustle is fully protected and evaluate cheap non-ex attacks alongside the direct Dragapult route.",
+      "winConditions": [
+        "Force Crustle to commit a second meaningful attachment before denying Energy, making abandonment expensive.",
+        "Attack underprotected Crustle targets or support pieces before one healthy fortress covers every represented answer.",
+        "Use protection-aware damage, confusion and non-ex pressure without feeding profitable return damage."
+      ],
+      "threats": [
+        "Using Hammer too early and letting the opponent move to a fresh Crustle",
+        "Building only a direct Dragapult plan into protection that requires a different attacker or effect",
+        "Allowing a fully protected Crustle to stabilize while the Dragapult bench lacks a multi-turn route"
+      ],
+      "decisionChecks": [
+        "Has Crustle committed enough Energy that denial creates real attachment debt?",
+        "Which attached Energy protects against the planned answer?",
+        "Can Boss's Orders expose a less protected Crustle or support target?",
+        "Does residual damage advance a knockout or enable the opponent's healing and retaliation plan?"
+      ],
+      "sourcePages": [32, 33],
+      "reviewStatus": "needs-human-review"
+    },
+    {
+      "perspectiveId": "dragapult-mirror",
+      "opponentArchetype": "dragapult",
+      "openingPlan": "Slightly prefer second under the guide's described mirror assumptions, while treating the choice as belief-dependent. Build a clean board and avoid initiating into equal development without a prize, Energy or disruption advantage.",
+      "winConditions": [
+        "Create the first sustainable attack chain with enough Energy and evolved backups.",
+        "Turn the opponent's initiation into an Unfair Stamp plus Crushing Hammer tempo swing.",
+        "Construct a multi-prize damage route without leaving counters that expose Drakloak or other support."
+      ],
+      "threats": [
+        "Budew consuming the attachment needed for the next attack",
+        "Residual damage enabling an opposing Munkidori knockout",
+        "Early Fezandipiti ex becoming a trap and attachment sink",
+        "Initiating without backup Drakloak or Dragapult readiness"
+      ],
+      "decisionChecks": [
+        "Will Budew survive or materially deny the opponent's setup?",
+        "Can the opponent punish the residual damage before our next turn?",
+        "Does initiating take two prizes or force an underdeveloped response?",
+        "Is Fezandipiti ex a draw solution or a new trap liability in this position?"
+      ],
+      "sourcePages": [13, 14, 16, 17, 18],
+      "reviewStatus": "needs-human-review"
+    }
+  ],
+  "versionConflicts": [
+    {
+      "id": "dragapult-updated-list-precedence",
+      "detail": "The guide contains chronological updates. The frozen list matches the post-Worlds section with two Budew, three Ultra Ball, three Night Stretcher, Judge, four Psychic and two Darkness Energy.",
+      "resolution": "Use later list-specific advice when older card-count assumptions conflict, while retaining compatible general principles."
+    }
+  ]
+}

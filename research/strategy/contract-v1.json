@@ -1,0 +1,180 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-contract-v1",
+  "status": "draft-awaiting-human-review",
+  "scope": {
+    "specialists": [
+      {
+        "id": "crustle-v1",
+        "deckId": "crustle",
+        "playbook": "research/strategy/crustle-v1.json"
+      },
+      {
+        "id": "dragapult-v1",
+        "deckId": "dragapult",
+        "playbook": "research/strategy/dragapult-v1.json"
+      }
+    ],
+    "matchupPerspectives": [
+      {
+        "id": "crustle-vs-dragapult",
+        "specialist": "crustle-v1",
+        "opponentArchetype": "dragapult"
+      },
+      {
+        "id": "dragapult-vs-crustle",
+        "specialist": "dragapult-v1",
+        "opponentArchetype": "crustle"
+      },
+      {
+        "id": "crustle-mirror",
+        "specialist": "crustle-v1",
+        "opponentArchetype": "crustle"
+      },
+      {
+        "id": "dragapult-mirror",
+        "specialist": "dragapult-v1",
+        "opponentArchetype": "dragapult"
+      }
+    ],
+    "excluded": [
+      "Other archetypes as graded pilots",
+      "Training and held-out deck variants as strategy authorities",
+      "Calibrated win probability",
+      "Automatic checkpoint promotion",
+      "Raw private guide text at runtime"
+    ]
+  },
+  "informationPolicy": {
+    "normalEvaluation": "The acting player may use its own private state and all public history. Opponent hidden cards, exact remaining order, prizes and private choices are unavailable.",
+    "opponentBeliefs": "Public cards, public actions, legal deck-construction relationships and prior matchup knowledge may update confidence-weighted hypotheses. An inference never becomes an observed fact.",
+    "benchmarkIsolation": "A benchmark may schedule an exact opponent list, but the specialist receives only the information allowed by normalEvaluation unless the result is explicitly labelled hindsight.",
+    "evidenceClasses": [
+      {
+        "id": "observed",
+        "meaning": "Directly visible in the current information state or public history."
+      },
+      {
+        "id": "inferred",
+        "meaning": "A supported possibility with an explicit confidence and public evidence trail."
+      },
+      {
+        "id": "unresolved",
+        "meaning": "A material possibility that remains open and must be represented in search or trigger abstention."
+      }
+    ],
+    "prohibited": [
+      "Reading the real opponent hand, deck order or prizes",
+      "Using later reveals to grade an earlier fair-information decision",
+      "Treating a scheduled deck ID as player-visible knowledge",
+      "Treating a guide matchup percentage as an outcome label"
+    ]
+  },
+  "strategicConcepts": [
+    {
+      "id": "win-condition",
+      "definition": "A concrete route to end the game, including primary, alternate and denial routes plus the public triggers that justify switching between them.",
+      "requiredSignals": ["remaining prizes", "reachable knockouts", "deck-out clock", "available attackers", "opponent answer classes"]
+    },
+    {
+      "id": "prize-race",
+      "definition": "The minimum credible sequence of knockouts for each player, adjusted for prize values, bench liabilities, multi-prize turns and denied attacks.",
+      "requiredSignals": ["prize map", "knockout thresholds", "gust access", "bench liabilities", "turns to finish"]
+    },
+    {
+      "id": "tempo",
+      "definition": "Who can execute a meaningful attack or denial turn first and how attachments, evolution, retreat, item lock and disruption change that schedule.",
+      "requiredSignals": ["attacker-ready turn", "attachment debt", "evolution readiness", "mobility", "action denial"]
+    },
+    {
+      "id": "offense",
+      "definition": "Pressure that advances a credible prize or board-control route rather than damage without a follow-up.",
+      "requiredSignals": ["current knockout", "next knockout", "damage placement", "target value", "response risk"]
+    },
+    {
+      "id": "defense",
+      "definition": "Actions that deny the opponent's next credible prize route through durability, healing, protection, mobility, board restraint or hand and energy disruption.",
+      "requiredSignals": ["survival threshold", "healing access", "protection role", "escape route", "opponent response set"]
+    },
+    {
+      "id": "resource-plan",
+      "definition": "Preservation and expenditure of finite cards, Energy, recovery and deck count according to the chosen win condition.",
+      "requiredSignals": ["visible resources used", "known remaining outs", "recovery", "deck count", "future turn obligations"]
+    },
+    {
+      "id": "information-sequencing",
+      "definition": "Ordering draw, search and chance actions so later commitments use the most public and private information legally available to the acting player.",
+      "requiredSignals": ["known cards", "unknown outs", "draw before search", "search before draw", "chance branches"]
+    },
+    {
+      "id": "plan-switch",
+      "definition": "A justified change between primary and alternate win conditions when public commitments or resource depletion change which route is credible.",
+      "requiredSignals": ["opponent commitment", "our readiness", "sunk resources", "remaining answers", "switch cost"]
+    }
+  ],
+  "actionAssessment": {
+    "tiers": [
+      {
+        "id": "preferred",
+        "rank": 0,
+        "meaning": "Best-supported action set for the current beliefs and strategic plan."
+      },
+      {
+        "id": "acceptable",
+        "rank": 1,
+        "meaning": "A sound alternative whose expected strategic result is not materially worse."
+      },
+      {
+        "id": "inaccuracy",
+        "rank": 2,
+        "meaning": "A modest strategic loss that preserves the principal win condition."
+      },
+      {
+        "id": "mistake",
+        "rank": 3,
+        "meaning": "A substantial loss of tempo, prize position or win-condition progress."
+      },
+      {
+        "id": "critical-error",
+        "rank": 4,
+        "meaning": "An action that foreseeably abandons or concedes the principal credible win condition."
+      }
+    ],
+    "multipleActionsAllowed": true,
+    "preciseWinProbabilityRequired": false,
+    "requiredExplanationFields": [
+      "activeWinCondition",
+      "conceptsAdvanced",
+      "conceptsRisked",
+      "observedEvidence",
+      "inferredEvidence",
+      "unresolvedEvidence"
+    ]
+  },
+  "confidencePolicy": {
+    "levels": ["high", "medium", "low", "insufficient"],
+    "gradeable": ["high", "medium"],
+    "abstainOn": [
+      "Unsupported or unaudited card interaction can change the ranking",
+      "A material opponent hypothesis is missing from the search",
+      "Search coverage is too shallow to distinguish the top tiers",
+      "Guide and learned evaluator materially disagree without reviewed evidence",
+      "A later hidden reveal would be required to justify the label"
+    ],
+    "abstentionLabel": "insufficient-confidence",
+    "rule": "Low or insufficient confidence produces assumptions and open questions, not a mistake grade."
+  },
+  "correctionsAndPromotion": {
+    "hardConstraints": ["Official card behavior", "Turn legality", "Information boundaries", "Deterministic replay requirements"],
+    "strategicCorrections": "A human correction creates a versioned playbook edit and a weighted reviewed scenario. It is not an outcome label or unconditional move rule.",
+    "candidatePolicy": "Self-play and training produce a versioned candidate specialist and never overwrite the active specialist.",
+    "requiredPromotionEvidence": [
+      "Guide scenario regression report",
+      "Four-perspective matchup benchmark",
+      "Changed-decision examples with explanations",
+      "Known regressions and uncertainty",
+      "Human approval"
+    ],
+    "automaticPromotion": false
+  }
+}
