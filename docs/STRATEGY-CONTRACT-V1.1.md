@@ -1,6 +1,6 @@
 # Strategy Contract v1.1
 
-Status: draft awaiting human review. Approved v1 remains unchanged and identifiable at commit `b176362`.
+Status: approved by the user on September 21, 2026. Approved v1 remains unchanged and identifiable at commit `b176362`.
 
 ## Purpose
 
@@ -13,7 +13,7 @@ The revision files are:
 - `research/strategy/dragapult-v1.1.json`
 - `research/strategy/strategy-contract-v1.1.schema.json`
 
-The overlays contain only additions and replacements. Approved v1 remains the base until v1.1 receives explicit approval.
+The overlays contain only additions and replacements. Approved v1 remains the immutable base, and approved v1.1 is now the active strategy contract.
 
 ## Shared changes
 
@@ -62,4 +62,4 @@ uv run --extra test python scripts/validate-strategy-contract.py
 uv run --extra test pytest -q tests/python/test_strategy_contract.py
 ```
 
-The validator checks both the unchanged approved v1 and the draft overlay, frozen deck counts, all four perspectives, page citations, fair opening information, structured card references, abstention/promotion gates and the `Blunder` display mapping.
+The validator checks both the unchanged approved v1 and the approved v1.1 overlay, frozen deck counts, all four perspectives, page citations, fair opening information, structured card references, abstention/promotion gates and the `Blunder` display mapping.

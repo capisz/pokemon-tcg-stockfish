@@ -120,7 +120,7 @@ def _validate_card_refs(path: Path, refs: list[dict], specialist: dict[str, int]
 
 
 def validate_strategy_revision(root: Path) -> dict:
-    """Validate the draft v1.1 overlay without mutating or weakening approved v1."""
+    """Validate the approved v1.1 overlay without mutating or weakening approved v1."""
     approved = validate_strategy_contract(root)
     if approved["contract"].get("status") != "approved":
         raise ValueError("Strategy v1 must remain approved while v1.1 is under review")
@@ -128,8 +128,8 @@ def validate_strategy_revision(root: Path) -> dict:
     revision = read_json(strategy / "contract-v1.1.json")
     if revision.get("id") != "strategy-contract-v1.1" or revision.get("release") != "1.1":
         raise ValueError("Unsupported strategy revision identity")
-    if revision.get("status") != "draft-awaiting-human-review":
-        raise ValueError("Strategy v1.1 remains draft until explicit human approval")
+    if revision.get("status") != "approved":
+        raise ValueError("Strategy v1.1 must record explicit human approval")
     if revision.get("base") != {"contractId": "strategy-contract-v1", "approvedCommit": "b176362"}:
         raise ValueError("Strategy v1.1 must identify the approved v1 base")
     opening = revision.get("openingInformationPolicy", {})
@@ -151,8 +151,8 @@ def validate_strategy_revision(root: Path) -> dict:
     for relative, (base_id, deck_id, default_opponent_id) in expected.items():
         path = root / relative
         playbook = read_json(path)
-        if playbook.get("status") != "draft-awaiting-human-review" or playbook.get("basePlaybook") != base_id:
-            raise ValueError(f"{path} must remain a draft overlay of {base_id}")
+        if playbook.get("status") != "approved" or playbook.get("basePlaybook") != base_id:
+            raise ValueError(f"{path} must be an approved overlay of {base_id}")
         if playbook.get("specialistDeckId") != deck_id or playbook.get("defaultOpponentDeckId") != default_opponent_id:
             raise ValueError(f"{path} changed its specialist or default opponent")
         specialist = _deck_cards(root, deck_id)

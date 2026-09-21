@@ -19,7 +19,7 @@ if __name__ == "__main__":
         f"{sum(len(item['matchups']) for item in result['playbooks'].values())} matchup perspectives."
     )
     print(
-        "Validated draft strategy-contract-v1.1: "
+        "Validated approved strategy-contract-v1.1: "
         f"{len(revision['playbooks'])} specialist overlays, "
         f"{sum(len(item['principlePatches']) for item in revision['playbooks'].values())} principle patches, "
         f"{sum(len(item['matchupPatches']) for item in revision['playbooks'].values())} matchup patches."

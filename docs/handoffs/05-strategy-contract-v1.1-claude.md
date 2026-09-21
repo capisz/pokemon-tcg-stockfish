@@ -1,6 +1,6 @@
 # Claude update: Strategy Contract v1.1 draft
 
-The approved v1 release remains intact at commit `b176362`. A separate v1.1 overlay is now drafted for human review. Do not treat v1.1 as approved and do not start the baseline milestone yet.
+The approved v1 release remains intact at commit `b176362`. The user approved the separate v1.1 overlay on September 21, 2026. Treat v1.1 as the active strategy contract, but do not start the baseline milestone without separate authorization.
 
 ## Implemented
 
@@ -27,4 +27,4 @@ The authoritative Crustle list remains version 3 with two Eri and two Xerosic's 
 
 ## Next gate
 
-Have the user review `docs/STRATEGY-CONTRACT-V1.1-REVIEW.md`. If approved, change v1.1 status through a separate approval commit. Only after that should a new bounded task build the honest strategy baseline. No engine optimization, training or long run should start before those gates.
+The strategy approval gate is complete. A new, separately authorized bounded task may build the honest strategy baseline. No engine optimization, training or long run is authorized by this approval.

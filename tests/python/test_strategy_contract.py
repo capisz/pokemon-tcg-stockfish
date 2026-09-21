@@ -57,12 +57,12 @@ def test_playbooks_only_reference_cards_from_frozen_manifests_as_executable_iden
     assert any(item["id"] == "dragapult-updated-list-precedence" for item in dragapult["versionConflicts"])
 
 
-def test_v11_preserves_approved_v1_and_remains_a_separate_draft():
+def test_v11_preserves_approved_v1_and_records_separate_approval():
     result = validate_strategy_revision(ROOT)
     assert result["approved"]["contract"]["id"] == "strategy-contract-v1"
     assert result["approved"]["contract"]["status"] == "approved"
     assert result["revision"]["id"] == "strategy-contract-v1.1"
-    assert result["revision"]["status"] == "draft-awaiting-human-review"
+    assert result["revision"]["status"] == "approved"
     assert set(result["playbooks"]) == {"crustle-v1.1", "dragapult-v1.1"}
 
 

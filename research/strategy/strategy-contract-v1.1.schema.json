@@ -7,7 +7,7 @@
     {"$ref": "#/$defs/playbookOverlay"}
   ],
   "$defs": {
-    "status": {"const": "draft-awaiting-human-review"},
+    "status": {"enum": ["draft-awaiting-human-review", "approved"]},
     "cardRef": {
       "oneOf": [
         {

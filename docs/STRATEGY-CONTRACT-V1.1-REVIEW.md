@@ -1,6 +1,6 @@
 # Strategy Contract v1.1 - approval review
 
-Status: draft awaiting human approval.
+Status: approved by the user on September 21, 2026.
 
 ## Proposed decisions
 
@@ -22,4 +22,4 @@ Status: draft awaiting human approval.
 - The guide does not establish a default Special Red Card role in the current mirror. It remains unresolved.
 - Dragapult's go-second mirror preference was written with one Budew and two Night Stretcher. The frozen list has two Budew and three Night Stretcher, so the preference remains low confidence.
 
-Approval of this document would make v1.1 eligible to replace v1 as the active strategy contract. It would not authorize the next baseline milestone automatically.
+This approval makes v1.1 the active strategy contract while retaining v1 as its immutable base. It does not authorize the next baseline milestone automatically.
