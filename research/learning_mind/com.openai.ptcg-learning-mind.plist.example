@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0"><dict>
+  <key>Label</key><string>com.openai.ptcg-learning-mind</string>
+  <key>ProgramArguments</key><array>
+    <string>REPLACE_WITH_PROJECT_PYTHON</string>
+    <string>-m</string><string>ptcg_lab.learning_mind</string>
+    <string>initialize-supervisor</string>
+    <string>--state-root</string><string>REPLACE_WITH_ARTIFACT_ROOT</string>
+  </array>
+  <key>RunAtLoad</key><true/>
+  <key>KeepAlive</key><false/>
+</dict></plist>
