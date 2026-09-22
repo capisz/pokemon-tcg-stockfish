@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Planner v4 counts only complete attack/pass plans against the 128-candidate cap and independently fails closed above 4096 expansion prefixes. The frozen 18-position audit supports 11/18 at depth 3; seven exceed the candidate cap. Expand and balance approved positions, then run a small no-promotion rollout-label smoke with common random numbers and exact identity checks before any broad label collection. PPO remains disabled."
+  "nextGate": "Planner v4 supports 11/18 positions with correct complete-plan cap accounting, but the one-position horizon-80 rollout smoke scored 0/81 candidates: 25 horizon cutoffs and 56 typed plan-resolution errors. Pause broader label collection. Resolve action execution across matched public determinization/chance samples in a research-only search path after explicit authorization; PPO remains disabled."
 }

@@ -215,3 +215,15 @@ strength or autonomous improvement.
   (16 passed; the known XGBoost native metadata test was excluded).
 - This corrects the accounting gate and improves support measurement; it does
   not establish policy quality. PPO, promotion, and 24/7 operation remain off.
+- A one-position, one-rollout-per-candidate smoke at the maximum 80-decision
+  horizon evaluated 81 complete candidates with common random seeds. It
+  correctly produced 25 horizon truncations and 56 typed action-resolution
+  errors, with zero finished outcomes and zero candidate scores. The raw local
+  record is ignored; checksums and reason counts are in
+  `macro-label-horizon80-smoke-v4-2026-09-22.json`.
+- Do not collect broader rollout labels yet. Exact planned action sequences
+  generated under one sampled state do not reliably resolve during search
+  rollouts. A likely cause is independently sampled hidden state between the
+  planner and search. Confirming this requires an explicitly authorized
+  research-search change to support matched determinization and chance streams;
+  no such engine/search change was made here.

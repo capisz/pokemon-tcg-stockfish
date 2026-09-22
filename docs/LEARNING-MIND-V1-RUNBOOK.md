@@ -555,7 +555,10 @@ should expand its evidence without changing the acceptance rules:
    explicit attack or pass ending. Only complete plans count against the
    128-candidate cap (intermediate traversal has a separate 4,096-prefix hard
    bound); the corrected accounting supports 11/18 frozen positions;
-4. run the default 16-to-64 common-random-number allocation;
+4. first fix action-sequence execution across matched determinization and
+   chance samples. The one-position 80-decision smoke scored 0/81 candidates
+   (25 cutoffs, 56 typed action-resolution errors); do not start broad label
+   collection until a targeted matched-sample test passes;
 5. refit and require measured archetype/policy holdouts;
 6. only after broad, balanced support and label quality are demonstrated, train
    a new immutable candidate and evaluate held-out labels plus every frozen

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "harnessCommit": "ef1730b2e73d111846fa61f255065f3edf61c5ce",
+  "generatorVersion": "transition-aware-public-determinization-v4-complete-candidate-cap",
+  "datasetManifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+  "positionHash": "08eea8b71bbd79dab48ad18b73bf89794bb2c2b10607f78420d6af9781061e34",
+  "positionSplit": "train",
+  "positionOpponentArchetype": "grimmsnarl",
+  "generatorHypothesisId": "dragapult",
+  "candidateCount": 81,
+  "completeIntents": {"attack": 40, "no-attack": 41},
+  "exploredPrefixes": 137,
+  "rolloutsPerCandidate": 1,
+  "horizonDecisionLimit": 80,
+  "commonRolloutSeed": 14441839780872190054,
+  "outcomes": {"finished": 0, "truncated": 25, "error": 56},
+  "reasons": {
+    "search-rollout-horizon-cutoff": 25,
+    "MACRO_PLAN_UNEXECUTABLE:1:action-not-legal": 36,
+    "MACRO_PLAN_UNEXECUTABLE:2:action-not-legal": 19,
+    "macro-root-no-longer-legal": 1
+  },
+  "scoredCandidates": 0,
+  "allExpectedResultsNull": true,
+  "highConfidencePolicyEligible": false,
+  "artifacts": {
+    "ignoredOutputDirectory": "artifacts/learning-mind-v1/macro-labels-v4-h80-smoke-08eea8b71bbd",
+    "positionRecordSha256": "ce661c9095aa06e626a48d72594d8d7e911db757aa10430a43782ded8f2136ad",
+    "manifestHash": "51334bc90dec16ed9c28a03653cbbaec3ba73e9142c1aa0c0910b468f0a92d64"
+  },
+  "interpretation": "The cutoff/error accounting is correct and produced no fake labels. Exact-sequence candidates are not reliably executable across rollout samples. A likely source is that generation and research search independently sample hidden state from the same public position; this requires a matched-sample research-search fix to confirm. No change was made because that would alter the shared engine search interface/determinization behavior without explicit authorization.",
+  "trainingOrPromotion": false
+}
