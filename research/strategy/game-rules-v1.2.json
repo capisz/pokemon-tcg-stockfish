@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "strategy-game-rules-v1.2",
   "release": "1.2",
-  "status": "draft-awaiting-human-review",
+  "status": "approved",
   "rules": [
     {"id": "failed-draw-loss", "statement": "A player loses when required to draw from an empty deck, unless the game has already ended."},
     {"id": "trainer-subtype-tool", "statement": "Pokemon Tools are Trainer cards but are not Item cards under the current rules."},

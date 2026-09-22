@@ -1,9 +1,9 @@
 # Strategy Contract v1.2 - approval review
 
-Status: pending human review.
+Status: approved.
 
-Approver: pending.
+Approver: project owner (user).
 
-Approval date: pending.
+Approval date: 2026-09-21.
 
-This draft approval record is intentionally inactive. Approval must be a separate commit that changes only v1.2 status fields and this record.
+The project owner reviewed strategy v1.2 and confirmed that it looks solid. This record activates the separately drafted v1.2 overlay without changing its strategic content.

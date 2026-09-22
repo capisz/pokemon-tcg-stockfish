@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "dragapult-v1.2",
   "release": "1.2",
-  "status": "draft-awaiting-human-review",
+  "status": "approved",
   "basePlaybook": "dragapult-v1.1",
   "specialistDeckId": "dragapult",
   "defaultOpponentDeckId": "crustle",

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "strategy-contract-v1.2",
   "release": "1.2",
-  "status": "draft-awaiting-human-review",
+  "status": "approved",
   "base": {
     "contractId": "strategy-contract-v1.1",
     "approvedCommit": "f376323"
