@@ -55,5 +55,18 @@ Base: `7543298`
 - The launchd file is an uninstalled example. A process initialized from it
   persists `PAUSED`; it cannot start training without explicit human enablement.
 
+## Raging Bolt evidence expansion
+
+- A deterministic actor-visible pool now contains 18 unlabeled Raging Bolt
+  positions: 12 train, three development, and three held-out, spanning all five
+  opponent archetypes and two frozen opponent-policy families.
+- A six-position, 2-to-4 rollout smoke completed and trained a ranker over 35
+  training candidates. The single development position had 0.0415 top-1
+  relative regret, zero top-3 recall, and 0.554 pairwise accuracy.
+- Archetype and policy-family holdout machinery produced measured results, but
+  the sample is intentionally too small and uses root-action proxy semantics.
+  It is not a high-confidence macro-plan label and changes no promotion gate.
+- Frozen hashes are recorded in `raging-bolt-macro-smoke-2026-09-22.json`.
+
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

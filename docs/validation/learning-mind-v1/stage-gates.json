@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Expand the frozen label corpus to include a genuinely held-out split, the three targeted macro families, and a blind opponent-policy family; then rerun ranker holdouts, supervised evaluation, and frozen v1.2 probes. The current four-position smoke is insufficient and does not enable PPO."
+  "nextGate": "Run the default 16-to-64 rollout allocation over the 18-position Raging Bolt pool, implement full turn-plan execution, and obtain human-reviewed labels for the Crustle Fan and Dragapult Judge queues. Then retrain and rerun frozen v1.2 probes. Current smoke evidence does not enable PPO."
 }

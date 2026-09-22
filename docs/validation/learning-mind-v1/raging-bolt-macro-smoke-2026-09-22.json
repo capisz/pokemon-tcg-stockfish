@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "scope": "Raging Bolt root-action proxy smoke; not a high-confidence macro label or promotion result.",
+  "positionPool": {
+    "artifactPath": "artifacts/learning-mind-v1/raging-bolt-macro-pool-v1",
+    "manifestHash": "e293b9cf250c41a894dabc9e509c4a085ebe8c1ce144b6e92b092d29036e1317",
+    "manifestFileSha256": "3ffadaf4a25cdea1d38b0b7d87739c0181079bd09ac6ef0128986e4d94ef4ad2",
+    "rowsSha256": "4926b51d7cb0227ea101b18952eb0751574d888d0ca6126607986dce5415ae36",
+    "positions": 18,
+    "train": 12,
+    "development": 3,
+    "heldout": 3,
+    "opponentArchetypes": 5,
+    "opponentPolicyFamilies": 2,
+    "ordinarySelfPlayPolicyLabels": 0
+  },
+  "rolloutSmoke": {
+    "artifactPath": "artifacts/learning-mind-v1/raging-bolt-macro-labels-smoke-v1",
+    "manifestHash": "741911308f1f835a7476f8b26c707da30a5c8e0deb5606cbcb3de0f1d66acaa3",
+    "manifestFileSha256": "99a5246fb1f2d4851683cb119a722f4718acb3b1baa405e5173f7ce95150f390",
+    "positions": 6,
+    "initialRollouts": 2,
+    "maximumRollouts": 4,
+    "highConfidencePolicyLabels": 0
+  },
+  "rankerSmoke": {
+    "artifactPath": "artifacts/learning-mind-v1/raging-bolt-macro-ranker-smoke-v1.ubj",
+    "modelSha256": "2635493b16d1ed4502bc7cc1b46ef31c74763cfa0f4c32069381d2115f62bbe7",
+    "manifestFileSha256": "c6a87287a5452ffbae2bd122b9b29a055a65668e765c8ef070226a22e15068fd",
+    "trainingPositions": 4,
+    "trainingCandidates": 35,
+    "developmentPositions": 1,
+    "developmentTop1RelativeRegret": 0.0414752414056877,
+    "developmentTop3Recall": 0.0,
+    "developmentPairwiseOrderingAccuracy": 0.5544554455445545,
+    "archetypeHoldoutTypesMeasured": 5,
+    "policyFamilyHoldoutTypesMeasured": 2,
+    "acceptance": "review-required"
+  },
+  "gates": {
+    "targetProbeWin": false,
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false,
+    "trustedPromotion": false
+  }
+}
