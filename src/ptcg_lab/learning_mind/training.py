@@ -40,7 +40,11 @@ def acceptable_set_loss(logits: torch.Tensor, mask: torch.Tensor, rows: list[dic
             target = torch.as_tensor(row["policyDistribution"], dtype=logits.dtype, device=logits.device)
             if target.numel() != logits.shape[1] or not torch.isclose(target.sum(), torch.tensor(1., device=logits.device)):
                 raise ValueError("invalid policy distribution")
-            losses.append(-(target * log_probs[index]).sum())
+            positive = target > 0
+            if not positive.any() or not mask[index, positive].all():
+                raise ValueError("policy distribution assigns mass to an unavailable action")
+            # Avoid the undefined 0 * -inf produced by padded, masked options.
+            losses.append(-(target[positive] * log_probs[index, positive]).sum())
         else:
             actions = sorted(set(int(value) for value in row["acceptableActionIndices"]))
             if not actions or any(value < 0 or value >= logits.shape[1] or not mask[index, value] for value in actions):

@@ -58,6 +58,23 @@ def generate_candidates(observation: dict, *, cap: int = MAX_CANDIDATES) -> list
     choices = [[None] + sorted(values, key=lambda item: (_name(item), str(item.get("id"))))
                for values in buckets.values()]
     candidates: dict[str, MacroCandidateV1] = {}
+    # Every legal root action gets a plan candidate, including information
+    # actions, abilities and deliberate end-turn actions that are not one of the
+    # strategic slots below. This prevents the abstraction from erasing options.
+    for action in sorted(legal, key=lambda item: (_name(item), str(item.get("id")))):
+        kind = _kind(action)
+        candidate = MacroCandidateV1(
+            intended_attack=_name(action) if kind == "attack" else None,
+            attack_target=str(action.get("target")) if kind == "attack" and action.get("target") is not None else None,
+            supporter=_name(action) if kind == "supporter" else None,
+            pivot_destination=str(action.get("target") or _name(action)) if kind == "pivot" else None,
+            energy_source=_name(action) if kind == "energy" else None,
+            energy_destination=str(action.get("target")) if kind == "energy" and action.get("target") is not None else None,
+            disruption_intent=_name(action) if kind == "disruption" else None,
+            protected_pokemon=str(action.get("target")) if kind == "energy" and "mist" in _name(action).lower() else None,
+            setup_target=str(action.get("target")) if kind in {"energy", "pivot"} and action.get("target") is not None else None,
+            action_ids=(str(action.get("id")),))
+        candidates[candidate.key()] = candidate
     for attack, supporter, pivot, energy, disruption in itertools.product(*choices):
         actions = tuple(item for item in (supporter, pivot, energy, disruption, attack) if item)
         # A single action can occupy two semantic roles (e.g. Judge); execute it once.
@@ -103,7 +120,8 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
         raise ValueError("label generation may not consume promotion seeds")
     if not candidates or not 1 <= initial <= maximum <= 64:
         raise ValueError("invalid rollout allocation")
-    records = {item.key(): [] for item in candidates}
+    records = {item.key(): {"scores": [], "finished": 0, "truncated": 0, "error": 0}
+               for item in candidates}
 
     def run(indices, selected):
         for index in indices:
@@ -111,26 +129,36 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
             for candidate in selected:
                 outcome = rollout(candidate, seed)
                 status = outcome.get("status")
-                if status == "finished" and outcome.get("score") in {0, .5, 1}:
-                    records[candidate.key()].append(float(outcome["score"]))
-                elif status not in {"truncated", "error"}:
+                score = outcome.get("score")
+                if (status == "finished" and isinstance(score, (int, float))
+                        and not isinstance(score, bool) and math.isfinite(score)
+                        and 0 <= score <= 1):
+                    records[candidate.key()]["scores"].append(float(score))
+                    records[candidate.key()]["finished"] += 1
+                elif status in {"truncated", "error"}:
+                    records[candidate.key()][status] += 1
+                else:
                     raise ValueError("rollout returned an invalid status")
 
     run(range(initial), candidates)
-    means = {key: sum(values) / len(values) if values else -math.inf for key, values in records.items()}
+    means = {key: sum(record["scores"]) / len(record["scores"]) if record["scores"] else -math.inf
+             for key, record in records.items()}
     best = max(means.values())
     close = [candidate for candidate in candidates if best - means[candidate.key()] <= close_margin]
     if maximum > initial and len(close) > 1:
         run(range(initial, maximum), close)
-    finite_means = [sum(values) / len(values) for values in records.values() if values]
+    finite_means = [sum(record["scores"]) / len(record["scores"])
+                    for record in records.values() if record["scores"]]
     center = max(finite_means) if finite_means else 0.0
     output = []
     for candidate in candidates:
-        scores = records[candidate.key()]
+        record = records[candidate.key()]
+        scores = record["scores"]
         mean = sum(scores) / len(scores) if scores else None
         uncertainty = math.sqrt(max((mean or 0) * (1 - (mean or 0)), .25) / len(scores)) if scores else None
         output.append({"candidate": asdict(candidate), "candidateHash": candidate.key(),
                        "completedRollouts": len(scores), "attemptedRollouts": maximum if candidate in close and len(close) > 1 else initial,
+                       "outcomes": {key: record[key] for key in ("finished", "truncated", "error")},
                        "expectedResult": mean, "relativeResult": mean - center if mean is not None else None,
                        "uncertainty": uncertainty, "weight": 0 if not scores else len(scores) / (1 + uncertainty)})
     return output

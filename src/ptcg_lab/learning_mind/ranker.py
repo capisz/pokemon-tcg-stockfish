@@ -39,9 +39,23 @@ class XGBoostMacroRanker:
 
     def fit(self, features, labels, groups, weights=None):
         xgb = _xgboost()
+        groups = [int(size) for size in groups]
+        if not groups or any(size <= 0 for size in groups) or sum(groups) != len(features) or len(labels) != len(features):
+            raise ValueError("ranker groups must be positive and cover every feature and label")
         self.model = xgb.XGBRanker(**self.parameters)
+        group_weights = None
+        if weights is not None:
+            values = np.asarray(weights, dtype=float)
+            if len(values) != len(features) or not np.isfinite(values).all() or (values < 0).any():
+                raise ValueError("ranker rollout weights must be finite, nonnegative, and cover every candidate")
+            group_weights, offset = [], 0
+            for size in groups:
+                group_weights.append(float(values[offset:offset + size].mean()))
+                offset += size
+            if any(weight <= 0 for weight in group_weights):
+                raise ValueError("every ranker query needs positive completed-rollout weight")
         self.model.fit(np.asarray(features), np.asarray(labels), group=np.asarray(groups),
-                       sample_weight=None if weights is None else np.asarray(weights))
+                       sample_weight=group_weights)
         return self
 
     def predict(self, features):

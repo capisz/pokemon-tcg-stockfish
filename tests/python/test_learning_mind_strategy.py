@@ -4,7 +4,7 @@ import pytest
 
 from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
 from ptcg_lab.learning_mind.macro import MacroExecutionFailure, execute_candidate, generate_candidates, label_candidates, rollout_seed
-from ptcg_lab.learning_mind.ranker import FrozenIteration, holdout_splits
+from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
@@ -19,6 +19,13 @@ def test_macro_candidates_are_deterministic_executable_and_capped():
         assert [row["id"] for row in execute_candidate(candidate, obs["legalActions"])] == list(candidate.action_ids)
     selected = next(item for item in first if item.action_ids)
     with pytest.raises(MacroExecutionFailure): execute_candidate(selected, [])
+
+
+def test_macro_abstraction_preserves_every_legal_root_action():
+    obs = observation()
+    candidates = generate_candidates(obs)
+    represented = {identifier for candidate in candidates for identifier in candidate.action_ids}
+    assert represented == {str(action["id"]) for action in obs["legalActions"]}
 
 
 def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
@@ -40,11 +47,30 @@ def test_rollout_errors_are_not_fabricated_scores():
     assert rows[0]["completedRollouts"] == 0 and rows[0]["expectedResult"] is None
 
 
+def test_rollout_accepts_bounded_horizon_values_but_rejects_invalid_scores():
+    candidate = generate_candidates(observation())[:1]
+    rows = label_candidates(candidate, "position", lambda c, s: {"status": "finished", "score": .362},
+                            initial=2, maximum=2)
+    assert rows[0]["completedRollouts"] == 2
+    with pytest.raises(ValueError, match="invalid status"):
+        label_candidates(candidate, "position", lambda c, s: {"status": "finished", "score": 1.1},
+                         initial=1, maximum=1)
+
+
 def test_holdouts_and_refit_limit():
     rows = [{"opponentArchetype": "a", "opponentPolicyFamily": "old"},
             {"opponentArchetype": "b", "opponentPolicyFamily": "new"}]
     assert len(holdout_splits(rows)) == 4
     with pytest.raises(ValueError, match="six"): FrozenIteration(7, "t", "o", "i", ("p",))
+
+
+def test_xgboost_ranker_accepts_rollout_group_weights():
+    ranker = XGBoostMacroRanker(n_estimators=2, max_depth=2).fit(
+        [[0., 0.], [1., 0.], [0., 1.], [1., 1.]],
+        [0., 1., 0., 1.], [2, 2], [1., 2., 3., 4.])
+    assert len(ranker.predict([[0., 0.], [1., 1.]])) == 2
+    with pytest.raises(ValueError, match="cover every"):
+        XGBoostMacroRanker(n_estimators=1).fit([[0.], [1.]], [0., 1.], [1], [1., 1.])
 
 
 def test_only_approved_policy_labels_and_ppo_remains_human_gated():

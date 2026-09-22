@@ -7,7 +7,7 @@ torch = pytest.importorskip("torch")
 
 from ptcg_lab.learning_mind.encoding import collate
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, autoregressive_select
-from ptcg_lab.learning_mind.training import PPOConfig, ppo_update, train_supervised
+from ptcg_lab.learning_mind.training import PPOConfig, acceptable_set_loss, ppo_update, train_supervised
 from test_learning_mind_representation import encoded, observation
 
 
@@ -65,6 +65,15 @@ def test_supervised_resume_is_bit_equivalent_on_same_device(tmp_path):
     left = torch.load(resumed["checkpoint"], weights_only=False)["model"]
     right = torch.load(complete_path, weights_only=False)["model"]
     assert all(torch.equal(left[key], right[key]) for key in left)
+
+
+def test_search_distribution_loss_ignores_zero_mass_padded_options():
+    mask = torch.tensor([[True, True, False, True]])
+    logits = torch.tensor([[1., 0., -torch.inf, -1.]])
+    loss = acceptable_set_loss(logits, mask, [{"policyDistribution": [.75, .25, 0., 0.]}])
+    assert torch.isfinite(loss)
+    with pytest.raises(ValueError, match="unavailable action"):
+        acceptable_set_loss(logits, mask, [{"policyDistribution": [.5, 0., .5, 0.]}])
 
 
 def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
