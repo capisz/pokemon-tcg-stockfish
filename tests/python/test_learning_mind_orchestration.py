@@ -9,6 +9,7 @@ from ptcg_lab.learning_mind.dataset_v1 import (build_macro_position_pool, file_s
                                                load_dataset, training_records)
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import CANDIDATE_GENERATOR_VERSION
+from ptcg_lab.learning_mind.macro import candidates_from_transition_plans
 from ptcg_lab.learning_mind.schema import IdentityManifest
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
@@ -51,6 +52,9 @@ def test_dataset_hash_identity_and_feature_identity_are_enforced(tmp_path):
 def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(tmp_path, monkeypatch):
     dataset, identity = frozen_dataset(tmp_path)
     calls = []
+    observation_row = json.loads((dataset / "rows.jsonl").read_text())
+    root_action = observation_row["observation"]["legalActions"][0]
+    next_action = {**observation_row["observation"]["legalActions"][-1], "id": "next:0"}
 
     class FakeEngine:
         def __init__(self, *args, **kwargs):
@@ -69,6 +73,10 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
                 {"actionId": action["id"], "visits": 1, "score": .4}]}
 
     monkeypatch.setattr(experiment, "EngineClient", FakeEngine)
+    monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
+        "plannerSha256": "planner", "adapterSha256": "adapter"})
+    monkeypatch.setattr(experiment, "generate_transition_candidates", lambda root, observation, seed: (
+        candidates_from_transition_plans([{"actions": [root_action, next_action]}]), {"hypothesisId": "public-test-hypothesis"}))
     output = tmp_path / "labels"
     first = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                             identity=identity, limit=1, initial=1, maximum=1)
@@ -80,10 +88,11 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
-    assert record["semantics"] == "single legal root-action candidate; not a complete turn-plan label"
+    assert record["semantics"].startswith("transition-aware legal action prefix")
     assert record["highConfidencePolicyEligible"] is False
+    assert record["generatorHypothesisId"] == "public-test-hypothesis"
     assert len(record["rolloutSeeds"]) == 1
-    assert all(call[1].get("macroPlanActions") for call in calls)
+    assert all(len(call[1].get("macroPlanActions", [])) == 2 for call in calls)
     assert all(label["outcomes"] == {"finished": 1, "truncated": 0, "error": 0}
                for label in record["labels"])
     with pytest.raises(ValueError, match="configuration drift"):

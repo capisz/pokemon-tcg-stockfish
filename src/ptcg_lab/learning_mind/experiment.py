@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 import os
+import subprocess
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
@@ -16,11 +17,37 @@ from ptcg_lab.features import heuristic_action_score
 
 from .dataset_v1 import file_sha256, load_dataset, training_records
 from .encoding import encode_decision
-from .macro import CANDIDATE_GENERATOR_VERSION, generate_candidates, label_candidates, rollout_seed
+from .macro import (CANDIDATE_GENERATOR_VERSION, candidates_from_transition_plans,
+                    label_candidates, rollout_seed)
 from .model import StrategyTransformerV1
 from .ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
-from .schema import IdentityManifest, identity_hash
+from .schema import IdentityManifest, UnsupportedPosition, identity_hash
 from .training import require_checkpoint_identity, train_supervised
+
+
+def transition_generator_identity(root: Path) -> dict:
+    planner = root / "research/learning_mind/transition_macro_planner.ts"
+    adapter = Path(__file__).with_name("macro.py")
+    if not planner.is_file(): raise FileNotFoundError(f"transition planner missing: {planner}")
+    return {"version": CANDIDATE_GENERATOR_VERSION,
+            "plannerSha256": file_sha256(planner), "adapterSha256": file_sha256(adapter)}
+
+
+def generate_transition_candidates(root: Path, observation: dict, seed: int):
+    planner = root / "research/learning_mind/transition_macro_planner.ts"
+    runner = root / "node_modules/.bin/tsx"
+    result = subprocess.run([str(runner), str(planner)], cwd=root,
+        input=json.dumps({"observation": observation, "seed": seed}, separators=(",", ":")),
+        text=True, capture_output=True, timeout=180, check=False)
+    if result.returncode:
+        message = (result.stderr or result.stdout).strip()[-2000:]
+        if "unsupported position:" in message.lower():
+            raise UnsupportedPosition(message)
+        raise RuntimeError(f"transition macro planner failed ({result.returncode}): {message}")
+    response = json.loads(result.stdout)
+    if response.get("version") != CANDIDATE_GENERATOR_VERSION:
+        raise ValueError("transition macro planner version mismatch")
+    return candidates_from_transition_plans(response.get("candidates", [])), response
 
 
 def runtime_identity(root: Path) -> IdentityManifest:
@@ -70,10 +97,12 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     manifest, rows = load_dataset(dataset_dir, identity=identity)
     output.mkdir(parents=True, exist_ok=True)
     selected = rows[:limit]
+    generator_identity = transition_generator_identity(root)
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
                 "maximumRollouts": maximum, "horizon": horizon,
-                "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION}
+                "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
+                "candidateGeneratorIdentity": generator_identity}
     manifest_path = output / "manifest.json"
     completed = set()
     if manifest_path.exists():
@@ -101,17 +130,32 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
             key = row["positionHash"]
             if key in completed: continue
             observation = row["observation"]
-            candidates = generate_candidates(observation)
-            executable = [candidate for candidate in candidates if candidate.action_ids]
             legal = {str(action["id"]): action for action in observation.get("legalActions", [])}
+            generator_seed = int.from_bytes(hashlib.sha256(
+                f"learning-mind-v1|macro-generator|{key}".encode()).digest()[:4], "big")
+            try:
+                candidates, generation = generate_transition_candidates(root, observation, generator_seed)
+            except UnsupportedPosition as error:
+                namespace = "training" if row["split"] == "train" else "development"
+                record = {"schemaVersion": 1, "positionHash": key, "split": row["split"],
+                    "identity": identity, "datasetManifestHash": manifest["manifestHash"],
+                    "familyId": row["familyId"], "opponentArchetype": row["opponentArchetype"],
+                    "opponentPolicyFamily": row["opponentPolicyFamily"], "observation": observation,
+                    "labels": [], "status": "unsupported", "unsupportedReason": str(error),
+                    "seedNamespace": namespace, "generatorSeed": generator_seed,
+                    "semantics": "transition-aware plan generation exceeded the declared supported bounds",
+                    "highConfidencePolicyEligible": False}
+                _atomic_json(output / f"{key}.json", record)
+                continue
+            executable = [candidate for candidate in candidates if candidate.action_sequence]
 
             def rollout(candidate, seed):
                 root_action = legal.get(candidate.action_ids[0])
                 if root_action is None: return {"status": "error", "reason": "macro-root-no-longer-legal"}
                 narrowed = copy.deepcopy(observation); narrowed["legalActions"] = [root_action]
-                plan_actions = [legal.get(identifier) for identifier in candidate.action_ids]
-                if any(action is None for action in plan_actions):
-                    return {"status": "error", "reason": "macro-action-no-longer-legal"}
+                plan_actions = list(candidate.action_sequence)
+                if not plan_actions or plan_actions[0].get("id") != root_action["id"]:
+                    return {"status": "error", "reason": "macro-plan-root-mismatch"}
                 result = engine.request("search", {"observation": narrowed, "seed": seed, "budgetMs": 120000,
                                                     "method": "rollout", "iterations": 1,
                                                     "maxRolloutDecisions": horizon,
@@ -134,13 +178,19 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "familyId": row["familyId"], "opponentArchetype": row["opponentArchetype"],
                       "opponentPolicyFamily": row["opponentPolicyFamily"],
                       "observation": observation, "labels": labels,
+                      "status": "collected", "generatorSeed": generator_seed,
+                      "generatorHypothesisId": generation.get("hypothesisId"),
+                      "candidateCount": len(candidates),
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
-                      "semantics": "single legal root-action candidate; not a complete turn-plan label",
+                      "semantics": "transition-aware legal action prefix from one actor-visible public determinization; later steps are revalidated at rollout",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")
+    records = [json.loads(path.read_text()) for path in files]
     result = {"schemaVersion": 1, **settings, "positions": len(files),
+              "supportedPositions": sum(record.get("status") == "collected" for record in records),
+              "unsupportedPositions": sum(record.get("status") == "unsupported" for record in records),
               "files": [{"path": path.name, "sha256": file_sha256(path)} for path in files],
               "highConfidencePolicyLabels": 0, "resumePolicy": "verified position files are immutable"}
     result["manifestHash"] = identity_hash(result)

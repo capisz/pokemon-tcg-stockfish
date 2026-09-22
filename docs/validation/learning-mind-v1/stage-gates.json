@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Implement a transition-aware turn-plan generator that chooses later actions from updated legal observations, then collect fresh labels with adequate independent development and held-out positions. Add reviewed Crustle Fan and Dragapult Judge labels and rerun v1.2 probes. Current root-action diagnostics do not enable PPO."
+  "nextGate": "The transition-aware planner is implemented and tested, but its bounded collector smoke marked the first selected position unsupported at the 128-candidate cap. Measure support rate across the frozen pool, fix candidate branching without weakening legality or the cap, then collect fresh transition-plan labels with independent development and held-out positions. Add reviewed Crustle Fan and Dragapult Judge labels and rerun v1.2 probes. PPO remains disabled."
 }

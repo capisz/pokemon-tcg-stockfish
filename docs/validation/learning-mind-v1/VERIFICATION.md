@@ -125,5 +125,28 @@ Base: `7543298`
   development and fold metrics. Full frozen identities and ranker checksums are
   in `root-action-ranker-v2-2026-09-22.json`.
 
+## Transition-aware planner implementation
+
+- Added a research-only planner that samples opponent hypotheses from the
+  actor-visible public search position and expands ordered action prefixes by
+  replaying each prefix from the same determinization. Every next action is
+  re-resolved against the updated legal observation; the 128-candidate cap and
+  three-action depth fail closed rather than dropping branches. The Python
+  collector freezes planner/adapter hashes and records unsupported positions
+  immutably.
+- The saved actor-view fixture smoke (three supplied root actions) generated
+  41 candidates, including 38 multi-action prefixes at depths one through
+  three. The end-to-end one-position collector smoke correctly recorded its
+  first selected position as unsupported because full branching exceeded 128;
+  it produced no fabricated labels. This is a support-rate warning, not a
+  successful label-collection result.
+- `npm run typecheck`, all 70 engine tests, and the seven targeted Python
+  macro/orchestration tests pass. A broad Python invocation still hits a native
+  XGBoost segmentation fault outside the touched tests. PPO, ranker refitting,
+  policy promotion, and continuous operation remain disabled.
+- Exact fixture, smoke-output, and implementation checksums are recorded in
+  `transition-macro-smoke-2026-09-22.json`; the full collector artifact stays
+  ignored under `artifacts/learning-mind-v1/`.
+
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

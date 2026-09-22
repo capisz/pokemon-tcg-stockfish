@@ -233,13 +233,19 @@ change an encoded row.
 
 ## 6. Generate strategic macro labels
 
-The rollout orchestration CLI still needs to be implemented. It should consume
-the frozen dataset positions and call `generate_candidates` and
-`label_candidates` from `ptcg_lab.learning_mind.macro`.
+The rollout orchestration CLI consumes frozen dataset positions and calls the
+transition-aware TypeScript planner plus `label_candidates` from
+`ptcg_lab.learning_mind.macro`. The planner reconstructs one actor-visible
+public determinization, enumerates bounded ordered prefixes (up to three
+actions), and re-resolves every later action against the updated legal list.
+Candidate overflow is an explicit unsupported-position outcome, not silent
+pruning. A smoke run found one such overflow, so support-rate measurement and
+branching reduction under the same legality guarantees are required before
+large-scale collection.
 
 For every selected position:
 
-1. Generate candidates deterministically.
+1. Generate candidates deterministically with the frozen public planner.
 2. Stop and record `unsupported-position` if more than 128 candidates exist.
 3. Reconstruct hidden possibilities from actor-visible information and the
    approved deck-hypothesis model only.
@@ -261,7 +267,8 @@ Start with a small smoke set covering:
 - Dragapult Judge against a large opposing hand.
 
 Do not scale collection until candidates reproduce their declared action plan
-or emit a typed `MacroExecutionFailure` on every smoke fixture.
+or emit a typed `MacroExecutionFailure` on every smoke fixture, and the frozen
+pool's unsupported-position rate is measured and accepted.
 
 ## 7. Fit and evaluate the XGBoost macro ranker
 

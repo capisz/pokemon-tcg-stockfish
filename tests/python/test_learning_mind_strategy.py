@@ -4,6 +4,7 @@ import pytest
 
 from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
 from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
+    candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
@@ -36,6 +37,17 @@ def test_candidate_generator_never_combines_root_actions_into_unverified_sequenc
     assert len({candidate.action_ids[0] for candidate in candidates}) == len(obs["legalActions"])
     with pytest.raises(UnsupportedPosition, match="candidate cap"):
         generate_candidates(obs, cap=len(obs["legalActions"]) - 1)
+
+
+def test_transition_plans_preserve_ordered_actions_and_semantic_roles():
+    root = {"id": "1:0", "type": "play-trainer", "label": "Play Judge", "cardId": "MEG-116"}
+    attack = {"id": "2:1", "type": "attack", "label": "Attack: Eon Blade", "target": "active"}
+    candidate, = candidates_from_transition_plans([{"actions": [root, attack]}])
+    assert candidate.action_ids == ("1:0", "2:1")
+    assert candidate.action_sequence == (root, attack)
+    assert candidate.supporter == "MEG-116" and candidate.intended_attack == "Attack: Eon Blade"
+    with pytest.raises(UnsupportedPosition, match="cap"):
+        candidates_from_transition_plans([{"actions": [root]}, {"actions": [attack]}], cap=1)
 
 
 def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
