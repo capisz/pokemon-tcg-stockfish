@@ -552,8 +552,9 @@ should expand its evidence without changing the acceptance rules:
 2. preserve a real held-out split and a blind opponent-policy family;
 3. improve the transition planner's candidate abstraction without merging
    board targets or dropping meaningful action bindings: v3 now requires an
-   explicit attack or pass ending, but only 4/18 frozen positions fit under the
-   128-candidate cap;
+   explicit attack or pass ending. Only complete plans count against the
+   128-candidate cap (intermediate traversal has a separate 4,096-prefix hard
+   bound); the corrected accounting supports 11/18 frozen positions;
 4. run the default 16-to-64 common-random-number allocation;
 5. refit and require measured archetype/policy holdouts;
 6. only after broad, balanced support and label quality are demonstrated, train

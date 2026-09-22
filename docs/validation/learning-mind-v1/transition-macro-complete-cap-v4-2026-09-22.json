@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "harnessCommit": "6b26454a2e2103b03e20042dcf246f49c5f29722",
+  "implementation": {
+    "version": "transition-aware-public-determinization-v4-complete-candidate-cap",
+    "plannerSha256": "3e02b3fa60d5cc4891408f5a914d4fde54563b6e08aaa67a1225756ff7deb9a2",
+    "actionKeySha256": "b3f0256747420a0fc122d185d7c2c9bb893f8e1826390da392c4c003211021b7",
+    "adapterSha256": "c71e1138d5a1e5305ef22b378000c30a4330af7ad7d139f591d49ccc85713b5c"
+  },
+  "capSemantics": {
+    "candidateLimit": 128,
+    "countedAsCandidates": "Only complete attack-terminated or pass-terminated plans.",
+    "intermediatePrefixes": "Traversal only; not returned as candidates and never eligible for labels.",
+    "maxUniqueExpansionPrefixes": 4096,
+    "overflowPolicy": "Typed unsupported position; no prefix or candidate is silently dropped.",
+    "actionEquivalence": "Existing legalActionKey over ordered action sequences; preserves board targets and staged-choice bindings."
+  },
+  "frozenPoolAudit": {
+    "datasetManifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+    "datasetManifestSha256": "721a53f6aa325922908c5bae9c488025b71d8b4f0424d08d634c96dcac31c87c",
+    "positions": 18,
+    "supported": 11,
+    "candidateCapUnsupported": 7,
+    "expansionCapUnsupported": 0,
+    "otherErrors": 0,
+    "completeCandidateCounts": [17, 29, 37, 45, 61, 81, 85, 87, 101, 105, 113],
+    "totalCompleteCandidates": 761,
+    "exploredPrefixCounts": [9, 51, 59, 75, 137, 147, 179, 203, 250, 275, 301],
+    "totalExploredPrefixes": 1686,
+    "rolloutsRun": 0,
+    "labelsWritten": 0
+  },
+  "verification": {
+    "typescriptTypecheck": "passed",
+    "engineTests": {"passed": 75, "failed": 0},
+    "targetedPythonTests": {"passed": 16, "deselected": 1},
+    "pythonExclusion": "The existing XGBoost native metadata test was excluded after its environment segmentation fault.",
+    "diffCheck": "passed",
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false
+  },
+  "interpretation": "Correct candidate accounting raises v3 measured support from 4/18 to 11/18 without changing the 128 complete-candidate limit or dropping candidates. Seven positions still explicitly overflow; no rollout labels or playing-strength evidence were produced."
+}

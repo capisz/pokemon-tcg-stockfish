@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Planner v3 now labels candidate intent explicitly: attack-terminated or deliberate pass/no-attack plans only. The frozen 18-position audit supports 4/18 at depth 3; 14 exceed the 128-candidate cap. Develop and test a target-preserving candidate abstraction, then rerun support coverage. Do not collect broad rollout labels until position support is adequate; PPO remains disabled."
+  "nextGate": "Planner v4 counts only complete attack/pass plans against the 128-candidate cap and independently fails closed above 4096 expansion prefixes. The frozen 18-position audit supports 11/18 at depth 3; seven exceed the candidate cap. Expand and balance approved positions, then run a small no-promotion rollout-label smoke with common random numbers and exact identity checks before any broad label collection. PPO remains disabled."
 }

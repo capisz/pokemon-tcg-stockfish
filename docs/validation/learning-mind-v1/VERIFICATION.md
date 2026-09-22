@@ -197,3 +197,21 @@ strength or autonomous improvement.
   identity are in `transition-macro-terminal-intent-v3-2026-09-22.json`.
 - No new training labels or ranker fit were started. PPO, promotion, and
   continuous operation remain disabled.
+
+## Complete-candidate cap accounting in planner v4
+
+- The prior cap check incorrectly charged intermediate traversal prefixes and
+  queued search work against the 128-candidate limit. Planner v4 counts only
+  completed attack/pass plans as candidates; intermediate prefixes are
+  traversal-only and are independently bounded at 4,096 unique sequences.
+  Either bound fails closed; candidates are never silently clipped.
+- The same frozen 18-position pool now supports 11 positions at depth three;
+  seven exceed the 128 complete-candidate cap. Those 11 yield 761 completed
+  candidates after exploring 1,686 unique prefixes. No position hit the
+  expansion-prefix cap, and no candidate rollouts or labels were produced.
+- Full details and checksums are in
+  `transition-macro-complete-cap-v4-2026-09-22.json`. Harness commit
+  `6b26454` passed typecheck, all 75 engine tests, and the focused Python suite
+  (16 passed; the known XGBoost native metadata test was excluded).
+- This corrects the accounting gate and improves support measurement; it does
+  not establish policy quality. PPO, promotion, and 24/7 operation remain off.
