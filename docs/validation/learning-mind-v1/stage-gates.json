@@ -1,8 +1,8 @@
 {
   "schemaVersion": 1,
   "representationParity": true,
-  "supervisedManifestFrozen": false,
-  "supervisedCheckpointTrained": false,
+  "supervisedManifestFrozen": true,
+  "supervisedCheckpointTrained": true,
   "heldOutLabelWin": false,
   "targetProbeWin": false,
   "severityThreeRegression": false,
@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Freeze the supervised training and held-out evaluation manifest, install the mind extra in the isolated environment, train a candidate, and measure held-out labels plus the targeted strategy probes."
+  "nextGate": "Expand the frozen label corpus to include a genuinely held-out split, the three targeted macro families, and a blind opponent-policy family; then rerun ranker holdouts, supervised evaluation, and frozen v1.2 probes. The current four-position smoke is insufficient and does not enable PPO."
 }

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "scope": "Bounded orchestration smoke only; not playing-strength or promotion evidence.",
+  "identityHash": "97ead7f324f8caf37fc42e30f0658244d3547fc20724e0d77209dcd0c21f8ecd",
+  "dataset": {
+    "artifactPath": "artifacts/learning-mind-v1/supervised-v1-smoke-v2",
+    "manifestHash": "9db1b45faa7e48d468ae8bcf8edf624d2d19ed9be7920b06be16055502f5ebb6",
+    "manifestFileSha256": "75b1e89cecfb08ed4df7904f3d2f98d4684b4ab29f5ea4b6e1f3c9584b1eada1",
+    "rowsSha256": "e6144e4841be024e8bee224a519d3aa2a671177f81a288c87e89d553501cd210",
+    "rows": 4,
+    "train": 3,
+    "development": 1,
+    "heldout": 0,
+    "reviewedUniquePositions": 2,
+    "exactSearchPositions": 2,
+    "ordinarySelfPlayPolicyLabels": 0,
+    "staleReviewsExcluded": 4
+  },
+  "macroSmoke": {
+    "artifactPath": "artifacts/learning-mind-v1/macro-labels-v1-smoke-v2",
+    "manifestHash": "a7d6d8974d5f9a29472f9a2ffe4ca5ed29212c2cb988ab7e42b69bd6304b93c1",
+    "manifestFileSha256": "dbeb8a2543e945aa11abf95896c548bbb21f3a0d320d09b2155fa1658abc856b",
+    "positions": 1,
+    "initialRollouts": 4,
+    "maximumRollouts": 8,
+    "highConfidencePolicyLabels": 0,
+    "limitation": "Root-action proxy smoke; later turn-plan fields are not yet enforced."
+  },
+  "rankerSmoke": {
+    "artifactPath": "artifacts/learning-mind-v1/macro-ranker-v1-smoke-v2.ubj",
+    "modelSha256": "80ad575ea01ee048cdf6b9e38ef81a7461ecd14db7b40b0e8039880ed83426ab",
+    "manifestFileSha256": "ea204a0b7f108b12a56096c1e0a716202a0cc29223ef287b49e50a5703355448",
+    "trainingPositions": 1,
+    "trainingCandidates": 3,
+    "pairwiseOrderingAccuracy": 0.0,
+    "developmentStatus": "insufficient",
+    "archetypeHoldoutStatus": "insufficient",
+    "policyFamilyHoldoutStatus": "insufficient",
+    "acceptance": "insufficient"
+  },
+  "transformerSmoke": {
+    "artifactPath": "artifacts/learning-mind-v1/strategy-transformer-v1-smoke-v2.pt",
+    "checkpointSha256": "bbd464d723cfe32c63a61d0d447236d7df9291ecd6e60fdd034b00d2c6e8848d",
+    "parameters": 1585714,
+    "epochs": 1,
+    "trainingExamples": 3,
+    "developmentPositions": 1,
+    "modelDevelopmentAccuracy": 1.0,
+    "heuristicDevelopmentAccuracy": 1.0,
+    "heldoutPositions": 0,
+    "heldOutLabelWin": false,
+    "targetProbeWin": false,
+    "acceptance": "insufficient-or-not-improved",
+    "evaluationFileSha256": "2bc814d00e57f1c070b5274cd3b1885162a3246e2c5461b09342636624eba67b"
+  },
+  "gates": {
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false,
+    "trustedPromotion": false
+  }
+}

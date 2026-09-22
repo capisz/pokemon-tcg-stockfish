@@ -1,15 +1,15 @@
 # Autonomous Learning Mind v1 — Operator Runbook
 
-This guide describes how to take the research implementation through commit
-`bf4ed0e` from representation parity to its first supervised candidate and,
+This guide describes how to take the research implementation from
+representation parity through its first supervised candidate and,
 only after that candidate passes its gates, toward bounded PPO and supervised
 continuous operation.
 
 This is not currently a one-command autonomous learner. The safety components,
-model, ranker boundary, evaluation logic, PPO update, and supervisor exist, but
-the dataset builder, macro-rollout worker orchestration, experiment CLI, and
-notification adapters still need to be connected. Do not start a long-running
-process until the relevant readiness checkpoint below is complete.
+dataset builder, macro-rollout orchestration, model, ranker, evaluation CLI,
+PPO update, and supervisor exist. The first bounded smoke is complete, but its
+four positions are insufficient for a held-out or strategy win. Notification
+adapters and long-running operation remain deliberately disconnected.
 
 ## 1. Non-negotiable boundaries
 
@@ -48,14 +48,15 @@ The following is complete:
   sequential evaluation, PPO update guards, specialist routing, rollback, and
   pause-safe supervisor behavior are tested;
 - Python, engine, TypeScript, and strategy-contract tests pass.
+- an immutable four-position supervised smoke manifest;
+- resumable macro collection and XGBoost fit/report commands;
+- a one-epoch supervised smoke checkpoint and development evaluation.
 
 The following is not complete:
 
-- a frozen supervised dataset manifest;
-- a production-quality macro-rollout collection CLI;
-- the first fitted XGBoost ranker;
-- the first trained Transformer candidate;
 - held-out label and targeted-probe wins;
+- enough approved positions for archetype and policy-family holdouts;
+- complete turn-plan execution rather than root-action proxy labels;
 - a candidate-specific 400-game screen or sequential promotion evaluation;
 - an installed notification transport or reboot service.
 
@@ -84,9 +85,10 @@ npm ci
 npm run engine:build
 ```
 
-Before using `--locked`, update and review `uv.lock`; the `mind` extra was added
-after the current lockfile was generated. A lockfile change should contain the
-expected XGBoost dependency and its transitive packages only.
+The reviewed lockfile includes the `mind` extra and XGBoost. On macOS, prefix
+combined Torch/XGBoost test or experiment commands with
+`OMP_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1` to avoid competing native thread
+runtimes.
 
 Verify the environment:
 
@@ -523,20 +525,20 @@ git status --short --branch
 Also verify the generated experiment manifest, replay hashes, exact scheduled
 game count, unfinished-outcome accounting, seed namespaces, and disk reserve.
 
-## 16. Recommended next implementation task
+## 16. Recommended next evidence task
 
-The next Codex task should build one bounded orchestration layer with these
-deliverables:
+The orchestration layer below is implemented and smoke-tested. The next task
+should expand its evidence without changing the acceptance rules:
 
-1. `build-supervised-dataset` CLI;
-2. immutable dataset/identity manifest;
-3. resumable `collect-macro-labels` CLI;
-4. `fit-macro-ranker` with holdout reports;
-5. `train-supervised` CLI wrapping the existing trainer;
-6. `evaluate-supervised` report against the frozen heuristic and targeted
-   probes;
-7. tests for interruption, label-source exclusion, hidden-view isolation,
-   identity rejection, and artifact hashing.
+1. collect approved positions for the Raging Bolt plan, Crustle Fan target, and
+   Dragapult large-hand Judge families;
+2. preserve a real held-out split and a blind opponent-policy family;
+3. replace root-action proxy labels with candidates whose declared turn plan is
+   fully executed or fails with a typed error;
+4. run the default 16-to-64 common-random-number allocation;
+5. refit and require measured archetype/policy holdouts;
+6. train a new immutable candidate and evaluate held-out labels plus every
+   frozen v1.2 probe.
 
 Stop after producing the supervised acceptance report. Do not enable PPO,
 install launchd, or promote the candidate in that task.
