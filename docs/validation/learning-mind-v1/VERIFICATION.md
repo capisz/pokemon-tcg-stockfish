@@ -147,6 +147,11 @@ Base: `7543298`
 - Exact fixture, smoke-output, and implementation checksums are recorded in
   `transition-macro-smoke-2026-09-22.json`; the full collector artifact stays
   ignored under `artifacts/learning-mind-v1/`.
+- A planner-only audit of all 18 frozen Raging Bolt positions found depth-three
+  support on 5/18 and depth-two support on 16/18, with zero errors and zero
+  rollouts. This isolates branching depth as the primary cap pressure but does
+  not justify dropping third-step interactions. The next gate is a tested,
+  semantics-preserving candidate abstraction/dominance rule.
 
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

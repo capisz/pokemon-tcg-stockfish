@@ -243,6 +243,11 @@ pruning. A smoke run found one such overflow, so support-rate measurement and
 branching reduction under the same legality guarantees are required before
 large-scale collection.
 
+The 18-position planner-only support audit found depth-three support on 5/18
+positions and depth-two support on 16/18 (zero errors; no rollouts). Do not
+resolve this by blindly reducing depth: define a tested equivalence or
+dominance rule first, retain all board targets, and keep overflow explicit.
+
 For every selected position:
 
 1. Generate candidates deterministically with the frozen public planner.

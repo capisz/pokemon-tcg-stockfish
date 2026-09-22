@@ -32,6 +32,19 @@
     "positionRecordSha256": "42470124944b76b35c1a442db85e9b6037f10ac679da841f81bb50f5ed989f35",
     "ignoredLocalArtifact": true
   },
+  "frozenPoolSupportAudit": {
+    "datasetManifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+    "positions": 18,
+    "seedRule": "first four SHA-256 bytes of learning-mind-v1|macro-generator|positionHash",
+    "rolloutsRun": 0,
+    "errors": 0,
+    "byMaxPlanActions": {
+      "1": {"supported": 18, "unsupported": 0},
+      "2": {"supported": 16, "unsupported": 2},
+      "3": {"supported": 5, "unsupported": 13}
+    },
+    "conclusion": "Most overflow begins when expanding to depth three; reducing depth to two improves support but still leaves two unsupported and may omit important turn-plan interactions."
+  },
   "verification": {
     "typescriptTypecheck": "passed",
     "engineTests": {
@@ -47,5 +60,5 @@
     "playingStrengthClaim": false,
     "ppoEnabled": false
   },
-  "nextGate": "Measure planner support rate on the frozen position pool and reduce branching without weakening transition legality or silently pruning candidates before collecting fresh labels."
+  "nextGate": "Design a defensible candidate-abstraction/dominance rule that preserves targets and strategic intent, then rerun depth/support coverage before collecting fresh labels."
 }
