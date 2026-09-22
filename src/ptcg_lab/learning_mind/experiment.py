@@ -96,14 +96,20 @@ def _atomic_json(path: Path, value: object) -> None:
 
 def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identity: dict,
                          limit: int = 20, initial: int = 16, maximum: int = 64,
-                         horizon: int = 16) -> dict:
+                         horizon: int = 16, position_hash: str | None = None) -> dict:
     manifest, rows = load_dataset(dataset_dir, identity=identity)
     output.mkdir(parents=True, exist_ok=True)
-    selected = rows[:limit]
+    if position_hash is not None:
+        selected = [row for row in rows if row["positionHash"] == position_hash]
+        if not selected:
+            raise ValueError(f"requested macro position is not present in the frozen dataset: {position_hash}")
+    else:
+        selected = rows[:limit]
     generator_identity = transition_generator_identity(root)
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
                 "maximumRollouts": maximum, "horizon": horizon,
+                "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
                 "candidateGeneratorIdentity": generator_identity}
     manifest_path = output / "manifest.json"

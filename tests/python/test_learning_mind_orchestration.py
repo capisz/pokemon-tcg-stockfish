@@ -80,10 +80,12 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
         {"hypothesisId": "public-test-hypothesis"}))
     output = tmp_path / "labels"
     first = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
-                                            identity=identity, limit=1, initial=1, maximum=1)
+                                            identity=identity, limit=1, initial=1, maximum=1,
+                                            position_hash="position")
     call_count = len(calls)
     assert first["positions"] == 1 and first["highConfidencePolicyLabels"] == 0
     assert first["candidateGeneratorVersion"] == CANDIDATE_GENERATOR_VERSION
+    assert first["selectedPositionHashes"] == ["position"]
     second = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                              identity=identity, limit=1, initial=1, maximum=1)
     assert second["manifestHash"] == first["manifestHash"]
@@ -104,6 +106,13 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     with pytest.raises(ValueError, match="configuration drift"):
         experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                         identity=identity, limit=1, initial=1, maximum=1)
+
+
+def test_macro_collector_rejects_position_hash_outside_frozen_pool(tmp_path):
+    dataset, identity = frozen_dataset(tmp_path)
+    with pytest.raises(ValueError, match="not present in the frozen dataset"):
+        experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=tmp_path / "labels",
+                                        identity=identity, position_hash="not-in-pool", initial=1, maximum=1)
 
 
 def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
