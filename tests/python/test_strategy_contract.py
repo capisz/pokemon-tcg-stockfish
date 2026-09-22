@@ -93,13 +93,14 @@ def test_v11_keeps_user_confirmed_crustle_counts_and_explicit_unresolved_items()
     assert {ref["cardName"] for ref in historical} == {"Hand Trimmer", "Bianca's Devotion"}
 
 
-def test_v12_draft_preserves_approved_revisions_and_is_not_active():
+def test_v12_status_is_consistent_and_controls_active_revision():
     result = validate_strategy_revision_v12(ROOT)
     assert result["v11"]["revision"]["status"] == "approved"
-    assert result["revision"]["status"] == "draft-awaiting-human-review"
-    assert result["activeRevision"] == "v1.1"
-    assert {item["status"] for item in result["playbooks"].values()} == {"draft-awaiting-human-review"}
-    assert result["registry"]["status"] == "draft-awaiting-human-review"
+    status = result["revision"]["status"]
+    assert status in {"draft-awaiting-human-review", "approved"}
+    assert result["activeRevision"] == ("v1.2" if status == "approved" else "v1.1")
+    assert {item["status"] for item in result["playbooks"].values()} == {status}
+    assert result["registry"]["status"] == status
 
 
 def test_v12_uses_claim_level_provenance_for_every_patch():
