@@ -198,10 +198,10 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "status": "collected", "generatorSeed": generator_seed,
                       "generatorHypothesisId": generation.get("hypothesisId"),
                       "candidateCount": len(executable),
-                      "incompletePrefixCount": len(candidates) - len(executable),
+                      "exploredPrefixCount": generation.get("exploredPrefixCount"),
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
-                      "semantics": "complete transition-aware attack or deliberate no-attack plan from one actor-visible public determinization; later steps are revalidated at rollout",
+                      "semantics": "complete transition-aware attack or deliberate no-attack candidates only; incomplete traversal prefixes do not consume candidate cap or receive labels; later steps are revalidated at rollout",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")

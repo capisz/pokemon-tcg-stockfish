@@ -7,9 +7,10 @@ import { SeededRandom } from '../../packages/engine/src/random';
 import type { LegalAction, Observation } from '../../packages/engine/src/types';
 import { TrainerType } from '../../vendor/twinleaf/ptcg-server/src/game/store/card/card-types';
 
-export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v3-terminal-intent';
+export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v4-complete-candidate-cap';
 export const TRANSITION_MACRO_MAX_CANDIDATES = 128;
 export const TRANSITION_MACRO_MAX_STEPS = 3;
+export const TRANSITION_MACRO_MAX_EXPANSION_PREFIXES = 4096;
 
 export interface PlannedCandidate {
   actions: LegalAction[];
@@ -104,7 +105,7 @@ export function generateTransitionMacroPlans(
   seed: number,
   maxCandidates = TRANSITION_MACRO_MAX_CANDIDATES,
   maxSteps = TRANSITION_MACRO_MAX_STEPS,
-): {version: string; hypothesisId: string; candidates: PlannedCandidate[]} {
+): {version: string; hypothesisId: string; exploredPrefixCount: number; candidates: PlannedCandidate[]} {
   if (!Number.isInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('macro-plan seed must be uint32');
   if (!Number.isInteger(maxCandidates) || maxCandidates < 1 || maxCandidates > TRANSITION_MACRO_MAX_CANDIDATES)
     throw new Error('macro candidate cap must be between 1 and 128');
@@ -139,8 +140,11 @@ export function generateTransitionMacroPlans(
       candidateIntents: Object.fromEntries([...candidateIntents].sort(([a], [b]) => a.localeCompare(b))),
       expansionsBySlot: Object.fromEntries([...expansionsBySlot].sort(([a], [b]) => a.localeCompare(b))),
     };
-    return new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates}); diagnostic=${JSON.stringify(diagnostic)}`);
+    return new Error(`unsupported position: complete macro candidate cap exceeded (${maxCandidates}); diagnostic=${JSON.stringify(diagnostic)}`);
   };
+  const expansionFailure = () => new Error(`unsupported position: transition macro expansion prefix cap exceeded (${TRANSITION_MACRO_MAX_EXPANSION_PREFIXES}); diagnostic=${JSON.stringify({
+    emittedCompleteCandidates: candidates.length, queued: queue.length, visitedPrefixes: visitedPrefixes.size,
+  })}`);
   const enqueuePrefix = (prefix: PlannedCandidate) => {
     const key = JSON.stringify(prefix.actions.map(legalActionKey));
     if (visitedPrefixes.has(key) || pendingPrefixKeys.has(key)) {
@@ -149,6 +153,8 @@ export function generateTransitionMacroPlans(
     }
     pendingPrefixKeys.add(key);
     queue.push(prefix);
+    if (visitedPrefixes.size + pendingPrefixKeys.size > TRANSITION_MACRO_MAX_EXPANSION_PREFIXES)
+      throw expansionFailure();
   };
   for (const action of root.legalActions.filter(action => suppliedRoot.has(legalActionKey(action)))
     .sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id))) {
@@ -171,7 +177,7 @@ export function generateTransitionMacroPlans(
       candidateDepths.set(candidate.actions.length, (candidateDepths.get(candidate.actions.length) ?? 0) + 1);
       candidateIntents.set(candidate.completion, (candidateIntents.get(candidate.completion) ?? 0) + 1);
     };
-    addCandidate(plan);
+    if (plan.completion !== 'incomplete') addCandidate(plan);
     if (plan.completion !== 'incomplete' || plan.actions.length >= maxSteps) continue;
 
     const {decision} = replayPlan(determinization.create, observation, plan.actions, seed);
@@ -198,11 +204,11 @@ export function generateTransitionMacroPlans(
       enqueuePrefix({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot],
         completion: 'incomplete'});
       expansionsBySlot.set(option.slot, (expansionsBySlot.get(option.slot) ?? 0) + 1);
-      if (candidates.length + pendingPrefixKeys.size > maxCandidates)
-        throw capFailure();
     }
   }
-  return {version: TRANSITION_MACRO_PLANNER_VERSION, hypothesisId: determinization.selectedHypothesis, candidates};
+  if (!candidates.length) throw new Error('unsupported position: no complete attack or deliberate no-attack macro candidate');
+  return {version: TRANSITION_MACRO_PLANNER_VERSION, hypothesisId: determinization.selectedHypothesis,
+    exploredPrefixCount: visitedPrefixes.size, candidates};
 }
 
 if (process.argv[1]?.endsWith('/transition_macro_planner.ts')) {

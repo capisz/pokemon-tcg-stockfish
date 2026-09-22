@@ -89,7 +89,7 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
-    assert record["semantics"].startswith("complete transition-aware attack or deliberate no-attack plan")
+    assert record["semantics"].startswith("complete transition-aware attack or deliberate no-attack candidates only")
     assert record["highConfidencePolicyEligible"] is False
     assert record["generatorHypothesisId"] == "public-test-hypothesis"
     assert len(record["rolloutSeeds"]) == 1

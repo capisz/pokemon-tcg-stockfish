@@ -20,14 +20,13 @@ function readyObservation() {
   return observation;
 }
 
-test('transition-aware macro planner emits deterministic candidates with root coverage and explicit terminal intent', () => {
+test('transition-aware macro planner traverses roots but returns only complete candidates with explicit terminal intent', () => {
   const observation = readyObservation();
   const roots = observation.legalActions.slice(0, 3);
   const narrowed = {...observation, legalActions: roots};
   const generated = generateTransitionMacroPlans(narrowed, 42, 128, 2);
   assert.deepEqual(generated, generateTransitionMacroPlans(narrowed, 42, 128, 2));
-  assert.deepEqual(generated.candidates.filter(candidate => candidate.actions.length === 1)
-    .map(candidate => candidate.actions[0].id).sort(), roots.map(action => action.id).sort());
+  assert.ok(generated.exploredPrefixCount >= roots.length);
   assert.ok(generated.candidates.every(candidate => candidate.actions.length >= 1 && candidate.actions.length <= 2));
   for (const candidate of generated.candidates) {
     const last = candidate.actions.at(-1)!;
@@ -38,7 +37,7 @@ test('transition-aware macro planner emits deterministic candidates with root co
 
 test('transition-aware macro planner fails closed when the plan cap is exceeded', () => {
   const observation = readyObservation();
-  assert.throws(() => generateTransitionMacroPlans(observation, 42, 1, 2), /cap exceeded.*diagnostic=/);
+  assert.throws(() => generateTransitionMacroPlans(observation, 42, 1, 3), /candidate cap exceeded.*diagnostic=/);
 });
 
 test('transition-aware macro planner preserves action bindings when validating visible roots', () => {
