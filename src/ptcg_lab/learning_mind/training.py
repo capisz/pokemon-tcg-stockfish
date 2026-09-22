@@ -127,6 +127,67 @@ def ppo_enablement(stage_record: dict) -> dict:
             "humanEnableRequired": True}
 
 
+def eligible_ppo_records(records: Iterable[dict]) -> list[dict]:
+    result = []
+    for row in records:
+        if row.get("status") in {"truncated", "error"}:
+            continue
+        required = {"encoded", "selectedAction", "oldLogProb", "return", "advantage"}
+        if not required <= set(row):
+            raise ValueError(f"PPO record is missing: {sorted(required - set(row))}")
+        result.append(row)
+    return result
+
+
+def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
+               config: PPOConfig = PPOConfig(), seed: int = 7543298) -> dict:
+    """One frozen PPO epoch; rejected minibatches do not mutate the model."""
+    config.validate(); records = eligible_ppo_records(records)
+    if not records: raise ValueError("no completed PPO traces")
+    order = torch.randperm(len(records), generator=torch.Generator().manual_seed(seed)).tolist()
+    accepted = rejected = 0; reasons: dict[str, int] = {}; metrics = []
+    for start in range(0, len(order), config.minibatch):
+        selected = [records[index] for index in order[start:start + config.minibatch]]
+        arrays = collate([row["encoded"] for row in selected])
+        tensors = {key: torch.as_tensor(value) for key, value in arrays.items()}
+        local_actions = []
+        for row in selected:
+            action = int(row["selectedAction"])
+            count = len(row["encoded"].action_classes)
+            if not 0 <= action <= count: raise ValueError("selected PPO action is not represented")
+            local_actions.append(arrays["option_mask"].shape[1] - 1 if action == count else action)
+        chosen = torch.tensor(local_actions, dtype=torch.long)
+        old = torch.tensor([row["oldLogProb"] for row in selected], dtype=torch.float32)
+        returns = torch.tensor([row["return"] for row in selected], dtype=torch.float32)
+        advantages = torch.tensor([row["advantage"] for row in selected], dtype=torch.float32)
+        logits = model.policy_forward(**tensors)
+        distribution = torch.distributions.Categorical(logits=logits)
+        new = distribution.log_prob(chosen)
+        values = model.evaluation_forward(**{key: tensors[key] for key in
+                                             ("state_card_ids", "state_features", "state_type_ids", "state_mask")})
+        ratio = torch.exp(new - old)
+        clipped = torch.clamp(ratio, 1 - config.clip, 1 + config.clip)
+        policy_loss = -torch.minimum(ratio * advantages, clipped * advantages).mean()
+        value_loss = torch.nn.functional.mse_loss(values, returns)
+        entropy = distribution.entropy().mean()
+        approximate_kl = (old - new).mean()
+        finite = all(torch.isfinite(item).all() for item in (policy_loss, value_loss, entropy, approximate_kl))
+        allowed, reason = update_guard(approximate_kl=float(approximate_kl.detach()),
+                                       value_loss=float(value_loss.detach()), finite=finite)
+        metric = {"approximateKL": float(approximate_kl.detach()), "valueLoss": float(value_loss.detach()),
+                  "policyLoss": float(policy_loss.detach()), "entropy": float(entropy.detach())}
+        metrics.append(metric)
+        if not allowed:
+            rejected += 1; reasons[reason] = reasons.get(reason, 0) + 1
+            continue
+        loss = policy_loss + config.value_coefficient * value_loss - config.entropy * entropy
+        optimizer.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0); optimizer.step()
+        accepted += 1
+    return {"optimizationEpochs": 1, "acceptedMinibatches": accepted, "rejectedMinibatches": rejected,
+            "rejectionReasons": reasons, "metrics": metrics,
+            "pauseRequired": rejected >= 3}
+
+
 def manifest_digest(value: dict) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 

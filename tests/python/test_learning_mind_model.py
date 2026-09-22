@@ -7,7 +7,7 @@ torch = pytest.importorskip("torch")
 
 from ptcg_lab.learning_mind.encoding import collate
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, autoregressive_select
-from ptcg_lab.learning_mind.training import train_supervised
+from ptcg_lab.learning_mind.training import PPOConfig, ppo_update, train_supervised
 from test_learning_mind_representation import encoded, observation
 
 
@@ -65,3 +65,21 @@ def test_supervised_resume_is_bit_equivalent_on_same_device(tmp_path):
     left = torch.load(resumed["checkpoint"], weights_only=False)["model"]
     right = torch.load(complete_path, weights_only=False)["model"]
     assert all(torch.equal(left[key], right[key]) for key in left)
+
+
+def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
+    torch.manual_seed(4); model = StrategyTransformerV1(); decision = encoded()
+    batch = tensors(collate([decision]))
+    with torch.no_grad():
+        logits = model.policy_forward(**batch)
+        old = torch.log_softmax(logits, -1)[0, 0].item()
+        value = model.evaluation_forward(**{key: batch[key] for key in
+                                            ("state_card_ids", "state_features", "state_type_ids", "state_mask")})[0].item()
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    config = PPOConfig()
+    row = {"status": "finished", "encoded": decision, "selectedAction": 0,
+           "oldLogProb": old, "return": value, "advantage": 1.0}
+    result = ppo_update(model, optimizer, [row], config=config)
+    assert result["acceptedMinibatches"] == 1 and result["optimizationEpochs"] == 1
+    rejected = ppo_update(model, optimizer, [{**row, "oldLogProb": old + 1}], config=config)
+    assert rejected["rejectedMinibatches"] == 1
