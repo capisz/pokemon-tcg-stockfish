@@ -191,7 +191,15 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                     return {"status": "error", "reason": reason}
                 if result.get("status") != "complete" or alternative is None or alternative.get("score") is None:
                     return {"status": "error", "reason": "search-rollout-unavailable"}
-                return {"status": "finished", "score": float(alternative["score"])}
+                continuation = alternative.get("continuation") or {}
+                if continuation.get("end") != "terminal":
+                    return {"status": "truncated", "reason": "search-rollout-horizon-cutoff"}
+                outcome = continuation.get("outcome")
+                winner = outcome.get("winner") if isinstance(outcome, dict) else "invalid"
+                if winner is not None and (type(winner) is not int or winner not in (0, 1)):
+                    return {"status": "error", "reason": "terminal-rollout-missing-valid-outcome"}
+                score = .5 if winner is None else 1. if winner == observation["playerId"] else 0.
+                return {"status": "finished", "score": score}
 
             namespace = "training" if row["split"] == "train" else "development"
             labels = label_candidates(executable, key, rollout, namespace=namespace,

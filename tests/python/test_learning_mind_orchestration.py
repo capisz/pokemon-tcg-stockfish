@@ -70,7 +70,9 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
             calls.append((method, payload))
             action = payload["observation"]["legalActions"][0]
             return {"status": "complete", "alternatives": [
-                {"actionId": action["id"], "visits": 1, "score": .4}]}
+                {"actionId": action["id"], "visits": 1, "score": .4,
+                 "continuation": {"end": "terminal", "outcome": {"winner": 0, "reason": "fixture"}}}],
+                "macroPlanExecution": {"requested": True, "completed": 1, "failures": []}}
 
     monkeypatch.setattr(experiment, "EngineClient", FakeEngine)
     monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
@@ -113,6 +115,38 @@ def test_macro_collector_rejects_position_hash_outside_frozen_pool(tmp_path):
     with pytest.raises(ValueError, match="not present in the frozen dataset"):
         experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=tmp_path / "labels",
                                         identity=identity, position_hash="not-in-pool", initial=1, maximum=1)
+
+
+def test_macro_collector_treats_search_horizon_cutoff_as_truncated_not_a_label(tmp_path, monkeypatch):
+    dataset, identity = frozen_dataset(tmp_path)
+    row = json.loads((dataset / "rows.jsonl").read_text())
+    root_action = row["observation"]["legalActions"][0]
+    attack = {**row["observation"]["legalActions"][-1], "id": "attack:0", "type": "attack"}
+
+    class CutoffEngine:
+        def __init__(self, *args, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def request(self, method, payload=None):
+            action = payload["observation"]["legalActions"][0]
+            return {"status": "complete", "alternatives": [{"actionId": action["id"], "visits": 1,
+                    "score": .8, "continuation": {"end": "cutoff"}}],
+                    "macroPlanExecution": {"requested": True, "completed": 1, "failures": []}}
+
+    monkeypatch.setattr(experiment, "EngineClient", CutoffEngine)
+    monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
+        "plannerSha256": "planner", "actionKeySha256": "action-key", "adapterSha256": "adapter"})
+    monkeypatch.setattr(experiment, "generate_transition_candidates", lambda root, observation, seed: (
+        candidates_from_transition_plans([{"actions": [root_action, attack], "completion": "attack"}]),
+        {"hypothesisId": "cutoff-test"}))
+    output = tmp_path / "cutoff-labels"
+    experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output, identity=identity,
+                                    initial=1, maximum=1, position_hash="position")
+    record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
+    label, = record["labels"]
+    assert label["expectedResult"] is None
+    assert label["completedRollouts"] == 0
+    assert label["outcomes"] == {"finished": 0, "truncated": 1, "error": 0}
 
 
 def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
