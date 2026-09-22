@@ -5,9 +5,12 @@ import json
 import pytest
 
 from ptcg_lab.learning_mind import experiment
-from ptcg_lab.learning_mind.dataset_v1 import file_sha256, load_dataset, training_records
+from ptcg_lab.learning_mind.dataset_v1 import (build_macro_position_pool, file_sha256,
+                                               load_dataset, training_records)
 from ptcg_lab.learning_mind.encoding import encode_decision
+from ptcg_lab.learning_mind.schema import IdentityManifest
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
+from ptcg_lab.storage import Store
 from test_learning_mind_representation import observation
 
 
@@ -83,3 +86,30 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     with pytest.raises(ValueError, match="configuration drift"):
         experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                         identity=identity, limit=1, initial=1, maximum=2)
+
+
+def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
+    experimental = tmp_path / "experimental"
+    store = Store(experimental)
+    replay_items = []
+    for index, opponent in enumerate(("crustle", "dragapult", "grimmsnarl")):
+        obs = observation()
+        replay_id = f"replay{index}"
+        replay = {"id": replay_id, "dataTier": "experimental", "status": "finished",
+                  "decks": ["raging-bolt", opponent], "deckHashes": [f"own{index}", f"opp{index}"],
+                  "policies": ["current", "historical" if index % 2 else "heuristic"],
+                  "frames": [{"decisionIndex": index, "actor": 0, "observations": [obs, {}]}]}
+        store.put("replays", replay_id, replay)
+        replay_items.append({"id": replay_id, "familyId": f"family{index}",
+                             "decks": replay["decks"]})
+    source = tmp_path / "source.json"
+    source.write_text(json.dumps({"replays": replay_items}))
+    identity = IdentityManifest.create(engine_build_hash="engine", deck_manifests={}, card_metadata={})
+    output = tmp_path / "pool"
+    manifest = build_macro_position_pool(output=output, experimental_root=experimental,
+                                         source_dataset_manifest=source, identity=identity, limit=3)
+    _, rows = load_dataset(output, identity=identity.record())
+    assert manifest["ordinarySelfPlayPolicyLabels"] == 0
+    assert {row["split"] for row in rows} == {"train", "development", "heldout"}
+    assert all(row["policyLabelSource"] is None and row["observation"]["playerId"] == row["actor"]
+               for row in rows)

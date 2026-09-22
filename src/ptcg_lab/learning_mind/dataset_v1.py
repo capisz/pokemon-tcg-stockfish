@@ -198,3 +198,71 @@ def training_records(rows: list[dict], split: str = "train") -> list[dict]:
                        "acceptableActionIndices": row.get("acceptableActionIndices"),
                        "policyDistribution": row.get("policyDistribution")})
     return result
+
+
+def build_macro_position_pool(*, output: Path, experimental_root: Path,
+                              source_dataset_manifest: Path, identity: IdentityManifest,
+                              target_deck: str = "raging-bolt", limit: int = 18) -> dict:
+    """Freeze actor-visible, unlabeled positions for rollout ranking only."""
+    if output.exists():
+        raise ValueError("macro position pools are immutable; choose a new directory")
+    source = json.loads(source_dataset_manifest.read_text())
+    store = Store(experimental_root)
+    candidates = []
+    sources = []
+    for item in sorted(source.get("replays", []), key=lambda row: row["id"]):
+        if not any(str(deck).replace("-training", "") == target_deck for deck in item.get("decks", [])):
+            continue
+        replay = store.get("replays", item["id"])
+        sources.append({"replayId": item["id"], "sha256": file_sha256(store.location("replays", item["id"]))})
+        trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
+        for frame in replay.get("frames", []):
+            actor = frame.get("actor")
+            if actor not in (0, 1):
+                continue
+            observation = frame["observations"][actor]
+            snapshot = trackers[actor].update(observation)
+            own_deck = str(replay.get("decks", ["", ""])[actor]).replace("-training", "")
+            if (own_deck != target_deck or observation.get("prompt") or observation.get("searchUnavailableReason")
+                    or str(observation.get("phase", "")).lower().replace("_", "-") != "player-turn"
+                    or len(observation.get("legalActions", [])) < 2):
+                continue
+            encoded = encode_decision(observation, snapshot)
+            if len(encoded.action_classes) < 2:
+                continue
+            position_hash = legacy_digest(observation)
+            opponent = str(replay.get("decks", ["unknown", "unknown"])[1 - actor]).replace("-training", "")
+            policies = replay.get("policies") or ["unknown", "unknown"]
+            candidates.append({"positionHash": position_hash,
+                "familyId": f"{target_deck}-macro-plan:{item['familyId']}",
+                "sourceGameId": replay["id"], "sourceDecisionIndex": frame["decisionIndex"], "actor": actor,
+                "deckHash": (replay.get("deckHashes") or [None, None])[actor],
+                "opponentArchetype": opponent, "opponentPolicyFamily": str(policies[1 - actor]),
+                "featureIdentityHash": encoded.identity, "policyLabelSource": None,
+                "acceptableActionIndices": None, "policyDistribution": None,
+                "observation": observation, "tracker": snapshot})
+    # Round-robin across opponent archetype and policy family before taking the cap.
+    buckets = defaultdict(list)
+    for row in candidates:
+        buckets[(row["opponentArchetype"], row["opponentPolicyFamily"])].append(row)
+    selected = []
+    while len(selected) < limit and any(buckets.values()):
+        for key in sorted(buckets):
+            if buckets[key] and len(selected) < limit:
+                selected.append(buckets[key].pop(0))
+    for index, row in enumerate(selected):
+        row["split"] = "development" if index % 6 == 0 else "heldout" if index % 6 == 1 else "train"
+    output.mkdir(parents=True)
+    rows_path = output / "rows.jsonl"
+    _atomic_text(rows_path, "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in selected))
+    manifest = {"schemaVersion": 1, "id": "learning-mind-macro-position-pool-v1",
+                "identity": identity.record(), "targetDeck": target_deck, "rows": len(selected),
+                "rowsSha256": file_sha256(rows_path), "sourceManifestSha256": file_sha256(source_dataset_manifest),
+                "sources": sources, "ordinarySelfPlayPolicyLabels": 0,
+                "splitCounts": dict(sorted(Counter(row["split"] for row in selected).items())),
+                "opponentArchetypes": sorted({row["opponentArchetype"] for row in selected}),
+                "opponentPolicyFamilies": sorted({row["opponentPolicyFamily"] for row in selected}),
+                "selection": "deterministic round-robin by opponent archetype and policy family"}
+    manifest["manifestHash"] = identity_hash(manifest)
+    _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+    return manifest
