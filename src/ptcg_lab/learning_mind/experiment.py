@@ -27,10 +27,13 @@ from .training import require_checkpoint_identity, train_supervised
 
 def transition_generator_identity(root: Path) -> dict:
     planner = root / "research/learning_mind/transition_macro_planner.ts"
+    action_key = root / "packages/engine/src/action-key.ts"
     adapter = Path(__file__).with_name("macro.py")
-    if not planner.is_file(): raise FileNotFoundError(f"transition planner missing: {planner}")
+    if not planner.is_file() or not action_key.is_file():
+        raise FileNotFoundError(f"transition planner/action identity helper missing: {planner} / {action_key}")
     return {"version": CANDIDATE_GENERATOR_VERSION,
-            "plannerSha256": file_sha256(planner), "adapterSha256": file_sha256(adapter)}
+            "plannerSha256": file_sha256(planner), "actionKeySha256": file_sha256(action_key),
+            "adapterSha256": file_sha256(adapter)}
 
 
 def generate_transition_candidates(root: Path, observation: dict, seed: int):

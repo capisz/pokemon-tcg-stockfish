@@ -8,7 +8,7 @@ from typing import Callable, Iterable
 from .schema import UnsupportedPosition, identity_hash
 
 MAX_CANDIDATES = 128
-CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v1"
+CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v2-bound-actions"
 
 
 @dataclass(frozen=True)

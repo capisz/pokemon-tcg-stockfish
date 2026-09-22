@@ -74,7 +74,7 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
 
     monkeypatch.setattr(experiment, "EngineClient", FakeEngine)
     monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
-        "plannerSha256": "planner", "adapterSha256": "adapter"})
+        "plannerSha256": "planner", "actionKeySha256": "action-key-v1", "adapterSha256": "adapter"})
     monkeypatch.setattr(experiment, "generate_transition_candidates", lambda root, observation, seed: (
         candidates_from_transition_plans([{"actions": [root_action, next_action]}]), {"hypothesisId": "public-test-hypothesis"}))
     output = tmp_path / "labels"
@@ -98,6 +98,11 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     with pytest.raises(ValueError, match="configuration drift"):
         experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                         identity=identity, limit=1, initial=1, maximum=2)
+    monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
+        "plannerSha256": "planner", "actionKeySha256": "action-key-v2", "adapterSha256": "adapter"})
+    with pytest.raises(ValueError, match="configuration drift"):
+        experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
+                                        identity=identity, limit=1, initial=1, maximum=1)
 
 
 def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):

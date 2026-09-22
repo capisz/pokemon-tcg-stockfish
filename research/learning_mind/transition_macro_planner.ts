@@ -1,4 +1,5 @@
 import { Environment } from '../../packages/engine/src/environment';
+import { legalActionKey } from '../../packages/engine/src/action-key';
 import { CARD_FACTORIES } from '../../packages/engine/src/generated-catalog';
 import { opponentHypotheses } from '../../packages/engine/src/hypotheses';
 import { chooseAction } from '../../packages/engine/src/policies';
@@ -6,7 +7,7 @@ import { SeededRandom } from '../../packages/engine/src/random';
 import type { LegalAction, Observation } from '../../packages/engine/src/types';
 import { TrainerType } from '../../vendor/twinleaf/ptcg-server/src/game/store/card/card-types';
 
-export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v1';
+export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v2-bound-actions';
 export const TRANSITION_MACRO_MAX_CANDIDATES = 128;
 export const TRANSITION_MACRO_MAX_STEPS = 3;
 
@@ -15,22 +16,16 @@ export interface PlannedCandidate {
   semanticSlots: string[];
 }
 
-function normalizedRef(ref: LegalAction['sourceRef']): unknown {
-  if (!ref) return null;
-  return [ref.playerId, ref.zone, ['hand', 'prompt'].includes(ref.zone) ? null : ref.index ?? null];
-}
-
-function actionKey(action: LegalAction): string {
-  return JSON.stringify([action.type, action.cardId ?? null, action.target ?? null, action.label,
-    action.choiceOperation ?? null, action.selectionCount ?? null, action.amount ?? null, normalizedRef(action.sourceRef),
-    normalizedRef(action.targetRef), (action.choiceRefs ?? []).map(choice => [
-      normalizedRef(choice.sourceRef), normalizedRef(choice.targetRef), choice.cardId ?? null, choice.amount ?? null,
-    ])]);
-}
-
-/** Existing engine search re-resolution key; it cannot distinguish binding collisions. */
+/** Mirrors the search action identity; equality is checked at every planned step. */
 function searchActionKey(action: LegalAction): string {
-  return JSON.stringify([action.type, action.cardId, action.target, action.label]);
+  const ref = (value: LegalAction['sourceRef']) => value
+    ? [value.playerId, value.zone, ['hand', 'prompt'].includes(value.zone) ? null : value.index ?? null]
+    : null;
+  return JSON.stringify([action.type, action.cardId ?? null, action.target ?? null, action.label,
+    action.choiceOperation ?? null, action.selectionCount ?? null, action.amount ?? null, ref(action.sourceRef),
+    ref(action.targetRef), (action.choiceRefs ?? []).map(choice => [
+      ref(choice.sourceRef), ref(choice.targetRef), choice.cardId ?? null, choice.amount ?? null,
+    ])]);
 }
 
 function candidateSlot(action: LegalAction): string | null {
@@ -84,11 +79,14 @@ function replayPlan(
   for (const [step, intended] of actions.entries()) {
     const current = settlePrompts(env, observation.playerId, observation.turn, seed);
     if (!current) return {env, decision: null};
-    const matches = current.legalActions.filter(candidate => actionKey(candidate) === actionKey(intended));
+    const intendedKey = legalActionKey(intended);
+    if (searchActionKey(intended) !== intendedKey)
+      throw new Error(`unsupported position: planner/search action-key mismatch for ${JSON.stringify(intended.label)}`);
+    const matches = current.legalActions.filter(candidate => legalActionKey(candidate) === intendedKey);
     if (matches.length !== 1) return {env, decision: null};
     if (step > 0) {
       const searchMatches = current.legalActions.filter(candidate => searchActionKey(candidate) === searchActionKey(intended));
-      const distinctBindings = new Set(searchMatches.map(actionKey));
+      const distinctBindings = new Set(searchMatches.map(legalActionKey));
       if (distinctBindings.size > 1)
         throw new Error(`unsupported position: search cannot uniquely re-resolve bound action ${JSON.stringify(intended.label)}`);
     }
@@ -115,20 +113,20 @@ export function generateTransitionMacroPlans(
     throw new Error('macro-plan generation requires the acting player and at least one legal action');
   const determinization = publicDeterminization(observation, seed);
   const root = determinization.create().observe(observation.playerId);
-  const suppliedRoot = new Set(observation.legalActions.map(actionKey));
-  const sampledRoot = new Set(root.legalActions.map(actionKey));
-  const missingFromSample = observation.legalActions.filter(action => !sampledRoot.has(actionKey(action))).map(action => action.label);
+  const suppliedRoot = new Set(observation.legalActions.map(legalActionKey));
+  const sampledRoot = new Set(root.legalActions.map(legalActionKey));
+  const missingFromSample = observation.legalActions.filter(action => !sampledRoot.has(legalActionKey(action))).map(action => action.label);
   if (root.turn !== observation.turn || missingFromSample.length)
     throw new Error(`public determinization omitted actor-visible root actions (missing=${JSON.stringify(missingFromSample)})`);
 
   const candidates: PlannedCandidate[] = [];
-  const queue: PlannedCandidate[] = root.legalActions.filter(action => suppliedRoot.has(actionKey(action)))
+  const queue: PlannedCandidate[] = root.legalActions.filter(action => suppliedRoot.has(legalActionKey(action)))
     .sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id))
     .map(action => ({actions: [action], semanticSlots: [candidateSlot(action) ?? 'other']}));
   const seen = new Set<string>();
   while (queue.length) {
     const plan = queue.shift()!;
-    const key = JSON.stringify(plan.actions.map(actionKey));
+    const key = JSON.stringify(plan.actions.map(legalActionKey));
     if (seen.has(key)) continue;
     seen.add(key);
     if (candidates.length >= maxCandidates) throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
