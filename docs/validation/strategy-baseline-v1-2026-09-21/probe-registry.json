@@ -1,0 +1,275 @@
+{
+  "schemaVersion": 1,
+  "hash": "43406c49c1e31111082ceffffb81b2a827b53caf2791cf65f3a1534dbac6ff5c",
+  "probes": [
+    {
+      "id": "crustle-opening-kangaskhan",
+      "principle_id": "crustle-opening-shell",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Opening selection contains both Mega Kangaskhan ex and Dwebble.",
+      "preferred": "Select Mega Kangaskhan ex."
+    },
+    {
+      "id": "crustle-one-fortress-restraint",
+      "principle_id": "crustle-one-fortress",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "A live Crustle exists versus a publicly visible Dragapult line and another Dwebble can be benched.",
+      "preferred": "Do not bench the extra Dwebble."
+    },
+    {
+      "id": "crustle-energy-jobs",
+      "principle_id": "crustle-energy-has-jobs",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Active Crustle can receive either Mist/Spiky or Growing Grass Energy.",
+      "preferred": "Choose Mist or Spiky."
+    },
+    {
+      "id": "crustle-safe-first-prize-delay",
+      "principle_id": "crustle-delay-first-prize",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "A safe first-prize knockout is optional while Crustle remains below the three-Energy survival threshold.",
+      "preferred": "End the turn instead of taking the knockout."
+    },
+    {
+      "id": "crustle-target-public-answer",
+      "principle_id": "crustle-target-answers",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "A target prompt includes Drakloak/Dragapult and another target.",
+      "preferred": "Choose Drakloak/Dragapult."
+    },
+    {
+      "id": "crustle-kangaskhan-pivot",
+      "principle_id": "crustle-pivot-after-commitment",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Active Crustle is underdeveloped and an attachment can develop either it or a benched Kangaskhan.",
+      "preferred": "Attach to Kangaskhan."
+    },
+    {
+      "id": "crustle-fan-active-kangaskhan",
+      "principle_id": "crustle-fan-kangaskhan",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:handheld-fan"
+      ],
+      "trigger": "Handheld Fan can be attached while Mega Kangaskhan ex is Active.",
+      "preferred": "Attach Fan to the Active Kangaskhan."
+    },
+    {
+      "id": "crustle-eri-critical-item",
+      "principle_id": "crustle-eri-response-window",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:eri"
+      ],
+      "trigger": "Eri selection reveals a listed critical Item.",
+      "preferred": "Select a critical Item instead of finishing empty."
+    },
+    {
+      "id": "crustle-special-red-card-window",
+      "principle_id": "crustle-special-red-card-window",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:special-red-card"
+      ],
+      "trigger": "Special Red Card is legal at three or fewer opposing Prizes against a hand of at least five.",
+      "preferred": "Play Special Red Card."
+    },
+    {
+      "id": "crustle-lumiose-last",
+      "principle_id": "crustle-lumiose-under-item-lock",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:lumiose-city"
+      ],
+      "trigger": "Budew is public, no Dwebble is in play, and Lumiose City is legal.",
+      "preferred": "Take remaining Supporter/attachment actions before Lumiose, then use Lumiose."
+    },
+    {
+      "id": "crustle-healing-third-energy",
+      "principle_id": "crustle-preserve-healing-threshold",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:jumbo-ice-cream"
+      ],
+      "trigger": "A damaged Active Crustle has two Energy and attachment targets include Active and elsewhere.",
+      "preferred": "Attach the third Energy to Active Crustle."
+    },
+    {
+      "id": "crustle-dragapult-energy-priority",
+      "principle_id": "crustle-dragapult-energy-priority",
+      "deck": "crustle",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:mist-energy",
+        "prebaseline-rules:spiky-energy"
+      ],
+      "trigger": "Active Crustle can receive Mist/Spiky or Growing Grass Energy.",
+      "preferred": "Choose Mist or Spiky."
+    },
+    {
+      "id": "crustle-fan-stack-destination",
+      "principle_id": "crustle-fan-destination",
+      "deck": "crustle",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:handheld-fan"
+      ],
+      "trigger": "A Fan Energy-move prompt has a legal opposing Bench target that already holds Energy.",
+      "preferred": "Move Energy to the already energized Bench target."
+    },
+    {
+      "id": "dragapult-information-poke-pad-first",
+      "principle_id": "dragapult-information-order",
+      "deck": "dragapult",
+      "severity": 1,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Poké Pad and Recon Directive are simultaneously legal.",
+      "preferred": "Use Poké Pad first."
+    },
+    {
+      "id": "dragapult-backup-attachment",
+      "principle_id": "dragapult-stay-ahead-on-energy",
+      "deck": "dragapult",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Active Dragapult is ready and Energy can attach to it or a backup Drakloak/Dragapult.",
+      "preferred": "Attach to the backup."
+    },
+    {
+      "id": "dragapult-conditional-budew-lock",
+      "principle_id": "dragapult-conditional-budew",
+      "deck": "dragapult",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:itchy-pollen"
+      ],
+      "trigger": "Budew is Active against a publicly visible Crustle line and Itchy Pollen is legal.",
+      "preferred": "Use Itchy Pollen."
+    },
+    {
+      "id": "dragapult-initiate-with-backup",
+      "principle_id": "dragapult-initiate-with-a-chain",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Phantom Dive is legal and an energized backup Drakloak/Dragapult exists.",
+      "preferred": "Use Phantom Dive."
+    },
+    {
+      "id": "dragapult-counters-unprotected-crustle",
+      "principle_id": "dragapult-place-damage-for-prizes",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:mist-energy"
+      ],
+      "trigger": "A counter-placement prompt can target a benched Crustle without Mist.",
+      "preferred": "Target the unprotected Crustle."
+    },
+    {
+      "id": "dragapult-large-hand-judge",
+      "principle_id": "dragapult-combine-disruption",
+      "deck": "dragapult",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Judge is legal against an opposing hand of at least seven.",
+      "preferred": "Play Judge."
+    },
+    {
+      "id": "dragapult-hammer-commitment",
+      "principle_id": "dragapult-hammer-committed-crustle",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:jumbo-ice-cream",
+        "prebaseline-rules:mist-energy",
+        "prebaseline-rules:spiky-energy"
+      ],
+      "trigger": "Crushing Hammer is legal against an Active Crustle with attached Energy.",
+      "preferred": "Use it at two Energy or for Mist/Spiky; otherwise preserve it."
+    },
+    {
+      "id": "dragapult-judge-before-kangaskhan-ko",
+      "principle_id": "dragapult-race-kangaskhan-opening",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [],
+      "trigger": "Judge and Phantom Dive are legal against a KO-range Kangaskhan with a large hand.",
+      "preferred": "Play Judge before attacking."
+    },
+    {
+      "id": "dragapult-pressure-unmist-crustle",
+      "principle_id": "dragapult-pressure-underprotected-crustle",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:mist-energy"
+      ],
+      "trigger": "A counter-placement prompt can target a benched Crustle without Mist.",
+      "preferred": "Target the unprotected Crustle."
+    },
+    {
+      "id": "dragapult-dudunsparce-avoid-spiky",
+      "principle_id": "dragapult-dudunsparce-crustle-role",
+      "deck": "dragapult",
+      "severity": 3,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:spiky-energy"
+      ],
+      "trigger": "Active Dudunsparce faces Spiky Crustle and a non-attack alternative exists.",
+      "preferred": "Do not attack into Spiky."
+    },
+    {
+      "id": "dragapult-dudunsparce-run-away",
+      "principle_id": "dragapult-dudunsparce-crustle-role",
+      "deck": "dragapult",
+      "severity": 2,
+      "coverage": "partial",
+      "rules_tests": [
+        "prebaseline-rules:run-away-draw"
+      ],
+      "trigger": "Active Dudunsparce can use Run Away Draw and has a replacement Active.",
+      "preferred": "Use Run Away Draw."
+    }
+  ]
+}

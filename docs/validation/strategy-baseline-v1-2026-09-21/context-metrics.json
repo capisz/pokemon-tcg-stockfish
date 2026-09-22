@@ -1,0 +1,1425 @@
+{
+  "schemaVersion": 1,
+  "outcomes": [
+    {
+      "policy": "P1",
+      "dimension": "firstPlayer",
+      "value": "false",
+      "categories": {
+        "win": {
+          "k": 19,
+          "n": 48,
+          "rate": 0.3958333333333333,
+          "wilson95": {
+            "low": 0.2702062649595057,
+            "high": 0.5368984540306487
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 29,
+          "n": 48,
+          "rate": 0.6041666666666666,
+          "wilson95": {
+            "low": 0.4631015459693511,
+            "high": 0.7297937350404942
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "firstPlayer",
+      "value": "true",
+      "categories": {
+        "win": {
+          "k": 29,
+          "n": 48,
+          "rate": 0.6041666666666666,
+          "wilson95": {
+            "low": 0.4631015459693511,
+            "high": 0.7297937350404942
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 19,
+          "n": 48,
+          "rate": 0.3958333333333333,
+          "wilson95": {
+            "low": 0.2702062649595057,
+            "high": 0.5368984540306487
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "perspective",
+      "value": "crustle-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "perspective",
+      "value": "crustle-to-dragapult",
+      "categories": {
+        "win": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "perspective",
+      "value": "dragapult-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "perspective",
+      "value": "dragapult-to-crustle",
+      "categories": {
+        "win": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "seat",
+      "value": "seat0",
+      "categories": {
+        "win": {
+          "k": 29,
+          "n": 48,
+          "rate": 0.6041666666666666,
+          "wilson95": {
+            "low": 0.4631015459693511,
+            "high": 0.7297937350404942
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 19,
+          "n": 48,
+          "rate": 0.3958333333333333,
+          "wilson95": {
+            "low": 0.2702062649595057,
+            "high": 0.5368984540306487
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P1",
+      "dimension": "seat",
+      "value": "seat1",
+      "categories": {
+        "win": {
+          "k": 19,
+          "n": 48,
+          "rate": 0.3958333333333333,
+          "wilson95": {
+            "low": 0.2702062649595057,
+            "high": 0.5368984540306487
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 29,
+          "n": 48,
+          "rate": 0.6041666666666666,
+          "wilson95": {
+            "low": 0.4631015459693511,
+            "high": 0.7297937350404942
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "firstPlayer",
+      "value": "false",
+      "categories": {
+        "win": {
+          "k": 22,
+          "n": 48,
+          "rate": 0.4583333333333333,
+          "wilson95": {
+            "low": 0.3257502185455351,
+            "high": 0.5970916690505266
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 26,
+          "n": 48,
+          "rate": 0.5416666666666666,
+          "wilson95": {
+            "low": 0.4029083309494732,
+            "high": 0.6742497814544648
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "firstPlayer",
+      "value": "true",
+      "categories": {
+        "win": {
+          "k": 26,
+          "n": 48,
+          "rate": 0.5416666666666666,
+          "wilson95": {
+            "low": 0.4029083309494732,
+            "high": 0.6742497814544648
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 22,
+          "n": 48,
+          "rate": 0.4583333333333333,
+          "wilson95": {
+            "low": 0.3257502185455351,
+            "high": 0.5970916690505266
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "perspective",
+      "value": "crustle-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "perspective",
+      "value": "crustle-to-dragapult",
+      "categories": {
+        "win": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "perspective",
+      "value": "dragapult-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "perspective",
+      "value": "dragapult-to-crustle",
+      "categories": {
+        "win": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "seat",
+      "value": "seat0",
+      "categories": {
+        "win": {
+          "k": 24,
+          "n": 48,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.36389098932037767,
+            "high": 0.6361090106796223
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 24,
+          "n": 48,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.36389098932037767,
+            "high": 0.6361090106796223
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P2",
+      "dimension": "seat",
+      "value": "seat1",
+      "categories": {
+        "win": {
+          "k": 24,
+          "n": 48,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.36389098932037767,
+            "high": 0.6361090106796223
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 24,
+          "n": 48,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.36389098932037767,
+            "high": 0.6361090106796223
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "firstPlayer",
+      "value": "false",
+      "categories": {
+        "win": {
+          "k": 21,
+          "n": 48,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.3070105464041092,
+            "high": 0.5772522849899835
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 27,
+          "n": 48,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.4227477150100165,
+            "high": 0.6929894535958907
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "firstPlayer",
+      "value": "true",
+      "categories": {
+        "win": {
+          "k": 27,
+          "n": 48,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.4227477150100165,
+            "high": 0.6929894535958907
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 21,
+          "n": 48,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.3070105464041092,
+            "high": 0.5772522849899835
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "perspective",
+      "value": "crustle-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "perspective",
+      "value": "crustle-to-dragapult",
+      "categories": {
+        "win": {
+          "k": 15,
+          "n": 16,
+          "rate": 0.9375,
+          "wilson95": {
+            "low": 0.7167073163197013,
+            "high": 0.9888809426916687
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 1,
+          "n": 16,
+          "rate": 0.0625,
+          "wilson95": {
+            "low": 0.01111905730833121,
+            "high": 0.2832926836802987
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "perspective",
+      "value": "dragapult-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "perspective",
+      "value": "dragapult-to-crustle",
+      "categories": {
+        "win": {
+          "k": 1,
+          "n": 16,
+          "rate": 0.0625,
+          "wilson95": {
+            "low": 0.01111905730833121,
+            "high": 0.2832926836802987
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 15,
+          "n": 16,
+          "rate": 0.9375,
+          "wilson95": {
+            "low": 0.7167073163197013,
+            "high": 0.9888809426916687
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "seat",
+      "value": "seat0",
+      "categories": {
+        "win": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P3",
+      "dimension": "seat",
+      "value": "seat1",
+      "categories": {
+        "win": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "firstPlayer",
+      "value": "false",
+      "categories": {
+        "win": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "firstPlayer",
+      "value": "true",
+      "categories": {
+        "win": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "perspective",
+      "value": "crustle-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "perspective",
+      "value": "crustle-to-dragapult",
+      "categories": {
+        "win": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "perspective",
+      "value": "dragapult-mirror",
+      "categories": {
+        "win": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        },
+        "loss": {
+          "k": 16,
+          "n": 32,
+          "rate": 0.5,
+          "wilson95": {
+            "low": 0.33630614316859386,
+            "high": 0.6636938568314061
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 32,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.1071827150573635
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "perspective",
+      "value": "dragapult-to-crustle",
+      "categories": {
+        "win": {
+          "k": 7,
+          "n": 16,
+          "rate": 0.4375,
+          "wilson95": {
+            "low": 0.2309836333518552,
+            "high": 0.6682180439322347
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        },
+        "loss": {
+          "k": 9,
+          "n": 16,
+          "rate": 0.5625,
+          "wilson95": {
+            "low": 0.33178195606776517,
+            "high": 0.7690163666481448
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 16,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.19361341827271994
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "seat",
+      "value": "seat0",
+      "categories": {
+        "win": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    },
+    {
+      "policy": "P4",
+      "dimension": "seat",
+      "value": "seat1",
+      "categories": {
+        "win": {
+          "k": 23,
+          "n": 48,
+          "rate": 0.4791666666666667,
+          "wilson95": {
+            "low": 0.34471090015787464,
+            "high": 0.6167100436401562
+          }
+        },
+        "draw": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        },
+        "loss": {
+          "k": 25,
+          "n": 48,
+          "rate": 0.5208333333333334,
+          "wilson95": {
+            "low": 0.3832899563598438,
+            "high": 0.6552890998421255
+          }
+        },
+        "unfinished": {
+          "k": 0,
+          "n": 48,
+          "rate": 0.0,
+          "wilson95": {
+            "low": 0.0,
+            "high": 0.0741026511527422
+          }
+        }
+      }
+    }
+  ],
+  "gameLengthDecisions": {
+    "mean": 216.05729166666666,
+    "median": 221.0,
+    "min": 14,
+    "max": 368
+  },
+  "deckOuts": 0,
+  "guardFilteredDecisions": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 2043,
+    "P4": 0
+  },
+  "search": {
+    "P1": {
+      "searchedDecisions": 0,
+      "fallbackDecisions": 0,
+      "searchAttempts": 0,
+      "totalIterations": 0,
+      "iterationsPerAttempt": null
+    },
+    "P2": {
+      "searchedDecisions": 0,
+      "fallbackDecisions": 0,
+      "searchAttempts": 0,
+      "totalIterations": 0,
+      "iterationsPerAttempt": null
+    },
+    "P3": {
+      "searchedDecisions": 0,
+      "fallbackDecisions": 0,
+      "searchAttempts": 0,
+      "totalIterations": 0,
+      "iterationsPerAttempt": null
+    },
+    "P4": {
+      "searchedDecisions": 574,
+      "fallbackDecisions": 9513,
+      "searchAttempts": 612,
+      "totalIterations": 574,
+      "iterationsPerAttempt": 0.9379084967320261
+    }
+  },
+  "claimBoundary": "Context metrics only; this baseline does not establish playing strength."
+}

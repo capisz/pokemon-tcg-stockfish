@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-baseline-v1-results",
+  "frozenInputsHash": "225ca0b947a80912e8b89a4eccd8a7003203f41ea28a6ba04ae16d617a0499a7",
+  "scheduledGames": 192,
+  "finished": 192,
+  "truncated": 0,
+  "errors": 0,
+  "files": [
+    "probe-results.json",
+    "context-metrics.json",
+    "teaching-results.json",
+    "ranked-gaps.json",
+    "draft-scenarios.json",
+    "replay-manifest.json"
+  ]
+}

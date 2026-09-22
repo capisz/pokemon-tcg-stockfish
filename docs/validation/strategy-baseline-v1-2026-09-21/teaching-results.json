@@ -1,0 +1,351 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "policy": "P1",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "teachingId": "28386376c13d35786c7522eba8eddf09",
+      "positionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09",
+      "selectedActionId": "0:1",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "teachingId": "28386376c13d35786c7522eba8eddf09",
+      "positionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09",
+      "selectedActionId": "0:1",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "teachingId": "28386376c13d35786c7522eba8eddf09",
+      "positionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "teachingId": "28386376c13d35786c7522eba8eddf09",
+      "positionHash": "2bb5c82fa19d498c19ee7dcbf7b7bd2e42ab12ae4c18469389920903bf942b09",
+      "selectedActionId": "0:2",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": false,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "teachingId": "dfc925acc610f803d957d0182fca3c09",
+      "positionHash": "7f88e2612808d5e319a7a173f74e661513a2039c854a91cbcafd0cf712f8e1e6",
+      "selectedActionId": "0:0",
+      "acceptableActionIds": [
+        "0:0"
+      ],
+      "acceptableHit": true,
+      "preferredActionId": null,
+      "preferredHit": null
+    }
+  ],
+  "perRecord": [
+    {
+      "policy": "P1",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P1",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P2",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P3",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+      "k": 0,
+      "n": 1
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+      "k": 1,
+      "n": 1
+    },
+    {
+      "policy": "P4",
+      "reviewHash": "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b",
+      "k": 1,
+      "n": 1
+    }
+  ],
+  "perUniquePosition": [
+    {
+      "policy": "P1",
+      "k": 0,
+      "n": 2,
+      "rate": 0.0
+    },
+    {
+      "policy": "P2",
+      "k": 0,
+      "n": 2,
+      "rate": 0.0
+    },
+    {
+      "policy": "P3",
+      "k": 2,
+      "n": 2,
+      "rate": 1.0
+    },
+    {
+      "policy": "P4",
+      "k": 1,
+      "n": 2,
+      "rate": 0.5
+    }
+  ],
+  "preferredActionRate": null,
+  "preferredActionNote": "Unavailable: the exact-compatible reviews have no preferred-action annotation.",
+  "abstentions": {
+    "P1": 0,
+    "P2": 0,
+    "P3": 0,
+    "P4": 0
+  },
+  "staleReviewsForHumanRereview": [
+    "1e803b1a30c55cf8f61bbe7ee1cc2ec6aca2b5dbaa7f20f416560aeaf84a0510",
+    "49f4021acf629bce7b69352b8eee611f490665f771b222c1aa0b042fae6fa36d",
+    "c0d1cfe46ceda16810fc05b4e2290083685000e9186962350cc33c5e0875ea82",
+    "f34b1c1bc4182ba857136585dcb3c683b195e59487830308444a1eab3be51260"
+  ]
+}

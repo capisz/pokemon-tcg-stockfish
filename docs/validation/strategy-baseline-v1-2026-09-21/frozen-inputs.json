@@ -1,0 +1,617 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-baseline-v1-frozen-inputs",
+  "harnessCommit": "2cb0e01d8d35840b95bdc54090fa6218f987e0a7",
+  "engineFingerprint": "twinleaf-adapter-0.1.0+bf3a9a0f133b99bd",
+  "engineBuildHash": "474549dda1d98fea5a7435c3abfdcccb4baa2663237ce8bb4aab99c40b36906e",
+  "deckListHashes": {
+    "crustle": "f454a2c2f3bd329f6d75bb8344ba09000db93e220e8a07c3e0502e5a7ddd8343",
+    "dragapult": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9"
+  },
+  "effectiveContractHash": "c13d14d4af34dbab8d2f52c3755281fb57d9aa7755f582c3656668f7cb32954b",
+  "checkpoint": {
+    "path": "/Users/admin/Documents/ChatGPT/Pokemon Ai project/data/competitive/experimental/models/09572b53a4e74d9193c101bab05b30da-guide.pt",
+    "sha256": "1ff34f893540373ebb2da6433b3b67a0cdbcb2b711220cf08767cdeb85a08e6f"
+  },
+  "guardVersion": "visible-repetition-v1",
+  "policies": {
+    "P1": "TypeScript choose heuristic",
+    "P2": "Python heuristic_action_score",
+    "P3": "frozen guide-policy checkpoint through visible-repetition-v1",
+    "P4": "ISMCTS 200 ms with Python heuristic_action_score fallback"
+  },
+  "searchBudgetMs": 200,
+  "maxDecisions": 1000,
+  "seedDerivation": "uint32 big-endian first four SHA-256 bytes of strategy-baseline-v1-main|cell-id|game-index",
+  "schedule": [
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first0",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 0,
+      "seed": 2985749212
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first0",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 1,
+      "seed": 459278410
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first0",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 2,
+      "seed": 1252472582
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first0",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 3,
+      "seed": 2065453610
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first1",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 0,
+      "seed": 15100544
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first1",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 1,
+      "seed": 4259398968
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first1",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 2,
+      "seed": 753033897
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat0-first1",
+        "decks": [
+          "crustle",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 3,
+      "seed": 338875126
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first0",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 0,
+      "seed": 1060657139
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first0",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 1,
+      "seed": 2648470042
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first0",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 2,
+      "seed": 1677053410
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first0",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 3,
+      "seed": 4200391463
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first1",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 0,
+      "seed": 2902935282
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first1",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 1,
+      "seed": 3208698459
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first1",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 2,
+      "seed": 2216893326
+    },
+    {
+      "cell": {
+        "id": "cross-crustle-seat1-first1",
+        "decks": [
+          "dragapult",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 3,
+      "seed": 3254179399
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 0,
+      "seed": 2264801661
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 1,
+      "seed": 3957081039
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 2,
+      "seed": 4067717605
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 3,
+      "seed": 1532444935
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 4,
+      "seed": 4087499514
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 5,
+      "seed": 2055025376
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 6,
+      "seed": 1639839733
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first0",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 7,
+      "seed": 3684628369
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 0,
+      "seed": 810129219
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 1,
+      "seed": 3941623858
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 2,
+      "seed": 491146711
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 3,
+      "seed": 3446485698
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 4,
+      "seed": 2378834479
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 5,
+      "seed": 3211756273
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 6,
+      "seed": 2997585263
+    },
+    {
+      "cell": {
+        "id": "crustle-mirror-first1",
+        "decks": [
+          "crustle",
+          "crustle"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 7,
+      "seed": 1781579144
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 0,
+      "seed": 1178468048
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 1,
+      "seed": 2010223671
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 2,
+      "seed": 1577374817
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 3,
+      "seed": 1294094057
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 4,
+      "seed": 729218
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 5,
+      "seed": 2485096464
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 6,
+      "seed": 1946271217
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first0",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 0
+      },
+      "gameIndex": 7,
+      "seed": 741099598
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 0,
+      "seed": 3179825672
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 1,
+      "seed": 3489845386
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 2,
+      "seed": 1376158550
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 3,
+      "seed": 645023260
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 4,
+      "seed": 3446812219
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 5,
+      "seed": 2895930508
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 6,
+      "seed": 528904640
+    },
+    {
+      "cell": {
+        "id": "dragapult-mirror-first1",
+        "decks": [
+          "dragapult",
+          "dragapult"
+        ],
+        "firstPlayer": 1
+      },
+      "gameIndex": 7,
+      "seed": 818576261
+    }
+  ],
+  "probeRegistryHash": "43406c49c1e31111082ceffffb81b2a827b53caf2791cf65f3a1534dbac6ff5c",
+  "exactTeachingReviews": [
+    "530af43192745703ac2acf2dc7ea4a4ac1520f226b4cba3a4636eac617f954e4",
+    "832239559647d57880eba66a7f28718c1bebb0ebd82f5f66040bcd9f7a4aab32",
+    "b6a6c6526c4fb448e856f471edb25d94c048cb9c34c0d3ab9456502657ac0f0c",
+    "da82cf9119099fbff943b254a499f579c8c8512020f5cbdcaf767512ab7ee23b"
+  ],
+  "staleTeachingReviews": [
+    "1e803b1a30c55cf8f61bbe7ee1cc2ec6aca2b5dbaa7f20f416560aeaf84a0510",
+    "49f4021acf629bce7b69352b8eee611f490665f771b222c1aa0b042fae6fa36d",
+    "c0d1cfe46ceda16810fc05b4e2290083685000e9186962350cc33c5e0875ea82",
+    "f34b1c1bc4182ba857136585dcb3c683b195e59487830308444a1eab3be51260"
+  ]
+}

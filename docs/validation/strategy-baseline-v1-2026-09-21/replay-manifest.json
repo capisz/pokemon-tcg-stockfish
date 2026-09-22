@@ -1,0 +1,1542 @@
+{
+  "schemaVersion": 1,
+  "root": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays",
+  "replays": [
+    {
+      "gameKey": "P1:cross-crustle-seat0-first0:0:2985749212",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first0/00-2985749212.json.gz",
+      "sha256": "5d2408d696b66ec54e00fab24b7fa4b2e55e0521021903ec0ed3753e859ce744",
+      "bytes": 1794875,
+      "decodedSha256": "2b4284ea11e30cb06c132e2ea3015027ff86c67785a28bbf955b9429f1f7dd5c",
+      "decodedBytes": 38953244
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first0:1:459278410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first0/01-459278410.json.gz",
+      "sha256": "c5280a434095842a0535619ebc02f99d8fb6461bcc5dc3ea26847bc3508a9c77",
+      "bytes": 547887,
+      "decodedSha256": "23294e75fdffab51656320d8b76a94377af4d47eafc254b70a3277b557875d44",
+      "decodedBytes": 11944113
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first0:2:1252472582",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first0/02-1252472582.json.gz",
+      "sha256": "967a868c569dd431f188600254a694d46ba062614f2ee227569ea2baaa4cb7b8",
+      "bytes": 1193951,
+      "decodedSha256": "7e2637cec6eed934915f7814eae5a1405cc7a8634848025a312f4404780415f8",
+      "decodedBytes": 27003221
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first0:3:2065453610",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first0/03-2065453610.json.gz",
+      "sha256": "3b0373bca333081c70f6f546dd2dfdae72c81670b0e5fb01ae1109df46f2016e",
+      "bytes": 1376870,
+      "decodedSha256": "207b606b12181da1b34d6640a21aeb5c2d455e0218972e6e9a96badcbbf3c2c4",
+      "decodedBytes": 31486402
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first1:0:15100544",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first1/00-15100544.json.gz",
+      "sha256": "43d9f55534895d98c6e10ee0464930abc9aca3398e1f412a829bfbb6853519cc",
+      "bytes": 1038723,
+      "decodedSha256": "e575f82434d9d9bb29c7769b33b3f9c9285a4653d9140bbf90aad576c9207fe0",
+      "decodedBytes": 22038165
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first1:1:4259398968",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first1/01-4259398968.json.gz",
+      "sha256": "59824e5494fadadc1666122cff4fb4c59a47926d3e519a5821b64d64342724c4",
+      "bytes": 1328606,
+      "decodedSha256": "a74f66b40748c542da2858a05494f312b3f23d9c6a34709eac7097f74d86a11e",
+      "decodedBytes": 34359445
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first1:2:753033897",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first1/02-753033897.json.gz",
+      "sha256": "a137a8cbbe8027bff8379b5e66be20d2ccecd4a1edf25d6a2ff24c47ff27b689",
+      "bytes": 1413742,
+      "decodedSha256": "99c40945154055e466a2fcc8e813787c13b3ac507031f289d46f3ea010622703",
+      "decodedBytes": 35728097
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat0-first1:3:338875126",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat0-first1/03-338875126.json.gz",
+      "sha256": "a45134836293f0df7718e5ff046c9c117826185aaeca9c5081bd81b06aee9912",
+      "bytes": 1768580,
+      "decodedSha256": "5eaea78f6d7062c9aa45733885cfb7376304bbfdf4634c0e8b646a72e2c31f6e",
+      "decodedBytes": 41687035
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first0:0:1060657139",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first0/00-1060657139.json.gz",
+      "sha256": "8087073c36c305901bb0005f477a22b2e904f7ccfa05e213112fa4c37b999984",
+      "bytes": 988649,
+      "decodedSha256": "f7dc77e0835087f10845e13f332914d385dce0e6d3afabd615b0d59f3f82463e",
+      "decodedBytes": 21040757
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first0:1:2648470042",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first0/01-2648470042.json.gz",
+      "sha256": "a78fd9d765fdc6782479789840faa9651227ff46f43cd2bd1e4a21d40e6443e5",
+      "bytes": 692452,
+      "decodedSha256": "bdd0585eee1b947c98053389fa39ef4263c7ab5a1993513b96318d4502eac9c3",
+      "decodedBytes": 17085056
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first0:2:1677053410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first0/02-1677053410.json.gz",
+      "sha256": "d977963af9bcf4faa1847e99f84c3e1cdb668546c171a6da34e567bf56d0a35b",
+      "bytes": 914393,
+      "decodedSha256": "ab30333d3060c6b16faee062a96a7653b48be64bec79b615206c814c29e162f9",
+      "decodedBytes": 20099492
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first0:3:4200391463",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first0/03-4200391463.json.gz",
+      "sha256": "15ada2cf4c0a1d001d06a216cee0c8dfd7ffb15146c9d539ec5a38fd885fd647",
+      "bytes": 1212061,
+      "decodedSha256": "ab67563a53effc1eab117dac8a7c5af441cf19a773785e0965204f13cc3dfb5e",
+      "decodedBytes": 27165488
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first1:0:2902935282",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first1/00-2902935282.json.gz",
+      "sha256": "84cf4e68e415eccf12248ccf75e4e6b1ce8b6b910b41c219d97e06b631a1db19",
+      "bytes": 1298133,
+      "decodedSha256": "667e4a6d3f25d3bf057c64455ee0201e1a064c5ccc6b8c302c86485f29138a1c",
+      "decodedBytes": 28542379
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first1:1:3208698459",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first1/01-3208698459.json.gz",
+      "sha256": "7f479755af364506b6d38a2b964bdce87023346c684f45e27351401cb5df33bf",
+      "bytes": 1215200,
+      "decodedSha256": "7fcc9f138f383064fff7398c337bb89fb125b83b69e0a87b6444e85d347fee19",
+      "decodedBytes": 27740850
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first1:2:2216893326",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first1/02-2216893326.json.gz",
+      "sha256": "bee2851efd37d190fde08af7d0e3dff359fd81f17b3a75bdc3eb7769ec785281",
+      "bytes": 314766,
+      "decodedSha256": "9a52ec3b3ff19c35e4f5a7115cf885988cb46b486059b6e430319f4dced35437",
+      "decodedBytes": 7290382
+    },
+    {
+      "gameKey": "P1:cross-crustle-seat1-first1:3:3254179399",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/cross-crustle-seat1-first1/03-3254179399.json.gz",
+      "sha256": "bbd7f0e4c0b0758d758b538d6bbb13d0e8843c7b7bed3fc89b68ce32ae5e31eb",
+      "bytes": 1247183,
+      "decodedSha256": "67c5c4394a754d4d5e48059db77e39e73a626c1f098377982e4c1f8656f6a4eb",
+      "decodedBytes": 28751248
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:0:2264801661",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/00-2264801661.json.gz",
+      "sha256": "637e44e66076def4ffe63c53f09f268806708c3fdbb1ad7544843a68ad0f97af",
+      "bytes": 414809,
+      "decodedSha256": "86d7c223bc50ab9904f1a48cfb831dfa616279c2b5d7c323a7fa10db09de4c93",
+      "decodedBytes": 13973490
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:1:3957081039",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/01-3957081039.json.gz",
+      "sha256": "f789b162576598700adfc4467b211a9a9f700cbc7b45d105bcbb044ab91684dd",
+      "bytes": 483857,
+      "decodedSha256": "130c3d7b6bfa3fcb03139f3eb069751cdca2cf27d29e7406b4826b23006f2017",
+      "decodedBytes": 15428314
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:2:4067717605",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/02-4067717605.json.gz",
+      "sha256": "df7ad7884cd9d7dac923a75d7f52fe6961cf3e2a2be0f30fd55c50cdd9a2d4cb",
+      "bytes": 799493,
+      "decodedSha256": "5db27646a7b5d6ba885b65f905926da699755fd7b4796c904f94dc7ac5add963",
+      "decodedBytes": 28704339
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:3:1532444935",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/03-1532444935.json.gz",
+      "sha256": "710e231d8136a4c78201dee9021cdc846785653c2222ee7a07b8fe0ff35d3374",
+      "bytes": 705525,
+      "decodedSha256": "87e24a1f611919c3fdee469e8ca5abed8c1bbdc43101e5b72236fb78e100f538",
+      "decodedBytes": 24289220
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:4:4087499514",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/04-4087499514.json.gz",
+      "sha256": "af87d757bef212216579655128338535946fa852be37cc6aba634d3f5b561513",
+      "bytes": 818543,
+      "decodedSha256": "bece1d638c3fcc89b63cd86d3300b184e23c25b349775ca63ff94c3aed15badd",
+      "decodedBytes": 29686623
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:5:2055025376",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/05-2055025376.json.gz",
+      "sha256": "ab549a947a85b1afdb452afbb3fdbe779cf73b47e2d87995cb3d8e940bbbf7ee",
+      "bytes": 837292,
+      "decodedSha256": "143d62800cc26948d6bd927a86cf32fc5176d096a14790a9aa22b68b87e0b702",
+      "decodedBytes": 29619554
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:6:1639839733",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/06-1639839733.json.gz",
+      "sha256": "b6c26b962e193e68a078ecc3d992db82d6fbbae4dfd8ba46f5aba3ee9ae84450",
+      "bytes": 892714,
+      "decodedSha256": "32360f138a70e897dc4a1b08a6f899fde97c6871af3dde5fbf3380ef561b71be",
+      "decodedBytes": 28929801
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first0:7:3684628369",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first0/07-3684628369.json.gz",
+      "sha256": "01d69e61aadd521230d68da62f2db1aa90370ee432a6e451aaf067da1d06d5b6",
+      "bytes": 996519,
+      "decodedSha256": "67943d86b764e73773e3778d93ec21abacb7796889996df0f13728739c4bbb30",
+      "decodedBytes": 41193188
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:0:810129219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/00-810129219.json.gz",
+      "sha256": "78a1ebd51159b0fcb15f78765812eaf4a486131a9baf309ed31968bd17efa543",
+      "bytes": 886257,
+      "decodedSha256": "511a220740d61f5da2a3ade7e5415ddefa4d485c91cae330fd5388e1b6a8acf6",
+      "decodedBytes": 30733137
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:1:3941623858",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/01-3941623858.json.gz",
+      "sha256": "19a511300d83acf8feed7f4ce8a2d579810a4be6eaf1b2ed8f3d4a072d2bc076",
+      "bytes": 596254,
+      "decodedSha256": "4ee4eb7bfa09beb1714933f2cf12fbd0527fa2667e5a9023a356e17725a8bb6e",
+      "decodedBytes": 18578846
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:2:491146711",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/02-491146711.json.gz",
+      "sha256": "6cb97e25fa52a4e8fd0065ffa10ac1ca3386747d4eea0acde9a766e66cf1778b",
+      "bytes": 339994,
+      "decodedSha256": "a66bbfd07c5cd88bf88e840d17dcf2c1713db7066f05518cbcd78b79deb1f2fd",
+      "decodedBytes": 11484092
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:3:3446485698",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/03-3446485698.json.gz",
+      "sha256": "dbd132d536d69f9c154bb3fb9ffeef7b5cb92dd47ca9e40454cace2728055cfd",
+      "bytes": 656861,
+      "decodedSha256": "c003ee2e1d91f37a33cb9d317524cdb8e1ebf6532ecab7abb7ef916c9493ecf1",
+      "decodedBytes": 20726181
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:4:2378834479",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/04-2378834479.json.gz",
+      "sha256": "9be2476d4aa42f4782cdd48413c9901e64412234ac1bd158665cec7779482344",
+      "bytes": 801882,
+      "decodedSha256": "b49d2f22f2704269415fbb2a7ceae1389aa18324c2e67900970c60f0b95274d5",
+      "decodedBytes": 27342290
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:5:3211756273",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/05-3211756273.json.gz",
+      "sha256": "f0c54e1cd2181438f98e39a403c3a69455921a7b47f6a0fa7906b85a7f8776b4",
+      "bytes": 696136,
+      "decodedSha256": "6f3b30274df5bbfc5862eeebbb4f7bd51fef4a2584caaed98ef1e73d0a267c99",
+      "decodedBytes": 25858708
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:6:2997585263",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/06-2997585263.json.gz",
+      "sha256": "51e95c65c2ee00ba4e1b66674e78621d8eeefb3924e6554de991af590af23933",
+      "bytes": 333140,
+      "decodedSha256": "5dc07bcd35ab5dcfe9b0c561649951db1e0f3a84001bf84d297aadadefaa459a",
+      "decodedBytes": 11742803
+    },
+    {
+      "gameKey": "P1:crustle-mirror-first1:7:1781579144",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/crustle-mirror-first1/07-1781579144.json.gz",
+      "sha256": "b0dbaa8a7caf4e315ad243c0e6837666797c7b6e63c8f1e5c733064304b0eed8",
+      "bytes": 770908,
+      "decodedSha256": "146c0c209d01d17ea0082ba6ae3b44a34ecb5ee51cf39aa2524dea4321039289",
+      "decodedBytes": 27370716
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:0:1178468048",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/00-1178468048.json.gz",
+      "sha256": "d0aadf5259036fdfa4accdd3a657a5cc6eb92a624cead102dab3a083983258ee",
+      "bytes": 1186386,
+      "decodedSha256": "67341361c770c104693275dc1b5495012d79214558348dd3681e5f5359831c1c",
+      "decodedBytes": 36922053
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:1:2010223671",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/01-2010223671.json.gz",
+      "sha256": "a66078355267e3a76dcf44c4fd26b44bae97704c9f529637219af110ad5ec6a0",
+      "bytes": 1067982,
+      "decodedSha256": "1da8367c61d0736896ed5a8f9e7be6aaa1e2323d38c262ff3f822187ee529d98",
+      "decodedBytes": 31426863
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:2:1577374817",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/02-1577374817.json.gz",
+      "sha256": "9b0390dfac129d442b15c95108f85568f86f8caace4cccb7c329467215833241",
+      "bytes": 1050804,
+      "decodedSha256": "e8d266f954b0b3bb22b7584486a1d7f18dc23e92da05058039a6e731f512b481",
+      "decodedBytes": 37251263
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:3:1294094057",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/03-1294094057.json.gz",
+      "sha256": "f01f9e1b8040acead514c3633c09dfb7ed6aa38e520e9fac3e4a3d77fd9cf601",
+      "bytes": 1344242,
+      "decodedSha256": "f6541d14f7316eaed46062c3964eaf7bcb0dbd2dca8a0b05e3b41e6ff62e87a4",
+      "decodedBytes": 45777277
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:4:729218",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/04-729218.json.gz",
+      "sha256": "39a8602d200dab0782f4fc9d3aca5eb5bb25882c893af3eaa90b84dcc72c4ec2",
+      "bytes": 1366082,
+      "decodedSha256": "258547c42679515c8f5dfbe3621aae46976104e39bf6f8193e912709735509ee",
+      "decodedBytes": 46732831
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:5:2485096464",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/05-2485096464.json.gz",
+      "sha256": "017c3f3ff3b3f1b3610a568f85d130cb2317a3a0b3f75d306c2f51aa94324936",
+      "bytes": 1057340,
+      "decodedSha256": "f977900ce985263cfb5f579c5a90a3676cb5a472850e8de650306e2e3115dbb3",
+      "decodedBytes": 35933183
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:6:1946271217",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/06-1946271217.json.gz",
+      "sha256": "bce556d6253cc3ff9ab346b199597e393ffb210a270b72506bee1810f880385c",
+      "bytes": 727346,
+      "decodedSha256": "6007e70e9e784e626956dbd43b3a13c80920f0624f22152d3339ac08c10da30d",
+      "decodedBytes": 26169420
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first0:7:741099598",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first0/07-741099598.json.gz",
+      "sha256": "b52a5c3c6b006926f674fc5e59af51c2cf005db958c1ecb3402c63bbc7418894",
+      "bytes": 1091417,
+      "decodedSha256": "3a2551af73b2abcbf26bcb9efd6b97c618eec9dbc7c924d0c864c338b94fb08a",
+      "decodedBytes": 39224799
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:0:3179825672",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/00-3179825672.json.gz",
+      "sha256": "e29af3969986774da38cc43850aca793fca9a99d7dafa8bdd0234f1a5ead5d07",
+      "bytes": 1023893,
+      "decodedSha256": "7463273674b067037d3d2e14a3354c5be83b12855d0e539f08ecf65d586b558e",
+      "decodedBytes": 36390660
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:1:3489845386",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/01-3489845386.json.gz",
+      "sha256": "7924b233a065a92b2352cd39969abaa1d1a91f04692a8e9c3f9c163a9b682027",
+      "bytes": 1202261,
+      "decodedSha256": "c9298ca47aeb82f8d972c32da0a781168e54a1b2ffff64b925dae2b40e4334f6",
+      "decodedBytes": 34680779
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:2:1376158550",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/02-1376158550.json.gz",
+      "sha256": "e5d3a45cd3e469cb0f0ec406ab5fcfcef52c982fc0beda358242d66911e92c77",
+      "bytes": 1427787,
+      "decodedSha256": "7fdd7b7d4caf10edbc78cbf124f3cb42e047f7ed10586f225db7b9477007d5ab",
+      "decodedBytes": 48856791
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:3:645023260",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/03-645023260.json.gz",
+      "sha256": "a550c3117aac614504152c8b4744470e0b00629ce7b976ba279cc2d1cc3c0da7",
+      "bytes": 1467129,
+      "decodedSha256": "8be2593a3ecb33159f60af4004e0f84c6c979aef15eff2d6fd02d40d63d378c3",
+      "decodedBytes": 50918413
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:4:3446812219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/04-3446812219.json.gz",
+      "sha256": "9e9c97fa20137dd9cc79d6002adcd873137269f19008de9e5f53c73304c9b78e",
+      "bytes": 1568786,
+      "decodedSha256": "869b32ee60e127e993fda743033e28e738e5ed9df6d14954897ceaa9214f3773",
+      "decodedBytes": 53377836
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:5:2895930508",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/05-2895930508.json.gz",
+      "sha256": "611105351d1e927a202e39909900ee1bd4ae45cfb930331ba5b33bf94da1ba29",
+      "bytes": 905967,
+      "decodedSha256": "9b1af8695e5015b66b701b0ee96c21824aaffc96813c9d87eeb335361286ba0a",
+      "decodedBytes": 28819483
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:6:528904640",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/06-528904640.json.gz",
+      "sha256": "9d970ca126089ff200273ddc015383b3031fedf6735e3487fcbbcec4eeae2885",
+      "bytes": 1261397,
+      "decodedSha256": "16ce5a1678ed57d791ef8d788a290fae1bc2b6554f9ba402d2970c13c65daf59",
+      "decodedBytes": 43252060
+    },
+    {
+      "gameKey": "P1:dragapult-mirror-first1:7:818576261",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P1/dragapult-mirror-first1/07-818576261.json.gz",
+      "sha256": "3c804c6ee3c2d1559a04e4f40d94e09ce4bd82469102f26ae8bdf56bad1df2da",
+      "bytes": 1040535,
+      "decodedSha256": "4c357ff221518b1532b1e57832e1f7c19187b4a948eb3a8583acd57b5a22ec4f",
+      "decodedBytes": 33355683
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first0:0:2985749212",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first0/00-2985749212.json.gz",
+      "sha256": "ff3b6d20129cc55bfe4d9849c1b8a23bff32a0f119ffb69143fd6a0a848a559d",
+      "bytes": 727935,
+      "decodedSha256": "836955f6cfec609712466471e1e55694468e3c3155c7a195b47037b22ebefaec",
+      "decodedBytes": 13932570
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first0:1:459278410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first0/01-459278410.json.gz",
+      "sha256": "5c34f5c236d0c71ac6fa9297e0da54fec365765f50d8a427f898f31ce42cc490",
+      "bytes": 1790856,
+      "decodedSha256": "ec5a1f692c92b83b81b5b9769ec93710425706719209f78cdafff9a4bb47908b",
+      "decodedBytes": 43191910
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first0:2:1252472582",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first0/02-1252472582.json.gz",
+      "sha256": "bd4805cbc7044aba44588df248623bc5ac171185716226a79ccf8e0304c0b428",
+      "bytes": 867710,
+      "decodedSha256": "9b62167ea95824b2eb3204261cd82b49b4591d633a924fac24d83d1d6e32e087",
+      "decodedBytes": 18968996
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first0:3:2065453610",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first0/03-2065453610.json.gz",
+      "sha256": "298af98cdc57b15a0818603421f255468ad532dd440b938b8e30f70cf88a4312",
+      "bytes": 38026,
+      "decodedSha256": "9576af447e641793dfec6c924a860faf0560691c111d51eb2d52dbbe10cee783",
+      "decodedBytes": 1006301
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first1:0:15100544",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first1/00-15100544.json.gz",
+      "sha256": "1cb5ee9f9452a6d6cc62ee5d7bf99c17df842e5579626c024097f94cd93b62b1",
+      "bytes": 991357,
+      "decodedSha256": "96281d1846674964b2b13ca27a6753bcd563534bb1252acf87b5cffa4807f533",
+      "decodedBytes": 21773084
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first1:1:4259398968",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first1/01-4259398968.json.gz",
+      "sha256": "2204dd26479fb318d510eeec36a06aa7b027b6b23f8606310a6251b1188d24e5",
+      "bytes": 1385565,
+      "decodedSha256": "e3b43e390d67c4145036e41f3bb2e284a4ec0c509e5d6ba071ea465c7fc1af88",
+      "decodedBytes": 36928527
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first1:2:753033897",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first1/02-753033897.json.gz",
+      "sha256": "33c89396a0cb0fe2c29b905a6939c1db30a4f5119ca3b16a3a1bcbf0d54f6aa4",
+      "bytes": 1442033,
+      "decodedSha256": "3668d043e9b64ecc6828c285bf0fe87acf23fda9e342162dbd745eee98b64f05",
+      "decodedBytes": 34572508
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat0-first1:3:338875126",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat0-first1/03-338875126.json.gz",
+      "sha256": "d8fd3c95392dbf03db6c3bbbf423a06281274303bd88b243c7ed54edb758fda3",
+      "bytes": 1516809,
+      "decodedSha256": "21f0f6da186b88375f56f08ce2503a11e049b481509acc06b107be9412c5d9ca",
+      "decodedBytes": 32739489
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first0:0:1060657139",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first0/00-1060657139.json.gz",
+      "sha256": "aeccc3d259ef92183af31ebc98f61cc47dc931fc2cc7fc88a10270661f440e35",
+      "bytes": 889852,
+      "decodedSha256": "48dc2e9b5ac25a1218a45e1c9e4c798208ef75e3262fedcf60b0e4c68c9632d8",
+      "decodedBytes": 18234459
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first0:1:2648470042",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first0/01-2648470042.json.gz",
+      "sha256": "b899b656f0405f0af58b1b94921bc4ff5c9e8b2583b6b7ae4b9c89974e20f39d",
+      "bytes": 402073,
+      "decodedSha256": "7aef2b9c6bcdca4bf0a3491b2f1e9b01cc7e533fe458d364de1164b147f0af8c",
+      "decodedBytes": 9876357
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first0:2:1677053410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first0/02-1677053410.json.gz",
+      "sha256": "1d804d91e0c4d2fbf1f62d25d0ab1261722e781bef70c8b07905f40926c7e6b0",
+      "bytes": 1092483,
+      "decodedSha256": "dd8802b9b87d2a94326d27be76e9e95c23de54a2b9d607d78d6100ca5c6f456c",
+      "decodedBytes": 23900662
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first0:3:4200391463",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first0/03-4200391463.json.gz",
+      "sha256": "d3f7439703b60953e703817ac026693f7fd8471de1c24701e0a9cc4741c406b1",
+      "bytes": 1109965,
+      "decodedSha256": "47993de0a4b27f1839985b321ae73b8ab0798978198b2464218dd65bb9ce65c1",
+      "decodedBytes": 24061023
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first1:0:2902935282",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first1/00-2902935282.json.gz",
+      "sha256": "5806dac4e5821054bb3d278ca28b92d262ab806522aab62f4a4ca649c48c7b2d",
+      "bytes": 380279,
+      "decodedSha256": "1af662a6e54596e2d1e6e94091609932b2c120177964543019fca5952fef61aa",
+      "decodedBytes": 10084457
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first1:1:3208698459",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first1/01-3208698459.json.gz",
+      "sha256": "f9a57060418844ac9d5490144dd7ff340c810b5e9eeed0d8f2f206197044083a",
+      "bytes": 1608991,
+      "decodedSha256": "d095c32bd5def139b866dfe04bbf3188b8c2e3a1200704db2b56100c47e541f5",
+      "decodedBytes": 35024827
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first1:2:2216893326",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first1/02-2216893326.json.gz",
+      "sha256": "822c8167aa8441e66ee2ff975ad616c279bcd0de172b2a7f538a394f95d04bf6",
+      "bytes": 1351930,
+      "decodedSha256": "81e91346e1e7559aaccb24a438bfb110c2317a43e3a197b8a02db1b833a277df",
+      "decodedBytes": 29888945
+    },
+    {
+      "gameKey": "P2:cross-crustle-seat1-first1:3:3254179399",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/cross-crustle-seat1-first1/03-3254179399.json.gz",
+      "sha256": "af60d3e1e84c6579032baa2efe0352091fd0a449ec88f313c2659b0716d38159",
+      "bytes": 1446713,
+      "decodedSha256": "f8d69cadab231c9845c02cd05261d6e86e10140fdaf5286a9a96bb1e529b64b2",
+      "decodedBytes": 33253693
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:0:2264801661",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/00-2264801661.json.gz",
+      "sha256": "0783914a7c69420bea42d68a5c73b673414e6348b1653cd063994be4c74eafb6",
+      "bytes": 296800,
+      "decodedSha256": "defb3f5d82701a00dbc49085b591b0eb0d22bec258663a97a2f8b19f0fcfc708",
+      "decodedBytes": 9347589
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:1:3957081039",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/01-3957081039.json.gz",
+      "sha256": "b8c9b23c314412ff1e9c53e13843fb2ffd22fd82a6e1f3628116b7d9a7d92355",
+      "bytes": 211505,
+      "decodedSha256": "637548d20479515424b2eb43dbb2bf80ea83f828db0b6075790156cd6aa47e17",
+      "decodedBytes": 7369176
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:2:4067717605",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/02-4067717605.json.gz",
+      "sha256": "729119df36ae9442fa4fe61204fcc05472cdd7d4f30fb84ec5ad83795775fbc7",
+      "bytes": 893543,
+      "decodedSha256": "bea9af4b9cb33b65e699dd42d9e19f047ed3b83cd1da1c48773063bbbe27235c",
+      "decodedBytes": 33426246
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:3:1532444935",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/03-1532444935.json.gz",
+      "sha256": "18c890363804f51f4beb3d5f4f9bb4b17ebd07eaab0c3f25743d4385c6df2931",
+      "bytes": 1120260,
+      "decodedSha256": "acd0a11efeed44153d4ca17e32b83d1144776583623138723777978c40d94b7c",
+      "decodedBytes": 40502156
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:4:4087499514",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/04-4087499514.json.gz",
+      "sha256": "0a36ca2a2bce7869b4b11f174b1f6a26a52115a654ae3973411b0181dc6cd22c",
+      "bytes": 1023460,
+      "decodedSha256": "47fd64fcfede7ce3e8ca7112887a6366c6ff78678d4323c565041722c8ec2135",
+      "decodedBytes": 36541677
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:5:2055025376",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/05-2055025376.json.gz",
+      "sha256": "a7d5998543b4e22b706b11843356cf3b77f9534e05a4579a9a177c7eb64cf9a3",
+      "bytes": 548722,
+      "decodedSha256": "ef90df883cf1d7f10f25157295bb4ebf780f1b3d9b47f008a732b3df19bcbe29",
+      "decodedBytes": 18367455
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:6:1639839733",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/06-1639839733.json.gz",
+      "sha256": "1bb1a569ec6f8ab2f38d80bc00d1c6058c6086a729c43a0cd26f7ac8191bab83",
+      "bytes": 1050156,
+      "decodedSha256": "151c4c47b2d69de25955f49674c4644e649f2ac1863e884b371ec0cdfd3dc6ec",
+      "decodedBytes": 37538071
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first0:7:3684628369",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first0/07-3684628369.json.gz",
+      "sha256": "4a8c53e03a52a136626d8864366717dfdca1afca84b6cbae65bea5af6ec85099",
+      "bytes": 378178,
+      "decodedSha256": "0b0e8f573801ea66c24d6eb65d6ec6bc6fdc1628e35890de527ff4fbe5dad143",
+      "decodedBytes": 12534195
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:0:810129219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/00-810129219.json.gz",
+      "sha256": "5848f250a1892026cc4fcfa8a42baab34340c392f11e200eee9dd82877bd7edb",
+      "bytes": 787226,
+      "decodedSha256": "d0a8da04d1a460ce935d6307aa20b89c4611e2423742fc01b2a17dec2e7c6774",
+      "decodedBytes": 27858686
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:1:3941623858",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/01-3941623858.json.gz",
+      "sha256": "6ac4f655475e8ab7c730f62a0cd80fd0ba15566d7de245ec9e7f3d3a9a0ab7f7",
+      "bytes": 576445,
+      "decodedSha256": "17467ff9a5f6dd212e5eccfa99d7914f3577e412a2d05a192b2982739a671141",
+      "decodedBytes": 18746855
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:2:491146711",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/02-491146711.json.gz",
+      "sha256": "4e240d2748a08c112464f0b44bcc95839ec8ff7dd6eddd8c7e4040499c0bff22",
+      "bytes": 288081,
+      "decodedSha256": "b64d9a7bc2545c627e6291e748a17eca739fa5e49b73a8bf923d15ae1991d0ef",
+      "decodedBytes": 8849648
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:3:3446485698",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/03-3446485698.json.gz",
+      "sha256": "219e7a6367ee5f39aae96517f096506614036ce18c481a527706ed653e183a8f",
+      "bytes": 289970,
+      "decodedSha256": "220e9b5f21d19951f6400075b83df94ca49b33f8e71e2065b7468ae137048bba",
+      "decodedBytes": 9272461
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:4:2378834479",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/04-2378834479.json.gz",
+      "sha256": "84d9f4d87e05a2d956fe64a0d4c0841c7724aa990f410c084e8740621a5fd725",
+      "bytes": 735226,
+      "decodedSha256": "7972b211d766021705b9f0f74f2f8a37c845a8a81f51b38cb9f28bd5cb79768c",
+      "decodedBytes": 27399316
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:5:3211756273",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/05-3211756273.json.gz",
+      "sha256": "e78194d95dab1889a2796db6f345f114713ee2b9b1c53d71c6efca8ac6958707",
+      "bytes": 650272,
+      "decodedSha256": "931959980720e32c259b8ef5fd3cd0b12635e2565b7f35b5eef4e86ff5a6f1cf",
+      "decodedBytes": 24057426
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:6:2997585263",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/06-2997585263.json.gz",
+      "sha256": "da96be04fbf17f841ea9e5fd34978c39da412605247990958649a9c66815e833",
+      "bytes": 1207253,
+      "decodedSha256": "820acbd57cda9d9d14399ffbde8a503248a03ab96c8a2ac14d1de56dab294ffe",
+      "decodedBytes": 44049651
+    },
+    {
+      "gameKey": "P2:crustle-mirror-first1:7:1781579144",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/crustle-mirror-first1/07-1781579144.json.gz",
+      "sha256": "50f3ced8b0e898ecdaf8c6f4c019e547d8b1cee1176e0b6183a12b9f6586a399",
+      "bytes": 971628,
+      "decodedSha256": "b1265c5de7f2158a6e6976491ea9f2ea7caeaa136b63368f527d179576be9060",
+      "decodedBytes": 32573202
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:0:1178468048",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/00-1178468048.json.gz",
+      "sha256": "a086e2913aa52c6800ecbe3fe77e3db563edaf0382d16e0c0a66793e2c093de6",
+      "bytes": 1911391,
+      "decodedSha256": "0be271b7903405c980a83bf5d8732a7829b0c85243df8d57499717a7c0487bb1",
+      "decodedBytes": 63995845
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:1:2010223671",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/01-2010223671.json.gz",
+      "sha256": "19f74b44b840dbafaf79ca076767dec796d1c7d7aa640e4e8ac12fdab4be0fbf",
+      "bytes": 1273742,
+      "decodedSha256": "39642b087856b8091ff86c9ecc8bcacefb61983603674ba3e94012d8a16b72ad",
+      "decodedBytes": 40500103
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:2:1577374817",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/02-1577374817.json.gz",
+      "sha256": "c88f0a97d8c2f932cf0e7014bb93d5c8ccd0f0028eef3edfb545870cf6a890b9",
+      "bytes": 742127,
+      "decodedSha256": "90afce4dc48464fe97c0a7d0174f09558d126ad1102208a6c01ecd4fe6493049",
+      "decodedBytes": 23959290
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:3:1294094057",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/03-1294094057.json.gz",
+      "sha256": "fd9425a406182f05685ce24020da5b04f2a30eaf844347db5ed66682dd47c5a3",
+      "bytes": 816357,
+      "decodedSha256": "30633d11082bc2e9ee0927a4defef0f6ffe06ee83d322254d3f82e81d4f667c9",
+      "decodedBytes": 25175331
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:4:729218",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/04-729218.json.gz",
+      "sha256": "27178a37c096358a192af933cd0b6f441dae5a361ab55a3450c23d03cc743a05",
+      "bytes": 111575,
+      "decodedSha256": "bd9640c86c6667f341679c9d53ffbb2f153622d1bbdfde028aa61425860bee27",
+      "decodedBytes": 3890964
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:5:2485096464",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/05-2485096464.json.gz",
+      "sha256": "750cce504b9c2ba6809f627377297adb2186f7676548a85d05595031e308e129",
+      "bytes": 1455688,
+      "decodedSha256": "bcb1a150eb5b283163710bffce6f4297fcbff3c7028c7fdf38da7803d8475a13",
+      "decodedBytes": 45893546
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:6:1946271217",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/06-1946271217.json.gz",
+      "sha256": "91dbc9e37e237f6f4743bdd49ebe4d2bc33e3baa07a65451493ab13151d7b6fe",
+      "bytes": 12097,
+      "decodedSha256": "1dd59e96f36da97e51e0b63ae86b568b2a56e9f030ebabaa5390b322ee449363",
+      "decodedBytes": 361437
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first0:7:741099598",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first0/07-741099598.json.gz",
+      "sha256": "bc528649b81b85c90da8eb08a8948153fff270b1d83e5ed48f6ee407ca8b459a",
+      "bytes": 40577,
+      "decodedSha256": "46bb56adbccce4a7838e1cd9786d9c81e8d7ec507d5ca36f13fca278a366daf6",
+      "decodedBytes": 1152455
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:0:3179825672",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/00-3179825672.json.gz",
+      "sha256": "8f0eec62ae2e82b46db5c4a35e249e9a29b15977f5c9b122dcd383868cb9a06f",
+      "bytes": 1525893,
+      "decodedSha256": "66c74d1428c805c5806a3affec4b0af883eb1a724ab4ad99bd701b9b8d36544d",
+      "decodedBytes": 53978029
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:1:3489845386",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/01-3489845386.json.gz",
+      "sha256": "608c98306d1ce21690d4ec7227af9417add1447225c856dd325e166ab1d0bf7f",
+      "bytes": 1462668,
+      "decodedSha256": "6b9e490952bc42b04f666c17451c04788a872d52b8ee28f80c2d67aabe02133c",
+      "decodedBytes": 45395052
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:2:1376158550",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/02-1376158550.json.gz",
+      "sha256": "2b084f00c5da7a5a11d2ae32038dca94d5f83750a01fdf007e06666318c37e27",
+      "bytes": 945789,
+      "decodedSha256": "68e431a6f710cb7ca520dd7050d4007a7bd4b7c25e0c201e61927e65d72b6183",
+      "decodedBytes": 30339091
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:3:645023260",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/03-645023260.json.gz",
+      "sha256": "e0324ddc5ea49beb1ff4e7020ec0f132fa2cbe59988d702da40e28a76c1958e1",
+      "bytes": 650180,
+      "decodedSha256": "8cb845dbd42196c946271c9035f9d5dc37f4c52c3a62ba3cfaafdf77798270b6",
+      "decodedBytes": 22596924
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:4:3446812219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/04-3446812219.json.gz",
+      "sha256": "f188aa201949cef9d4a74f60dd91b20fba7a9819b541fc2719142f70a91c8409",
+      "bytes": 921284,
+      "decodedSha256": "4eabab1a2dace98aa5467ec655f4814f1d7c6a1e98fafd89942995777b11c7a5",
+      "decodedBytes": 30041624
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:5:2895930508",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/05-2895930508.json.gz",
+      "sha256": "337d25f7cc2679c46a794a8ff13e7803d7a36c5cb591f823ccae5ec6a17a9b34",
+      "bytes": 165085,
+      "decodedSha256": "aa6943f177eeaea81d7aee6187dd186b71c12145c4579c26f60f8eaf9181fe16",
+      "decodedBytes": 5173096
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:6:528904640",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/06-528904640.json.gz",
+      "sha256": "9b509f970f0feda38c6783fde29365a092542e24ad13d0880967e5552072b8ee",
+      "bytes": 1083512,
+      "decodedSha256": "def2fd7f764771bcecaa575ed559e10e5da32f669a277664525b341508018f3e",
+      "decodedBytes": 34675208
+    },
+    {
+      "gameKey": "P2:dragapult-mirror-first1:7:818576261",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P2/dragapult-mirror-first1/07-818576261.json.gz",
+      "sha256": "47da09fac8daf55c1dff4bd2ee3b24ecddafe07a7f782e539e302cca1369038d",
+      "bytes": 336540,
+      "decodedSha256": "42baf685b2d380911db75e85affdf886ff29ebc4de7fa55857eec9adeb7f07b6",
+      "decodedBytes": 9825930
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first0:0:2985749212",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first0/00-2985749212.json.gz",
+      "sha256": "8e0f65380a2ee1e327bd029e7c7ef6312c7c0245f008c5046b535b976a952d37",
+      "bytes": 1295302,
+      "decodedSha256": "eb13a8f3b62a85c963a8e29a6f2cd46dc52930d5425dfa069b17d97447665ea8",
+      "decodedBytes": 30974675
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first0:1:459278410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first0/01-459278410.json.gz",
+      "sha256": "4b350716ae1b659542c54b1a98c149b6e883d87b8cd02a23503f0ae7599251ea",
+      "bytes": 1551322,
+      "decodedSha256": "59000b39b07a6fb509a4abad3b77f85ebdc77675c1d086ecc1d4ad85d0f6a097",
+      "decodedBytes": 36207156
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first0:2:1252472582",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first0/02-1252472582.json.gz",
+      "sha256": "a0e0a47afbcdf60c2d7dcb6fa8ae8e82c7bb069767cd6e007deecfcc38b1aad1",
+      "bytes": 1621101,
+      "decodedSha256": "00fefe7ca605a25aee9131989f12f436a3a571ef0e3b1c3dd20690855b0414b0",
+      "decodedBytes": 48286376
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first0:3:2065453610",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first0/03-2065453610.json.gz",
+      "sha256": "f89573f9cb9c813cf7201304d49c8d7138ee275acab31e886579e83790e4bfe2",
+      "bytes": 1999760,
+      "decodedSha256": "a6db3d30d92a9387dcaf9f47744baf8b9f5da55f2ed8bdcf27c38d5af6919ae6",
+      "decodedBytes": 61981421
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first1:0:15100544",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first1/00-15100544.json.gz",
+      "sha256": "d268ad4f94816e9e0914f7e36bf48dac497ade89c186939e3b65b458165bd806",
+      "bytes": 1774350,
+      "decodedSha256": "e558119e64e35a252895190b9aa88325fe728256bd6d3fd8e867f5b3b416aced",
+      "decodedBytes": 45118705
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first1:1:4259398968",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first1/01-4259398968.json.gz",
+      "sha256": "9372b6b14a61d1730d4446cde0a6dc019054b09b9bc3e6604f40d16ea33d79f8",
+      "bytes": 1443978,
+      "decodedSha256": "ac9917543dba939b4f4032f78e02ea9b42c533da05be4376265923b1e3eb61bd",
+      "decodedBytes": 50157085
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first1:2:753033897",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first1/02-753033897.json.gz",
+      "sha256": "6f279abf361762c38c634a9145b4177d2afa1de78e3c41e8f5e0b845b29d4807",
+      "bytes": 1060660,
+      "decodedSha256": "ad999dd2e5be7ec4480d1cc811dc39f5aa973cc12b23c60352bf3c657ec9a28d",
+      "decodedBytes": 24679534
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat0-first1:3:338875126",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat0-first1/03-338875126.json.gz",
+      "sha256": "aced768a2ab4eded61a5054bb3516f201294463507c6c791b67e1f1afa91ca50",
+      "bytes": 1913479,
+      "decodedSha256": "db752a782dcbc7373f4caef23970d27f9871f88d2ff51726bcde67c4d179895c",
+      "decodedBytes": 48470561
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first0:0:1060657139",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first0/00-1060657139.json.gz",
+      "sha256": "34090d3d7c8bcb16d2b31e9b32545c9a2ddbbf6dbf4ca57eb965ad70a13f425e",
+      "bytes": 809586,
+      "decodedSha256": "305d6e79f1fdc2228d184d7bd102291dab9c97d8dd188f23066ce6a25dac7516",
+      "decodedBytes": 17862066
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first0:1:2648470042",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first0/01-2648470042.json.gz",
+      "sha256": "f60f1f14a7536f0e9135546b15e2f371c682b57b05364dda56fff6e8550bce0a",
+      "bytes": 2124249,
+      "decodedSha256": "2f1ea182ee79cd4f3ceed472a8059309b3786ac98d1212433c62557bde597d9f",
+      "decodedBytes": 73820469
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first0:2:1677053410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first0/02-1677053410.json.gz",
+      "sha256": "3fea13bb5335bfedaa4a47a20acf8e62748d196206ca878c76f31657e503bba5",
+      "bytes": 1761907,
+      "decodedSha256": "7b766390475f54598426496f0b8b4074ef24e526269191cab14e1af97c01419b",
+      "decodedBytes": 52898073
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first0:3:4200391463",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first0/03-4200391463.json.gz",
+      "sha256": "b46050f665d3ee6bd31135545582dc25b028e344e36df3ee83364608393fae0e",
+      "bytes": 1433763,
+      "decodedSha256": "b8ae47e4fa1c8156452e2e473a41f45025d52e7f49a8dc8e4f491d552898626b",
+      "decodedBytes": 36651470
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first1:0:2902935282",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first1/00-2902935282.json.gz",
+      "sha256": "4b30ec5a6bec7bc00b50f7729c940d115932627100393cc7908fa71ee00f750a",
+      "bytes": 986958,
+      "decodedSha256": "1faf098e94fc09a39281a85b0ee3559b9d03b8d4b6c89cf769168d4e266157a8",
+      "decodedBytes": 25324477
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first1:1:3208698459",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first1/01-3208698459.json.gz",
+      "sha256": "cd644f459138a7782e902ddf6e80ee50b146dc9c1b0188c21306526330c3da5e",
+      "bytes": 462998,
+      "decodedSha256": "407e431525d40a75de12b1bdadf53a9331de9025154d5783e423656ecee8d6c1",
+      "decodedBytes": 8479584
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first1:2:2216893326",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first1/02-2216893326.json.gz",
+      "sha256": "37d25ff2714a809d1c6009dbf247a9c76da2607d4f8d54953cb2d42debc02fa2",
+      "bytes": 1083124,
+      "decodedSha256": "d5f217cfd157a6bc882b14070e9ca9a586566f715946088578d2b068b44dba52",
+      "decodedBytes": 26063298
+    },
+    {
+      "gameKey": "P3:cross-crustle-seat1-first1:3:3254179399",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/cross-crustle-seat1-first1/03-3254179399.json.gz",
+      "sha256": "40011ca781d5878666000badbf1ac65ea630a54666c6d031c93b9d361c366bc7",
+      "bytes": 1807919,
+      "decodedSha256": "fa812dbdb59a0cbfeac54bdcd36e999bf12c8d9142c0dee3fb09f8917f9944d1",
+      "decodedBytes": 58758792
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:0:2264801661",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/00-2264801661.json.gz",
+      "sha256": "9273ffeab240a991e928c5133840c0349976809a7049c9b2ea490f8e5c7178a5",
+      "bytes": 84331,
+      "decodedSha256": "f1b058565723c7104b213f9d3da483f890c361b465f58b40512f378594e01302",
+      "decodedBytes": 2964483
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:1:3957081039",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/01-3957081039.json.gz",
+      "sha256": "2aca554cd7932e50d1fe547c18a30d5066c58dfb7f1a896578d4e3420ce7ae82",
+      "bytes": 1043020,
+      "decodedSha256": "0b01db80671ae7e1d5d8b6dc2dc08531742a322756da786882d653133d42afb3",
+      "decodedBytes": 36188218
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:2:4067717605",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/02-4067717605.json.gz",
+      "sha256": "6e1064c5c72437e1fd9a930f5cf281db1369f215a75530bd6d092dd202b6fa08",
+      "bytes": 1599503,
+      "decodedSha256": "af3d8d59a7ee5cd0b0e68af8c4a21bf45362f60c4c6c45654ca2327d4387db36",
+      "decodedBytes": 102149039
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:3:1532444935",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/03-1532444935.json.gz",
+      "sha256": "3f3e9662af6a00a8250273fbd2b0b721fbeef2f12a3c6029f6aa7f3032cfd3a5",
+      "bytes": 1082262,
+      "decodedSha256": "980a7d84581d5c690b76075f7b8cebe86190ba0238f262b761c1076a23bd3f49",
+      "decodedBytes": 39212530
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:4:4087499514",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/04-4087499514.json.gz",
+      "sha256": "346f1cd86008312916035ade50d405911404b7fe41b36fca53290579a3502607",
+      "bytes": 1886771,
+      "decodedSha256": "e4ff20c111826f4b445dfc6095ae82e0546206c45f7dd2a3f85b32aed2a34bc0",
+      "decodedBytes": 117715350
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:5:2055025376",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/05-2055025376.json.gz",
+      "sha256": "9816744fea13a665ad3517597e228b731cecedd268416e8fcea3affd71bef8a7",
+      "bytes": 1860663,
+      "decodedSha256": "4a54b4878236d2499ad966e2df5bb4b2b13ca875477f571807eda7962c57a32a",
+      "decodedBytes": 109219775
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:6:1639839733",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/06-1639839733.json.gz",
+      "sha256": "d57bf1fbe39faf75f181aa15ad5c57e3f51df2fc1786ab253731d7055bbd50d5",
+      "bytes": 1764847,
+      "decodedSha256": "0aa3b4cf4599de89defbd708669326a9a1e656b889a32abdaa1742251dec2ddc",
+      "decodedBytes": 111244813
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first0:7:3684628369",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first0/07-3684628369.json.gz",
+      "sha256": "682bb050a715e04c1cd9506651081b095685afb80c0a6b563155b9c3a7a6a862",
+      "bytes": 1400239,
+      "decodedSha256": "5b578b031b39361993e76572ab21f82852c73884ffcfde90ed5575f1f558a018",
+      "decodedBytes": 88946605
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:0:810129219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/00-810129219.json.gz",
+      "sha256": "95b6a909e7e410363ad0466a7565a008094b0b40bdcf5e05687203388a5c4ae2",
+      "bytes": 1567232,
+      "decodedSha256": "90078125ca003c3dce870cc641c7163aa2bceac3aca727aa41863fdae17bcc2f",
+      "decodedBytes": 94582360
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:1:3941623858",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/01-3941623858.json.gz",
+      "sha256": "62bd353413a08449dec5b9f23d2ef07df309475bc8ed3c7ce33f961f6f919138",
+      "bytes": 1656082,
+      "decodedSha256": "23c00674c6fc4bddbd74dcd94ab7f1fbb273fbf85480ca14c8a74cb138027323",
+      "decodedBytes": 95238965
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:2:491146711",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/02-491146711.json.gz",
+      "sha256": "f45e6d5a0f802e22f22e1f0593afd94a8b02d473ea8625b7e3e05da4f25a3639",
+      "bytes": 1720710,
+      "decodedSha256": "c29cf4fb1a37b003e077cd15ef3d62797364c1beec79fbd9beb262ac9acff88b",
+      "decodedBytes": 94705889
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:3:3446485698",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/03-3446485698.json.gz",
+      "sha256": "7d24754cc65fbc8e30ca5b8f384ba4117c0a61af1d1a13931550ddda2b46dd39",
+      "bytes": 616719,
+      "decodedSha256": "daee2d9fdc86811d6802b3b79a3b20d20b88f7c81a5550b2dfab822a396d03bb",
+      "decodedBytes": 20050496
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:4:2378834479",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/04-2378834479.json.gz",
+      "sha256": "c8edc02e953fb2e36de5658ed7b87ec66453619a6af9c47c359a84f67f3e401e",
+      "bytes": 990686,
+      "decodedSha256": "9d92c054d03023032c7f5b41f19ba7432c7b32596eeeb0a162ec41b5116df9c1",
+      "decodedBytes": 40485909
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:5:3211756273",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/05-3211756273.json.gz",
+      "sha256": "7a79343578deb0c1585eae90109f1eb8275ee45996ecd78381bd4c950ff0ebb2",
+      "bytes": 754770,
+      "decodedSha256": "4b469f206135a3e4729400b9928696e919e5bc95a1ee4a86bc0211d48f97069a",
+      "decodedBytes": 25472046
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:6:2997585263",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/06-2997585263.json.gz",
+      "sha256": "4d805b4c2ef2fc517a4fd95485b458fc829549b038feaba7c2f3e3b9ea27f403",
+      "bytes": 1781174,
+      "decodedSha256": "e0021eb2503a8fdcd7cf74b8f02529c0c1bf001951941c083b64ef8eda829b87",
+      "decodedBytes": 108223227
+    },
+    {
+      "gameKey": "P3:crustle-mirror-first1:7:1781579144",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/crustle-mirror-first1/07-1781579144.json.gz",
+      "sha256": "25541943aceeccdcdd3e586dc8a6f43d341e07208802f9447eb7c13d442c75ea",
+      "bytes": 900724,
+      "decodedSha256": "d78fbaa0ef145f1ef7dae1d841536d0aa3812a3ee1a36b4a5356d67d992da28d",
+      "decodedBytes": 31172358
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:0:1178468048",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/00-1178468048.json.gz",
+      "sha256": "7a263d2123e879ef47b4ccbdf6ef44d0119c8a7e0ef3e80576759fd38cc15947",
+      "bytes": 1352687,
+      "decodedSha256": "7cfc1a51e67961a43fb147b3c99658bd85170837d6400e86e699c322da89449e",
+      "decodedBytes": 45113058
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:1:2010223671",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/01-2010223671.json.gz",
+      "sha256": "5117a567baf26fd173ea14b6e53c6371202e191fbd6ca48110f00581da78ca5a",
+      "bytes": 1102146,
+      "decodedSha256": "a7fbe1f8d51132c4e0c0a8ce61ad3e04433c21a03fabbc23eeaf25eea6ab3786",
+      "decodedBytes": 35558105
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:2:1577374817",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/02-1577374817.json.gz",
+      "sha256": "7821ec69fcbe5186cc52002ec3646457045bebb1b0bcf83a07687ed47a6197d6",
+      "bytes": 571505,
+      "decodedSha256": "a9387692071d611b6e0a08f3db26be3d73eadea6e6441f59df5108d337f492eb",
+      "decodedBytes": 19302772
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:3:1294094057",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/03-1294094057.json.gz",
+      "sha256": "0624639c39e1367e8c81bf59b3423223d9aa857c37f3dc69e02184dbedb68f9d",
+      "bytes": 953763,
+      "decodedSha256": "7b66e8687a8b8e76fdf8729c08d53f7cbb866d256951ec0c70e79b66e59c4b16",
+      "decodedBytes": 32550849
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:4:729218",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/04-729218.json.gz",
+      "sha256": "f77ab98ddf17541c2292c1882299f95a15c1bd2538d2e26dadd5b748d1416e15",
+      "bytes": 685956,
+      "decodedSha256": "b6fd5771dac178e8b98904c0dc64bae36134bf01bb12d060d0ed1c827bada4cd",
+      "decodedBytes": 23637503
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:5:2485096464",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/05-2485096464.json.gz",
+      "sha256": "69220a0497e273783890650944756f70235322c44a625642b4861d42f0a94ee3",
+      "bytes": 1309183,
+      "decodedSha256": "8fab358b08a9b83e4cf3bb06b1f5c9db22d72724af77f19f7ba68cd919ff388f",
+      "decodedBytes": 43159878
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:6:1946271217",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/06-1946271217.json.gz",
+      "sha256": "09dc926815213da4d08273e90c8c52b91e097f1d4e7f2bf7e3aa4d44dda3909a",
+      "bytes": 1241352,
+      "decodedSha256": "98491ae7a73055b9d977cb76ef1eb5c741da1ef151472ce0c55e703a6e06f1c1",
+      "decodedBytes": 41482342
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first0:7:741099598",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first0/07-741099598.json.gz",
+      "sha256": "843c2af9c2552d9cda8a8ab2da2dc23145dd6642358cc0e71efa07501bbc1ec1",
+      "bytes": 354716,
+      "decodedSha256": "882a805f0960d9e95cbd914a10f94a2fd719e0f277886ab0b9ea71e923f651ed",
+      "decodedBytes": 12010511
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:0:3179825672",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/00-3179825672.json.gz",
+      "sha256": "424ac1a970bd8260dddeea0586d3aa8895dd74f3f475f8723c56e5dc3921148a",
+      "bytes": 1102426,
+      "decodedSha256": "61179d8a7666b6f17613c5ca3aa23661362083f4bd5a4705a33aeb5a27196894",
+      "decodedBytes": 37617774
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:1:3489845386",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/01-3489845386.json.gz",
+      "sha256": "18a5f32d616f7b53310f57ebe9164cc6ec578abe8c94ddd98b8c916aedf9dd23",
+      "bytes": 1523032,
+      "decodedSha256": "abd2b3a0c73484fb8ad52de05aa1b738cc6d25aa4ef6a312769c37a8f8d2f1b6",
+      "decodedBytes": 44941400
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:2:1376158550",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/02-1376158550.json.gz",
+      "sha256": "20242a65b9eff104c4f19bd7012988cf3174d8640a9aa61af9ee9ea46063609b",
+      "bytes": 761507,
+      "decodedSha256": "ab22d42dc7e5de0b8d38345973e358c550b2fccc945ba239b941cb57b65e5c0c",
+      "decodedBytes": 24041355
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:3:645023260",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/03-645023260.json.gz",
+      "sha256": "b30996bbce1f6dd88220639f0914162591964d455c57c564afaa6984277cf3d5",
+      "bytes": 455473,
+      "decodedSha256": "63f18fc15d87f21ed0765dd6cf44c73419ad4768b42a9e9cbf49cee5b433bd7b",
+      "decodedBytes": 15156908
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:4:3446812219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/04-3446812219.json.gz",
+      "sha256": "1dd200af96f74f13b3ccda2364d4f37d52dbb7bb310daa094b1f08514dee7585",
+      "bytes": 1513845,
+      "decodedSha256": "2a8604b9ae225c0e10161450276377735a0e98da207aeea81fdb6104e819ac71",
+      "decodedBytes": 52345925
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:5:2895930508",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/05-2895930508.json.gz",
+      "sha256": "2d252ef11282c004c074a8a43c23915af66f0f03f5751b145d15dd7954be5080",
+      "bytes": 1229941,
+      "decodedSha256": "d69802970e6caea9bc0c02696cff661d5be8b11f89b114d4723a10104149e78f",
+      "decodedBytes": 37779944
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:6:528904640",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/06-528904640.json.gz",
+      "sha256": "5a2f82f34f070e291f78179cbfeed1961a9d10bf31c54628fb116c622742563b",
+      "bytes": 1421041,
+      "decodedSha256": "2f4d2a98e8af8801f98a53951ac037f1f6571259790905a66e91d7fd7c9a2bb8",
+      "decodedBytes": 48052683
+    },
+    {
+      "gameKey": "P3:dragapult-mirror-first1:7:818576261",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P3/dragapult-mirror-first1/07-818576261.json.gz",
+      "sha256": "c814525cb41c97b9d564245cfcf16cedef46884d06a16f333de857470cff65b1",
+      "bytes": 1567720,
+      "decodedSha256": "e588421bae730719832d004bf2212811531d7579c8e64ae2140faf6bfbe192ae",
+      "decodedBytes": 55533749
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first0:0:2985749212",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first0/00-2985749212.json.gz",
+      "sha256": "576e26a4386751898695c34dd66e7d147b13a4abc10769fd60e2cd31367d11cf",
+      "bytes": 1532172,
+      "decodedSha256": "0465fccdb85f2eb77bc011b3efb718c99029449d5f821b4067a76cd57dde225e",
+      "decodedBytes": 33815949
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first0:1:459278410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first0/01-459278410.json.gz",
+      "sha256": "0f8fd480edad66e1cd44da9a39de2fca6752818cc8751b67bedc7d163f734227",
+      "bytes": 1515187,
+      "decodedSha256": "b8f2af4680c3de642193f3b24178158854ac458ab3e7466c226397711f5957d1",
+      "decodedBytes": 38141273
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first0:2:1252472582",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first0/02-1252472582.json.gz",
+      "sha256": "96c662523259adcd3e5d17be460ac8f1d4fb2eb12b82c8179d8bc5dcba4dff69",
+      "bytes": 1296579,
+      "decodedSha256": "b36bebcb63017ab3c2ae799b73954c14f0e5274827acd85557f8b1bb6b827a85",
+      "decodedBytes": 32532472
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first0:3:2065453610",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first0/03-2065453610.json.gz",
+      "sha256": "8580de5f08c11f52bcef4ab05a855e67e2e35f62118d1253391ad996daf75927",
+      "bytes": 159128,
+      "decodedSha256": "7d4c9726640ea6c66724096428b08f844cdb5616b4efae1da2a1973fb5b2e0f7",
+      "decodedBytes": 5014754
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first1:0:15100544",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first1/00-15100544.json.gz",
+      "sha256": "ae36555a6d8d0bda8e491d0a4c7c3bc47589e5e61cbf2265f2617a6a3b99fc08",
+      "bytes": 1056151,
+      "decodedSha256": "56a21775e5628ebe984a1ce08683a75156513c5f1aa13b35cfe65d18e7760359",
+      "decodedBytes": 22815651
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first1:1:4259398968",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first1/01-4259398968.json.gz",
+      "sha256": "991143a768a7f5d70bdb381064caf72abc43233c253d73d623bf4d2eb7fb41a8",
+      "bytes": 1298283,
+      "decodedSha256": "8e00ee3df2c6cc1633199c5a9929fe384dd213aa1875e79f63dea36ca3785071",
+      "decodedBytes": 33986565
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first1:2:753033897",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first1/02-753033897.json.gz",
+      "sha256": "d3d910de33ec6b524928f527505d57b70533610b2a7190d21a54c9e0c35be5bf",
+      "bytes": 1826057,
+      "decodedSha256": "b7c2281047a96df65a281c7650034f1c013f35524e7f01adeaec61bd0766d633",
+      "decodedBytes": 41989011
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat0-first1:3:338875126",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat0-first1/03-338875126.json.gz",
+      "sha256": "613732dfd42031dc4c4d22d76657e73595ef887242dc4dc84a0d51dfb190089e",
+      "bytes": 710001,
+      "decodedSha256": "c9ef1259750da2e0602ec7e48405eb35df308d221f768d4fb90b638bf63a1706",
+      "decodedBytes": 14614886
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first0:0:1060657139",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first0/00-1060657139.json.gz",
+      "sha256": "727ad9cdcce32b2d144f0eb7aee752035a66151d81baad85d033d2731321fbac",
+      "bytes": 384083,
+      "decodedSha256": "72a5a73e95e438daba4eeca39ca4b3f83a8c5e7c60c2b508f689d3d60b7bbb4c",
+      "decodedBytes": 11545825
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first0:1:2648470042",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first0/01-2648470042.json.gz",
+      "sha256": "a9cd4a933ac309678d173968522c8130d3f9c41fba13586b0739a9a582f58181",
+      "bytes": 400391,
+      "decodedSha256": "9e5a9c574d0dde21dde21debf074a8dcb68ff675dc2fcba18d4ca5fba1bdf1be",
+      "decodedBytes": 9887411
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first0:2:1677053410",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first0/02-1677053410.json.gz",
+      "sha256": "6acf9ec742230047ba67a79c594498bac9367678a7d877dc65384c83cc2e9045",
+      "bytes": 1037940,
+      "decodedSha256": "77c4da4cf082fa59352b58806fa532693d4553e81032b5e5fc4886455c66fe47",
+      "decodedBytes": 22963446
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first0:3:4200391463",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first0/03-4200391463.json.gz",
+      "sha256": "dd3a64d3e5d421922977db954890661ee0eedb3ce71eab13dcf07d5b35501a48",
+      "bytes": 1794210,
+      "decodedSha256": "c7caeb65ca2a74eb8607e87a2eb96f9c82f4210c0299b79e5433ad857a730290",
+      "decodedBytes": 37693701
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first1:0:2902935282",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first1/00-2902935282.json.gz",
+      "sha256": "4b11a2144879fef61bf0343073e6554be65be5ee037121923176087f8a437833",
+      "bytes": 281207,
+      "decodedSha256": "e957fdba7b9ad24869ea2970d2ce8ec5274923120cd383172d02e2fee3b4787f",
+      "decodedBytes": 6798829
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first1:1:3208698459",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first1/01-3208698459.json.gz",
+      "sha256": "741ff71d1b68786f15e6d31da25cfb8feb4ffa3a723d7f40de272256c4910e0b",
+      "bytes": 1867943,
+      "decodedSha256": "ca34ac599c378e92515d8e1dda49116b5c695f4e0434e5af2a21972c9ee331b3",
+      "decodedBytes": 46803700
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first1:2:2216893326",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first1/02-2216893326.json.gz",
+      "sha256": "a600360a94c5043811628305c2bd826aed3881df6f62308240680e5153ad4769",
+      "bytes": 1332386,
+      "decodedSha256": "070c33140bf0c4f153fe09edfce0e2b82e6a483799f77c1fac680366c10b5250",
+      "decodedBytes": 30378945
+    },
+    {
+      "gameKey": "P4:cross-crustle-seat1-first1:3:3254179399",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/cross-crustle-seat1-first1/03-3254179399.json.gz",
+      "sha256": "3a37cd9b6ac6b87d7d32a9868a7190ad6b7dd062ebbcfdc6246ce67d21e1c9b4",
+      "bytes": 1710741,
+      "decodedSha256": "8e9516f54a92c4b6f609c9f53fa8468ceca926ae233c54adeea43f6e22608d2a",
+      "decodedBytes": 38248847
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:0:2264801661",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/00-2264801661.json.gz",
+      "sha256": "07ccb05b8b17ef2255466bf74384e096edd58c1c07e84cb223deedb7d1a2fd3d",
+      "bytes": 251684,
+      "decodedSha256": "4861a6b3b2334b6c85f29cd65719f4d331c4ec19269cee6414459dd3f22e45b5",
+      "decodedBytes": 8539044
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:1:3957081039",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/01-3957081039.json.gz",
+      "sha256": "a1a07355a4035f06dba16092e80fe09a023442db3d717906b3cb66a0db2fa1b9",
+      "bytes": 280704,
+      "decodedSha256": "b87199f24c65bdc62fcccd0ea39fe187596f69f90c2bf0383e42d6289b3f783b",
+      "decodedBytes": 8934801
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:2:4067717605",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/02-4067717605.json.gz",
+      "sha256": "dca2ac5587de8c6241aeac17320e3265444d2e6e8f9a866583d1afb0a8e7e8df",
+      "bytes": 750929,
+      "decodedSha256": "225756b3845734038b02be720485b575f0fac0154d552ae979967011eebbfb50",
+      "decodedBytes": 28957418
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:3:1532444935",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/03-1532444935.json.gz",
+      "sha256": "ee50b20125e47492c08983a4318d839756df272ed8ab268b6c961ae882c237e2",
+      "bytes": 769835,
+      "decodedSha256": "7aab2b765ca97fa9fc1ffe6988d4a7ee4916ab9936e7e1e705f0e5854efa713b",
+      "decodedBytes": 25887847
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:4:4087499514",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/04-4087499514.json.gz",
+      "sha256": "4ce0206a4a6cc7ccb6b6c5027efb1d3d9bdea5a56abd753c06bb813027da70f7",
+      "bytes": 687513,
+      "decodedSha256": "2edd93b732b0a9bd919fafc6d7b28f5b18f8403c0d9d6f7070a7dd4eeb5f152d",
+      "decodedBytes": 22938663
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:5:2055025376",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/05-2055025376.json.gz",
+      "sha256": "ef4e9212fd154957cf1da1815ac4be4db32dcff6b73e2c99bea7cf113aa2ff99",
+      "bytes": 714131,
+      "decodedSha256": "cd51b022a1cd7aa3c7c587fb31d8cd728a06e33fc2eb7dfd2aabb6c7c344837a",
+      "decodedBytes": 23310631
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:6:1639839733",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/06-1639839733.json.gz",
+      "sha256": "a3e3acf233c261c407149925fcbcbeb1048aa548abb14131544114d97d2e557c",
+      "bytes": 847075,
+      "decodedSha256": "64f4f178a5fb270064ac890bf555886a7d04f296682b36e428e6788a75f9809c",
+      "decodedBytes": 31515467
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first0:7:3684628369",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first0/07-3684628369.json.gz",
+      "sha256": "6fe661459d085bbb3701fa5f618139e29b5a4c2c16e2b6e89b88407e7d7663a5",
+      "bytes": 335786,
+      "decodedSha256": "c4ad1b41d05e8fa017b6678e78340ff9091f204090c647dbffcdceb1fa68a3d8",
+      "decodedBytes": 10079965
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:0:810129219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/00-810129219.json.gz",
+      "sha256": "fdb797da0e71cc1b4f274fce42abcbcdca662e7390a85604b45a4f21b893c638",
+      "bytes": 811992,
+      "decodedSha256": "f48792cfe1bc503be3372b78c036f34c647b3065f22866fd3218badbab51ffa4",
+      "decodedBytes": 31340870
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:1:3941623858",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/01-3941623858.json.gz",
+      "sha256": "0f5b970118e8752aef35dcee0eb0cb5a3f77f277422839c02f0f187960906ba2",
+      "bytes": 465110,
+      "decodedSha256": "591ea82d3175271a92cbd56f58d12a81e05816aa19a85a6324d843f3cd350346",
+      "decodedBytes": 13878955
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:2:491146711",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/02-491146711.json.gz",
+      "sha256": "c2a7d1226ab9a7413a5930354e4bb1e15d8ecc29ec6c214454d11a9f567c7e4d",
+      "bytes": 115463,
+      "decodedSha256": "ffc73888d6f7ce4e5c6823b2a15f261009bed1a34c94defa01778cc7e334812d",
+      "decodedBytes": 3897927
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:3:3446485698",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/03-3446485698.json.gz",
+      "sha256": "601baf569e60fe2351da4bc53e0cb4a699471ec3d825eb825e0a9bd9fabba20e",
+      "bytes": 863079,
+      "decodedSha256": "e0b521b2a851f704848575b5c3bad1135e6b468219df15b326ae4007d54eb3a0",
+      "decodedBytes": 29102455
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:4:2378834479",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/04-2378834479.json.gz",
+      "sha256": "d41aae29368b631c5efde290ad07ee47486dfbb7e942ab2ec73881efe8c02560",
+      "bytes": 843498,
+      "decodedSha256": "9679439a63dcdb0f9bf9499c308a60fd116e7ba30cb62410ad4b99302b0e7a30",
+      "decodedBytes": 30053337
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:5:3211756273",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/05-3211756273.json.gz",
+      "sha256": "238ec22824006444fcc6c9fa4f85f40763647319ec6620c218b7e4f73041296c",
+      "bytes": 676277,
+      "decodedSha256": "37346ef31a933f880ad9f0403f9cd91f5fc0729657983cdfb429ee0015bdaf85",
+      "decodedBytes": 22491422
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:6:2997585263",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/06-2997585263.json.gz",
+      "sha256": "905c074613bbed4107b7eedfa8277bd71930bfd070253d0249cdac33089c3d71",
+      "bytes": 313659,
+      "decodedSha256": "4b9ebaf62f9d1f76a18ed0d1953780b161cea74ffe59421c286482be4e1333cd",
+      "decodedBytes": 10620634
+    },
+    {
+      "gameKey": "P4:crustle-mirror-first1:7:1781579144",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/crustle-mirror-first1/07-1781579144.json.gz",
+      "sha256": "5b6bacbcdb6e2d24c7d3ba23047f98620dadbd8393e982c9285d64730c09017b",
+      "bytes": 656028,
+      "decodedSha256": "7fe8f78bf5294cde22047acac3a64397d2826a3a91b5f81548e752f4cc8cf2cc",
+      "decodedBytes": 22317429
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:0:1178468048",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/00-1178468048.json.gz",
+      "sha256": "223ca779e63cd1b7041edb9e5ee5bc3076950b30366313c6e3169dee7763f126",
+      "bytes": 1091024,
+      "decodedSha256": "a2efe07ff12a76e17b669724fa7bdd4259df33422872bd3b60adb1a33695c89d",
+      "decodedBytes": 38386671
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:1:2010223671",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/01-2010223671.json.gz",
+      "sha256": "dae6f60b9972ec090d6df47bf1aa05713fa9c0da95674aee94859d87f48df7c0",
+      "bytes": 614825,
+      "decodedSha256": "4158976880b4270c372717d1e1b84b828c67d18b1d756862c929dfdb6bcaac95",
+      "decodedBytes": 17479430
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:2:1577374817",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/02-1577374817.json.gz",
+      "sha256": "6a1b69af6421a96a527ea02d6521985b9cc0b83313e3cd00509d91241830ddb1",
+      "bytes": 638768,
+      "decodedSha256": "00d00ce6bbc25ed930a6d5e3f0660a64c78ae88bf0da757acda98718ca0951e9",
+      "decodedBytes": 18903902
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:3:1294094057",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/03-1294094057.json.gz",
+      "sha256": "8da45382d42352f78f667a707d51aed21a3a15a01cc0e32adad09eaa2b96657f",
+      "bytes": 1272942,
+      "decodedSha256": "13c70682d9e53c73e754c1571ed88c91b0ed02a60c1118dee6f548f1aa5d1cd4",
+      "decodedBytes": 41498819
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:4:729218",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/04-729218.json.gz",
+      "sha256": "6953d6af132c2d9ad3dc3981416fa0833d2a118abc4ba8017e47f5148ab1163b",
+      "bytes": 1035782,
+      "decodedSha256": "339d34645cf1187565991f4b063ad1a2c667c17a512fc7046a247e45c929dba3",
+      "decodedBytes": 33823331
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:5:2485096464",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/05-2485096464.json.gz",
+      "sha256": "6d0d7d7346bd69ac79cc6a8aeb751249cdabc4419334424ecdfed3589ee6e560",
+      "bytes": 1372552,
+      "decodedSha256": "94023a670e25939d951fea7ff0d3594024734cff7620015074cafc526346963f",
+      "decodedBytes": 44467760
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:6:1946271217",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/06-1946271217.json.gz",
+      "sha256": "882a99ba2c5fd1a54591fd16a20b99d0a4b948078ccce815f5760fa525400ff1",
+      "bytes": 958815,
+      "decodedSha256": "e7b172044f29a7a1a383681665b60d44b7d5e3172edac443b2e2613e16b8f395",
+      "decodedBytes": 27769660
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first0:7:741099598",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first0/07-741099598.json.gz",
+      "sha256": "9b17b589b44c444489864cbd61c3f15c470f2d7aceecf84533ea4c8b3b050019",
+      "bytes": 97467,
+      "decodedSha256": "082febf2394fd0d38f4383f3aa22116054ee9dedc01b5ae4096624f2a1e8b6d8",
+      "decodedBytes": 3273830
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:0:3179825672",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/00-3179825672.json.gz",
+      "sha256": "44a4cbade998191505b4568417916fcfaa07efe8bed6506ef63e08fa80039897",
+      "bytes": 1057803,
+      "decodedSha256": "1a4f11e4aef27326ae7787e8ae4a47e146631dec2f5c973b514ae562d70faf62",
+      "decodedBytes": 32524930
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:1:3489845386",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/01-3489845386.json.gz",
+      "sha256": "43e5e695b9e0f288b7d44ee6c10f056cd0d9e99961bb78bf08598865b4faf095",
+      "bytes": 1364447,
+      "decodedSha256": "4dbdb52663fd1f821598ea61fc489af65f6fc0782507f4f23e7550669f5484dc",
+      "decodedBytes": 44914579
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:2:1376158550",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/02-1376158550.json.gz",
+      "sha256": "662df7b53ee3ca06f44988a8da0553502d35551e0c02d9c6bb497ec219fba466",
+      "bytes": 1427938,
+      "decodedSha256": "14c27f582f462a55fc6ccf20a1f8a6b0a537ce5a297e92138192f4c3f6296717",
+      "decodedBytes": 44167819
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:3:645023260",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/03-645023260.json.gz",
+      "sha256": "89061c41daa55b6072af16119ee33e2520102d331869ecf573f107d12404c4f5",
+      "bytes": 1146334,
+      "decodedSha256": "cbb23f3de0672de75a976213f9543b2fb58d1c149da46d051ab0aba09ea316e8",
+      "decodedBytes": 39775848
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:4:3446812219",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/04-3446812219.json.gz",
+      "sha256": "eb079b68ae0e0dfa2052c564ba0b0f04e5e818ecea52c8211296c29aeee27e5b",
+      "bytes": 1736294,
+      "decodedSha256": "a7656f8b0666515faef9283106ac71e58e6a8870338d25ee322cee62bd1e8709",
+      "decodedBytes": 54941630
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:5:2895930508",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/05-2895930508.json.gz",
+      "sha256": "fe9c7a7103bf5e4a4011d85ca8f297ce58fa3c02538db4bb1bd5ffa871afc349",
+      "bytes": 465133,
+      "decodedSha256": "d82b6d0b7df6af4b1eb2d0dd1157e8272d310dc73b45e83ea5ec217b89250ede",
+      "decodedBytes": 14914062
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:6:528904640",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/06-528904640.json.gz",
+      "sha256": "5172a567c5bf016056d75de20c73b8c519f12304c6f9f0a73452b1d4841f259e",
+      "bytes": 1749758,
+      "decodedSha256": "0c12f2ddc748bb3519c55aa4956166320b4aab6ea35dc7483f8e68b8f36d9faa",
+      "decodedBytes": 62811632
+    },
+    {
+      "gameKey": "P4:dragapult-mirror-first1:7:818576261",
+      "path": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/artifacts/strategy-baseline-v1-2026-09-21/replays/P4/dragapult-mirror-first1/07-818576261.json.gz",
+      "sha256": "a2f18255b78c50c8db118cdfd60fbb6f135ee3d774a52b8960a77ad1ae01f4c4",
+      "bytes": 1115977,
+      "decodedSha256": "3c995ffaa86662e9c9339ee169766695268f9063cd22dd971a2ce0c32ad34783",
+      "decodedBytes": 35896523
+    }
+  ]
+}

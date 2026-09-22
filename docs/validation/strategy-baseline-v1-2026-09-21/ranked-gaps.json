@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "rankingFormula": "headline failures / eligible game-sides * severity",
+  "gaps": [
+    {
+      "policy": "P2",
+      "probeId": "crustle-fan-active-kangaskhan",
+      "principleId": "crustle-fan-kangaskhan",
+      "severity": 3,
+      "headlineFailures": 16,
+      "headlineN": 18,
+      "eligibleGameSides": 48,
+      "gapScore": 1.0,
+      "insufficient": true
+    },
+    {
+      "policy": "P4",
+      "probeId": "crustle-fan-active-kangaskhan",
+      "principleId": "crustle-fan-kangaskhan",
+      "severity": 3,
+      "headlineFailures": 16,
+      "headlineN": 17,
+      "eligibleGameSides": 48,
+      "gapScore": 1.0,
+      "insufficient": true
+    },
+    {
+      "policy": "P1",
+      "probeId": "crustle-fan-active-kangaskhan",
+      "principleId": "crustle-fan-kangaskhan",
+      "severity": 3,
+      "headlineFailures": 15,
+      "headlineN": 17,
+      "eligibleGameSides": 48,
+      "gapScore": 0.9375,
+      "insufficient": true
+    },
+    {
+      "policy": "P3",
+      "probeId": "crustle-fan-active-kangaskhan",
+      "principleId": "crustle-fan-kangaskhan",
+      "severity": 3,
+      "headlineFailures": 15,
+      "headlineN": 20,
+      "eligibleGameSides": 48,
+      "gapScore": 0.9375,
+      "insufficient": false
+    },
+    {
+      "policy": "P1",
+      "probeId": "dragapult-large-hand-judge",
+      "principleId": "dragapult-combine-disruption",
+      "severity": 2,
+      "headlineFailures": 20,
+      "headlineN": 24,
+      "eligibleGameSides": 48,
+      "gapScore": 0.8333333333333334,
+      "insufficient": false
+    }
+  ]
+}
