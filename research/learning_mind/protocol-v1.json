@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "autonomous-learning-mind-v1",
+  "baseCommit": "7543298",
+  "status": "implementation-only-disabled",
+  "informationBoundary": "frame.observations[frame.actor] plus that seat's prior redacted stream",
+  "limits": {"stateTokens": 160, "legalActionClasses": 128, "macroCandidates": 128},
+  "seedNamespaces": ["training", "development", "promotion"],
+  "policyLabelSources": [
+    "exact-search-distribution",
+    "compatible-reviewed-acceptable-set",
+    "high-confidence-macro-plan",
+    "macro-ranker-distillation"
+  ],
+  "ppo": {
+    "enabled": false,
+    "enablement": "supervised milestone plus explicit human enablement",
+    "terminalReward": [1, 0, -1],
+    "truncationPolicy": "terminate trace, exclude reward, never bootstrap across reset"
+  },
+  "promotion": {"automatic": false, "humanApprovalRequired": true},
+  "initialAcceptanceTargets": [
+    "Raging Bolt macro-plan fidelity",
+    "Crustle Fan-to-active-Kangaskhan",
+    "Dragapult large-hand Judge"
+  ]
+}

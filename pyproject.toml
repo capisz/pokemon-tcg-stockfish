@@ -11,6 +11,7 @@ dependencies = ["fastapi>=0.115,<1", "uvicorn>=0.30,<1", "numpy>=1.26,<3", "pyda
 
 [project.optional-dependencies]
 training = ["torch>=2.4,<3", "scikit-learn>=1.5,<2", "pyarrow>=17,<24", "mlflow-skinny>=2.17,<4", "sqlalchemy>=2,<3", "alembic>=1.13,<2"]
+mind = ["torch>=2.4,<3", "scikit-learn>=1.5,<2", "xgboost>=2.1,<4"]
 guides = ["sentence-transformers>=3,<6"]
 test = ["pytest>=8,<10", "httpx>=0.27,<1"]
 
