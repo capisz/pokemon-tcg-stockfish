@@ -1,4 +1,5 @@
 import { Environment } from './environment';
+import { legalActionKey } from './action-key';
 import { opponentHypotheses } from './hypotheses';
 import { chooseAction } from './policies';
 import { SeededRandom } from './random';
@@ -18,9 +19,8 @@ export function continuationStep(observation: Observation, action: LegalAction, 
       ? `Resolve ${observation.prompt?.type ?? 'private choice'} (private choice omitted)` : action.label};
 }
 interface Node { visits: number; edges: Map<string, Edge> }
-const actionKey = (a: LegalAction) => JSON.stringify([a.type, a.cardId, a.target, a.label]);
 function infoKey(o: Observation): string {
-  return JSON.stringify([o.playerId, o.turn, o.phase, o.players, o.prompt, o.knowledge, o.legalActions.map(actionKey)]);
+  return JSON.stringify([o.playerId, o.turn, o.phase, o.players, o.prompt, o.knowledge, o.legalActions.map(legalActionKey)]);
 }
 function leafResult(o: Observation, root: number): number {
   const resource = (p: Observation['players'][number]) => (6 - p.prizesRemaining) * 1.5
@@ -53,9 +53,9 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
   if (!hypotheses.length) return unavailable('No supported deck hypothesis matches the visible cards and public state.');
   const totalWeight=hypotheses.reduce((n,h)=>n+h.weight,0);
   hypotheses.forEach(h=>h.weight/=totalWeight);
-  const roots = new Map<string, Edge>(o.legalActions.map(action => [actionKey(action), {visits: 0, total: 0, squares: 0, action}]));
+  const roots = new Map<string, Edge>(o.legalActions.map(action => [legalActionKey(action), {visits: 0, total: 0, squares: 0, action}]));
   const macroPlan = params.macroPlanActions ?? [];
-  if (macroPlan.length && (macroPlan.length > 5 || actionKey(macroPlan[0]) !== actionKey(o.legalActions[0])))
+  if (macroPlan.length && (macroPlan.length > 5 || legalActionKey(macroPlan[0]) !== legalActionKey(o.legalActions[0])))
     throw new Error('Macro plan must start with the sole supplied root action and contain at most five actions.');
   if(params.rootPriors){
     const values=new Map(params.rootPriors.map(p=>[p.actionId,p.probability]));
@@ -78,12 +78,12 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
     const env = Environment.fromPublicPosition(o.searchPosition, rng.uint32(), hypothesis.kind==='unknown-variant'?hypothesis.deck:hypothesis.id, Number(o.legalActions[0].id.split(':')[0]));
     const rootObservation = env.observe();
     const rootChoices = rootObservation.legalActions;
-    const available = rootChoices.map(a => roots.get(actionKey(a))).filter((e): e is Edge => !!e);
+    const available = rootChoices.map(a => roots.get(legalActionKey(a))).filter((e): e is Edge => !!e);
     if (!available.length) {aborted++; continue;}
     let root: Edge;
     if (method === 'rollout') {const min = Math.min(...available.map(e => e.visits)); const least = available.filter(e => e.visits === min); root = least[rng.int(least.length)];}
     else root = select(available, iterations, o.playerId);
-    const rootAction = rootChoices.find(a => actionKey(a) === actionKey(root.action))!;
+    const rootAction = rootChoices.find(a => legalActionKey(a) === legalActionKey(root.action))!;
     const path: {edge: Edge; node?: Node}[] = [{edge: root}];
     const steps = [continuationStep(rootObservation, rootAction, o.playerId)];
     try {
@@ -100,7 +100,7 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
           if (obs.prompt) chosen = chooseAction(obs, 'heuristic', rng);
           else {
             const intended = macroPlan[planCursor];
-            const match = obs.legalActions.find(action => actionKey(action) === actionKey(intended));
+            const match = obs.legalActions.find(action => legalActionKey(action) === legalActionKey(intended));
             if (!match) throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:action-not-legal`);
             chosen = match; planCursor++;
           }
@@ -108,11 +108,11 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
           const key = infoKey(obs);
           let node = tree.get(key);
           if (!node) {node = {visits: 0, edges: new Map()}; tree.set(key, node);}
-          for (const action of obs.legalActions) if (!node.edges.has(actionKey(action))) node.edges.set(actionKey(action), {visits: 0, total: 0, squares: 0, action});
-          const edges = obs.legalActions.map(a => node!.edges.get(actionKey(a))!);
+          for (const action of obs.legalActions) if (!node.edges.has(legalActionKey(action))) node.edges.set(legalActionKey(action), {visits: 0, total: 0, squares: 0, action});
+          const edges = obs.legalActions.map(a => node!.edges.get(legalActionKey(a))!);
           const edge = select(edges, node.visits, obs.playerId);
           expanded = edge.visits === 0;
-          chosen = obs.legalActions.find(a => actionKey(a) === actionKey(edge.action))!;
+          chosen = obs.legalActions.find(a => legalActionKey(a) === legalActionKey(edge.action))!;
           path.push({edge, node});
         } else chosen = chooseAction(obs, 'heuristic', rng);
         if (steps.length < 8) steps.push(continuationStep(obs, chosen, o.playerId));
