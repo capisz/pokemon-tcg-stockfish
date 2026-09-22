@@ -211,6 +211,7 @@ def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
     output.parent.mkdir(parents=True, exist_ok=True); ranker.model.save_model(output)
     train_metrics = metrics(ranker, train)
     development_metrics = metrics(ranker, [record for record in records if record["split"] == "development"])
+    heldout_metrics = metrics(ranker, [record for record in records if record["split"] == "heldout"])
     holdouts = []
     for split in holdout_splits(records):
         train_records = [records[index] for index in split["train"] if records[index]["split"] == "train"]
@@ -224,8 +225,10 @@ def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
     result = {**ranker.manifest(frozen), "modelPath": str(output), "modelSha256": file_sha256(output),
               "trainingPositions": len(groups), "trainingCandidates": len(labels),
               "training": train_metrics, "development": development_metrics,
+              "heldout": heldout_metrics,
               "holdouts": holdouts,
               "acceptance": "insufficient" if development_metrics["status"] != "measured"
+                            or heldout_metrics["status"] != "measured"
                             or any(item["status"] != "measured" for item in holdouts) else "review-required"}
     _atomic_json(output.with_suffix(".manifest.json"), result)
     return result

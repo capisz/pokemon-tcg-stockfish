@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Collect a fresh diagnostic batch under the versioned root-action-only candidate generator. Then implement and test transition-aware multi-step plans, expand independent held-out positions, and obtain human-reviewed Crustle Fan and Dragapult Judge labels before rerunning v1.2 probes. Current evidence does not enable PPO."
+  "nextGate": "Implement a transition-aware turn-plan generator that chooses later actions from updated legal observations, then collect fresh labels with adequate independent development and held-out positions. Add reviewed Crustle Fan and Dragapult Judge labels and rerun v1.2 probes. Current root-action diagnostics do not enable PPO."
 }

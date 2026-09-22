@@ -114,6 +114,16 @@ Base: `7543298`
   manifest and hashes are recorded in `root-action-generator-smoke-2026-09-22.json`.
   This validates the corrected collector path only; a full fresh pool and
   transition-aware planner are still required.
+- The full corrected 18-position batch is now complete: 136 single-action
+  candidates and 7,984/7,984 completed rollouts, with zero typed errors and zero
+  truncations. A ranker trained on 12 positions measured 0.0029 mean top-1
+  regret on three development positions, but 0.0557 regret on the three
+  untouched held-out positions (top-3 recall 1.0; pairwise accuracy 0.475).
+  This mixed, tiny held-out result does not establish a policy or playing
+  strength improvement.
+- The ranker now reports the dedicated held-out split in addition to
+  development and fold metrics. Full frozen identities and ranker checksums are
+  in `root-action-ranker-v2-2026-09-22.json`.
 
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

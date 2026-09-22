@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "candidateGeneratorVersion": "root-legal-action-only-v2",
+  "candidateSemantics": "single legal root action; not a complete turn plan",
+  "labelDataset": {
+    "manifestHash": "cb55a08352f2deb162ac9faafd9b3b66f8fe44f870c1cbf104ae49792dc32898",
+    "fileManifestSha256": "2ea2dc2a2528341b80f5c1e3016e7ecc1d3449aa53090f616784315eaf1afa61",
+    "positions": 18,
+    "splits": {"train": 12, "development": 3, "heldout": 3},
+    "candidateCount": 136,
+    "completedRollouts": 7984,
+    "typedErrors": 0,
+    "truncations": 0,
+    "actionIdsPerCandidate": 1
+  },
+  "ranker": {
+    "modelSha256": "684e4935abf79bf219752be6a9cebb478781ab521ed21bce9b4406b9aea75230",
+    "reportManifestHash": "0f57f5717ca606ddbd211e60906c9aef74cac27b02fd1cab634ba70fe4d840b5",
+    "training": {
+      "positions": 12,
+      "candidates": 79,
+      "meanTop1RelativeRegret": 0.0,
+      "top3Recall": 0.9166666666666666,
+      "pairwiseOrderingAccuracy": 1.0
+    },
+    "development": {
+      "positions": 3,
+      "meanTop1RelativeRegret": 0.0029310575814215736,
+      "top3Recall": 0.6666666666666666,
+      "pairwiseOrderingAccuracy": 0.7469879518072289
+    },
+    "heldout": {
+      "positions": 3,
+      "meanTop1RelativeRegret": 0.05570428614502091,
+      "top3Recall": 1.0,
+      "pairwiseOrderingAccuracy": 0.4752475247524752
+    },
+    "acceptance": "review-required",
+    "playingStrengthClaim": false
+  },
+  "interpretation": "Small and mixed held-out evidence for isolated root actions. This is not complete-turn plan learning and does not satisfy a target strategy probe or held-out policy improvement gate."
+}
