@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "harnessCommit": "c54c93bc5f234efcaff7bd7359c5efed2b841ee1",
+  "implementation": {
+    "version": "transition-aware-public-determinization-v3-terminal-intent",
+    "plannerSha256": "78ae43b72facf3f660d7c10fb69386fd6166cfbd7bae7bec247116cb10fde318",
+    "actionKeySha256": "b3f0256747420a0fc122d185d7c2c9bb893f8e1826390da392c4c003211021b7",
+    "adapterSha256": "437a4c4bc6a02d03585dd774cfbcb65fcda05f0eb67ef0939aa7b337ced0ed3e",
+    "searchIdentityCommit": "eb14454"
+  },
+  "semantics": {
+    "completePlanTerminalActions": {"attack": "attack", "no-attack": "pass"},
+    "rolloutLabels": "Only complete terminal plans are eligible; incomplete prefixes are counted but not labeled.",
+    "mismatchedIntent": "Rejected by the Python adapter.",
+    "maxActions": 3,
+    "candidateCap": 128,
+    "engineApiChanged": false,
+    "productionPolicyChanged": false
+  },
+  "frozenPoolSupportAudit": {
+    "datasetManifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+    "datasetManifestSha256": "721a53f6aa325922908c5bae9c488025b71d8b4f0424d08d634c96dcac31c87c",
+    "positions": 18,
+    "supportedAtDepth3": 4,
+    "unsupported": 14,
+    "unsupportedReason": "candidate-cap",
+    "supportedCandidateCountsIncludingIncompletePrefixes": [25, 87, 119, 87],
+    "errors": 0,
+    "rolloutsRun": 0
+  },
+  "verification": {
+    "typescriptTypecheck": "passed",
+    "engineTests": {"passed": 74, "failed": 0},
+    "targetedPythonTests": {"passed": 16, "deselected": 1},
+    "pythonExclusion": "The single deselected XGBoost native metadata test has a previously observed environment segfault; non-XGBoost macro/orchestration tests passed.",
+    "diffCheck": "passed",
+    "workingTreeAfterHarnessCommit": "clean"
+  },
+  "interpretation": "Planner support only; no rollout labels, ranker fit, playing-strength claim, PPO, or continuous operation. Four supported positions are too few for broad collection."
+}

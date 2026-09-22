@@ -178,3 +178,22 @@ strength or autonomous improvement.
 - The shared-key change passed `npm run typecheck`, all 74 engine tests, and
   seven targeted Python tests. No new rollout labels, ranker fit, policy
   promotion, or PPO run was started.
+
+## Explicit attack / no-attack intent in planner v3
+
+- Harness commit `c54c93b` adds explicit terminal intent: attack candidates end
+  in a legal attack; deliberate no-attack candidates end in legal pass. The
+  adapter rejects any mismatch, and only those complete candidates may receive
+  rollout labels. Incomplete prefixes remain available for enumeration but are
+  excluded from labels.
+- Against the same frozen 18-position pool, depth-three support is 4/18; the
+  other 14 fail closed at the 128-candidate cap. Supported positions produced
+  25, 87, 119, and 87 candidates including incomplete prefixes. This ran no
+  rollouts and does not establish model quality. Candidate branching remains
+  the immediate blocker.
+- All 74 engine tests pass, `npm run typecheck` passes, and the focused Python
+  macro/orchestration tests pass (16; the XGBoost native metadata test was
+  excluded after its known environment segfault). Full checksums and pool
+  identity are in `transition-macro-terminal-intent-v3-2026-09-22.json`.
+- No new training labels or ranker fit were started. PPO, promotion, and
+  continuous operation remain disabled.

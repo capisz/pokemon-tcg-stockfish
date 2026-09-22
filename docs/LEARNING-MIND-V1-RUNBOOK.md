@@ -550,12 +550,15 @@ should expand its evidence without changing the acceptance rules:
 1. collect approved positions for the Raging Bolt plan, Crustle Fan target, and
    Dragapult large-hand Judge families;
 2. preserve a real held-out split and a blind opponent-policy family;
-3. replace root-action proxy labels with candidates whose declared turn plan is
-   fully executed or fails with a typed error;
+3. improve the transition planner's candidate abstraction without merging
+   board targets or dropping meaningful action bindings: v3 now requires an
+   explicit attack or pass ending, but only 4/18 frozen positions fit under the
+   128-candidate cap;
 4. run the default 16-to-64 common-random-number allocation;
 5. refit and require measured archetype/policy holdouts;
-6. train a new immutable candidate and evaluate held-out labels plus every
-   frozen v1.2 probe.
+6. only after broad, balanced support and label quality are demonstrated, train
+   a new immutable candidate and evaluate held-out labels plus every frozen
+   v1.2 probe.
 
 Stop after producing the supervised acceptance report. Do not enable PPO,
 install launchd, or promote the candidate in that task.

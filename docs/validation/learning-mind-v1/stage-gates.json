@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "The shared binding-aware key resolved all five former search-action ambiguity cases. The v2 planner supports 4/18 positions at depth 3 and 16/18 at depth 2; all remaining unsupported positions exceed the 128-candidate cap. Develop and test a semantics-preserving candidate abstraction that retains targets and plan intent, then rerun support coverage before broad rollout-label collection. PPO remains disabled."
+  "nextGate": "Planner v3 now labels candidate intent explicitly: attack-terminated or deliberate pass/no-attack plans only. The frozen 18-position audit supports 4/18 at depth 3; 14 exceed the 128-candidate cap. Develop and test a target-preserving candidate abstraction, then rerun support coverage. Do not collect broad rollout labels until position support is adequate; PPO remains disabled."
 }
