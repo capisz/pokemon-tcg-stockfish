@@ -16,7 +16,7 @@ from ptcg_lab.features import heuristic_action_score
 
 from .dataset_v1 import file_sha256, load_dataset, training_records
 from .encoding import encode_decision
-from .macro import generate_candidates, label_candidates, rollout_seed
+from .macro import CANDIDATE_GENERATOR_VERSION, generate_candidates, label_candidates, rollout_seed
 from .model import StrategyTransformerV1
 from .ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from .schema import IdentityManifest, identity_hash
@@ -72,7 +72,8 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     selected = rows[:limit]
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
-                "maximumRollouts": maximum, "horizon": horizon}
+                "maximumRollouts": maximum, "horizon": horizon,
+                "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION}
     manifest_path = output / "manifest.json"
     completed = set()
     if manifest_path.exists():
@@ -135,7 +136,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "observation": observation, "labels": labels,
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
-                      "semantics": "executable macro action sequence; prompt choices resolve heuristically and failures are typed",
+                      "semantics": "single legal root-action candidate; not a complete turn-plan label",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")

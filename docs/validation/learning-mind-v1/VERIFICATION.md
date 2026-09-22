@@ -91,5 +91,24 @@ Base: `7543298`
   `executable-raging-bolt-full-2026-09-22.json`; raw rollout artifacts and the
   model remain ignored under `artifacts/learning-mind-v1/`.
 
+## Candidate-generation safety correction
+
+- The full-run artifacts above were generated before the candidate-generator
+  correction. Inspection showed that combinations of root legal-action IDs do
+  not prove those actions remain legal in sequence. The old multi-action plans
+  were therefore not valid turn-plan candidates, even though typed failures
+  were excluded from their labels.
+- The generator now emits exactly one candidate per currently legal root
+  action, rejects cap overflow, and records a version in the resumable collector
+  settings. Its semantics explicitly say these are not complete turn plans.
+- Focused generator and collector tests pass (7 passed). A broader focused
+  pytest invocation reached a native segmentation fault in the existing
+  XGBoost test path; the isolated macro tests pass. No new collection or ranker
+  fit has been run under generator v2, so all prior metrics remain historical
+  and do not validate the corrected candidate set.
+- Next: collect under a new output directory with generator v2, then implement
+  a transition-aware multi-step planner before describing results as turn-plan
+  learning.
+
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

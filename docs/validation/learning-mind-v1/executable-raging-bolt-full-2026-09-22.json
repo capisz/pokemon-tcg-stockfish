@@ -9,6 +9,8 @@
     "positionFileHashesVerified": true,
     "policyLabels": 0
   },
+  "candidateGeneratorVersion": "legacy-static-root-combinations-pre-v2",
+  "candidateSemanticsWarning": "Multi-action combinations were assembled from root legal actions and were not transition-aware. The measured rollouts and ranker results are historical diagnostics, not validated complete turn-plan evidence.",
   "rollouts": {
     "candidatePlans": 174,
     "attempted": 10080,

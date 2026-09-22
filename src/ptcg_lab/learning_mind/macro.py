@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import hashlib
-import itertools
 import math
 from dataclasses import asdict, dataclass
 from typing import Callable
@@ -9,6 +8,7 @@ from typing import Callable
 from .schema import UnsupportedPosition, identity_hash
 
 MAX_CANDIDATES = 128
+CANDIDATE_GENERATOR_VERSION = "root-legal-action-only-v2"
 
 
 @dataclass(frozen=True)
@@ -48,19 +48,14 @@ def _name(action: dict) -> str:
 
 def generate_candidates(observation: dict, *, cap: int = MAX_CANDIDATES) -> list[MacroCandidateV1]:
     legal = list(observation.get("legalActions") or [])
-    buckets = {key: [] for key in ("attack", "supporter", "pivot", "energy", "disruption")}
-    for action in legal:
-        kind = _kind(action)
-        if kind in buckets:
-            buckets[kind].append(action)
-    # None is always a deliberate plan choice.  Candidate action IDs are an
-    # executable subset, not a fabricated whole turn.
-    choices = [[None] + sorted(values, key=lambda item: (_name(item), str(item.get("id"))))
-               for values in buckets.values()]
+    if cap < 1 or len(legal) > cap:
+        raise UnsupportedPosition(f"root legal-action candidate cap exceeded: {len(legal)} > {cap}")
     candidates: dict[str, MacroCandidateV1] = {}
-    # Every legal root action gets a plan candidate, including information
-    # actions, abilities and deliberate end-turn actions that are not one of the
-    # strategic slots below. This prevents the abstraction from erasing options.
+    # The observation contains only root legal actions. Combining two such IDs
+    # does not prove they remain legal in sequence, so this conservative
+    # generator evaluates one executable root action per candidate. Multi-step
+    # turn plans require a transition-aware generator and are intentionally not
+    # synthesized from this static action list.
     for action in sorted(legal, key=lambda item: (_name(item), str(item.get("id")))):
         kind = _kind(action)
         candidate = MacroCandidateV1(
@@ -75,25 +70,6 @@ def generate_candidates(observation: dict, *, cap: int = MAX_CANDIDATES) -> list
             setup_target=str(action.get("target")) if kind in {"energy", "pivot"} and action.get("target") is not None else None,
             action_ids=(str(action.get("id")),))
         candidates[candidate.key()] = candidate
-    for attack, supporter, pivot, energy, disruption in itertools.product(*choices):
-        actions = tuple(item for item in (supporter, pivot, energy, disruption, attack) if item)
-        # A single action can occupy two semantic roles (e.g. Judge); execute it once.
-        ids = tuple(dict.fromkeys(str(item.get("id")) for item in actions))
-        energy_name = _name(energy) if energy else None
-        candidate = MacroCandidateV1(
-            intended_attack=_name(attack) if attack else None,
-            attack_target=str(attack.get("target")) if attack and attack.get("target") is not None else None,
-            supporter=_name(supporter) if supporter else None,
-            pivot_destination=str(pivot.get("target") or _name(pivot)) if pivot else None,
-            energy_source=energy_name,
-            energy_destination=str(energy.get("target")) if energy and energy.get("target") is not None else None,
-            disruption_intent=_name(disruption) if disruption else None,
-            protected_pokemon=str((energy or {}).get("target")) if energy and "mist" in _name(energy).lower() else None,
-            setup_target=str((energy or pivot or {}).get("target")) if energy or pivot else None,
-            action_ids=ids)
-        candidates[candidate.key()] = candidate
-        if len(candidates) > cap:
-            raise UnsupportedPosition(f"macro candidate cap exceeded: > {cap}")
     return [candidates[key] for key in sorted(candidates)]
 
 

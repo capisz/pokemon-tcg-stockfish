@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Repair multi-action macro execution and explicit prompt handling; expand the frozen position pool and report independent held-out performance. Then obtain human-reviewed labels for the Crustle Fan and Dragapult Judge queues and rerun frozen v1.2 probes. Current macro evidence does not enable PPO."
+  "nextGate": "Collect a fresh diagnostic batch under the versioned root-action-only candidate generator. Then implement and test transition-aware multi-step plans, expand independent held-out positions, and obtain human-reviewed Crustle Fan and Dragapult Judge labels before rerunning v1.2 probes. Current evidence does not enable PPO."
 }

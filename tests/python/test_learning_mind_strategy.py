@@ -3,7 +3,8 @@ from __future__ import annotations
 import pytest
 
 from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
-from ptcg_lab.learning_mind.macro import MacroExecutionFailure, execute_candidate, generate_candidates, label_candidates, rollout_seed
+from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
+    execute_candidate, generate_candidates, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
@@ -26,6 +27,15 @@ def test_macro_abstraction_preserves_every_legal_root_action():
     candidates = generate_candidates(obs)
     represented = {identifier for candidate in candidates for identifier in candidate.action_ids}
     assert represented == {str(action["id"]) for action in obs["legalActions"]}
+
+
+def test_candidate_generator_never_combines_root_actions_into_unverified_sequences():
+    obs = observation()
+    candidates = generate_candidates(obs)
+    assert all(len(candidate.action_ids) == 1 for candidate in candidates)
+    assert len({candidate.action_ids[0] for candidate in candidates}) == len(obs["legalActions"])
+    with pytest.raises(UnsupportedPosition, match="candidate cap"):
+        generate_candidates(obs, cap=len(obs["legalActions"]) - 1)
 
 
 def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():

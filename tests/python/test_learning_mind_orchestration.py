@@ -8,6 +8,7 @@ from ptcg_lab.learning_mind import experiment
 from ptcg_lab.learning_mind.dataset_v1 import (build_macro_position_pool, file_sha256,
                                                load_dataset, training_records)
 from ptcg_lab.learning_mind.encoding import encode_decision
+from ptcg_lab.learning_mind.macro import CANDIDATE_GENERATOR_VERSION
 from ptcg_lab.learning_mind.schema import IdentityManifest
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
@@ -73,12 +74,13 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
                                             identity=identity, limit=1, initial=1, maximum=1)
     call_count = len(calls)
     assert first["positions"] == 1 and first["highConfidencePolicyLabels"] == 0
+    assert first["candidateGeneratorVersion"] == CANDIDATE_GENERATOR_VERSION
     second = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                              identity=identity, limit=1, initial=1, maximum=1)
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
-    assert record["semantics"].startswith("executable macro action sequence")
+    assert record["semantics"] == "single legal root-action candidate; not a complete turn-plan label"
     assert record["highConfidencePolicyEligible"] is False
     assert len(record["rolloutSeeds"]) == 1
     assert all(call[1].get("macroPlanActions") for call in calls)
