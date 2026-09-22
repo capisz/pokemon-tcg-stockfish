@@ -39,6 +39,16 @@ def action_summary(action: dict, score: float | None = None) -> dict:
     return result
 
 
+def prompt_summary(prompt: dict | None) -> dict | None:
+    if not prompt:
+        return None
+    result = {key: prompt.get(key) for key in
+              ("type", "message", "selectionCount", "min", "max", "canFinish", "canUndo")
+              if prompt.get(key) is not None}
+    result["cardIds"] = [card.get("id") for card in prompt.get("cards", [])]
+    return result
+
+
 def ranked_actions(checkpoint: Path, agent: Agent, observation: dict) -> tuple[dict, list[dict], list[dict]]:
     legal = observation["legalActions"]
     _, p3_scores = predict(checkpoint, observation, agent.loaded, allow_experimental=True)
@@ -93,7 +103,7 @@ def trace(root: Path, checkpoint: Path, case: dict, *, guarded: bool, max_decisi
                     "actor": actor,
                     "turn": observation.get("turn"),
                     "phase": observation.get("phase"),
-                    "prompt": observation.get("prompt"),
+                    "prompt": prompt_summary(observation.get("prompt")),
                 })
                 occurrence = pair_counts[token]
                 if occurrence in {1, 2, 3, 10, 50, 100}:
