@@ -121,15 +121,11 @@ export function generateTransitionMacroPlans(
     throw new Error(`public determinization omitted actor-visible root actions (missing=${JSON.stringify(missingFromSample)})`);
 
   const candidates: PlannedCandidate[] = [];
-  const queue: PlannedCandidate[] = root.legalActions.filter(action => suppliedRoot.has(legalActionKey(action)))
-    .sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id))
-    .map(action => {
-      const slot = candidateSlot(action) ?? 'other';
-      return {actions: [action], semanticSlots: [slot],
-        completion: slot === 'attack' ? 'attack' : slot === 'pass' ? 'no-attack' : 'incomplete'};
-    });
+  const queue: PlannedCandidate[] = [];
   const visitedPrefixes = new Set<string>();
+  const pendingPrefixKeys = new Set<string>();
   const candidateKeys = new Set<string>();
+  let deduplicatedPrefixes = 0;
   const candidateDepths = new Map<number, number>();
   const candidateIntents = new Map<string, number>();
   const expansionsBySlot = new Map<string, number>();
@@ -138,15 +134,32 @@ export function generateTransitionMacroPlans(
       emitted: candidates.length,
       queued: queue.length,
       visitedPrefixes: visitedPrefixes.size,
+      deduplicatedPrefixes,
       candidateDepths: Object.fromEntries([...candidateDepths].sort(([a], [b]) => a - b)),
       candidateIntents: Object.fromEntries([...candidateIntents].sort(([a], [b]) => a.localeCompare(b))),
       expansionsBySlot: Object.fromEntries([...expansionsBySlot].sort(([a], [b]) => a.localeCompare(b))),
     };
     return new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates}); diagnostic=${JSON.stringify(diagnostic)}`);
   };
+  const enqueuePrefix = (prefix: PlannedCandidate) => {
+    const key = JSON.stringify(prefix.actions.map(legalActionKey));
+    if (visitedPrefixes.has(key) || pendingPrefixKeys.has(key)) {
+      deduplicatedPrefixes++;
+      return;
+    }
+    pendingPrefixKeys.add(key);
+    queue.push(prefix);
+  };
+  for (const action of root.legalActions.filter(action => suppliedRoot.has(legalActionKey(action)))
+    .sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id))) {
+    const slot = candidateSlot(action) ?? 'other';
+    enqueuePrefix({actions: [action], semanticSlots: [slot],
+      completion: slot === 'attack' ? 'attack' : slot === 'pass' ? 'no-attack' : 'incomplete'});
+  }
   while (queue.length) {
     const plan = queue.shift()!;
     const key = JSON.stringify(plan.actions.map(legalActionKey));
+    pendingPrefixKeys.delete(key);
     if (visitedPrefixes.has(key)) continue;
     visitedPrefixes.add(key);
     const addCandidate = (candidate: PlannedCandidate) => {
@@ -182,10 +195,10 @@ export function generateTransitionMacroPlans(
       .sort((left, right) => left.slot.localeCompare(right.slot)
         || left.action.label.localeCompare(right.action.label) || left.action.id.localeCompare(right.action.id));
     for (const option of options) {
-      queue.push({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot],
+      enqueuePrefix({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot],
         completion: 'incomplete'});
       expansionsBySlot.set(option.slot, (expansionsBySlot.get(option.slot) ?? 0) + 1);
-      if (candidates.length + queue.length > maxCandidates)
+      if (candidates.length + pendingPrefixKeys.size > maxCandidates)
         throw capFailure();
     }
   }

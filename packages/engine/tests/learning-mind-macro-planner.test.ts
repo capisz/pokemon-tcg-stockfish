@@ -47,3 +47,12 @@ test('transition-aware macro planner preserves action bindings when validating v
   assert.throws(() => generateTransitionMacroPlans({...observation, legalActions: [forged]}, 42, 128, 1),
     /omitted actor-visible root actions/);
 });
+
+test('transition-aware macro planner deduplicates equivalent pending physical-copy prefixes', () => {
+  const observation = readyObservation();
+  const roots = observation.legalActions.slice(0, 3);
+  const duplicate = {...roots[0], id: `${roots[0].id}:indistinguishable-copy`};
+  const baseline = generateTransitionMacroPlans({...observation, legalActions: roots}, 42, 128, 2);
+  const withEquivalentCopy = generateTransitionMacroPlans({...observation, legalActions: [...roots, duplicate]}, 42, 128, 2);
+  assert.deepEqual(withEquivalentCopy, baseline);
+});
