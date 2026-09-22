@@ -1,0 +1,100 @@
+from __future__ import annotations
+
+import pytest
+
+from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
+from ptcg_lab.learning_mind.macro import MacroExecutionFailure, execute_candidate, generate_candidates, label_candidates, rollout_seed
+from ptcg_lab.learning_mind.ranker import FrozenIteration, holdout_splits
+from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
+from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
+from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
+from test_learning_mind_representation import observation
+
+
+def test_macro_candidates_are_deterministic_executable_and_capped():
+    obs = observation()
+    first, second = generate_candidates(obs), generate_candidates(obs)
+    assert [item.key() for item in first] == [item.key() for item in second]
+    for candidate in first:
+        assert [row["id"] for row in execute_candidate(candidate, obs["legalActions"])] == list(candidate.action_ids)
+    selected = next(item for item in first if item.action_ids)
+    with pytest.raises(MacroExecutionFailure): execute_candidate(selected, [])
+
+
+def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
+    candidates = generate_candidates(observation())[:2]; calls = []
+    def rollout(candidate, seed):
+        calls.append((candidate.key(), seed)); return {"status": "finished", "score": .5}
+    rows = label_candidates(candidates, "position", rollout, initial=2, maximum=4)
+    assert all(row["completedRollouts"] == 4 for row in rows)
+    for index in range(4):
+        expected = rollout_seed("training", "position", index)
+        assert sum(seed == expected for _, seed in calls) == 2
+    assert rollout_seed("training", "position", 0) != rollout_seed("development", "position", 0)
+    with pytest.raises(ValueError, match="promotion"): label_candidates(candidates, "p", rollout, namespace="promotion")
+
+
+def test_rollout_errors_are_not_fabricated_scores():
+    candidate = generate_candidates(observation())[:1]
+    rows = label_candidates(candidate, "position", lambda c, s: {"status": "truncated"}, initial=2, maximum=2)
+    assert rows[0]["completedRollouts"] == 0 and rows[0]["expectedResult"] is None
+
+
+def test_holdouts_and_refit_limit():
+    rows = [{"opponentArchetype": "a", "opponentPolicyFamily": "old"},
+            {"opponentArchetype": "b", "opponentPolicyFamily": "new"}]
+    assert len(holdout_splits(rows)) == 4
+    with pytest.raises(ValueError, match="six"): FrozenIteration(7, "t", "o", "i", ("p",))
+
+
+def test_only_approved_policy_labels_and_ppo_remains_human_gated():
+    rows = [{"policyLabelSource": "exact-search-distribution", "policyDistribution": [1.]},
+            {"playedAction": 1}]
+    assert supervised_policy_rows(rows) == rows[:1]
+    with pytest.raises(ValueError): supervised_policy_rows([{"policyLabelSource": "ordinary-self-play", "acceptableActionIndices": [0]}])
+    stage = {"representationParity": True, "heldOutLabelWin": True, "targetProbeWin": True,
+             "severityThreeRegression": False}
+    assert not ppo_enablement(stage)["enabled"]
+    assert ppo_enablement({**stage, "humanEnablePPO": True})["enabled"]
+
+
+def test_truncation_ends_advantage_trace_and_guards_skip_updates():
+    records = [{"status": "running", "reward": 0}, {"status": "truncated", "reward": 1, "episodeEnd": True},
+               {"status": "finished", "reward": 1, "episodeEnd": True}]
+    values = [0., .5, .25]
+    advantages = generalized_advantages(records, values)
+    assert advantages[1] == -.5  # no terminal reward and no bootstrap
+    assert advantages[2] == .75
+    assert update_guard(approximate_kl=.051, value_loss=.1) == (False, "approximate-kl-exceeded")
+    assert update_guard(approximate_kl=.01, value_loss=.51) == (False, "value-loss-exceeded")
+
+
+def test_sequential_evaluation_and_manual_promotion_gate():
+    records = [{"status": "finished", "score": 1}] * 100
+    assert sequential_decision(records)["status"] == "supported-improvement"
+    gate = promotion_gate(aggregate=sequential_decision(records), matchups=[],
+                          strategy={"severityThreeRegressions": []}, blind_family_passed=True,
+                          identities_match=True, human_approved=False)
+    assert not gate["promotable"] and gate["automaticPromotion"] is False
+
+
+def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():
+    rows = [assignment(index, ["h1", "h2"]) for index in range(100)]
+    assert sum(row["mirror"] for row in rows) == 5
+    assert sum(row["policyFamily"] == "historical" for row in rows) == 20
+    assert {row["ownArchetype"] for row in rows} == {"crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario"}
+    assert specialist_for_deck("exact", {"exact": {"checkpoint": "special", "approved": True}}, "general") == "special"
+    assert specialist_for_deck("modified", {}, "general") == "general"
+    seeds = {promotion_seed_namespace_disjoint(1, kind, 0) for kind in ("training", "development", "promotion")}
+    assert len(seeds) == 3
+
+
+def test_notification_scope_and_atomic_rollback():
+    events = []; router = NotificationRouter(local=events.append)
+    router({"kind": "progress"}); router({"kind": "review-ready"})
+    assert events == [{"kind": "review-ready"}]
+    registry = AtomicRollbackRegistry("trusted"); registry.queue("candidate")
+    with pytest.raises(PermissionError): registry.promote(human_approved=False, evidence_passed=True)
+    prior = registry.promote(human_approved=True, evidence_passed=True)
+    assert prior == "trusted" and registry.trusted_checkpoint == "candidate"
+    registry.rollback(prior); assert registry.trusted_checkpoint == "trusted"
