@@ -220,10 +220,12 @@ def summarize_policy(rows: list[dict]) -> dict:
             winners[winner] += 1
     # The main plan weights cross-matchup cells at 8 games each and mirror
     # cells at 16 games each; a flat 12x multiplier would distort this mix.
-    projected = sum(
-        row["elapsedSeconds"] * (8 if row["cell"]["id"].startswith("cross-") else 16)
-        for row in rows
-    )
+    projected = None
+    if len(finished) == len(rows):
+        projected = sum(
+            row["elapsedSeconds"] * (8 if row["cell"]["id"].startswith("cross-") else 16)
+            for row in rows
+        )
     return {
         "pilotGames": len(rows),
         "finished": len(finished),
@@ -243,6 +245,9 @@ def main() -> None:
     parser.add_argument("--output", type=Path, required=True)
     parser.add_argument("--guide-checkpoint", type=Path, required=True)
     parser.add_argument("--max-decisions", type=int, default=1000)
+    parser.add_argument("--policies", nargs="+", choices=["P1", "P2", "P3", "P4"])
+    parser.add_argument("--prior-results", type=Path,
+                        help="Merge previously timed policy rows without rerunning them")
     args = parser.parse_args()
     root = args.root.resolve()
     output = args.output.resolve()
@@ -266,15 +271,33 @@ def main() -> None:
 
     checkpoint = args.guide_checkpoint.resolve()
     checkpoint_record = {"path": str(checkpoint), "sha256": file_hash(checkpoint), "loadStatus": "pending"}
-    active_policies = ["P1", "P2", "P4"]
+    available_policies = ["P1", "P2", "P4"]
     try:
         from ptcg_lab.training import load_model
         load_model(checkpoint, allow_experimental=True)
         checkpoint_record["loadStatus"] = "loaded"
-        active_policies.insert(2, "P3")
+        available_policies.insert(2, "P3")
     except Exception as exc:
         checkpoint_record["loadStatus"] = "dropped"
         checkpoint_record["loadError"] = f"{type(exc).__name__}: {exc}"
+
+    executed_policies = args.policies or available_policies
+    unavailable = sorted(set(executed_policies) - set(available_policies))
+    if unavailable:
+        raise RuntimeError(f"Requested policies are unavailable: {unavailable}")
+
+    prior_rows = []
+    prior_policies = []
+    if args.prior_results:
+        prior = read_json(args.prior_results.resolve())
+        if (prior.get("engineFingerprint") != fingerprint
+                or prior.get("engineBuildHash") != build_hash
+                or prior.get("effectiveContractHash") != effective_hash):
+            raise ValueError("Prior pilot results use different frozen inputs")
+        prior_rows = prior.get("games", [])
+        prior_policies = prior.get("activePolicies", [])
+    combined = set(prior_policies) | set(executed_policies)
+    active_policies = [policy for policy in ["P1", "P2", "P3", "P4"] if policy in combined]
 
     frozen = {
         "schemaVersion": 1,
@@ -288,14 +311,16 @@ def main() -> None:
         "pilotSeeds": PILOT_SEEDS,
         "cells": CELLS,
         "activePolicies": active_policies,
-        "droppedPolicies": ["P3"] if "P3" not in active_policies else [],
+        "executedPolicies": executed_policies,
+        "priorResults": str(args.prior_results.resolve()) if args.prior_results else None,
+        "droppedPolicies": ["P3"] if "P3" not in available_policies else [],
         "maxDecisions": args.max_decisions,
         "searchBudgetMs": 200,
     }
     (output / "frozen-inputs.json").write_text(json.dumps(frozen, indent=2) + "\n", encoding="utf-8")
 
-    rows = []
-    for policy in active_policies:
+    rows = list(prior_rows)
+    for policy in executed_policies:
         for cell, seed in zip(CELLS, PILOT_SEEDS):
             row = run_cell(root, policy, cell, seed, args.max_decisions, checkpoint)
             rows.append(row)
@@ -303,9 +328,13 @@ def main() -> None:
                               "status": row["status"], "outcome": row["outcome"]}), flush=True)
 
     summaries = {policy: summarize_policy([row for row in rows if row["policy"] == policy]) for policy in active_policies}
-    executable_seconds = sum(summary["projected96GameSeconds"] for summary in summaries.values())
+    projectable = {policy: summary for policy, summary in summaries.items()
+                   if summary["projected96GameSeconds"] is not None}
+    blocking = [policy for policy in active_policies if policy not in projectable]
+    completed_policy_seconds = sum(summary["projected96GameSeconds"] for summary in projectable.values())
+    projection_available = not blocking
     full_games = 96 * len(active_policies)
-    reduced = executable_seconds > 3600
+    reduced = completed_policy_seconds > 3600 if projection_available else None
     result = {
         "schemaVersion": 1,
         "id": "strategy-baseline-v1-pilot-results",
@@ -319,12 +348,19 @@ def main() -> None:
         "projection": {
             "originalPromptGames": 384,
             "executableFullPlanGames": full_games,
-            "serialEquivalentSeconds": executable_seconds,
-            "serialEquivalentMinutes": executable_seconds / 60,
+            "projectablePolicyGames": 96 * len(projectable),
+            "completedPolicyProjectionSeconds": completed_policy_seconds,
+            "completedPolicyProjectionMinutes": completed_policy_seconds / 60,
+            "projectionAvailable": projection_available,
+            "blockingPolicies": blocking,
+            "serialEquivalentSeconds": completed_policy_seconds if projection_available else None,
+            "serialEquivalentMinutes": completed_policy_seconds / 60 if projection_available else None,
             "exceeds60Minutes": reduced,
-            "recommendedMainGames": full_games // 2 if reduced else full_games,
-            "recommendedGamesPerOriginalCell": "half" if reduced else "unchanged",
-            "note": "Projection is timing-only. Pilot outcomes are not strength estimates.",
+            "recommendedMainGames": (full_games // 2 if reduced else full_games) if projection_available else None,
+            "recommendedGamesPerOriginalCell": ("half" if reduced else "unchanged") if projection_available else None,
+            "note": ("Projection is timing-only. Pilot outcomes are not strength estimates."
+                     if projection_available else
+                     "The complete projection is unavailable because at least one policy had no terminal pilot games."),
         },
     }
     (output / "pilot-results.json").write_text(json.dumps(result, indent=2) + "\n", encoding="utf-8")
