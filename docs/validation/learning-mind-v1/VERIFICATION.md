@@ -134,24 +134,28 @@ Base: `7543298`
   three-action depth fail closed rather than dropping branches. The Python
   collector freezes planner/adapter hashes and records unsupported positions
   immutably.
-- The saved actor-view fixture smoke (three supplied root actions) generated
-  41 candidates, including 38 multi-action prefixes at depths one through
-  three. The end-to-end one-position collector smoke correctly recorded its
-  first selected position as unsupported because full branching exceeded 128;
-  it produced no fabricated labels. This is a support-rate warning, not a
-  successful label-collection result.
-- `npm run typecheck`, all 70 engine tests, and the seven targeted Python
+- The planner now uses complete action bindings (including source/target refs,
+  staged choice refs, and selection operation) when matching sampled actions.
+  Five positions are rejected because the existing search action key aliases
+  distinct downstream bindings; this is fail-closed. One supported full
+  position generated nine candidates, four multi-action, through depth two.
+- The end-to-end one-position collector smoke correctly recorded its first
+  selected position as unsupported because full branching exceeded 128; it
+  produced no fabricated labels. The updated frozen-pool audit supports 2/18
+  at depth three and 16/18 at depth two (zero errors, zero rollouts): 11 depth-
+  three positions overflow the cap and five hit the search-binding ambiguity.
+- `npm run typecheck`, all 71 engine tests, and the seven targeted Python
   macro/orchestration tests pass. A broad Python invocation still hits a native
   XGBoost segmentation fault outside the touched tests. PPO, ranker refitting,
   policy promotion, and continuous operation remain disabled.
 - Exact fixture, smoke-output, and implementation checksums are recorded in
   `transition-macro-smoke-2026-09-22.json`; the full collector artifact stays
   ignored under `artifacts/learning-mind-v1/`.
-- A planner-only audit of all 18 frozen Raging Bolt positions found depth-three
-  support on 5/18 and depth-two support on 16/18, with zero errors and zero
-  rollouts. This isolates branching depth as the primary cap pressure but does
-  not justify dropping third-step interactions. The next gate is a tested,
-  semantics-preserving candidate abstraction/dominance rule.
+- The earlier (coarse-key) audit reported depth-three support on 5/18. Binding-
+  aware revalidation reduced safe support to 2/18: 11 hit the 128-candidate cap
+  and five would be ambiguous under the existing research search matcher. A
+  matcher fix changes internal search behavior; it needs explicit scope
+  approval before implementation. The planner remains fail-closed meanwhile.
 
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.

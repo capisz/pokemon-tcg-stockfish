@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "The transition-aware planner is implemented and tested. In the 18-position frozen pool, depth 3 supports 5/18 positions and depth 2 supports 16/18; do not simply truncate depth because strategic interactions may be lost. Define and test a defensible candidate-abstraction/dominance rule that preserves targets and intent, then recollect fresh labels with independent development and held-out positions. PPO remains disabled."
+  "nextGate": "The binding-aware transition planner supports 2/18 positions at depth 3 and 16/18 at depth 2. Five depth-3 positions are safely rejected because the existing research search action matcher aliases distinct action bindings; eleven exceed the candidate cap. Any search-matcher correction changes engine-internal behavior and requires explicit scope approval. Do not recollect broadly until this boundary is resolved. PPO remains disabled."
 }

@@ -15,7 +15,21 @@ export interface PlannedCandidate {
   semanticSlots: string[];
 }
 
+function normalizedRef(ref: LegalAction['sourceRef']): unknown {
+  if (!ref) return null;
+  return [ref.playerId, ref.zone, ['hand', 'prompt'].includes(ref.zone) ? null : ref.index ?? null];
+}
+
 function actionKey(action: LegalAction): string {
+  return JSON.stringify([action.type, action.cardId ?? null, action.target ?? null, action.label,
+    action.choiceOperation ?? null, action.selectionCount ?? null, action.amount ?? null, normalizedRef(action.sourceRef),
+    normalizedRef(action.targetRef), (action.choiceRefs ?? []).map(choice => [
+      normalizedRef(choice.sourceRef), normalizedRef(choice.targetRef), choice.cardId ?? null, choice.amount ?? null,
+    ])]);
+}
+
+/** Existing engine search re-resolution key; it cannot distinguish binding collisions. */
+function searchActionKey(action: LegalAction): string {
   return JSON.stringify([action.type, action.cardId, action.target, action.label]);
 }
 
@@ -67,10 +81,18 @@ function replayPlan(
   seed: number,
 ): {env: Environment; decision: Observation | null} {
   const env = create();
-  for (const intended of actions) {
+  for (const [step, intended] of actions.entries()) {
     const current = settlePrompts(env, observation.playerId, observation.turn, seed);
     if (!current) return {env, decision: null};
-    const action = current.legalActions.find(candidate => actionKey(candidate) === actionKey(intended));
+    const matches = current.legalActions.filter(candidate => actionKey(candidate) === actionKey(intended));
+    if (matches.length !== 1) return {env, decision: null};
+    if (step > 0) {
+      const searchMatches = current.legalActions.filter(candidate => searchActionKey(candidate) === searchActionKey(intended));
+      const distinctBindings = new Set(searchMatches.map(actionKey));
+      if (distinctBindings.size > 1)
+        throw new Error(`unsupported position: search cannot uniquely re-resolve bound action ${JSON.stringify(intended.label)}`);
+    }
+    const action = matches[0];
     if (!action) return {env, decision: null};
     env.step(action.id);
   }

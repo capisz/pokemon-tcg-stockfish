@@ -4,7 +4,7 @@
   "implementation": {
     "version": "transition-aware-public-determinization-v1",
     "baseCommit": "32a6a4a40085638106f0fa8fabe0b9fbfe4d9301",
-    "plannerSha256": "722a799e629ae7293b0942ed08af8ac0a0c15b15b6ff15592b1bbef06585f598",
+    "plannerSha256": "dd468fc97a0563be13a51502d2399919c0d86a15a5d9e2d3a56961e7a48e630d",
     "pythonAdapterSha256": "187e17a01e6d381a305f5bd84c03d25e7fcf490fe3a35b00796932d2d0cbf89e",
     "limits": {
       "maxCandidates": 128,
@@ -12,13 +12,13 @@
     }
   },
   "plannerFixture": {
-    "source": "artifacts/learning-mind-v1/raging-bolt-root-action-labels-v2/6890417538b1ef4cc2adb3a1df1f49f4b6b9574869bb511d32ca86fa34950ed3.json",
+    "source": "artifacts/learning-mind-v1/raging-bolt-macro-pool-v2/rows.jsonl#7e8cf31cfabc32ab292b790c7a8b86104227e6c7f6161750868cd611090ad1ca",
     "observationSource": "actor-visible observation only",
-    "suppliedRootActionCount": 3,
-    "candidateCount": 41,
-    "multiActionCandidateCount": 38,
-    "observedDepths": [1, 2, 3],
-    "hypothesisId": "dragapult-training"
+    "suppliedRootActionCount": "all legal root actions",
+    "candidateCount": 9,
+    "multiActionCandidateCount": 4,
+    "observedDepths": [1, 2],
+    "hypothesisId": "mega-lucario"
   },
   "collectorSmoke": {
     "requestedPositions": 1,
@@ -27,8 +27,8 @@
     "unsupportedPositions": 1,
     "rolloutsAttempted": 0,
     "unsupportedReason": "transition-aware macro cap exceeded (128)",
-    "manifestHash": "466463a1d79fb601ab2d60c0a0008f24268fd1f36f98eede8374cbbf1756d8db",
-    "positionRecordPath": "artifacts/learning-mind-v1/transition-macro-smoke-v1/16abab76ed278ed4ce2cfe0c0b8a2e3ca8624f4d4ce85e8620d20bb846dbb662.json",
+    "manifestHash": "5aab836854a0c8d794c3485b76a26dc57ed905d68b292ffbb78ff70843810e9b",
+    "positionRecordPath": "artifacts/learning-mind-v1/transition-macro-binding-smoke-v1/16abab76ed278ed4ce2cfe0c0b8a2e3ca8624f4d4ce85e8620d20bb846dbb662.json",
     "positionRecordSha256": "42470124944b76b35c1a442db85e9b6037f10ac679da841f81bb50f5ed989f35",
     "ignoredLocalArtifact": true
   },
@@ -39,16 +39,19 @@
     "rolloutsRun": 0,
     "errors": 0,
     "byMaxPlanActions": {
-      "1": {"supported": 18, "unsupported": 0},
-      "2": {"supported": 16, "unsupported": 2},
-      "3": {"supported": 5, "unsupported": 13}
+      "2": {"supported": 16, "unsupported": 2, "errors": 0},
+      "3": {"supported": 2, "unsupported": 16, "errors": 0,
+        "unsupportedReasons": {
+          "candidate-cap": 11,
+          "search-action-binding-ambiguity": 5
+        }}
     },
-    "conclusion": "Most overflow begins when expanding to depth three; reducing depth to two improves support but still leaves two unsupported and may omit important turn-plan interactions."
+    "conclusion": "Candidate depth three is blocked both by combinatorial overflow and by ambiguous downstream re-resolution in the existing research search action key; five positions are deliberately failed closed rather than risking a different target."
   },
   "verification": {
     "typescriptTypecheck": "passed",
     "engineTests": {
-      "passed": 70,
+      "passed": 71,
       "failed": 0
     },
     "targetedPythonMacroAndOrchestrationTests": {
@@ -60,5 +63,5 @@
     "playingStrengthClaim": false,
     "ppoEnabled": false
   },
-  "nextGate": "Design a defensible candidate-abstraction/dominance rule that preserves targets and strategic intent, then rerun depth/support coverage before collecting fresh labels."
+  "nextGate": "The planner now preserves action bindings and fails closed when the research search matcher aliases a distinct target. Fixing the search matcher would alter engine-internal search behavior and needs explicit scope approval; otherwise retain typed unsupported positions and continue with only the measured safe subset."
 }

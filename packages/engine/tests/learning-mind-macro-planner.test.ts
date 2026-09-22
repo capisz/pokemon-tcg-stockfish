@@ -35,3 +35,10 @@ test('transition-aware macro planner fails closed when the plan cap is exceeded'
   const observation = readyObservation();
   assert.throws(() => generateTransitionMacroPlans(observation, 42, 1, 2), /cap exceeded/);
 });
+
+test('transition-aware macro planner preserves action bindings when validating visible roots', () => {
+  const observation = readyObservation();
+  const forged = {...observation.legalActions[0], targetRef: {playerId: observation.playerId, zone: 'bench' as const, index: 0}};
+  assert.throws(() => generateTransitionMacroPlans({...observation, legalActions: [forged]}, 42, 128, 1),
+    /omitted actor-visible root actions/);
+});
