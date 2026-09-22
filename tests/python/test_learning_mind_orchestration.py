@@ -54,7 +54,7 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     calls = []
     observation_row = json.loads((dataset / "rows.jsonl").read_text())
     root_action = observation_row["observation"]["legalActions"][0]
-    next_action = {**observation_row["observation"]["legalActions"][-1], "id": "next:0"}
+    next_action = {**observation_row["observation"]["legalActions"][-1], "id": "next:0", "type": "attack"}
 
     class FakeEngine:
         def __init__(self, *args, **kwargs):
@@ -76,7 +76,8 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {"version": CANDIDATE_GENERATOR_VERSION,
         "plannerSha256": "planner", "actionKeySha256": "action-key-v1", "adapterSha256": "adapter"})
     monkeypatch.setattr(experiment, "generate_transition_candidates", lambda root, observation, seed: (
-        candidates_from_transition_plans([{"actions": [root_action, next_action]}]), {"hypothesisId": "public-test-hypothesis"}))
+        candidates_from_transition_plans([{"actions": [root_action, next_action], "completion": "attack"}]),
+        {"hypothesisId": "public-test-hypothesis"}))
     output = tmp_path / "labels"
     first = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                             identity=identity, limit=1, initial=1, maximum=1)
@@ -88,7 +89,7 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
-    assert record["semantics"].startswith("transition-aware legal action prefix")
+    assert record["semantics"].startswith("complete transition-aware attack or deliberate no-attack plan")
     assert record["highConfidencePolicyEligible"] is False
     assert record["generatorHypothesisId"] == "public-test-hypothesis"
     assert len(record["rolloutSeeds"]) == 1

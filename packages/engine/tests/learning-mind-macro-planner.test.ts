@@ -20,7 +20,7 @@ function readyObservation() {
   return observation;
 }
 
-test('transition-aware macro planner emits deterministic legal prefixes with root coverage', () => {
+test('transition-aware macro planner emits deterministic candidates with root coverage and explicit terminal intent', () => {
   const observation = readyObservation();
   const roots = observation.legalActions.slice(0, 3);
   const narrowed = {...observation, legalActions: roots};
@@ -29,6 +29,11 @@ test('transition-aware macro planner emits deterministic legal prefixes with roo
   assert.deepEqual(generated.candidates.filter(candidate => candidate.actions.length === 1)
     .map(candidate => candidate.actions[0].id).sort(), roots.map(action => action.id).sort());
   assert.ok(generated.candidates.every(candidate => candidate.actions.length >= 1 && candidate.actions.length <= 2));
+  for (const candidate of generated.candidates) {
+    const last = candidate.actions.at(-1)!;
+    assert.equal(candidate.completion, last.type === 'attack' ? 'attack'
+      : last.type === 'pass' ? 'no-attack' : 'incomplete');
+  }
 });
 
 test('transition-aware macro planner fails closed when the plan cap is exceeded', () => {

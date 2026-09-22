@@ -7,13 +7,14 @@ import { SeededRandom } from '../../packages/engine/src/random';
 import type { LegalAction, Observation } from '../../packages/engine/src/types';
 import { TrainerType } from '../../vendor/twinleaf/ptcg-server/src/game/store/card/card-types';
 
-export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v2-bound-actions';
+export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v3-terminal-intent';
 export const TRANSITION_MACRO_MAX_CANDIDATES = 128;
 export const TRANSITION_MACRO_MAX_STEPS = 3;
 
 export interface PlannedCandidate {
   actions: LegalAction[];
   semanticSlots: string[];
+  completion: 'attack' | 'no-attack' | 'incomplete';
 }
 
 /** Mirrors the search action identity; equality is checked at every planned step. */
@@ -97,7 +98,7 @@ function replayPlan(
   return {env, decision: settlePrompts(env, observation.playerId, observation.turn, seed)};
 }
 
-/** Enumerate bounded legal prefixes by replaying each prefix from the same actor-visible determinization. */
+/** Enumerate bounded legal plans by replaying each prefix from the same actor-visible determinization. */
 export function generateTransitionMacroPlans(
   observation: Observation,
   seed: number,
@@ -122,20 +123,42 @@ export function generateTransitionMacroPlans(
   const candidates: PlannedCandidate[] = [];
   const queue: PlannedCandidate[] = root.legalActions.filter(action => suppliedRoot.has(legalActionKey(action)))
     .sort((left, right) => left.label.localeCompare(right.label) || left.id.localeCompare(right.id))
-    .map(action => ({actions: [action], semanticSlots: [candidateSlot(action) ?? 'other']}));
-  const seen = new Set<string>();
+    .map(action => {
+      const slot = candidateSlot(action) ?? 'other';
+      return {actions: [action], semanticSlots: [slot],
+        completion: slot === 'attack' ? 'attack' : slot === 'pass' ? 'no-attack' : 'incomplete'};
+    });
+  const visitedPrefixes = new Set<string>();
+  const candidateKeys = new Set<string>();
   while (queue.length) {
     const plan = queue.shift()!;
     const key = JSON.stringify(plan.actions.map(legalActionKey));
-    if (seen.has(key)) continue;
-    seen.add(key);
-    if (candidates.length >= maxCandidates) throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
-    candidates.push(plan);
-    if (plan.actions.length >= maxSteps || plan.semanticSlots.includes('attack') || plan.semanticSlots.includes('pass')) continue;
+    if (visitedPrefixes.has(key)) continue;
+    visitedPrefixes.add(key);
+    const addCandidate = (candidate: PlannedCandidate) => {
+      const candidateKey = JSON.stringify(candidate.actions.map(legalActionKey));
+      if (candidateKeys.has(candidateKey)) return;
+      candidateKeys.add(candidateKey);
+      if (candidates.length >= maxCandidates)
+        throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
+      candidates.push(candidate);
+    };
+    addCandidate(plan);
+    if (plan.completion !== 'incomplete' || plan.actions.length >= maxSteps) continue;
 
     const {decision} = replayPlan(determinization.create, observation, plan.actions, seed);
     if (!decision) continue;
     const occupied = new Set(plan.semanticSlots.filter(slot => slot !== 'other'));
+    const terminalOptions = decision.legalActions
+      .filter(action => action.type === 'attack' || action.type === 'pass')
+      .sort((left, right) => left.type.localeCompare(right.type)
+        || left.label.localeCompare(right.label) || left.id.localeCompare(right.id));
+    for (const action of terminalOptions) {
+      const slot = candidateSlot(action)!;
+      const completed: PlannedCandidate = {actions: [...plan.actions, action],
+        semanticSlots: [...plan.semanticSlots, slot], completion: slot === 'attack' ? 'attack' : 'no-attack'};
+      addCandidate(completed);
+    }
     const options = decision.legalActions
       .filter(action => !action.type.includes('prompt') && action.type !== 'choice')
       .map(action => ({action, slot: candidateSlot(action)}))
@@ -144,7 +167,8 @@ export function generateTransitionMacroPlans(
       .sort((left, right) => left.slot.localeCompare(right.slot)
         || left.action.label.localeCompare(right.action.label) || left.action.id.localeCompare(right.action.id));
     for (const option of options) {
-      queue.push({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot]});
+      queue.push({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot],
+        completion: 'incomplete'});
       if (candidates.length + queue.length > maxCandidates)
         throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
     }

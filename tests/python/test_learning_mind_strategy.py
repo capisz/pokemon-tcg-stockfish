@@ -42,12 +42,21 @@ def test_candidate_generator_never_combines_root_actions_into_unverified_sequenc
 def test_transition_plans_preserve_ordered_actions_and_semantic_roles():
     root = {"id": "1:0", "type": "play-trainer", "label": "Play Judge", "cardId": "MEG-116"}
     attack = {"id": "2:1", "type": "attack", "label": "Attack: Eon Blade", "target": "active"}
-    candidate, = candidates_from_transition_plans([{"actions": [root, attack]}])
+    candidate, = candidates_from_transition_plans([{"actions": [root, attack], "completion": "attack"}])
     assert candidate.action_ids == ("1:0", "2:1")
     assert candidate.action_sequence == (root, attack)
+    assert candidate.turn_intent == "attack"
     assert candidate.supporter == "MEG-116" and candidate.intended_attack == "Attack: Eon Blade"
+    passed = {"id": "2:2", "type": "pass", "label": "End turn"}
+    no_attack, = candidates_from_transition_plans([{"actions": [root, passed], "completion": "no-attack"}])
+    assert no_attack.turn_intent == "no-attack" and no_attack.intended_attack is None
+    incomplete, = candidates_from_transition_plans([{"actions": [root]}])
+    assert incomplete.turn_intent == "incomplete"
+    with pytest.raises(MacroExecutionFailure, match="does not match"):
+        candidates_from_transition_plans([{"actions": [root, passed], "completion": "attack"}])
     with pytest.raises(UnsupportedPosition, match="cap"):
-        candidates_from_transition_plans([{"actions": [root]}, {"actions": [attack]}], cap=1)
+        candidates_from_transition_plans([{"actions": [root]},
+                                          {"actions": [attack], "completion": "attack"}], cap=1)
 
 
 def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():

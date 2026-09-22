@@ -150,7 +150,21 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                     "highConfidencePolicyEligible": False}
                 _atomic_json(output / f"{key}.json", record)
                 continue
-            executable = [candidate for candidate in candidates if candidate.action_sequence]
+            executable = [candidate for candidate in candidates
+                          if candidate.action_sequence and candidate.turn_intent in {"attack", "no-attack"}]
+            if not executable:
+                namespace = "training" if row["split"] == "train" else "development"
+                record = {"schemaVersion": 1, "positionHash": key, "split": row["split"],
+                    "identity": identity, "datasetManifestHash": manifest["manifestHash"],
+                    "familyId": row["familyId"], "opponentArchetype": row["opponentArchetype"],
+                    "opponentPolicyFamily": row["opponentPolicyFamily"], "observation": observation,
+                    "labels": [], "status": "unsupported",
+                    "unsupportedReason": "no complete attack or deliberate no-attack plan within the frozen action-depth bound",
+                    "seedNamespace": namespace, "generatorSeed": generator_seed,
+                    "semantics": "transition-aware candidate generation produced only incomplete prefixes",
+                    "highConfidencePolicyEligible": False}
+                _atomic_json(output / f"{key}.json", record)
+                continue
 
             def rollout(candidate, seed):
                 root_action = legal.get(candidate.action_ids[0])
@@ -183,10 +197,11 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "observation": observation, "labels": labels,
                       "status": "collected", "generatorSeed": generator_seed,
                       "generatorHypothesisId": generation.get("hypothesisId"),
-                      "candidateCount": len(candidates),
+                      "candidateCount": len(executable),
+                      "incompletePrefixCount": len(candidates) - len(executable),
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
-                      "semantics": "transition-aware legal action prefix from one actor-visible public determinization; later steps are revalidated at rollout",
+                      "semantics": "complete transition-aware attack or deliberate no-attack plan from one actor-visible public determinization; later steps are revalidated at rollout",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")

@@ -8,11 +8,12 @@ from typing import Callable, Iterable
 from .schema import UnsupportedPosition, identity_hash
 
 MAX_CANDIDATES = 128
-CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v2-bound-actions"
+CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v3-terminal-intent"
 
 
 @dataclass(frozen=True)
 class MacroCandidateV1:
+    turn_intent: str = "incomplete"
     intended_attack: str | None = None
     attack_target: str | None = None
     supporter: str | None = None
@@ -81,6 +82,14 @@ def candidates_from_transition_plans(plans: Iterable[dict], *, cap: int = MAX_CA
         actions = tuple(plan.get("actions") or ())
         if not actions or any(not isinstance(action, dict) or not action.get("id") for action in actions):
             raise MacroExecutionFailure("transition planner returned an empty or malformed action sequence")
+        completion = plan.get("completion", "incomplete")
+        final_type = actions[-1].get("type")
+        if completion not in {"attack", "no-attack", "incomplete"}:
+            raise MacroExecutionFailure("transition planner returned an unknown terminal intent")
+        if (completion == "attack" and final_type != "attack") or (completion == "no-attack" and final_type != "pass"):
+            raise MacroExecutionFailure("transition planner terminal intent does not match its final legal action")
+        if completion == "incomplete" and final_type in {"attack", "pass"}:
+            raise MacroExecutionFailure("transition planner marked a terminal action as an incomplete prefix")
         typed = [(_kind(action), action) for action in actions]
         attack = next((action for kind, action in typed if kind == "attack"), None)
         supporter = next((action for kind, action in typed if kind == "supporter"), None)
@@ -88,6 +97,7 @@ def candidates_from_transition_plans(plans: Iterable[dict], *, cap: int = MAX_CA
         energy = next((action for kind, action in typed if kind == "energy"), None)
         disruption = next((action for kind, action in typed if kind == "disruption"), None)
         candidate = MacroCandidateV1(
+            turn_intent=str(completion),
             intended_attack=_name(attack) if attack else None,
             attack_target=str(attack.get("target")) if attack and attack.get("target") is not None else None,
             supporter=_name(supporter) if supporter else None,
