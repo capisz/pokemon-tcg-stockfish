@@ -159,3 +159,22 @@ Base: `7543298`
 
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
+
+## Bound-action search and planner v2
+
+- Research search now keys choices by action type/card, target, label, source
+  and target references, staged choice references/operation/count, and amount.
+  Physical copies in hand/prompt remain interchangeable; board indices do not.
+  This changed internal research search behavior only; no public API or
+  production policy changed.
+- The planner uses the same semantic action key and retains a runtime parity
+  check. A full 18-position, no-rollout audit found depth-three support on 4/18
+  and depth-two support on 16/18, with zero errors. The five prior binding
+  ambiguity rejections are resolved; 14 depth-three positions still exceed the
+  128-candidate cap.
+- A fresh one-position collector smoke recorded over-cap status with zero
+  rollouts. Full pool evidence and artifact hashes are in
+  `transition-macro-bound-actions-v2-2026-09-22.json`.
+- The shared-key change passed `npm run typecheck`, all 74 engine tests, and
+  seven targeted Python tests. No new rollout labels, ranker fit, policy
+  promotion, or PPO run was started.

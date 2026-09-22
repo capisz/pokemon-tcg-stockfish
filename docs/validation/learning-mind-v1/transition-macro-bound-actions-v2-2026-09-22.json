@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "implementation": {
+    "version": "transition-aware-public-determinization-v2-bound-actions",
+    "plannerSha256": "3e9c46e62ac980d2169d62c4b206a2b2f3bde4c7d0f2bee155466456b8b43bf9",
+    "actionKeySha256": "b3f0256747420a0fc122d185d7c2c9bb893f8e1826390da392c4c003211021b7",
+    "adapterSha256": "18b130c9bb043941c352c23b915373dd3e60e0602ef4589c00e713dc5e22fe5c",
+    "searchIdentityCommit": "eb14454"
+  },
+  "actionIdentity": {
+    "preserves": ["source/target refs", "board slot indices", "staged choice refs", "choice operation", "selection count", "amount"],
+    "collapses": "same-card hand/prompt copies only",
+    "engineApiChanged": false,
+    "productionPolicyChanged": false
+  },
+  "fixture": {
+    "positionHash": "7e8cf31cfabc32ab292b790c7a8b86104227e6c7f6161750868cd611090ad1ca",
+    "hypothesisId": "mega-lucario",
+    "candidateCount": 9,
+    "multiActionCandidateCount": 4,
+    "depths": [1, 2]
+  },
+  "frozenPoolSupportAudit": {
+    "datasetManifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+    "positions": 18,
+    "rolloutsRun": 0,
+    "errors": 0,
+    "byMaxPlanActions": {
+      "2": {"supported": 16, "unsupported": 2, "unsupportedReason": "candidate-cap"},
+      "3": {"supported": 4, "unsupported": 14, "unsupportedReason": "candidate-cap"}
+    },
+    "interpretation": "All five previous search-action-binding rejections are resolved; candidate branching remains the limiting factor."
+  },
+  "collectorSmoke": {
+    "positions": 1,
+    "supportedPositions": 0,
+    "unsupportedPositions": 1,
+    "rolloutsRun": 0,
+    "reason": "transition-aware macro cap exceeded (128)",
+    "manifestHash": "2bae658a23210394b5d7a4e104856ef63a19e7fea2f8f69fd7260e088f4fda95",
+    "positionRecordSha256": "42470124944b76b35c1a442db85e9b6037f10ac679da841f81bb50f5ed989f35",
+    "ignoredLocalArtifacts": true
+  },
+  "verification": {
+    "typescriptTypecheck": "passed",
+    "engineTests": {"passed": 74, "failed": 0},
+    "targetedPythonTests": {"passed": 7, "deselected": 10},
+    "playingStrengthClaim": false,
+    "ppoEnabled": false
+  },
+  "nextGate": "Reduce candidate branching with a tested abstraction that retains all meaningful action bindings and plan intent, then rerun support coverage before any broad rollout-label collection."
+}

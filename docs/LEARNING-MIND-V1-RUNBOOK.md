@@ -243,13 +243,15 @@ pruning. A smoke run found one such overflow, so support-rate measurement and
 branching reduction under the same legality guarantees are required before
 large-scale collection.
 
-The initial (coarse-key) 18-position audit found depth-three support on 5/18
-positions and depth-two support on 16/18. After the planner began checking
-complete action bindings against the research search matcher, conservative
-depth-three support fell to 2/18: 11 positions hit the cap and five contain
-downstream action-key aliases. These are recorded as unsupported. Do not resolve
-this by blindly reducing depth: retain targets, preserve overflow, and obtain
-explicit scope approval before changing engine-internal search behavior.
+The initial (coarse-key) 18-position audit found depth-three support on 5/18.
+The binding-aware audit conservatively found 2/18 because the old search key
+could alias different targets. The research search now shares a semantic key
+that preserves target refs, slot indices, staged choice bindings and amounts;
+same-card hand/prompt copies alone are interchangeable. The v2 audit resolves
+all five former alias cases: depth-three support is now 4/18 and depth-two
+support is 16/18. All remaining unsupported positions exceed 128 candidates.
+Do not blindly reduce depth or silently prune; design and test an abstraction
+that preserves plan intent and all meaningful targets before collecting broadly.
 
 For every selected position:
 

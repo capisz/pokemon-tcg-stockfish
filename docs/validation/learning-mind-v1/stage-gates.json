@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "The binding-aware transition planner supports 2/18 positions at depth 3 and 16/18 at depth 2. Five depth-3 positions are safely rejected because the existing research search action matcher aliases distinct action bindings; eleven exceed the candidate cap. Any search-matcher correction changes engine-internal behavior and requires explicit scope approval. Do not recollect broadly until this boundary is resolved. PPO remains disabled."
+  "nextGate": "The shared binding-aware key resolved all five former search-action ambiguity cases. The v2 planner supports 4/18 positions at depth 3 and 16/18 at depth 2; all remaining unsupported positions exceed the 128-candidate cap. Develop and test a semantics-preserving candidate abstraction that retains targets and plan intent, then rerun support coverage before broad rollout-label collection. PPO remains disabled."
 }
