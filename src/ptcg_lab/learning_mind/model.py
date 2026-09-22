@@ -26,7 +26,8 @@ class StrategyTransformerV1(nn.Module):
                                            dim_feedforward=ff_width, dropout=0.0,
                                            activation="gelu", batch_first=True,
                                            norm_first=True)
-        self.encoder = nn.TransformerEncoder(block, num_layers=layers, norm=nn.LayerNorm(width))
+        self.encoder = nn.TransformerEncoder(block, num_layers=layers, norm=nn.LayerNorm(width),
+                                             enable_nested_tensor=False)
         self.option_type_embedding = nn.Embedding(max(ACTION_TYPES.values()) + 1, 32, padding_idx=0)
         self.option_projection = nn.Linear(OPTION_DIM + 32, width)
         self.source_projection = nn.Linear(width, width, bias=False)

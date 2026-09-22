@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "sourceBaseline": "strategy-baseline-v1-2026-09-21",
+  "sourceCommit": "7543298",
+  "scheduledReplays": 192,
+  "auditedReplays": 192,
+  "actorDecisions": 41675,
+  "unsupportedPositions": 0,
+  "representationParity": true,
+  "privateViewRule": "Only frame.observations[frame.actor] was supplied to each seat tracker and encoder.",
+  "verification": {
+    "artifactHashes": "All 192 gzip and decoded SHA-256 values matched the frozen replay manifest.",
+    "legalActions": "Every selected action was represented in exactly one semantic action class.",
+    "fullLocalAuditPath": "/tmp/learning-mind-representation-parity.json",
+    "fullLocalAuditSha256": "d436ba037c5ecdb976b3d2d6d087f3a9fd3a1d146895ac29f3bc9933fbfd5556"
+  },
+  "scope": "Representation gate only; this does not establish policy quality or playing strength."
+}
