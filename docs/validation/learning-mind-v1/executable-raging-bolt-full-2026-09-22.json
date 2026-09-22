@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "dataset": {
+    "positions": 18,
+    "splits": {"train": 12, "development": 3, "heldout": 3},
+    "manifestHash": "0cd96292fdac81e49780f739e47e6c6f1b7958deb12b4154d21ce392818c9d11",
+    "positionFileCount": 18,
+    "positionFileHashesVerified": true,
+    "policyLabels": 0
+  },
+  "rollouts": {
+    "candidatePlans": 174,
+    "attempted": 10080,
+    "completed": 10000,
+    "typedExecutionErrors": 80,
+    "truncations": 0,
+    "multiActionPlans": 13,
+    "multiActionCompletedRollouts": 512,
+    "multiActionTypedErrors": 80,
+    "semantics": "executable action sequences; prompt choices resolve heuristically; incomplete or failed plans are excluded from ranker labels"
+  },
+  "ranker": {
+    "kind": "xgboost-macro-ranker-v1",
+    "manifestHash": "f3ef182c3f7a98a707ca0eaef16a3ddaa75e5e498098eb40a2ee8735d2e7319c",
+    "modelSha256": "0e620d25250a3e4b797d9be5a4782c961045461952eec1bd9790bb053e043846",
+    "trainingPositions": 12,
+    "trainingCandidates": 98,
+    "training": {
+      "top1RelativeRegret": 0.0,
+      "top3Recall": 0.9166666666666666,
+      "pairwiseOrderingAccuracy": 0.9934640522875817
+    },
+    "development": {
+      "positions": 3,
+      "top1RelativeRegret": 0.002041927414058694,
+      "top3Recall": 0.6666666666666666,
+      "pairwiseOrderingAccuracy": 0.7115384615384616
+    },
+    "primaryHeldoutEvaluation": "not reported by this fitter; the three held-out pool positions are used only where included in explicit fold tests",
+    "frozenPolicyFamilyHoldouts": [
+      {
+        "family": "heuristic",
+        "positions": 6,
+        "top1RelativeRegret": 0.03196106214116539,
+        "top3Recall": 0.16666666666666666,
+        "pairwiseOrderingAccuracy": 0.40370370370370373
+      },
+      {
+        "family": "1ff34f893540373ebb2da6433b3b67a0cdbcb2b711220cf08767cdeb85a08e6f",
+        "positions": 12,
+        "top1RelativeRegret": 0.021105964182121868,
+        "top3Recall": 0.5,
+        "pairwiseOrderingAccuracy": 0.5751173708920188
+      }
+    ],
+    "acceptance": "review-required",
+    "playingStrengthClaim": false
+  },
+  "identity": {
+    "engineBuildHash": "1da906003526a010eb3f22946aca5b7d195f8885fd7f843ea9b2fa71ca418d54",
+    "deckManifestHash": "a575bc9bc3da927ee893940609083ea26f8c85382fc5734b2ad1e0a715cc6550",
+    "featureSchemaHash": "aed35ce695f6471e0cd6985b839dc3083435868014c88fc13058ce51bc56125a",
+    "trackerRulesHash": "f9ec65255a2fd06cc0c547ee592124c94f9e12235ae569fb2600f67f5a8874c1",
+    "cardMetadataHash": "0b6d9e0b00649aabc2f4f9d910104afb17ffb7317eea446124de5ac3f02d8ea2",
+    "actionEquivalenceHash": "ef2b7483148402dfbaaca84a7a221fa3dc2fb09a3995f28061c29ec159197828",
+    "identityHash": "8ca586327a6510b073476ec5da78e3da5e82d23a3a8cc43b9dcc5a493b240eae"
+  },
+  "gates": {
+    "heldOutLabelWin": false,
+    "targetProbeWin": false,
+    "severityThreeRegressionCleared": false,
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false,
+    "trustedPromotion": false
+  }
+}

@@ -10,5 +10,5 @@
   "ppoEnabled": false,
   "continuousOperationEnabled": false,
   "trustedPromotion": false,
-  "nextGate": "Run the default 16-to-64 rollout allocation over the 18-position Raging Bolt pool, implement full turn-plan execution, and obtain human-reviewed labels for the Crustle Fan and Dragapult Judge queues. Then retrain and rerun frozen v1.2 probes. Current smoke evidence does not enable PPO."
+  "nextGate": "Repair multi-action macro execution and explicit prompt handling; expand the frozen position pool and report independent held-out performance. Then obtain human-reviewed labels for the Crustle Fan and Dragapult Judge queues and rerun frozen v1.2 probes. Current macro evidence does not enable PPO."
 }

@@ -68,5 +68,28 @@ Base: `7543298`
   It is not a high-confidence macro-plan label and changes no promotion gate.
 - Frozen hashes are recorded in `raging-bolt-macro-smoke-2026-09-22.json`.
 
+## Executable Raging Bolt macro evidence
+
+- The 18-position frozen pool completed at the default 16-to-64 rollout
+  allocation: 174 candidate plans, 10,000 completed rollouts, 80 typed
+  execution failures, and zero truncations. All 80 failures came from
+  multi-action plans; their outcomes were excluded from ranker labels.
+- The ranker used 12 training positions and 98 candidates. On three development
+  positions it measured 0.0020 mean top-1 relative regret, 0.667 top-3 recall,
+  and 0.712 pairwise ordering accuracy. This sample is too small to establish
+  generalization.
+- Frozen policy-family folds were weaker: held-out regret was 0.032 / 0.021,
+  top-3 recall 0.167 / 0.500, and pairwise accuracy 0.404 / 0.575. The fitter
+  did not report a primary held-out split score, and the result is explicitly
+  not evidence of playing-strength improvement.
+- The executable sequence harness improves on root-action proxy semantics, but
+  still uses heuristic prompt resolution and has incomplete multi-action
+  execution. Fix that coverage, expand the frozen pool, then rerun before
+  considering strategy-probe evaluation. PPO and continuous operation remain
+  disabled.
+- Compact results and all frozen identities are recorded in
+  `executable-raging-bolt-full-2026-09-22.json`; raw rollout artifacts and the
+  model remain ignored under `artifacts/learning-mind-v1/`.
+
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
