@@ -305,7 +305,12 @@ def analyze_probes(rows: list[dict]) -> tuple[dict, list[dict], list[dict]]:
                                  "principleId": probe.principle_id, "severity": probe.severity}
                                 for item in bucket["failures"])
     gaps.sort(key=lambda item: (-item["gapScore"], -item["headlineFailures"], item["policy"], item["probeId"]))
-    return {"schemaVersion": 1, "probes": results}, gaps[:5], all_failures
+    return {"schemaVersion": 1,
+            "firstPlayerPreference": {
+                "status": "structurally-unmeasurable",
+                "reason": "The benchmark scheduler fixes first player rather than presenting a policy decision."
+            },
+            "probes": results}, gaps[:5], all_failures
 
 
 def outcome_metrics(rows: list[dict]) -> dict:
@@ -464,6 +469,7 @@ def report_markdown(frozen: dict, rows: list[dict], probe_results: dict, context
              f"- Deck-outs: {context['deckOuts']}.",
              f"- P3 guard-filtered decisions: {context['guardFilteredDecisions']['P3']}.",
              f"- P4 searched/fallback decisions: {context['search']['P4']['searchedDecisions']} / {context['search']['P4']['fallbackDecisions']}.",
+             "- First-player preference is structurally unmeasurable because the benchmark scheduler fixes first player rather than presenting a policy decision.",
              "- W/D/L/unfinished Wilson intervals by perspective, seat, and first player are in `context-metrics.json`.", "",
              "## Largest measured strategic gaps", "",
              "| Rank | Policy | Probe | Failures / headline n | Severity | Gap score |",

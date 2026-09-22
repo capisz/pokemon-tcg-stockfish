@@ -180,6 +180,7 @@ def test_replay_checkpoint_hash_resume_and_private_actor_view(tmp_path):
     rows.write_text(json.dumps(row) + "\n")
     assert baseline.load_rows(rows)[row["key"]]["replay"]["sha256"] == artifact["sha256"]
     results, gaps, _ = baseline.analyze_probes([row])
+    assert results["firstPlayerPreference"]["status"] == "structurally-unmeasurable"
     target = next(item for item in results["probes"] if item["policy"] == "P1" and item["id"] == "dragapult-information-poke-pad-first")
     assert target["headline"] == {"k": 1, "n": 1, "rate": 1.0,
                                   "wilson95": probes.wilson(1, 1), "sufficient": False}
