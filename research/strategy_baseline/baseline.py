@@ -365,7 +365,9 @@ def teaching_seed(policy: str, position_hash: str) -> int:
 def typescript_choices(tsx: Path, root: Path, records: list[dict]) -> list[str]:
     payload = [{"observation": record["observation"], "seed": teaching_seed("P1", record["positionHash"])}
                for record in records]
-    loader = tsx.parent.parent / "tsx/dist/loader.mjs"
+    # `.bin/tsx` resolves from `<node_modules>/.bin`, so the package loader is
+    # a sibling of `.bin`, not nested below a second `tsx` directory.
+    loader = tsx.parent.parent / "tsx" / "dist" / "loader.mjs"
     if not loader.exists():
         raise FileNotFoundError(f"tsx loader is unavailable: {loader}")
     command = ["node", "--import", str(loader), str(root / "research/strategy_baseline/policy_eval.ts")]

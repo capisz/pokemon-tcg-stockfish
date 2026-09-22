@@ -211,3 +211,27 @@ def test_typescript_saved_observation_evaluator_matches_worker(tmp_path):
         worker = engine.request("choose", {"policy": "heuristic", "seed": 123456})["id"]
     record = {"observation": observation, "positionHash": "fixed"}
     assert baseline.typescript_choices(tsx, ROOT, [record]) == [worker]
+
+
+def test_typescript_loader_is_resolved_beside_node_modules_bin(tmp_path, monkeypatch):
+    node_modules = tmp_path / "node_modules"
+    tsx = node_modules / ".bin" / "tsx"
+    loader = node_modules / "tsx" / "dist" / "loader.mjs"
+    tsx.parent.mkdir(parents=True)
+    loader.parent.mkdir(parents=True)
+    tsx.touch()
+    loader.touch()
+
+    captured = {}
+
+    class Result:
+        stdout = '[{"actionId":"chosen"}]'
+
+    def fake_run(command, **kwargs):
+        captured["command"] = command
+        return Result()
+
+    monkeypatch.setattr(baseline.subprocess, "run", fake_run)
+    records = [{"observation": {}, "positionHash": "fixed"}]
+    assert baseline.typescript_choices(tsx, ROOT, records) == ["chosen"]
+    assert captured["command"][2] == str(loader)
