@@ -108,11 +108,19 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 root_action = legal.get(candidate.action_ids[0])
                 if root_action is None: return {"status": "error", "reason": "macro-root-no-longer-legal"}
                 narrowed = copy.deepcopy(observation); narrowed["legalActions"] = [root_action]
+                plan_actions = [legal.get(identifier) for identifier in candidate.action_ids]
+                if any(action is None for action in plan_actions):
+                    return {"status": "error", "reason": "macro-action-no-longer-legal"}
                 result = engine.request("search", {"observation": narrowed, "seed": seed, "budgetMs": 120000,
                                                     "method": "rollout", "iterations": 1,
-                                                    "maxRolloutDecisions": horizon})
+                                                    "maxRolloutDecisions": horizon,
+                                                    "macroPlanActions": plan_actions})
                 alternative = next((item for item in result.get("alternatives", [])
                                     if item.get("actionId") == root_action["id"] and item.get("visits", 0) > 0), None)
+                execution = result.get("macroPlanExecution") or {}
+                if execution.get("requested") and not execution.get("completed"):
+                    reason = (execution.get("failures") or [{"reason": "macro-plan-unexecuted"}])[0]["reason"]
+                    return {"status": "error", "reason": reason}
                 if result.get("status") != "complete" or alternative is None or alternative.get("score") is None:
                     return {"status": "error", "reason": "search-rollout-unavailable"}
                 return {"status": "finished", "score": float(alternative["score"])}
@@ -127,7 +135,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "observation": observation, "labels": labels,
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
-                      "semantics": "root-action-proxy; later turn-plan fields are not enforced and are not policy labels",
+                      "semantics": "executable macro action sequence; prompt choices resolve heuristically and failures are typed",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")

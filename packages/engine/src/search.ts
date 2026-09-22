@@ -31,7 +31,7 @@ function leafResult(o: Observation, root: number): number {
 }
 
 /** Executable imperfect-information research search. No live Environment or true hidden state input. */
-export function search(params: {observation: Observation; method?: 'rollout' | 'ismcts'; budgetMs?: number; seed?: number; iterations?: number; maxRolloutDecisions?: number; knownOpponentDeckId?: string; priorRevealedCards?: string[]; rootPriors?: {actionId:string; probability:number}[]; leafModel?:LeafEnvelope}) {
+export function search(params: {observation: Observation; method?: 'rollout' | 'ismcts'; budgetMs?: number; seed?: number; iterations?: number; maxRolloutDecisions?: number; knownOpponentDeckId?: string; priorRevealedCards?: string[]; rootPriors?: {actionId:string; probability:number}[]; macroPlanActions?: LegalAction[]; leafModel?:LeafEnvelope}) {
   const start = performance.now();
   const o = params.observation;
   const method = params.method ?? 'rollout';
@@ -54,6 +54,9 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
   const totalWeight=hypotheses.reduce((n,h)=>n+h.weight,0);
   hypotheses.forEach(h=>h.weight/=totalWeight);
   const roots = new Map<string, Edge>(o.legalActions.map(action => [actionKey(action), {visits: 0, total: 0, squares: 0, action}]));
+  const macroPlan = params.macroPlanActions ?? [];
+  if (macroPlan.length && (macroPlan.length > 5 || actionKey(macroPlan[0]) !== actionKey(o.legalActions[0])))
+    throw new Error('Macro plan must start with the sole supplied root action and contain at most five actions.');
   if(params.rootPriors){
     const values=new Map(params.rootPriors.map(p=>[p.actionId,p.probability]));
     if([...values].some(([id,p])=>!o.legalActions.some(a=>a.id===id)||!Number.isFinite(p)||p<0))throw new Error('Invalid root policy priors.');
@@ -62,7 +65,7 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
     for(const edge of roots.values())edge.prior=(values.get(edge.action.id)??0)/total;
   }
   const tree = new Map<string, Node>();
-  let iterations = 0; let aborted = 0; let cutoffCount = 0;
+  let iterations = 0; let aborted = 0; let cutoffCount = 0; let planCompleted = 0; const planFailures = new Map<string,number>();
   const select = (edges: Edge[], visits: number, actor: number) => {
     const unvisited = edges.filter(e => e.visits === 0);
     if (unvisited.length) return unvisited.reduce((a,b)=>(b.prior??0)>(a.prior??0)?b:a,unvisited[rng.int(unvisited.length)]);
@@ -85,12 +88,23 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
     const steps = [continuationStep(rootObservation, rootAction, o.playerId)];
     try {
       env.step(rootAction.id);
+      let planCursor = macroPlan.length ? 1 : 0;
       let expanded = false;
       for (let depth = 1; depth < horizon && env.status === 'running'; depth++) {
         if (performance.now() - start >= budget) break;
         const obs = env.observe();
         let chosen: LegalAction;
-        if (method === 'ismcts' && !expanded) {
+        if (planCursor < macroPlan.length) {
+          if (obs.playerId !== o.playerId || obs.turn !== rootObservation.turn)
+            throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:turn-ended`);
+          if (obs.prompt) chosen = chooseAction(obs, 'heuristic', rng);
+          else {
+            const intended = macroPlan[planCursor];
+            const match = obs.legalActions.find(action => actionKey(action) === actionKey(intended));
+            if (!match) throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:action-not-legal`);
+            chosen = match; planCursor++;
+          }
+        } else if (method === 'ismcts' && !expanded) {
           const key = infoKey(obs);
           let node = tree.get(key);
           if (!node) {node = {visits: 0, edges: new Map()}; tree.set(key, node);}
@@ -104,6 +118,8 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
         if (steps.length < 8) steps.push(continuationStep(obs, chosen, o.playerId));
         env.step(chosen.id);
       }
+      if (planCursor < macroPlan.length) throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:horizon-ended`);
+      if (macroPlan.length) planCompleted++;
       let value: number;
       let outcome: Replay['outcome'] = null;
       if (env.status === 'finished') {
@@ -119,7 +135,11 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
       };
       for (const {edge, node} of path) {edge.visits++; edge.total += value; edge.squares += value * value; if (node) node.visits++;}
       iterations++;
-    } catch (error) {aborted++; warnings.add(`Some sampled continuations failed and were excluded: ${error instanceof Error ? error.message : JSON.stringify(error)}`);}
+    } catch (error) {
+      aborted++; const message=error instanceof Error ? error.message : JSON.stringify(error);
+      if(message.startsWith('MACRO_PLAN_UNEXECUTABLE:'))planFailures.set(message,(planFailures.get(message)??0)+1);
+      warnings.add(`Some sampled continuations failed and were excluded: ${message}`);
+    }
   }
   if (cutoffCount) warnings.add(`${cutoffCount} of ${iterations} completed samples used ${learned?'learned':'heuristic'} horizon/budget evaluation, not terminal outcomes.`);
   if (aborted) warnings.add(`${aborted} continuations were excluded due to unsupported or failed transitions.`);
@@ -128,6 +148,8 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
     status: iterations ? 'complete' as const : 'unavailable' as const, method, iterations, elapsedMs: performance.now() - start,
     valueContext: learned?{kind:'learned',dataTier:learned.dataTier,label:learned.dataTier==='experimental'?'Experimental learned':'Learned',modelVersion:learned.modelVersion,checkpointHash:learned.checkpointHash,calibrated:false}:{kind:'heuristic',calibrated:false},
     hypotheses: hypotheses.map(h=>h.id), hypothesisWeights:hypotheses.map(({id,archetype,kind,weight})=>({id,archetype,kind,weight})), treeNodes: tree.size, warnings: [...warnings],
+    macroPlanExecution: {requested: macroPlan.length > 0, actionCount: macroPlan.length, completed: planCompleted,
+      failures: [...planFailures].map(([reason,count])=>({reason,count}))},
     alternatives: [...roots.values()].map(e => {
       const mean = e.visits ? e.total / e.visits : null;
       const stderr = e.visits > 1 ? Math.sqrt(Math.max(0, e.squares / e.visits - mean! * mean!) / (e.visits - 1)) : null;

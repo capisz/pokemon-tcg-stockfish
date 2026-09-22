@@ -78,9 +78,10 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
-    assert record["semantics"].startswith("root-action-proxy")
+    assert record["semantics"].startswith("executable macro action sequence")
     assert record["highConfidencePolicyEligible"] is False
     assert len(record["rolloutSeeds"]) == 1
+    assert all(call[1].get("macroPlanActions") for call in calls)
     assert all(label["outcomes"] == {"finished": 1, "truncated": 0, "error": 0}
                for label in record["labels"])
     with pytest.raises(ValueError, match="configuration drift"):

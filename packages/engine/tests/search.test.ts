@@ -63,3 +63,18 @@ test('sampled continuation redacts opponent private prompt selections', () => {
   const publicAction = continuationStep(privateObservation, {id: '1:1', type: 'attack', label: 'Attack: Aura Jab'}, observation.playerId);
   assert.equal(publicAction.label, 'Attack: Aura Jab');
 });
+
+test('macro rollout re-resolves declared actions and reports typed execution failure', () => {
+  const observation = ready().observe(); const root = observation.legalActions[0];
+  const narrowed = {...observation, legalActions: [root]};
+  const completed = search({observation: narrowed, method: 'rollout', iterations: 1,
+    maxRolloutDecisions: 4, seed: 91, macroPlanActions: [root]});
+  assert.equal(completed.status, 'complete');
+  assert.deepEqual(completed.macroPlanExecution, {requested: true, actionCount: 1, completed: 1, failures: []});
+  const impossible = search({observation: narrowed, method: 'rollout', iterations: 1,
+    maxRolloutDecisions: 4, seed: 91, macroPlanActions: [root, {id: 'x', type: 'attack', label: 'Impossible'}]});
+  assert.equal(impossible.status, 'unavailable');
+  assert.ok('macroPlanExecution' in impossible);
+  assert.equal(impossible.macroPlanExecution.completed, 0);
+  assert.match(impossible.macroPlanExecution.failures[0].reason, /^MACRO_PLAN_UNEXECUTABLE:/);
+});
