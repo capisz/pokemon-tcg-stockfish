@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-22",
+  "candidateGeneratorVersion": "root-legal-action-only-v2",
+  "semantics": "single legal root-action candidate; not a complete turn-plan label",
+  "positionCount": 1,
+  "candidateCount": 15,
+  "actionIdsPerCandidate": 1,
+  "rollouts": {
+    "attempted": 30,
+    "completed": 30,
+    "typedErrors": 0,
+    "truncations": 0
+  },
+  "labelManifestHash": "d5eccb518243c5f076b2446acdbd4fdeb219ac43a31ecd9c062394a42b7f6780",
+  "positionFileSha256": "170df23eb5e3ec2deac8881f848b5f2ae9f31ffeaa72240114fa7f7dd748f1bc",
+  "identityHash": "8ca586327a6510b073476ec5da78e3da5e82d23a3a8cc43b9dcc5a493b240eae",
+  "highConfidencePolicyLabels": 0,
+  "playingStrengthClaim": false
+}

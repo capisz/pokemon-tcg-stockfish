@@ -109,6 +109,11 @@ Base: `7543298`
 - Next: collect under a new output directory with generator v2, then implement
   a transition-aware multi-step planner before describing results as turn-plan
   learning.
+- A live one-position generator-v2 smoke completed 15 root actions × two
+  rollouts (30/30 complete, zero typed errors, zero truncations). Its compact
+  manifest and hashes are recorded in `root-action-generator-smoke-2026-09-22.json`.
+  This validates the corrected collector path only; a full fresh pool and
+  transition-aware planner are still required.
 
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
