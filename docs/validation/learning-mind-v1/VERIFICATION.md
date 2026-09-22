@@ -12,14 +12,14 @@ Base: `7543298`
 - Frozen representation audit: 192/192 replay hashes verified, 41,675 actor
   decisions encoded, zero unsupported positions, and every selected legal action
   represented exactly once.
-- Full Python suite: 282 passed.
+- Full Python suite: 283 passed.
 - Full engine suite: 67 passed.
 - TypeScript typecheck: passed.
 - Focused new plus baseline/pilot/decision-guard suite: 58 passed.
 - Engine transport and portable feature parity retry: 11 passed. The initial
   full-suite invocation began before the isolated worktree's temporary
-  dependency link was available; no source change was needed, and the clean
-  full Python rerun passed 282/282.
+  dependency link was available; no source change was needed, and the final
+  full Python rerun passed 283/283.
 - `git diff --check`: passed.
 
 ## Deliberately closed gates
