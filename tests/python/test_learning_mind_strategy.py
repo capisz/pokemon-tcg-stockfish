@@ -74,8 +74,9 @@ def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
 
 def test_rollout_errors_are_not_fabricated_scores():
     candidate = generate_candidates(observation())[:1]
-    rows = label_candidates(candidate, "position", lambda c, s: {"status": "truncated"}, initial=2, maximum=2)
+    rows = label_candidates(candidate, "position", lambda c, s: {"status": "truncated", "reason": "fixed-horizon"}, initial=2, maximum=2)
     assert rows[0]["completedRollouts"] == 0 and rows[0]["expectedResult"] is None
+    assert rows[0]["outcomeReasons"] == {"fixed-horizon": 2}
 
 
 def test_rollout_accepts_bounded_horizon_values_but_rejects_invalid_scores():

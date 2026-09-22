@@ -147,6 +147,7 @@ def test_macro_collector_treats_search_horizon_cutoff_as_truncated_not_a_label(t
     assert label["expectedResult"] is None
     assert label["completedRollouts"] == 0
     assert label["outcomes"] == {"finished": 0, "truncated": 1, "error": 0}
+    assert label["outcomeReasons"] == {"search-rollout-horizon-cutoff": 1}
 
 
 def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):

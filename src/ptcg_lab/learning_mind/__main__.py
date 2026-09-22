@@ -44,6 +44,7 @@ def main(argv=None) -> int:
     collect.add_argument("--limit", type=int, default=20)
     collect.add_argument("--initial", type=int, default=16)
     collect.add_argument("--maximum", type=int, default=64)
+    collect.add_argument("--horizon", type=int, default=16)
     collect.add_argument("--position-hash", help="collect one exact position from the frozen dataset")
     rank = sub.add_parser("fit-macro-ranker")
     rank.add_argument("--labels", type=Path, required=True)
@@ -81,7 +82,7 @@ def main(argv=None) -> int:
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = collect_macro_labels(root=root, dataset_dir=args.dataset.resolve(), output=args.output.resolve(),
                                       identity=identity, limit=args.limit, initial=args.initial, maximum=args.maximum,
-                                      position_hash=args.position_hash)
+                                      horizon=args.horizon, position_hash=args.position_hash)
     elif args.command == "build-macro-position-pool":
         root = args.root.resolve(); identity = runtime_identity(root)
         result = build_macro_position_pool(output=args.output.resolve(),

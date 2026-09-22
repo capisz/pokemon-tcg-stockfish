@@ -141,7 +141,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
         raise ValueError("label generation may not consume promotion seeds")
     if not candidates or not 1 <= initial <= maximum <= 64:
         raise ValueError("invalid rollout allocation")
-    records = {item.key(): {"scores": [], "finished": 0, "truncated": 0, "error": 0}
+    records = {item.key(): {"scores": [], "finished": 0, "truncated": 0, "error": 0, "reasons": {}}
                for item in candidates}
 
     def run(indices, selected):
@@ -157,7 +157,11 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                     records[candidate.key()]["scores"].append(float(score))
                     records[candidate.key()]["finished"] += 1
                 elif status in {"truncated", "error"}:
-                    records[candidate.key()][status] += 1
+                    record = records[candidate.key()]
+                    record[status] += 1
+                    reason = outcome.get("reason")
+                    if isinstance(reason, str) and reason:
+                        record["reasons"][reason] = record["reasons"].get(reason, 0) + 1
                 else:
                     raise ValueError("rollout returned an invalid status")
 
@@ -180,6 +184,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
         output.append({"candidate": asdict(candidate), "candidateHash": candidate.key(),
                        "completedRollouts": len(scores), "attemptedRollouts": maximum if candidate in close and len(close) > 1 else initial,
                        "outcomes": {key: record[key] for key in ("finished", "truncated", "error")},
+                       "outcomeReasons": dict(sorted(record["reasons"].items())),
                        "expectedResult": mean, "relativeResult": mean - center if mean is not None else None,
                        "uncertainty": uncertainty, "weight": 0 if not scores else len(scores) / (1 + uncertainty)})
     return output
