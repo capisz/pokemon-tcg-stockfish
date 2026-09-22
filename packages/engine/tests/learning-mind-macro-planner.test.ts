@@ -38,7 +38,7 @@ test('transition-aware macro planner emits deterministic candidates with root co
 
 test('transition-aware macro planner fails closed when the plan cap is exceeded', () => {
   const observation = readyObservation();
-  assert.throws(() => generateTransitionMacroPlans(observation, 42, 1, 2), /cap exceeded/);
+  assert.throws(() => generateTransitionMacroPlans(observation, 42, 1, 2), /cap exceeded.*diagnostic=/);
 });
 
 test('transition-aware macro planner preserves action bindings when validating visible roots', () => {

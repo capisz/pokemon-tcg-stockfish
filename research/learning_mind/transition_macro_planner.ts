@@ -130,6 +130,20 @@ export function generateTransitionMacroPlans(
     });
   const visitedPrefixes = new Set<string>();
   const candidateKeys = new Set<string>();
+  const candidateDepths = new Map<number, number>();
+  const candidateIntents = new Map<string, number>();
+  const expansionsBySlot = new Map<string, number>();
+  const capFailure = () => {
+    const diagnostic = {
+      emitted: candidates.length,
+      queued: queue.length,
+      visitedPrefixes: visitedPrefixes.size,
+      candidateDepths: Object.fromEntries([...candidateDepths].sort(([a], [b]) => a - b)),
+      candidateIntents: Object.fromEntries([...candidateIntents].sort(([a], [b]) => a.localeCompare(b))),
+      expansionsBySlot: Object.fromEntries([...expansionsBySlot].sort(([a], [b]) => a.localeCompare(b))),
+    };
+    return new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates}); diagnostic=${JSON.stringify(diagnostic)}`);
+  };
   while (queue.length) {
     const plan = queue.shift()!;
     const key = JSON.stringify(plan.actions.map(legalActionKey));
@@ -139,9 +153,10 @@ export function generateTransitionMacroPlans(
       const candidateKey = JSON.stringify(candidate.actions.map(legalActionKey));
       if (candidateKeys.has(candidateKey)) return;
       candidateKeys.add(candidateKey);
-      if (candidates.length >= maxCandidates)
-        throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
+      if (candidates.length >= maxCandidates) throw capFailure();
       candidates.push(candidate);
+      candidateDepths.set(candidate.actions.length, (candidateDepths.get(candidate.actions.length) ?? 0) + 1);
+      candidateIntents.set(candidate.completion, (candidateIntents.get(candidate.completion) ?? 0) + 1);
     };
     addCandidate(plan);
     if (plan.completion !== 'incomplete' || plan.actions.length >= maxSteps) continue;
@@ -169,8 +184,9 @@ export function generateTransitionMacroPlans(
     for (const option of options) {
       queue.push({actions: [...plan.actions, option.action], semanticSlots: [...plan.semanticSlots, option.slot],
         completion: 'incomplete'});
+      expansionsBySlot.set(option.slot, (expansionsBySlot.get(option.slot) ?? 0) + 1);
       if (candidates.length + queue.length > maxCandidates)
-        throw new Error(`unsupported position: transition-aware macro cap exceeded (${maxCandidates})`);
+        throw capFailure();
     }
   }
   return {version: TRANSITION_MACRO_PLANNER_VERSION, hypothesisId: determinization.selectedHypothesis, candidates};
