@@ -16,6 +16,11 @@ import statistics
 import time
 from pathlib import Path
 
+from ptcg_lab.decision_guard import (
+    VERSION as GUARD_VERSION,
+    forward_choices,
+    record_choice,
+)
 from ptcg_lab.engine import EngineClient
 from ptcg_lab.selfplay import Agent, search_choice
 from ptcg_lab.strategy_contract import validate_strategy_revision_v12
@@ -113,6 +118,23 @@ def normalized_observation(engine: RecordingEngine, state: dict) -> dict:
     return observation
 
 
+def select_policy_action(policy: str, agent: Agent, observation: dict,
+                         guard_state: dict) -> tuple[dict, dict | None]:
+    """Choose against a safe view, then recover the engine's original action."""
+    if policy == "P3":
+        safe_observation, position, filtered = forward_choices(observation, guard_state)
+        chosen_id = agent.choose(safe_observation)
+        action = next(item for item in observation["legalActions"] if item["id"] == chosen_id)
+        record_choice(guard_state, position, action)
+        return action, {
+            "version": GUARD_VERSION,
+            "filtered": filtered,
+            "searchTargetCreated": False,
+        }
+    chosen_id = agent.choose(observation)
+    return next(item for item in observation["legalActions"] if item["id"] == chosen_id), None
+
+
 def run_python_game(root: Path, cell: dict, seed: int, policy: str, max_decisions: int,
                     guide_checkpoint: Path) -> tuple[dict, dict]:
     client = EngineClient(root, timeout=300)
@@ -120,6 +142,8 @@ def run_python_game(root: Path, cell: dict, seed: int, policy: str, max_decision
     agent_policy = str(guide_checkpoint) if policy == "P3" else "heuristic"
     agents = [Agent(agent_policy, seed * 2 + player, allow_experimental=policy == "P3") for player in range(2)]
     search_tags = []
+    guard_state = {}
+    guard_tags = []
     failure = None
     try:
         state = engine.request("reset", {"seed": seed, "decks": cell["decks"], "firstPlayer": cell["firstPlayer"]})
@@ -156,7 +180,17 @@ def run_python_game(root: Path, cell: dict, seed: int, policy: str, max_decision
                             "iterations": response.get("iterations", 0),
                         })
                 else:
-                    action = agents[actor].choose(observation)
+                    selected, guard_event = select_policy_action(
+                        policy, agents[actor], observation, guard_state,
+                    )
+                    action = selected["id"]
+                    if guard_event is not None:
+                        guard_tags.append({
+                            "decisionIndex": decisions,
+                            "actor": actor,
+                            "filtered": guard_event["filtered"],
+                            "searchTargetCreated": guard_event["searchTargetCreated"],
+                        })
                 state = engine.request("step", {"actionId": action})
             except Exception as exc:  # Preserve an honest pilot result rather than reclassifying it.
                 failure = f"{type(exc).__name__}: {exc}"
@@ -171,6 +205,11 @@ def run_python_game(root: Path, cell: dict, seed: int, policy: str, max_decision
     return replay, {
         "decisions": decisions + 1 if replay.get("status") != "finished" else decisions,
         "failure": failure,
+        "guard": ({
+            "version": GUARD_VERSION,
+            "filteredDecisions": sum(tag["filtered"] for tag in guard_tags),
+            "decisions": guard_tags,
+        } if policy == "P3" else None),
         "search": {
             "fallbackPolicy": "Python heuristic_action_score" if policy == "P4" else None,
             "tags": search_tags,

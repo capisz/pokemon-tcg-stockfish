@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "id": "strategy-baseline-v1-pilot-inputs",
+  "engineFingerprint": "twinleaf-adapter-0.1.0+bf3a9a0f133b99bd",
+  "engineBuildHash": "474549dda1d98fea5a7435c3abfdcccb4baa2663237ce8bb4aab99c40b36906e",
+  "strategyRevision": "v1.2",
+  "effectiveContractHash": "c13d14d4af34dbab8d2f52c3755281fb57d9aa7755f582c3656668f7cb32954b",
+  "guideCheckpoint": {
+    "path": "/Users/admin/Documents/ChatGPT/Pokemon Ai project/data/competitive/experimental/models/09572b53a4e74d9193c101bab05b30da-guide.pt",
+    "sha256": "1ff34f893540373ebb2da6433b3b67a0cdbcb2b711220cf08767cdeb85a08e6f",
+    "loadStatus": "loaded"
+  },
+  "deckListHashes": {
+    "crustle": "f454a2c2f3bd329f6d75bb8344ba09000db93e220e8a07c3e0502e5a7ddd8343",
+    "dragapult": "2e40a150bc968b9e67a9c7e57f6b9ebddb72591a41ae7e3a9f7b855db92318b9"
+  },
+  "pilotSeeds": [
+    219283457,
+    219283458,
+    219283459,
+    219283460,
+    219283461,
+    219283462,
+    219283463,
+    219283464
+  ],
+  "cells": [
+    {
+      "id": "cross-crustle-seat0-first0",
+      "decks": [
+        "crustle",
+        "dragapult"
+      ],
+      "firstPlayer": 0
+    },
+    {
+      "id": "cross-crustle-seat0-first1",
+      "decks": [
+        "crustle",
+        "dragapult"
+      ],
+      "firstPlayer": 1
+    },
+    {
+      "id": "cross-crustle-seat1-first0",
+      "decks": [
+        "dragapult",
+        "crustle"
+      ],
+      "firstPlayer": 0
+    },
+    {
+      "id": "cross-crustle-seat1-first1",
+      "decks": [
+        "dragapult",
+        "crustle"
+      ],
+      "firstPlayer": 1
+    },
+    {
+      "id": "crustle-mirror-first0",
+      "decks": [
+        "crustle",
+        "crustle"
+      ],
+      "firstPlayer": 0
+    },
+    {
+      "id": "crustle-mirror-first1",
+      "decks": [
+        "crustle",
+        "crustle"
+      ],
+      "firstPlayer": 1
+    },
+    {
+      "id": "dragapult-mirror-first0",
+      "decks": [
+        "dragapult",
+        "dragapult"
+      ],
+      "firstPlayer": 0
+    },
+    {
+      "id": "dragapult-mirror-first1",
+      "decks": [
+        "dragapult",
+        "dragapult"
+      ],
+      "firstPlayer": 1
+    }
+  ],
+  "activePolicies": [
+    "P1",
+    "P2",
+    "P3",
+    "P4"
+  ],
+  "executedPolicies": [
+    "P3"
+  ],
+  "priorResults": "/Users/admin/.codex/worktrees/strategy-v12-prebaseline/Pokemon Ai project/docs/validation/strategy-baseline-v1-pilot-2026-09-21/pilot-results.json",
+  "droppedPolicies": [],
+  "maxDecisions": 1000,
+  "searchBudgetMs": 200
+}
