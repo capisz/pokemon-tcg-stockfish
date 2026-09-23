@@ -244,6 +244,26 @@ strength or autonomous improvement.
   descriptive variance reduction on multiple frozen positions. Do not scale
   label collection from this single-position result.
 
+## Common-random-number paired-results diagnostic (2026-09-23)
+
+- Harness commit `264fcff` preserves each completed score by rollout index and
+  reports candidate-versus-observed-leader paired differences and standard
+  errors as explicitly descriptive values. They are not confidence bounds and
+  do not control pruning or label eligibility. A follow-up marks paired counts
+  below 20 as insufficient.
+- One 11-candidate Raging Bolt diagnostic attempted 176 rollouts at a 15-second
+  budget: 87 finished, 89 were budget-truncated, and zero errored. Common
+  finished pairs ranged only from two to eight; all 11 comparisons are below
+  the 20-sample minimum. Zero paired standard errors on this tiny, incomplete
+  sample are not evidence of zero variance or a quality signal.
+- The report and artifact hashes are in
+  `macro-paired16-diagnostic-2026-09-23.json`; outputs remain ignored locally.
+  Do not use this as a macro training label or a reason to scale collection.
+- Next gate: attain at least 20 finished matched seeds on multiple frozen
+  development positions, preserve truncation accounting, and test whether
+  incomplete pairs bias the descriptive comparisons. High-confidence policy
+  eligibility, PPO, continuous operation, and trusted promotion remain off.
+
 ## Bound-action search and planner v2
 
 - Research search now keys choices by action type/card, target, label, source

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "status": "paired-outcome-schema-smoke-insufficient-samples-not-label-evidence",
+  "positionHash": "3bc61d1e33451c19e792144c8550400f7a07f313685feb0a3f3a51c63f2666be",
+  "candidateCount": 11,
+  "rolloutsPerCandidate": 16,
+  "rolloutBudgetMs": 15000,
+  "attempted": 176,
+  "finished": 87,
+  "budgetTruncated": 89,
+  "errors": 0,
+  "pairedComparison": {
+    "leaderCandidateHash": "0abf8b315e94dc3f0a1a1399cc5b22c31e8fa269e3fb6576b6c6d88027c7c6e4",
+    "commonFinishedRolloutsRange": {"minimum": 2, "maximum": 8},
+    "comparisonsBelowMinimum20": 11,
+    "observedZeroStandardErrors": "not evidence of zero variance: common sample counts are tiny and budget truncation leaves an incomplete, potentially selected subset"
+  },
+  "rolloutIdentity": "e4d87ce25b589fe63f3c86ffe8cbe56008614b4f37cc63d7df821355ced788d0",
+  "manifestHash": "e6b0d34bbcfb5c2c46ee6be29e4fc29a73785b857cff2e598bdbd9f3b4f85f8a",
+  "manifestFileSha256": "1ffb149f9f8b7b6782eab1cb154f9fe927b5612f417feeddb59091fd024788f6",
+  "labelFileSha256": "4ab74b839313ba1b0d460a5d8c50e65ac0f10578d4ab6503295c31ed75c55636",
+  "collectorVersion": "macro-rollout-labeler-v5; next version marks paired sample sizes under 20 insufficient",
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v10-typescript/labels-raging-bolt-paired16-v1/"
+  ],
+  "limitations": [
+    "This is one development position and not an independent validation set.",
+    "Only 87 of 176 attempts finished. All 89 non-finished attempts were search budget cutoffs.",
+    "Paired results are selected-leader descriptive comparisons, not confidence intervals and not used to prune or label a policy.",
+    "No ranker fit, supervised training, PPO, continuous operation, or promotion occurred."
+  ],
+  "nextResearchGate": "Before using paired variability, raise the finished matched-seed count to at least 20 on multiple frozen development positions, preserve truncation status explicitly, and validate that incomplete pairs do not bias comparisons. High-confidence policy eligibility stays disabled."
+}
