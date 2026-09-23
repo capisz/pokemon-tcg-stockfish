@@ -143,6 +143,28 @@ def test_transition_macro_generation_uses_built_cjs_worker(tmp_path, monkeypatch
     assert metadata["hypothesisId"] == "public-fixture"
 
 
+def test_transition_macro_generation_classifies_inconsistent_belief_pool_as_unsupported(tmp_path, monkeypatch):
+    bundle = tmp_path / "packages/engine/dist/learning-mind-planner.cjs"
+    bundle.parent.mkdir(parents=True)
+    bundle.write_text("generated fixture bundle")
+    def run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, "", "Belief pool does not match public zone counts.")
+    monkeypatch.setattr(experiment.subprocess, "run", run)
+    with pytest.raises(experiment.UnsupportedPosition, match="deck hypothesis cannot reconcile public zone counts"):
+        experiment.generate_transition_candidates(tmp_path, observation(), seed=123)
+
+
+def test_transition_macro_generation_does_not_swallow_unclassified_planner_errors(tmp_path, monkeypatch):
+    bundle = tmp_path / "packages/engine/dist/learning-mind-planner.cjs"
+    bundle.parent.mkdir(parents=True)
+    bundle.write_text("generated fixture bundle")
+    def run(command, **kwargs):
+        return subprocess.CompletedProcess(command, 1, "", "unexpected planner defect")
+    monkeypatch.setattr(experiment.subprocess, "run", run)
+    with pytest.raises(RuntimeError, match="unexpected planner defect"):
+        experiment.generate_transition_candidates(tmp_path, observation(), seed=123)
+
+
 def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(tmp_path, monkeypatch):
     dataset, identity = frozen_dataset(tmp_path)
     calls = []

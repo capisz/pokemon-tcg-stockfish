@@ -52,6 +52,9 @@ def generate_transition_candidates(root: Path, observation: dict, seed: int):
         message = (result.stderr or result.stdout).strip()[-2000:]
         if "unsupported position:" in message.lower():
             raise UnsupportedPosition(message)
+        if "belief pool does not match public zone counts" in message.lower():
+            raise UnsupportedPosition(
+                "unsupported position: actor-visible deck hypothesis cannot reconcile public zone counts")
         raise RuntimeError(f"transition macro planner failed ({result.returncode}): {message}")
     response = json.loads(result.stdout)
     if response.get("version") != CANDIDATE_GENERATOR_VERSION:

@@ -157,6 +157,13 @@ built with v3 and should show broad source-game coverage in every split before
 labels are considered. The v2 pools and their audits remain historical and
 unchanged.
 
+The first v4 support-audit attempt exposed an infeasible determinization: the
+selected actor-visible deck hypothesis could not reconcile the public zone
+counts. The planner adapter now classifies this exact failure as
+`unsupported-position`, allowing the audit to report the affected positions
+without swallowing unrelated planner defects. Generic planner errors still
+abort the audit.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:
