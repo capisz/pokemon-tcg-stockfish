@@ -21,7 +21,7 @@ from .schema import identity_hash
 
 POLICY_NAMES = {"typescript-heuristic", "python-heuristic"}
 DEFAULT_OPPONENTS = ("crustle", "dragapult", "raging-bolt")
-COLLECTOR_VERSION = "fresh-actor-position-collector-v2"
+COLLECTOR_VERSION = "fresh-actor-position-collector-v3"
 
 
 def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuristic") -> list[dict]:
@@ -34,7 +34,7 @@ def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuri
     for opponent in DEFAULT_OPPONENTS:
         cell_id = f"raging-bolt-vs-{opponent}"
         for game_index in range(games_per_matchup):
-            token = f"learning-mind-v1-fresh|{policy}|{cell_id}|{game_index}".encode()
+            token = f"learning-mind-v1-fresh|{COLLECTOR_VERSION}|{policy}|{cell_id}|{game_index}".encode()
             seed = int.from_bytes(hashlib.sha256(token).digest()[:4], "big")
             while seed in used_seeds:
                 seed = (seed + 1) % 2**32

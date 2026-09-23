@@ -23,6 +23,13 @@ def test_fresh_game_schedule_is_seeded_collision_free_and_balanced():
     assert {row["firstPlayer"] for row in mirror} == {0, 1}
 
 
+def test_fresh_seed_namespace_changes_with_collector_version(monkeypatch):
+    current = game_schedule(games_per_matchup=4)
+    monkeypatch.setattr(fresh_collection, "COLLECTOR_VERSION", "fresh-actor-position-collector-next")
+    next_version = game_schedule(games_per_matchup=4)
+    assert {row["seed"] for row in current}.isdisjoint({row["seed"] for row in next_version})
+
+
 @pytest.mark.parametrize("policy", ["typescript-heuristic", "python-heuristic"])
 def test_schedule_freezes_policy_and_game_boundary(policy):
     games = game_schedule(games_per_matchup=2, policy=policy)
