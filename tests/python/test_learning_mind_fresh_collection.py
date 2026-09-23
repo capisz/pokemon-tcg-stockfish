@@ -4,20 +4,26 @@ import pytest
 
 from ptcg_lab.learning_mind import fresh_collection
 from ptcg_lab.learning_mind.fresh_collection import actor_only_replay, game_schedule
+from ptcg_lab.learning_mind.curriculum import ARCHETYPES
 
 
 def test_fresh_game_schedule_is_seeded_collision_free_and_balanced():
     first = game_schedule(games_per_matchup=4)
     assert first == game_schedule(games_per_matchup=4)
-    assert len({row["seed"] for row in first}) == 12
-    assert len({row["replayId"] for row in first}) == 12
-    for opponent in ("crustle", "dragapult"):
-        cell = [row for row in first if row["cellId"] == f"raging-bolt-vs-{opponent}"]
-        assert {row["decks"].index("raging-bolt") for row in cell} == {0, 1}
-        assert {row["firstPlayer"] for row in cell} == {0, 1}
-        assert {(row["decks"].index("raging-bolt"), row["firstPlayer"]) for row in cell} == {
-            (0, 0), (0, 1), (1, 0), (1, 1)}
-    assert {row["firstPlayer"] for row in first if row["cellId"].endswith("raging-bolt")} == {0, 1}
+    assert len(first) == 60
+    assert len({row["seed"] for row in first}) == 60
+    assert len({row["replayId"] for row in first}) == 60
+    assert {deck for row in first for deck in row["decks"]} == set(ARCHETYPES)
+    assert len({row["cellId"] for row in first}) == 15
+    for deck_a_index, deck_a in enumerate(ARCHETYPES):
+        for deck_b in ARCHETYPES[deck_a_index:]:
+            cell = [row for row in first if row["cellId"] == f"{deck_a}-vs-{deck_b}"]
+            assert len(cell) == 4
+            if deck_a == deck_b:
+                assert {row["firstPlayer"] for row in cell} == {0, 1}
+            else:
+                assert {(row["decks"].index(deck_a), row["firstPlayer"]) for row in cell} == {
+                    (0, 0), (0, 1), (1, 0), (1, 1)}
     mirror = [row for row in game_schedule(games_per_matchup=2)
               if row["cellId"] == "raging-bolt-vs-raging-bolt"]
     assert {row["firstPlayer"] for row in mirror} == {0, 1}
@@ -49,7 +55,7 @@ def test_collection_epoch_requires_safe_ascii_slug(namespace):
 @pytest.mark.parametrize("policy", ["typescript-heuristic", "python-heuristic"])
 def test_schedule_freezes_policy_and_game_boundary(policy):
     games = game_schedule(games_per_matchup=2, policy=policy)
-    assert len(games) == 6
+    assert len(games) == 30
     assert all(row["policy"] == policy for row in games)
     assert all(row["firstPlayer"] in (0, 1) and 0 <= row["seed"] < 2**32 for row in games)
 
@@ -117,9 +123,9 @@ def test_fresh_collector_checkpoints_games_and_resume_rejects_identity_drift(tmp
     monkeypatch.setattr(fresh_collection, "EngineClient", engine_factory)
     output = tmp_path / "fresh-run"
     first = fresh_collection.collect_fresh_positions(root=tmp_path, output=output, games_per_matchup=1)
-    assert first["completedGames"] == first["scheduledGames"] == 3
-    assert first["statusCounts"] == {"finished": 0, "truncated": 0, "error": 3}
-    assert len(first["games"]) == 3
+    assert first["completedGames"] == first["scheduledGames"] == 15
+    assert first["statusCounts"] == {"finished": 0, "truncated": 0, "error": 15}
+    assert len(first["games"]) == 15
     requests_after_first_run = sum(instance.calls.count("run") for instance in instances)
     second = fresh_collection.collect_fresh_positions(root=tmp_path, output=output, games_per_matchup=1)
     assert second["manifestHash"] == first["manifestHash"]

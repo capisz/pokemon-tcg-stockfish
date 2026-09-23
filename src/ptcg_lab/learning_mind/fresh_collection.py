@@ -7,6 +7,7 @@ canonical competitive replay store.
 from __future__ import annotations
 
 import hashlib
+from itertools import combinations_with_replacement
 import json
 import os
 from pathlib import Path
@@ -18,10 +19,11 @@ from ptcg_lab.storage import Store
 from .dataset_v1 import file_sha256
 from .experiment import runtime_identity
 from .schema import identity_hash
+from .curriculum import ARCHETYPES
 
 POLICY_NAMES = {"typescript-heuristic", "python-heuristic"}
-DEFAULT_OPPONENTS = ("crustle", "dragapult", "raging-bolt")
-COLLECTOR_VERSION = "fresh-actor-position-collector-v3"
+DEFAULT_MATCHUPS = tuple(combinations_with_replacement(ARCHETYPES, 2))
+COLLECTOR_VERSION = "fresh-actor-position-collector-v4-five-archetype"
 
 
 def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuristic",
@@ -36,8 +38,8 @@ def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuri
         raise ValueError("collection namespace must be a 1-32 character ASCII slug")
     result = []
     used_seeds = set()
-    for opponent in DEFAULT_OPPONENTS:
-        cell_id = f"raging-bolt-vs-{opponent}"
+    for deck_a, deck_b in DEFAULT_MATCHUPS:
+        cell_id = f"{deck_a}-vs-{deck_b}"
         for game_index in range(games_per_matchup):
             epoch = "" if collection_namespace == "main" else f"|{collection_namespace}"
             token = f"learning-mind-v1-fresh|{COLLECTOR_VERSION}|{policy}{epoch}|{cell_id}|{game_index}".encode()
@@ -45,15 +47,16 @@ def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuri
             while seed in used_seeds:
                 seed = (seed + 1) % 2**32
             used_seeds.add(seed)
-            decks = (["raging-bolt", opponent] if game_index % 2 == 0 or opponent == "raging-bolt"
-                     else [opponent, "raging-bolt"])
-            first_player = game_index % 2 if opponent == "raging-bolt" else (game_index // 2) % 2
+            decks = [deck_a, deck_b] if game_index % 2 == 0 or deck_a == deck_b else [deck_b, deck_a]
+            # Cross-matchups cycle every four games to balance both deck seat
+            # and which archetype starts. Mirrors alternate the starting seat.
+            first_player = game_index % 2 if deck_a == deck_b else (game_index // 2) % 2
             epoch_label = "" if collection_namespace == "main" else f"-{collection_namespace}"
             result.append({"index": len(result), "cellId": cell_id, "gameIndex": game_index,
                            "seed": seed, "firstPlayer": first_player,
                            "decks": decks, "policy": policy,
                            "collectionNamespace": collection_namespace,
-                           "replayId": f"fresh-v1-{policy.removesuffix('-heuristic')}-{opponent}{epoch_label}-{game_index}"})
+                           "replayId": f"fresh-v2-{policy.removesuffix('-heuristic')}-{cell_id}{epoch_label}-{game_index}"})
     return result
 
 
