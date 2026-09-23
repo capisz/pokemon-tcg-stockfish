@@ -27,6 +27,19 @@ test('indistinguishable true hidden states produce identical public search input
   assert.deepEqual(a.store.state.players.map(p => p.deck.cards.map(c => c.fullName)), b.store.state.players.map(p => p.deck.cards.map(c => c.fullName)));
 });
 
+test('belief determinization preserves supported public once-per-turn player flags', () => {
+  const env = ready(); const viewer = env.actor;
+  const sourcePlayer = env.store.state.players[viewer];
+  sourcePlayer.usedRunErrand = true;
+  sourcePlayer.usedLunarCycle = true;
+  const position = env.observe().searchPosition!;
+  const opponentDeck = viewer === 0 ? 'mega-lucario' : 'crustle';
+  const sampled = Environment.fromPublicPosition(position, 4421, opponentDeck, env.decisionIndex);
+  assert.equal(sampled.store.state.players[viewer].usedRunErrand, true);
+  assert.equal(sampled.store.state.players[viewer].usedLunarCycle, true);
+  assert.equal(sampled.store.state.players[1 - viewer].usedRunErrand, env.store.state.players[1 - viewer].usedRunErrand);
+});
+
 test('flat rollouts and information-set UCB execute bounded sampled games', {timeout: 30000}, () => {
   const env = ready(); const observation = env.observe(); const original = env.replay();
   for (const method of ['rollout', 'ismcts'] as const) {
