@@ -650,3 +650,25 @@ strength or autonomous improvement.
   `macro-support-game-balanced-v2-2026-09-23.json`. Current gate: investigate
   principled candidate-cap handling and collect more independent source games
   before rollout labeling or model fitting.
+
+## Paired rollout completion across frozen development positions (2026-09-23)
+
+- Two late-game Crustle positions from different source games completed every
+  20-seed matched rollout at a 60-second budget: 460/460 across 23 candidates,
+  and 140/140 across seven candidates. Both have 20 common finished outcomes
+  for every candidate.
+- Dragapult was not uniformly tractable at the same cap. A 21-candidate
+  position completed 416/420 outcomes but only 18–19 paired finishes per
+  comparison. An eight-candidate position completed 115/160, with 45 budget
+  cutoffs and only 7–14 common finishes. Neither reaches the predeclared
+  20-sample minimum.
+- Paired variability is descriptive and selected-leader-relative, not a
+  confidence interval or policy label. These development-only diagnostics did
+  not train or fit any model. Complete identities, outcomes, and checksums are
+  in `macro-paired-development-budget60s-2026-09-23.json`; raw artifacts remain
+  ignored locally.
+- Next gate: collect only game-disjoint training positions across approved
+  archetypes and opponent families, choose a position-complexity-aware but
+  identity-bound rollout/censoring protocol, and preserve development
+  separation. Do not fit the ranker until there is sufficient independent
+  training breadth. PPO, continuous operation, and promotion remain disabled.
