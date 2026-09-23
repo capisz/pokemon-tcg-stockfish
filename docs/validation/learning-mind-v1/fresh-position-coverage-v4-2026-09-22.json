@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-current-engine-actor-position-coverage-v4",
+  "status": "development-only-not-policy-evaluation",
+  "changeUnderTest": "belief sampler now preserves cannotPlayItemCards, rocketSupporter, and cannotRetreatNextTurn",
+  "collectorVersion": "fresh-actor-position-collector-v3",
+  "runId": "0b483af2772beaba2a9a323710356483",
+  "runManifestPath": "artifacts/learning-mind-v1/fresh-actor-positions-v4/run-manifest.json",
+  "runManifestFileSha256": "a85dd003e02fd2b27bc32ac035d911b2d66cab599e694740fd3f0d8b37e42fee",
+  "runManifestInternalHash": "134d8fe8a971d4ba6a26b98b4db0177d77a0ce2bb0e21b7f13c8da201fce5658",
+  "runtimeIdentityHash": "f1247965a6b50a50270f7b141ba0d20bd5412ca987eacf6c32d9b30c09361cb5",
+  "engineVersion": "twinleaf-adapter-0.1.0+3dddf99eb4911076",
+  "engineBuildSha256": "1b7f3347aa2dbb548490288b4d62a76c5980c5acd48a7b3679b18922d4816749",
+  "policy": "typescript-heuristic",
+  "matchedComparison": {
+    "priorRunId": "f764f77ef7528a7415f3b5dc5bbf7c55",
+    "sameSeeds": true,
+    "samePoliciesAndScheduler": true,
+    "actionSequencesIdentical": true,
+    "outcomesIdentical": true,
+    "searchableActorPositionsBefore": 225,
+    "searchableActorPositionsAfter": 252,
+    "difference": 27,
+    "relativeIncrease": 0.12
+  },
+  "schedule": {
+    "games": 12,
+    "gamesPerMatchup": 4,
+    "matchups": ["raging-bolt-vs-crustle", "raging-bolt-vs-dragapult", "raging-bolt-vs-raging-bolt"],
+    "seedsUniqueWithinRun": true,
+    "crossMatchupSeatFirstPlayerCombinations": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "mirrorFirstPlayerSeats": [0, 1],
+    "maxDecisions": 1200
+  },
+  "outcomes": {"finished": 12, "truncated": 0, "error": 0, "totalDecisions": 2079},
+  "privacyAudit": {
+    "verifiedReplayHashes": 12,
+    "verifiedActorOnlyFrames": 2091,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false,
+    "replayArtifactBytes": 14296176
+  },
+  "macroPositionPool": {
+    "path": "artifacts/learning-mind-v1/fresh-actor-positions-v4/macro-pool",
+    "rows": 18,
+    "rowsSha256": "fcc4619a64cbeffba163d0da28a07a23db5097ab9966f35ebabc2985349cf14a",
+    "sourceManifestSha256": "a85dd003e02fd2b27bc32ac035d911b2d66cab599e694740fd3f0d8b37e42fee",
+    "manifestSha256": "9524780fd7e2e289db2325a9608922fbaf5bec0386fc8daceb7b42d24d122e17",
+    "splitCounts": {"train": 12, "development": 3, "heldout": 3},
+    "positionStages": {"opening": 8, "midgame": 8, "late": 2},
+    "sourceGames": 6,
+    "opponentPolicyFamilies": ["typescript-heuristic"],
+    "candidateRolloutLabels": 0,
+    "candidateSupportAuditedUnderThisIdentity": false
+  },
+  "interpretation": [
+    "This is a matched representation-coverage comparison: replay action sequences, outcomes, seeds, policy and scheduler were identical across v3 and v4; only the research engine build identity changed.",
+    "The three exact public-state fields added to belief transport correspond to 27 additional actor-searchable decision frames in this 12-game sample. This is sample-specific coverage, not a claim of general coverage or strategic improvement.",
+    "All private views and chance records remain excluded from stored replays.",
+    "The v4 pool's candidate support was not re-audited under the new identity. Do not transfer v3 candidate counts, fit a ranker, or treat this pool as labeled training data.",
+    "Only one opponent-policy family is represented. PPO, policy promotion, and service installation remain disabled."
+  ]
+}

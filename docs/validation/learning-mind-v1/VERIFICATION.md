@@ -362,6 +362,23 @@ strength or autonomous improvement.
   reconstruction fail-closed; v3 does not complete the representation or
   learning milestone.
 
+## Matched v4 position-coverage check (2026-09-22)
+
+- Recollected the same 12 deterministic seeds under the new engine identity.
+  All games finished; decisions, action sequences, and outcomes match v3
+  exactly. No policy or game mechanic changed in this check.
+- Actor-searchable decision frames increased from 225 to 252 (+27, or 12% in
+  this small sample). This is evidence that the three explicitly whitelisted
+  public state fields removed some unsupported-state rejections; it does not
+  establish full history support.
+- Verified all 12 replay hashes, 2,091 actor-only frames, null opposite views,
+  and empty chance arrays. The new immutable 18-row pool again spans eight
+  opening, eight midgame, and two late positions; its source-game split is
+  12/3/3. No rollout labels were collected.
+- Candidate support was not rerun under the new engine identity. Do not reuse
+  v3 candidate-support counts or train from the v4 pool. Complete hashes and
+  boundaries are in `fresh-position-coverage-v4-2026-09-22.json`.
+
 ## Public state transport extension (2026-09-22)
 
 - Replay inspection showed additional unsupported public-state flags in later

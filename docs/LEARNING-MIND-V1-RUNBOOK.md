@@ -684,3 +684,11 @@ revealed-card and known-order history. Do not weaken determinization's
 fail-closed restrictions to increase pool size. Until reconstruction fixtures
 pass, these new positions are coverage evidence only; do not start a ranker fit
 or policy training from them.
+
+After the research sampler added exact transport for three observable public
+flags, a fresh v4 run reused the same deterministic 12 seeds. The 12 action
+sequences and game outcomes matched v3 exactly, while actor-searchable decision
+frames increased from 225 to 252. A new, identity-matched 18-row pool was built;
+candidate support has **not** yet been re-audited under this engine identity.
+This is a narrow +27-frame coverage change, not general history reconstruction.
+See `docs/validation/learning-mind-v1/fresh-position-coverage-v4-2026-09-22.json`.
