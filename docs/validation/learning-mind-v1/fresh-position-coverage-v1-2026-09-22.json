@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-current-engine-actor-position-coverage-v1",
+  "status": "development-only-not-policy-evaluation",
+  "runId": "19dc4088627f1ed6bd3ac4b8e8c9710a",
+  "runManifestPath": "artifacts/learning-mind-v1/fresh-actor-positions-v1-2026-09-22/run-manifest.json",
+  "runManifestSha256": "f4522e39d88bf85326f40ad3e8db00b9caca0fbc7852d8331a59e0deb50f6a56",
+  "runtimeIdentityHash": "58b1b37c477a2cb73a1209897846464d2331c0fdaee1d86e6adfbecf4a540dfa",
+  "engineVersion": "twinleaf-adapter-0.1.0+c212653686a59248",
+  "engineBuildSha256": "74e600cca2fe5031a6c09f3869c340f170620a077de4aa7b1237170c8e511cca",
+  "policy": "typescript-heuristic",
+  "schedule": {
+    "games": 6,
+    "matchups": [
+      "raging-bolt-vs-crustle",
+      "raging-bolt-vs-dragapult",
+      "raging-bolt-vs-raging-bolt"
+    ],
+    "gamesPerMatchup": 2,
+    "maxDecisions": 1200,
+    "seedsUnique": true,
+    "absoluteFirstPlayerSeat": 0,
+    "targetDeckSeatBalancedInCrossMatchups": true
+  },
+  "games": [
+    {"cellId":"raging-bolt-vs-crustle","replayId":"fresh-v1-typescript-crustle-0","status":"finished","decisions":245,"actorSearchPositions":4,"bytes":2221396,"sha256":"df12574bdd1d27d76d8cff301e0edb8b623a7a0942d4ad86239253f28a48de38"},
+    {"cellId":"raging-bolt-vs-crustle","replayId":"fresh-v1-typescript-crustle-1","status":"finished","decisions":138,"actorSearchPositions":4,"bytes":899318,"sha256":"17bf2e380aef1cf04b82ed073baf216c9b9fd39ce53d725b5ec7d41378d033ec"},
+    {"cellId":"raging-bolt-vs-dragapult","replayId":"fresh-v1-typescript-dragapult-0","status":"finished","decisions":211,"actorSearchPositions":3,"bytes":1533984,"sha256":"ebf372c40cadd16ce18ed79e6390fbcde74524c76cae282aa6da63088ac8293e"},
+    {"cellId":"raging-bolt-vs-dragapult","replayId":"fresh-v1-typescript-dragapult-1","status":"finished","decisions":114,"actorSearchPositions":5,"bytes":621975,"sha256":"bf49b07673a49e1c2fa77a43f2ca69770ce4c2ec6a9251f529794f593c486523"},
+    {"cellId":"raging-bolt-vs-raging-bolt","replayId":"fresh-v1-typescript-raging-bolt-0","status":"finished","decisions":183,"actorSearchPositions":5,"bytes":1032711,"sha256":"b65e43d26ebf69ba582fba06cc69ea9d464bda8f3e863d29ae7391de6cdbca3a"},
+    {"cellId":"raging-bolt-vs-raging-bolt","replayId":"fresh-v1-typescript-raging-bolt-1","status":"finished","decisions":270,"actorSearchPositions":2,"bytes":2007024,"sha256":"96a9cc21262508b544a9e9baa7aea82a8edb490c6f8ccb8f91e82349d12340c6"}
+  ],
+  "outcomes": {"finished":6,"truncated":0,"error":0,"totalDecisions":1161},
+  "privacyAudit": {
+    "checksummedReplays": 6,
+    "verifiedActorOnlyFrames": 1167,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false
+  },
+  "macroPositionPool": {
+    "path": "artifacts/learning-mind-v1/fresh-actor-positions-v1-2026-09-22/macro-pool",
+    "rows": 13,
+    "rowsSha256": "c35ddf9f8a23d4d46a6e5006c8a4ef5f38a12915c291e1a3c66329d02ed7b216",
+    "manifestSha256": "f6ca81c412ff15894c716ee132b5c897143e82b8d72e5764e644ec38040bb848",
+    "splitCounts": {"train":7,"development":4,"heldout":2},
+    "positionStageCounts": {"opening":13},
+    "macroCandidateSupport": {"supportedPositions":13,"unsupportedPositions":0,"candidateCounts":[48,68,6,21,10,5,11,5,2,5,4,54,9]},
+    "rolloutsRun": 0
+  },
+  "candidateGeneratorIdentity": {
+    "version": "transition-aware-public-determinization-v5-cjs-runtime",
+    "plannerSha256": "73305eecb41f3c8b1da2fc2f8b5b40434bd68a287beff046c9bd27a7d6fa755e",
+    "actionKeySha256": "b3f0256747420a0fc122d185d7c2c9bb893f8e1826390da392c4c003211021b7",
+    "plannerWorkerSha256": "9d0975455c6c4986274fb39992d45bd0c14f07ffc0887c9c08052616bed4ce15",
+    "plannerBundleSha256": "e8baece494f1cb6448591989317022ee3b9eae73ba58a44291b97679676e7c17",
+    "adapterSha256": "ea5ddf5c677c817f1deea124d5465580eb6cc025b9b3525cf023cdfaf6613fff"
+  },
+  "interpretation": [
+    "This six-game sample exists for data-pipeline and position-coverage diagnostics only.",
+    "All selected positions are turn 1; no macro rollout labels or policy evaluation were performed.",
+    "The v1 collection schedule fixed absolute first-player seat 0; do not use outcomes as matched performance evidence.",
+    "Current engine search-position guards continue to reject later positions after unsupported revealed-history events."
+  ]
+}

@@ -82,6 +82,19 @@ Base: `7543298`
   top-3 recall 0.167 / 0.500, and pairwise accuracy 0.404 / 0.575. The fitter
   did not report a primary held-out split score, and the result is explicitly
   not evidence of playing-strength improvement.
+- A subsequent runtime audit found that the earlier transition-macro planner
+  ran under TSX/ESM while search ran from the CJS engine worker. A same-position
+  comparison reproduced 56/81 non-executable plans in that mixed runtime; the
+  CJS planner/search smoke generated 36 plans and executed all 36. All 36 then
+  hit the 80-decision horizon, yielding zero scored candidates. Treat the
+  earlier executable-plan failure count as a runtime mismatch, not a strategy
+  metric; re-run the historical 18-position collection under v5 before relying
+  on its aggregate failure count. See
+  `macro-planner-cjs-parity-v5-2026-09-22.json`.
+- A single 300-decision rollout under the pinned public hypothesis reached a
+  rules terminal after the v5 parity smoke. This establishes that a longer
+  fixed research horizon can produce a terminal sample on this position only;
+  it is not a candidate comparison, label set, or strength result.
 - The executable sequence harness improves on root-action proxy semantics, but
   still uses heuristic prompt resolution and has incomplete multi-action
   execution. Fix that coverage, expand the frozen pool, then rerun before
@@ -198,6 +211,32 @@ strength or autonomous improvement.
 - No new training labels or ranker fit were started. PPO, promotion, and
   continuous operation remain disabled.
 
+## Bounded rollout cutoff accounting
+
+- Macro collection accepts a frozen `--rollout-budget-ms` (default 1000),
+  includes it in resume identity, and reports search budget cutoffs distinctly
+  from decision-horizon cutoffs. Neither kind receives an outcome label.
+- A current-identity Raging Bolt position generated 42 executable candidates.
+  With one rollout each, a 300-decision horizon, and a 1-second per-rollout
+  cap, all 42 calls completed in about 52 seconds: 42 budget truncations, zero
+  horizon truncations, zero errors, and zero scored candidates. This validates
+  bounded collection and no-fabricated-label handling only; it is not usable
+  ranker data or strategy evidence.
+- Evidence and checksums are appended to
+  `macro-planner-cjs-parity-v5-2026-09-22.json`. The focused orchestration suite
+  passes (7 tests), engine typecheck/build pass, and `git diff --check` passes.
+- Continuation diagnostics now report simulated decision counts without adding
+  reward shaping. On the same position at a 5-second cap, 30/42 candidates
+  reached terminal and 12/42 remained budget-truncated (zero errors); decision
+  counts ranged 81–142, median 121. Since this is only one rollout per
+  candidate, it remains runtime evidence and is not used for ranker fitting.
+- Opt-in two-worker execution preserved matched seed assignment and candidate
+  result order. On this position, serial and parallel runs agreed on each
+  candidate's terminal/truncated status and completed score; decision counts
+  differed only for budget-limited continuations. Approximate wall time fell
+  from 151 seconds to 98 seconds (~1.5x) in this single run. Worker count stays
+  frozen per dataset and defaults to one; repeat a benchmark before scaling up.
+
 ## Complete-candidate cap accounting in planner v4
 
 - The prior cap check incorrectly charged intermediate traversal prefixes and
@@ -227,3 +266,69 @@ strength or autonomous improvement.
   planner and search. Confirming this requires an explicitly authorized
   research-search change to support matched determinization and chance streams;
   no such engine/search change was made here.
+
+## Position-stage availability and resumable sampling (2026-09-22)
+
+- Audited the 12 read-only Raging Bolt source replays using only each frame's
+  actor observation. They contain 177 opening, 343 midgame, and 938 late
+  actor-visible states. Only 37 opening positions pass the pool's strict
+  eligibility gate; every later-stage state carries a historical
+  search-unavailable marker for unreconstructed revealed-card/known-order
+  history or an unsupported modified-state flag. The 18-position v8 pool is
+  opening-only for this compatibility reason, not a sampler defect. Do not
+  bypass the gate or reconstruct from private replay fields.
+- A 34-candidate opening position was sampled 16 times per candidate (544
+  rollouts, 5-second budget, two workers). Six rollouts finished and 538 were
+  budget-truncated; no candidate had more than one completed score. This is
+  runtime/development evidence only and is not ranker-eligible. Unlike the
+  earlier v4 smoke, these matched-hypothesis rollouts had zero typed
+  action-resolution errors across all 544 attempts; this closes that
+  execution-reliability blocker for this opening position, but does not solve
+  terminal sample scarcity or historical later-stage incompatibility.
+- Added per-matched-sample-index atomic resume checkpoints and provenance/stage
+  fields for future immutable pools. Focused Python orchestration tests: 9
+  passed, including interruption/resume bit-equivalence and source-game split
+  isolation. The strategy validator passed; focused Python orchestration,
+  baseline-pilot, and decision-guard tests passed (15 total). `npm run
+  typecheck` and `npm run engine:build` passed with engine fingerprint
+  `c212653686a59248`. The full engine suite passed (76/76), including all
+  fifteen competitive lists reaching terminal games. `git diff --check`
+  passes.
+- No training, PPO, promotion, service installation, or production-policy
+  change was made. Historical later-stage records remain ineligible until an
+  independently tested reconstruction is available.
+
+## Fresh actor-only current-engine position collection (2026-09-22)
+
+- Added the research CLI command `collect-fresh-positions`. It freezes engine,
+  deck/feature identity, collector version, policy, max decisions, schedule,
+  and source code hash; checkpoints each completed game with a replay SHA-256;
+  and refuses identity drift, changed replay hashes, unexpected files, or
+  uncheckpointed replay artifacts on resume. It accepts only the TS or Python
+  frozen heuristic and creates no policy labels or training targets.
+- Collected six serial TypeScript-heuristic games (two each for Raging Bolt vs
+  Crustle, Dragapult, and a Raging Bolt mirror): six finished, zero truncations,
+  zero errors, 1,161 decisions, and 23 engine-provided searchable actor
+  positions. The original v1 schedule put absolute first player in seat 0 for
+  every game; target-deck seat was balanced in the cross-matchups. This is
+  explicitly position coverage, not matched playing-strength evidence.
+- Each stored replay contains only the decision actor's observation in every
+  frame; the opposite seat slot is null and chance records were discarded. All
+  six compressed replay hashes and all 1,167 actor-only frames were verified.
+- Built an immutable 13-position pool from the six current-engine replays.
+  All 13 positions were opening/turn 1, and the transition planner supported
+  all 13 without hitting the complete-candidate or traversal caps (2–68
+  candidates per position). No rollout labels were collected. Candidate and
+  replay hashes are captured in
+  `fresh-position-coverage-v1-2026-09-22.json`; local compressed replays remain
+  ignored under `artifacts/learning-mind-v1/`.
+- Bumped the collector identity to v2 for future runs: mirror first-player
+  assignment now alternates, four cross-matchup games balance both Raging Bolt
+  seat and first-player factors, and the collector source hash is frozen.
+  Existing v1 run output is immutable and must not be resumed under v2.
+- The new collector tests plus the existing focused orchestration, baseline
+  pilot, and decision-guard tests pass (21 total); `git diff --check` passes.
+- Fresh mid/late positions are still blocked by engine-side knowledge
+  restrictions after effects such as temporary-zone reveals. Do not bypass
+  them. The next implementation target is a tested, actor-visible reconstruction
+  contract for those facts; until then this pool is too narrow for ranker fit.

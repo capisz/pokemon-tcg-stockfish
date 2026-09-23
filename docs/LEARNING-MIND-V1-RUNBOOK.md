@@ -85,6 +85,32 @@ npm ci
 npm run engine:build
 ```
 
+`engine:build` also produces the ignored
+`packages/engine/dist/learning-mind-planner.cjs` research CLI. Macro collection
+requires this CJS bundle so candidate generation and the engine search worker
+use consistent module semantics; do not invoke the TypeScript planner directly
+with `tsx` for label collection.
+
+Ordinary search retains its 80-decision horizon cap. Research search may request
+up to 500 decisions only when it pins a public hypothesis with
+`researchHypothesisId`; include that horizon in the frozen collection identity.
+Macro collection also freezes a per-rollout wall-clock cap. The CLI defaults to
+`--rollout-budget-ms 1000`; increase it only for a named experiment and expect
+longer collection. A budget cutoff is recorded as `truncated` with no outcome
+label, separately from a fixed-horizon cutoff. Each record includes a
+`decisionCountDistribution` so runtime budgets can be estimated from observed
+progress; this is diagnostic metadata, not a reward or value target. For example, a one-position
+runtime smoke can use `--initial 1 --maximum 1 --horizon 300
+--rollout-budget-ms 1000`; do not fit a ranker from a smoke set dominated by
+truncations.
+Rollouts can be parallelized with `--rollout-workers 2` (maximum 8); the
+default remains one worker until a matched throughput comparison is recorded.
+Worker count is frozen into the collection manifest and resume identity.
+Within each position, collection atomically checkpoints after each fully
+completed matched-seed batch. A restart replays at most the interrupted batch;
+the position, candidate set, rollout config, and checkpoint hash must all match
+before resume. Final position files remain immutable.
+
 The reviewed lockfile includes the `mind` extra and XGBoost. On macOS, prefix
 combined Torch/XGBoost test or experiment commands with
 `OMP_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1` to avoid competing native thread
@@ -564,5 +590,66 @@ should expand its evidence without changing the acceptance rules:
    a new immutable candidate and evaluate held-out labels plus every frozen
    v1.2 probe.
 
+### Position-stage support audit (2026-09-22)
+
+The current Raging Bolt source replay set contains actor-visible states across
+all three stages, but the pool builder intentionally admits only positions
+without a search-unavailable flag. In the 12 source games, 177 actor-visible
+states were opening, 343 midgame, and 938 late; only 37 opening states passed
+the frozen eligibility gate. All sampled midgame/late states were rejected
+because historical observations lack the revealed-card/known-order history
+required by current determinization, or carry unsupported modified-state
+flags. The stage-balanced selector is therefore behaving correctly; its
+opening-only output is an evidence-coverage limitation, not a selection bug.
+
+Do not remove this gate or infer hidden-card history from private replay data.
+Use only freshly collected positions whose actor-visible tracker state is
+complete, or separately build and validate an observable-history reconstruction
+before admitting historical midgame/late positions. The 16-matched-sample
+opening experiment also produced only 6 terminal outcomes across 544 rollouts
+(538 budget cutoffs; at most one completed outcome for any candidate), so it
+does not meet the minimum evidence threshold for ranker fitting. Preserve it as
+development/runtime evidence only.
+
 Stop after producing the supervised acceptance report. Do not enable PPO,
 install launchd, or promote the candidate in that task.
+
+### Fresh current-engine position collection (2026-09-22)
+
+Use the research-only collector to get positions from a frozen current build;
+do not use its ordinary heuristic choices as policy labels:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-fresh-positions \
+  --root . \
+  --output artifacts/learning-mind-v1/fresh-actor-positions-v2 \
+  --games-per-matchup 4 \
+  --policy typescript-heuristic
+```
+
+The command is serial and game-checkpointed. Its immutable identity covers the
+engine/deck/feature identity, policy, schedule, game cap, and collector version;
+resume only at the same output path with all replay hashes intact. It retains
+only `frame.observations[frame.actor]` and removes chance records. Finished
+games are exposed in `run-manifest.json` as the source manifest for
+`build-macro-position-pool`; truncated/error games stay in the run record and
+are not silently replaced. The v2 schedule balances the Raging Bolt seat and
+first-player assignments when four games are scheduled in each cross-matchup,
+and alternates first player in mirror games. These are position-coverage games,
+not a performance benchmark.
+
+The first exploratory six-game capture is frozen at
+`artifacts/learning-mind-v1/fresh-actor-positions-v1-2026-09-22`. It used six
+finished TypeScript-heuristic games (two each against Crustle, Dragapult, and
+Raging Bolt mirror), 1,161 decisions, and 23 engine-provided searchable actor
+positions. The candidate pool contained 13 unique positions, all opening;
+transition-plan generation supported 13/13, with 2–68 complete candidates
+per position. This capture was for coverage diagnostics only: the original v1
+schedule fixed absolute first player to seat 0 and did not provide full
+factorial matchup balance. Do not treat its outcomes as policy-strength
+evidence or resume it with the v2 collector.
+
+The local replay files are under the ignored artifact directory and are
+checksummed in its `run-manifest.json`; the compact pool manifest is
+`macro-pool/manifest.json`. Candidate support has not yet been rollout-scored,
+and all later states remain blocked by engine knowledge-reconstruction gates.
