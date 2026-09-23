@@ -665,3 +665,22 @@ collected. The v2 schedule reused the first two seed entries per matchup from
 exploratory v1 because collector version was not yet part of the seed token;
 the v2 pool does not mix in the separate v1 data. Current v3 fixes that
 namespace issue and refuses to resume these v2 outputs as if they were v3.
+
+The v3 run completed at `artifacts/learning-mind-v1/fresh-actor-positions-v3`.
+It finished all 12 scheduled games, with zero truncations/errors and 2,079
+decisions. All replay and manifest hashes were verified; 2,091 stored frames
+contain only the acting player's observation, with opposite private views null
+and chance records removed. Its new 18-position pool spans eight opening,
+eight midgame, and two late positions, with 12/3/3 source-game-disjoint
+train/development/heldout splits. The candidate support audit covered all 18
+positions (2–116 candidates each); it produced no rollout labels. This fixes
+the earlier opening-only coverage limitation, but the pool still uses only the
+TypeScript heuristic opponent family and does not establish policy strength or
+blind generalization. Checksums and exact metrics are in
+`docs/validation/learning-mind-v1/fresh-position-coverage-v3-2026-09-22.json`.
+
+The next gate remains a tested actor-visible reconstruction contract for
+revealed-card and known-order history. Do not weaken determinization's
+fail-closed restrictions to increase pool size. Until reconstruction fixtures
+pass, these new positions are coverage evidence only; do not start a ranker fit
+or policy training from them.

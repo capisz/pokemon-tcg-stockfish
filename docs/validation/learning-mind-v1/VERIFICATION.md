@@ -336,6 +336,32 @@ strength or autonomous improvement.
   them. The next implementation target is a tested, actor-visible reconstruction
   contract for those facts; until then this pool is too narrow for ranker fit.
 
+## Fresh actor-only position collection v3 (2026-09-22)
+
+- After the research engine began preserving the two exact public once-per-turn
+  flags used by supported determinization, the v3 collector ran 12 games: four
+  each in Raging Bolt vs Crustle, Raging Bolt vs Dragapult, and Raging Bolt
+  mirror. All 12 finished (zero truncations/errors), with 2,079 decisions.
+- The seed namespace is versioned. The 12 unique v3 seeds overlap neither the
+  exploratory v1 nor balanced v2 seed sets. Cross-matchup seat/first-player
+  assignments remain balanced; mirror first player alternates.
+- Verified all 12 compressed replay hashes and the run-manifest checksum. The
+  2,091 stored frames contain only the decision actor's observation; opposite
+  private views are null and chance records are empty. Raw local replay bytes:
+  14,114,328.
+- The immutable pool contains 18 game-disjoint rows: eight opening, eight
+  midgame, and two late; 12 train, three development, and three held out by
+  source game. The transition candidate audit supported all 18 positions with
+  2–116 candidates each. No candidate rollout labels were collected.
+- Exact run, pool, replay, and identity hashes are recorded in
+  `fresh-position-coverage-v3-2026-09-22.json`. These are coverage artifacts,
+  not evidence of strategic improvement. The pool still contains only one
+  opponent-policy family and does not establish blind generalization.
+- No ranker fit, supervised training, PPO, policy promotion, or service
+  installation occurred. Continue to treat unsupported actor-visible history
+  reconstruction fail-closed; v3 does not complete the representation or
+  learning milestone.
+
 ## Balanced fresh-position batch v2 (2026-09-22)
 
 - Ran the committed v2 collector after the harness commit, with four games in

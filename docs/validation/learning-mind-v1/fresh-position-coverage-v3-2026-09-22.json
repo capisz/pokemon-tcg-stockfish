@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-current-engine-actor-position-coverage-v3",
+  "status": "development-only-not-policy-evaluation",
+  "collectorVersion": "fresh-actor-position-collector-v3",
+  "collectorSourceSha256": "44e765605e406a9c57f5d79aacf36b36ab79045b8b78ca6cab7f46600f9dc1dd",
+  "runId": "f764f77ef7528a7415f3b5dc5bbf7c55",
+  "runManifestPath": "artifacts/learning-mind-v1/fresh-actor-positions-v3/run-manifest.json",
+  "runManifestFileSha256": "392bd4df344839e2729276c859965ccbecfec7adc2c3c3111112cc88cfb8a603",
+  "runManifestInternalHash": "3d3b889dd6a4c34d48b00d64b2036a9528cbbb2607bbe08b9e19873d59b63fed",
+  "runtimeIdentityHash": "c8130a27debec893f69d252cdf7494fc3d55ffed660693e4668bb6f18a94670d",
+  "engineVersion": "twinleaf-adapter-0.1.0+f4c4d9f14d16a726",
+  "engineBuildSha256": "8bb4b77e3202afbc35b858da64bd8a1edf2ed7f413982c52651a3a4cedfa603d",
+  "policy": "typescript-heuristic",
+  "schedule": {
+    "games": 12,
+    "gamesPerMatchup": 4,
+    "matchups": ["raging-bolt-vs-crustle", "raging-bolt-vs-dragapult", "raging-bolt-vs-raging-bolt"],
+    "seedsUniqueWithinRun": true,
+    "seedOverlapWithV1AndV2": false,
+    "crossMatchupSeatFirstPlayerCombinations": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "mirrorFirstPlayerSeats": [0, 1],
+    "maxDecisions": 1200
+  },
+  "outcomes": {"finished": 12, "truncated": 0, "error": 0, "totalDecisions": 2079},
+  "searchPositionCoverage": {"actorPositions": 225, "macroPoolRows": 18, "positionStages": {"opening": 8, "midgame": 8, "late": 2}},
+  "privacyAudit": {
+    "verifiedReplayHashes": 12,
+    "verifiedActorOnlyFrames": 2091,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false,
+    "replayArtifactBytes": 14114328
+  },
+  "macroPositionPool": {
+    "path": "artifacts/learning-mind-v1/fresh-actor-positions-v3/macro-pool",
+    "rowsSha256": "e89595eb1e5e3ce74f2d7843bee443e07717ea0af77bc4b2f16fa9b4c1bef223",
+    "sourceManifestSha256": "392bd4df344839e2729276c859965ccbecfec7adc2c3c3111112cc88cfb8a603",
+    "manifestSha256": "87cb050babcb1520090e1075d2d43cbd6420a58531a29ecc9c2332c193cbf828",
+    "splitCounts": {"train": 12, "development": 3, "heldout": 3},
+    "opponentPolicyFamilies": ["typescript-heuristic"],
+    "candidateSupport": {
+      "supportedPositions": 18,
+      "unsupportedPositions": 0,
+      "candidateCounts": [5, 7, 74, 22, 116, 21, 23, 2, 2, 32, 11, 24, 8, 5, 19, 37, 11, 2]
+    },
+    "rolloutsRunForLabels": 0
+  },
+  "interpretation": [
+    "The collector run and position pool measure actor-visible coverage only; game outcomes do not establish playing strength.",
+    "The v3 seed namespace is disjoint from v1 and v2. Earlier pools are not combined with this pool.",
+    "The pool now spans opening, midgame, and late positions, and all 18 positions were supported by the transition candidate generator in the bounded support audit.",
+    "No candidate rollout labels, ranker fitting, supervised training, PPO, policy promotion, or service installation occurred.",
+    "Only one opponent-policy family is represented, so there is no blind opponent-family validation.",
+    "This does not resolve the full actor-visible history reconstruction contract or satisfy the learning-mind milestone."
+  ]
+}
