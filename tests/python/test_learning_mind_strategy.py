@@ -132,6 +132,22 @@ def test_staged_rollouts_resume_without_repeating_completed_seed_batches():
                                          for i in range(5, 16)]
 
 
+def test_common_seed_pairs_report_descriptive_paired_variability():
+    candidates = generate_candidates(observation())[:2]
+    index_by_seed = {rollout_seed("training", "paired-position", index): index for index in range(8)}
+
+    def rollout(_candidate, seed):
+        return {"status": "finished", "score": float(index_by_seed[seed] % 2)}
+
+    labels = label_candidates(candidates, "paired-position", rollout, initial=8, maximum=8)
+    paired = labels[1]["pairedComparisonToObservedLeader"]
+    assert paired["leaderCandidateHash"] == candidates[0].key()
+    assert paired["commonFinishedRollouts"] == 8
+    assert paired["meanScoreDifference"] == 0
+    assert paired["standardError"] == 0
+    assert paired["interpretation"] == "descriptive-selected-leader-comparison-not-confidence-bound"
+
+
 def test_rollout_errors_are_not_fabricated_scores():
     candidate = generate_candidates(observation())[:1]
     rows = label_candidates(candidate, "position", lambda c, s: {"status": "truncated", "reason": "fixed-horizon"}, initial=2, maximum=2)

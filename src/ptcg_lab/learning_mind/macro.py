@@ -161,7 +161,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
     candidate_hashes = [item.key() for item in candidates]
     if len(set(candidate_hashes)) != len(candidate_hashes):
         raise ValueError("macro candidates must have unique hashes")
-    records = {key: {"scores": [], "finished": 0, "truncated": 0, "error": 0,
+    records = {key: {"scores": [], "scoresByIndex": {}, "finished": 0, "truncated": 0, "error": 0,
                      "reasons": {}, "decisionCounts": {}} for key in candidate_hashes}
     completed_initial: set[int] = set()
     completed_extension: set[int] = set()
@@ -194,7 +194,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                         "completedExtensionIndices": sorted(completed_extension),
                         "closeCandidateHashes": close_candidate_hashes})
 
-    def consume(candidate, outcome):
+    def consume(candidate, index, outcome):
         status = outcome.get("status")
         score = outcome.get("score")
         if (status == "finished" and isinstance(score, (int, float))
@@ -202,6 +202,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                 and 0 <= score <= 1):
             record = records[candidate.key()]
             record["scores"].append(float(score))
+            record["scoresByIndex"][str(index)] = float(score)
             record["finished"] += 1
             decision_count = outcome.get("decisionCount")
             if isinstance(decision_count, int) and not isinstance(decision_count, bool) and decision_count >= 0:
@@ -230,7 +231,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
             outcomes = ([rollout(candidate, seed) for candidate in selected] if executor is None
                         else list(executor.map(lambda candidate: rollout(candidate, seed), selected)))
             for candidate, outcome in zip(selected, outcomes):
-                consume(candidate, outcome)
+                consume(candidate, index, outcome)
             completed.add(index)
             save_progress()
 
@@ -295,6 +296,27 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
     finite_means = [sum(record["scores"]) / len(record["scores"])
                     for record in records.values() if record["scores"]]
     center = max(finite_means) if finite_means else 0.0
+    observed_leader = max((candidate for candidate in candidates if records[candidate.key()]["scores"]),
+                          key=lambda candidate: sum(records[candidate.key()]["scores"]) /
+                          len(records[candidate.key()]["scores"]), default=None)
+    paired = {}
+    if observed_leader is not None:
+        leader_key = observed_leader.key()
+        leader_scores = records[leader_key]["scoresByIndex"]
+        for candidate in candidates:
+            key = candidate.key()
+            candidate_scores = records[key]["scoresByIndex"]
+            common = sorted(set(candidate_scores) & set(leader_scores), key=int)
+            differences = [candidate_scores[index] - leader_scores[index] for index in common]
+            mean_delta = sum(differences) / len(differences) if differences else None
+            if len(differences) > 1:
+                variance = sum((value - mean_delta) ** 2 for value in differences) / (len(differences) - 1)
+                standard_error = math.sqrt(variance / len(differences))
+            else:
+                standard_error = None
+            paired[key] = {"leaderCandidateHash": leader_key, "commonFinishedRollouts": len(common),
+                           "meanScoreDifference": mean_delta, "standardError": standard_error,
+                           "interpretation": "descriptive-selected-leader-comparison-not-confidence-bound"}
     output = []
     attempted = {key: record["finished"] + record["truncated"] + record["error"]
                  for key, record in records.items()}
@@ -309,5 +331,6 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                        "outcomeReasons": dict(sorted(record["reasons"].items())),
                        "decisionCountDistribution": dict(sorted(record["decisionCounts"].items(), key=lambda item: int(item[0]))),
                        "expectedResult": mean, "relativeResult": mean - center if mean is not None else None,
-                       "uncertainty": uncertainty, "weight": 0 if not scores else len(scores) / (1 + uncertainty)})
+                       "uncertainty": uncertainty, "weight": 0 if not scores else len(scores) / (1 + uncertainty),
+                       "pairedComparisonToObservedLeader": paired.get(candidate.key())})
     return output
