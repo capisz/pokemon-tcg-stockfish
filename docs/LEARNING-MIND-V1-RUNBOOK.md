@@ -145,6 +145,18 @@ locations are in
 No rollout, label generation, ranker fit, supervised training, PPO, or promotion
 was run as part of this audit.
 
+### Source-game sampling follow-up
+
+The next 30-game-per-family epoch showed that split balancing alone was not
+enough: the prior row selector chose only 8 TypeScript and 10 Python source
+games from 30 available games because it cycled through matchup/stage buckets
+without cycling through games inside each bucket. Pool-builder v3 fixes this
+by round-robining across distinct source games within every matchup/policy/stage
+bucket before taking a second position from a game. New immutable pools must be
+built with v3 and should show broad source-game coverage in every split before
+labels are considered. The v2 pools and their audits remain historical and
+unchanged.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

@@ -134,6 +134,36 @@ def _assign_source_game_splits(game_rows: dict[str, list[dict]]) -> dict[str, st
     return best_assignment
 
 
+def _select_macro_positions(candidates: list[dict], limit: int) -> list[dict]:
+    """Round-robin context buckets and source games to avoid early-game bias."""
+    if type(limit) is not int or limit < 1:
+        raise ValueError("macro position limit must be a positive integer")
+    buckets: dict[tuple[str, str, str], dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
+    for row in candidates:
+        context = (row["opponentArchetype"], row["opponentPolicyFamily"], row["positionStage"])
+        buckets[context][row["sourceGameId"]].append(row)
+    for games in buckets.values():
+        for rows in games.values():
+            rows.sort(key=lambda row: (row["sourceDecisionIndex"], row["positionHash"]))
+
+    selected = []
+    while len(selected) < limit:
+        added = False
+        for context in sorted(buckets):
+            games = buckets[context]
+            game_ids = sorted(games, key=lambda game_id: hashlib.sha256(
+                f"learning-mind-v1|macro-pool-source-order-v1|{game_id}".encode()).hexdigest())
+            for game_id in game_ids:
+                if games[game_id] and len(selected) < limit:
+                    selected.append(games[game_id].pop(0))
+                    added = True
+            if len(selected) >= limit:
+                break
+        if not added:
+            break
+    return selected
+
+
 def _map_acceptable(encoded, action_ids: set[str]) -> list[int]:
     indices = [index for index, group in enumerate(encoded.action_classes)
                if any(action.get("id") in action_ids for action in group.actions)]
@@ -359,15 +389,8 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
         unique_candidates.setdefault(row["positionHash"], row)
     candidates = list(unique_candidates.values())
 
-    # Round-robin across matchup, policy family, and observable game stage.
-    buckets = defaultdict(list)
-    for row in candidates:
-        buckets[(row["opponentArchetype"], row["opponentPolicyFamily"], row["positionStage"])].append(row)
-    selected = []
-    while len(selected) < limit and any(buckets.values()):
-        for key in sorted(buckets):
-            if buckets[key] and len(selected) < limit:
-                selected.append(buckets[key].pop(0))
+    # Balance matchup, policy family, stage, and source-game representation.
+    selected = _select_macro_positions(candidates, limit)
     game_rows = defaultdict(list)
     for row in selected:
         game_rows[row["sourceGameId"]].append(row)
@@ -388,8 +411,8 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
                 "positionStages": sorted({row["positionStage"] for row in selected}),
                 "positionStageCounts": dict(sorted(Counter(row["positionStage"] for row in selected).items())),
                 "sourceGameSplitCounts": dict(sorted(Counter(game_splits.values()).items())),
-                "poolBuilderVersion": "game-balanced-selection-v2",
-                "selection": "deterministic round-robin by matchup/policy/stage; stable row-balanced source-game assignments with matchup stratification and disjoint splits",
+                "poolBuilderVersion": "game-balanced-selection-v3",
+                "selection": "deterministic round-robin by matchup/policy/stage/source-game; stable row-balanced source-game assignments with matchup stratification and disjoint splits",
                 "splitQuotasBySourceGame": dict(sorted(Counter(game_splits.values()).items()))}
     manifest["manifestHash"] = identity_hash(manifest)
     _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")

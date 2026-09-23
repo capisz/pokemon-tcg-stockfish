@@ -11,8 +11,9 @@ import pytest
 
 from ptcg_lab.learning_mind import experiment
 from ptcg_lab.learning_mind import candidate_support
-from ptcg_lab.learning_mind.dataset_v1 import (_assign_source_game_splits, build_macro_position_pool, file_sha256,
-                                               load_dataset, training_records)
+from ptcg_lab.learning_mind.dataset_v1 import (_assign_source_game_splits, _select_macro_positions,
+                                               build_macro_position_pool, file_sha256, load_dataset,
+                                               training_records)
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCandidateV1,
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
@@ -323,7 +324,7 @@ def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
     assert {row["split"] for row in rows} == {"train", "development", "heldout"}
     assert {row["positionStage"] for row in rows} == {"opening", "midgame", "late"}
     assert manifest["positionStageCounts"] == {"late": 3, "midgame": 3, "opening": 3}
-    assert manifest["poolBuilderVersion"] == "game-balanced-selection-v2"
+    assert manifest["poolBuilderVersion"] == "game-balanced-selection-v3"
     assert manifest["splitQuotasBySourceGame"] == {"development": 1, "heldout": 1, "train": 1}
     splits_by_game = {}
     for row in rows:
@@ -358,6 +359,35 @@ def test_source_game_split_balances_rows_and_stratifies_by_matchup():
     assert min(rows_by_split.values()) >= 30
     assert max(rows_by_split.values()) / min(rows_by_split.values()) <= 2.7
     assert all(contexts_by_split[split] for split in contexts_by_split)
+
+
+def test_macro_pool_selection_round_robins_across_source_games_before_repeats():
+    candidates = []
+    for opponent in ("crustle", "dragapult", "raging-bolt"):
+        for game_index in range(6):
+            game_id = f"{opponent}-{game_index:02d}"
+            for stage, stage_index in (("opening", 0), ("midgame", 1), ("late", 2)):
+                for position_index in range(2):
+                    decision_index = stage_index * 10 + position_index
+                    candidates.append({
+                        "opponentArchetype": opponent,
+                        "opponentPolicyFamily": "frozen-family",
+                        "positionStage": stage,
+                        "sourceGameId": game_id,
+                        "sourceDecisionIndex": decision_index,
+                        "positionHash": f"{game_id}-{stage}-{position_index}",
+                    })
+    selected = _select_macro_positions(candidates, 54)
+    assert len(selected) == 54
+    assert len({row["sourceGameId"] for row in selected}) == 18
+    assert Counter(row["positionStage"] for row in selected) == {
+        "opening": 18, "midgame": 18, "late": 18,
+    }
+    assert Counter((row["opponentArchetype"], row["positionStage"]) for row in selected) == {
+        (opponent, stage): 6
+        for opponent in ("crustle", "dragapult", "raging-bolt")
+        for stage in ("opening", "midgame", "late")
+    }
 
 
 def test_source_game_split_large_collection_uses_bounded_deterministic_search():
