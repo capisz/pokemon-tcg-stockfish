@@ -40,6 +40,19 @@ test('belief determinization preserves supported public once-per-turn player fla
   assert.equal(sampled.store.state.players[1 - viewer].usedRunErrand, env.store.state.players[1 - viewer].usedRunErrand);
 });
 
+test('belief determinization preserves observable public restriction and Team Rocket flags', () => {
+  const env = ready(); const viewer = env.actor;
+  const sourcePlayer = env.store.state.players[viewer];
+  sourcePlayer.cannotPlayItemCards = true; sourcePlayer.rocketSupporter = true;
+  env.store.state.players[1 - viewer].active.cannotRetreatNextTurn = true;
+  const position = env.observe().searchPosition!;
+  const opponentDeck = viewer === 0 ? 'mega-lucario' : 'crustle';
+  const sampled = Environment.fromPublicPosition(position, 977, opponentDeck, env.decisionIndex);
+  assert.equal(sampled.store.state.players[viewer].cannotPlayItemCards, true);
+  assert.equal(sampled.store.state.players[viewer].rocketSupporter, true);
+  assert.equal(sampled.store.state.players[1 - viewer].active.cannotRetreatNextTurn, true);
+});
+
 test('flat rollouts and information-set UCB execute bounded sampled games', {timeout: 30000}, () => {
   const env = ready(); const observation = env.observe(); const original = env.replay();
   for (const method of ['rollout', 'ismcts'] as const) {

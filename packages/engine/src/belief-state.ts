@@ -13,11 +13,11 @@ export type DeckHypothesis = string | DeckManifest;
 const PLAYER_FIELDS = ['supporterTurn', 'retreatedTurn', 'energyPlayedTurn', 'stadiumPlayedTurn', 'stadiumUsedTurn',
   'usedTableTurner', 'pokemonKnockedOutDuringOpponentsLastTurn', 'pokemonKnockedOutByAttackDuringOpponentsLastTurn',
   'pokemonKnockedOutLastTurnEntries', 'prizesTaken', 'prizesTakenThisTurn', 'prizesTakenLastTurn', 'canEvolve',
-  'ancientPokemonAttackedLastTurn', 'usedRunErrand', 'usedLunarCycle'];
+  'ancientPokemonAttackedLastTurn', 'usedRunErrand', 'usedLunarCycle', 'cannotPlayItemCards', 'rocketSupporter'];
 const BOARD_FIELDS = ['damage', 'hp', 'hpBonus', 'specialConditions', 'poisonDamage', 'burnDamage', 'confusionDamage',
   'pokemonPlayedTurn', 'abilityLockActivationOrder', 'sleepFlips', 'boardEffect', 'attacksThisTurn',
   'cannotUseAttacksNextTurn', 'cannotUseAttacksNextTurnPending', 'noAbilities', 'noAbilitiesAttackerId', 'noAbilitiesClearArmed',
-  'cannotAttackNextTurn', 'cannotAttackNextTurnPending', 'healedThisTurn', 'maxTools'];
+  'cannotAttackNextTurn', 'cannotAttackNextTurnPending', 'cannotRetreatNextTurn', 'healedThisTurn', 'maxTools'];
 const PLAYER_IGNORE = new Set(['id', 'name', 'hand', 'deck', 'prizes', 'active', 'bench', 'discard', 'lostzone', 'stadium', 'supporter', 'marker',
   'playableCardIds', 'playableHandAbilityCardIds', 'gameStats', 'movedToActiveThisTurn', 'movedFromActiveToBenchThisTurn']);
 const BOARD_IGNORE = new Set(['cards', 'tools', 'energies', 'marker', 'isSecret', 'isPublic', 'isActivatingCard', 'triggerEvolutionAnimation',

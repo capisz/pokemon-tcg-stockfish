@@ -362,6 +362,23 @@ strength or autonomous improvement.
   reconstruction fail-closed; v3 does not complete the representation or
   learning milestone.
 
+## Public state transport extension (2026-09-22)
+
+- Replay inspection showed additional unsupported public-state flags in later
+  positions: `cannotPlayItemCards`, `rocketSupporter`, and
+  `cannotRetreatNextTurn`. Added these exact scalar fields to the research
+  belief-state whitelist; hidden-history restrictions were not changed.
+- A determinization round-trip fixture verifies all three flags survive into
+  the sampled state. TypeScript typecheck passes; engine build fingerprint is
+  `3dddf99eb4911076`, worker bundle SHA-256 is
+  `1b7f3347aa2dbb548490288b4d62a76c5980c5acd48a7b3679b18922d4816749`, and
+  the full engine suite passes (78/78).
+- Existing v3 positions and generated evidence retain their prior engine
+  identity and are not treated as data from this new build. Recollect under a
+  new output identity before using positions with the updated sampler. This
+  narrow state transport repair does not claim to remove any knowledge-history
+  blocker or validate sampled strategic quality.
+
 ## Balanced fresh-position batch v2 (2026-09-22)
 
 - Ran the committed v2 collector after the harness commit, with four games in
