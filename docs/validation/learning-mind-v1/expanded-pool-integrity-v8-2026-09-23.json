@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "audit": "expanded-two-family-pool-integrity",
+  "date": "2026-09-23",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "families": {
+    "typescript-heuristic": {
+      "poolManifestHash": "00bdaf9814ffc72e74bfd8102f10de739f693eeeb68b355f2ac2ef76693bce66",
+      "rowsSha256": "762516a0942561684d64f68c64f29bbb00317683d6c09be194c45401446a43c1",
+      "rows": 72,
+      "featureReencoded": 72,
+      "sourceGames": 6,
+      "sourceGameSplitCounts": {"train": 4, "development": 1, "heldout": 1},
+      "rowSplitCounts": {"train": 67, "development": 4, "heldout": 1},
+      "rowsBySourceGame": {
+        "fresh-v1-typescript-crustle-0": 21,
+        "fresh-v1-typescript-crustle-1": 3,
+        "fresh-v1-typescript-dragapult-0": 19,
+        "fresh-v1-typescript-dragapult-1": 4,
+        "fresh-v1-typescript-dragapult-2": 1,
+        "fresh-v1-typescript-raging-bolt-0": 24
+      }
+    },
+    "python-heuristic": {
+      "poolManifestHash": "6e17b1b9c11e475e1943df57bb2cc082bade8afbd25089b975a80e937b640b3d",
+      "rowsSha256": "2d7a987ae18e9e5a5ae68bb6444db3d18f5d7de830e80bcac29ce1d475348522",
+      "rows": 72,
+      "featureReencoded": 72,
+      "sourceGames": 6,
+      "sourceGameSplitCounts": {"train": 4, "development": 1, "heldout": 1},
+      "rowSplitCounts": {"train": 49, "development": 1, "heldout": 22},
+      "rowsBySourceGame": {
+        "fresh-v1-python-crustle-0": 23,
+        "fresh-v1-python-crustle-1": 1,
+        "fresh-v1-python-dragapult-0": 23,
+        "fresh-v1-python-dragapult-1": 1,
+        "fresh-v1-python-raging-bolt-0": 22,
+        "fresh-v1-python-raging-bolt-1": 2
+      }
+    }
+  },
+  "crossPool": {
+    "combinedRows": 144,
+    "uniqueActorVisiblePositions": 144,
+    "crossFamilyDuplicates": 0,
+    "integrityErrors": 0
+  },
+  "interpretation": [
+    "All 144 rows re-encoded to their frozen feature identity; every source game stays within one split.",
+    "The source-game assignment is disjoint, but row counts are badly imbalanced. Development has only four TypeScript rows and one Python row; TypeScript held-out has one row.",
+    "Do not interpret these development/held-out results as reliable generalization evidence or collect rollout labels from the expanded pools yet.",
+    "Candidate support has not been re-audited for the expanded 72-row pools."
+  ]
+}

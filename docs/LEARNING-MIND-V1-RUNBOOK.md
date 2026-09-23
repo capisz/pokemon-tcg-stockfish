@@ -100,6 +100,15 @@ expanded pools. Full identities and caveats are in
 The next gate is a tested multi-source pool/split audit plus support checks on
 the exact expanded rows—not rollouts or model fitting yet.
 
+The expanded-pool audit re-encoded all 144 rows and confirmed game-disjoint
+splits and zero cross-family duplicate positions, but exposed severe row
+imbalance (TypeScript 67/4/1 and Python 49/1/22 train/development/held-out).
+Therefore do not use these tiny dev/held-out subsets as generalization tests.
+The next implementation task is to repair and test selection/splitting so
+source games remain disjoint while each split gets enough balanced rows; then
+rerun identity and candidate-support audits. Details are in
+`docs/validation/learning-mind-v1/expanded-pool-integrity-v8-2026-09-23.json`.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

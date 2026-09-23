@@ -492,3 +492,18 @@ strength or autonomous improvement.
 - Run, pool, and support-report hashes are in
   `fresh-position-coverage-v8-2026-09-23.json`. No rollout labels, ranker fit,
   supervised training, PPO, or promotion occurred.
+
+## Expanded-pool integrity and split audit (2026-09-23)
+
+- Re-encoded all 144 rows under the exact frozen identity: 72/72 per policy
+  family matched. Each source game appears in only one split, and the two
+  families have no duplicate actor-visible positions.
+- The resulting row split is too imbalanced for evaluation: TypeScript has
+  67/4/1 train/development/held-out rows; Python has 49/1/22. These come from
+  only six selected source games per family. Source-game disjointness alone is
+  insufficient; development and held-out row counts are not defensible evidence.
+- Candidate support was not audited on the expanded pools. Do not collect
+  rollout labels or fit a ranker from them. First fix and test balanced
+  game-level pool selection, then rerun feature and candidate-support audits.
+- Counts and per-game provenance are frozen in
+  `expanded-pool-integrity-v8-2026-09-23.json`.
