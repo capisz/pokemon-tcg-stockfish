@@ -1,0 +1,56 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-current-engine-actor-position-coverage-v2",
+  "status": "development-only-not-policy-evaluation",
+  "harnessCommit": "6d66340",
+  "collectorVersion": "fresh-actor-position-collector-v2",
+  "collectorSourceSha256": "bb7aec51baf1d5200bd2c566896697bfc97cf1476b323f6b9016b0f784dd9a1d",
+  "runId": "8d674b23f27f0bb40c60c18bd2125708",
+  "runManifestPath": "artifacts/learning-mind-v1/fresh-actor-positions-v2/run-manifest.json",
+  "runManifestFileSha256": "163c91be5355dcc08eecd2fb273c63dde066ec8ceeb529d70d4b2ef0c1d90b4c",
+  "runManifestInternalHash": "1155c899757a07387e8cea53f3885cd7c9ad8fa991f877ab9efdb639951d6f2e",
+  "runtimeIdentityHash": "58b1b37c477a2cb73a1209897846464d2331c0fdaee1d86e6adfbecf4a540dfa",
+  "engineVersion": "twinleaf-adapter-0.1.0+c212653686a59248",
+  "engineBuildSha256": "74e600cca2fe5031a6c09f3869c340f170620a077de4aa7b1237170c8e511cca",
+  "policy": "typescript-heuristic",
+  "schedule": {
+    "games": 12,
+    "gamesPerMatchup": 4,
+    "matchups": ["raging-bolt-vs-crustle", "raging-bolt-vs-dragapult", "raging-bolt-vs-raging-bolt"],
+    "seedsUniqueWithinRun": true,
+    "crossMatchupSeatFirstPlayerCombinations": [[0, 0], [0, 1], [1, 0], [1, 1]],
+    "mirrorFirstPlayerSeats": [0, 1],
+    "maxDecisions": 1200
+  },
+  "outcomes": {"finished": 12, "truncated": 0, "error": 0, "totalDecisions": 2263},
+  "searchPositionCoverage": {"actorPositions": 38, "macroPoolRows": 18, "turnCounts": {"1": 18}},
+  "privacyAudit": {
+    "verifiedReplayHashes": 12,
+    "verifiedActorOnlyFrames": 2275,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false,
+    "replayArtifactBytes": 15453726
+  },
+  "macroPositionPool": {
+    "path": "artifacts/learning-mind-v1/fresh-actor-positions-v2/macro-pool",
+    "rowsSha256": "e5a417909872f09a85c5503059aa3f6bee99f15f6b094d07bc9f760973c3668d",
+    "sourceManifestSha256": "163c91be5355dcc08eecd2fb273c63dde066ec8ceeb529d70d4b2ef0c1d90b4c",
+    "manifestSha256": "ae8aa879e5a17e3f54ff26daff0fefabd39cdf61246e7e37eb925eb1a48403c7",
+    "splitCounts": {"train": 11, "development": 3, "heldout": 4},
+    "opponentPolicyFamilies": ["typescript-heuristic"],
+    "candidateSupport": {"supportedPositions": 18, "unsupportedPositions": 0, "candidateCounts": [48, 65, 6, 21, 11, 5, 11, 8, 2, 5, 89, 4, 15, 48, 13, 5, 62, 5]},
+    "rolloutsRun": 0
+  },
+  "seedNamespaceAudit": {
+    "overlapsWithExploratoryV1": true,
+    "reason": "Collector version was omitted from the v2 seed token; the first two entries per matchup reused v1 seeds.",
+    "v1AndV2PoolsCombined": false,
+    "futureFix": "Collector v3 includes the collector version in seed derivation."
+  },
+  "interpretation": [
+    "Position coverage only; outcomes do not establish playing strength.",
+    "All 18 pool positions are turn 1; fresh mid/late states remain blocked by actor-visible knowledge-history compatibility checks.",
+    "The pool has a source-game holdout but no blind opponent-policy-family holdout.",
+    "No labels, model training, PPO, policy promotion, or service installation occurred."
+  ]
+}

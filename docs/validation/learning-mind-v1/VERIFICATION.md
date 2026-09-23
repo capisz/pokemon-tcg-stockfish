@@ -322,13 +322,46 @@ strength or autonomous improvement.
   replay hashes are captured in
   `fresh-position-coverage-v1-2026-09-22.json`; local compressed replays remain
   ignored under `artifacts/learning-mind-v1/`.
-- Bumped the collector identity to v2 for future runs: mirror first-player
-  assignment now alternates, four cross-matchup games balance both Raging Bolt
-  seat and first-player factors, and the collector source hash is frozen.
-  Existing v1 run output is immutable and must not be resumed under v2.
+- The committed v2 collector source hash matches harness commit `6d66340`.
+  The v2 schedule alternated mirror first player and fully balanced the four
+  Raging Bolt seat × first-player cells in each cross-matchup. Its seed token
+  did not yet include the collector version, so its first two seeds per
+  matchup overlap the separate exploratory v1 run; the two pools were not
+  combined. Collector v3 now includes its version in seed derivation, and v1/v2
+  outputs must not be resumed under v3.
 - The new collector tests plus the existing focused orchestration, baseline
   pilot, and decision-guard tests pass (21 total); `git diff --check` passes.
 - Fresh mid/late positions are still blocked by engine-side knowledge
   restrictions after effects such as temporary-zone reveals. Do not bypass
   them. The next implementation target is a tested, actor-visible reconstruction
   contract for those facts; until then this pool is too narrow for ranker fit.
+
+## Balanced fresh-position batch v2 (2026-09-22)
+
+- Ran the committed v2 collector after the harness commit, with four games in
+  each of three cells: Raging Bolt vs Crustle, Raging Bolt vs Dragapult, and
+  Raging Bolt mirror. All 12 finished (0 truncations, 0 errors), totaling
+  2,263 decisions and 38 engine-provided searchable actor positions. Cross
+  matchups covered all four Raging Bolt-seat × first-player assignments; the
+  mirror alternated first player. This remains position-coverage data, not
+  policy evaluation.
+- Verified the run-manifest checksum and all 12 compressed replay hashes.
+  The 2,275 stored frames retain only the decision actor's observation; all
+  opposite-seat slots are null and the replay chance arrays are empty. Raw
+  artifact size was 15,453,726 bytes. The frozen collector hash in the run
+  manifest matches `6d66340`.
+- The 18-position game-disjoint pool contains all three matchups but all rows
+  are turn 1. Candidate generation supports 18/18 positions, producing 2–89
+  complete plans each without rollout or expansion-cap failures. No rollout
+  labels were generated. Pool split: 11 train, 3 development, 4 held out by
+  source game; there is still only one opponent policy family, so this is not
+  a blind policy-family holdout.
+- The v2 seed namespace reused its first two seeds per matchup from the
+  separate v1 exploratory run because collector version was not in the seed
+  token. The v2 run itself has 12 unique seeds, and the v1 and v2 pools were
+  not mixed. v3 corrects the namespace for future batches.
+- Full checksums, schedule and compact coverage metrics are in
+  `fresh-position-coverage-v2-2026-09-22.json`. Current engine-side
+  knowledge-history restrictions still exclude mid/late states; no guard was
+  bypassed. No model training, PPO, policy promotion, or service installation
+  was started.

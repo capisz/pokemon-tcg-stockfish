@@ -622,7 +622,7 @@ do not use its ordinary heuristic choices as policy labels:
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-fresh-positions \
   --root . \
-  --output artifacts/learning-mind-v1/fresh-actor-positions-v2 \
+  --output artifacts/learning-mind-v1/fresh-actor-positions-v3 \
   --games-per-matchup 4 \
   --policy typescript-heuristic
 ```
@@ -635,8 +635,9 @@ games are exposed in `run-manifest.json` as the source manifest for
 `build-macro-position-pool`; truncated/error games stay in the run record and
 are not silently replaced. The v2 schedule balances the Raging Bolt seat and
 first-player assignments when four games are scheduled in each cross-matchup,
-and alternates first player in mirror games. These are position-coverage games,
-not a performance benchmark.
+and alternates first player in mirror games. Seed derivation includes the
+collector version, so future batches do not repeat the exploratory v1/v2
+namespace. These are position-coverage games, not a performance benchmark.
 
 The first exploratory six-game capture is frozen at
 `artifacts/learning-mind-v1/fresh-actor-positions-v1-2026-09-22`. It used six
@@ -647,9 +648,20 @@ transition-plan generation supported 13/13, with 2–68 complete candidates
 per position. This capture was for coverage diagnostics only: the original v1
 schedule fixed absolute first player to seat 0 and did not provide full
 factorial matchup balance. Do not treat its outcomes as policy-strength
-evidence or resume it with the v2 collector.
+evidence or resume it with the current collector.
 
 The local replay files are under the ignored artifact directory and are
 checksummed in its `run-manifest.json`; the compact pool manifest is
 `macro-pool/manifest.json`. Candidate support has not yet been rollout-scored,
 and all later states remain blocked by engine knowledge-reconstruction gates.
+
+The committed v2 collector was exercised with a balanced 12-game run at
+`artifacts/learning-mind-v1/fresh-actor-positions-v2`. All 12 finished, with
+2,263 decisions and 38 engine-provided searchable actor positions. Its
+18-position capped pool is still all turn 1, despite covering all three
+matchups and every cross-matchup seat/first-player cell. Candidate generation
+supports all 18 positions (2–89 complete plans), but no rollout labels were
+collected. The v2 schedule reused the first two seed entries per matchup from
+exploratory v1 because collector version was not yet part of the seed token;
+the v2 pool does not mix in the separate v1 data. Current v3 fixes that
+namespace issue and refuses to resume these v2 outputs as if they were v3.
