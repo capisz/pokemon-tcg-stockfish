@@ -672,3 +672,38 @@ strength or autonomous improvement.
   identity-bound rollout/censoring protocol, and preserve development
   separation. Do not fit the ranker until there is sufficient independent
   training breadth. PPO, continuous operation, and promotion remain disabled.
+
+## Five-archetype actor-position coverage and stratified planner screen (2026-09-23)
+
+- Completed 60-game Python-heuristic and 60-game TypeScript-heuristic coverage
+  runs: five archetypes, all 15 unordered matchup/mirror cells, four games per
+  cell, and 120/120 finished outcomes with zero truncations or engine errors.
+  All 120 replay records had a present file with a matching SHA-256. The Python
+  and TypeScript run-manifest file hashes are
+  `f96ab09610515840a11d3dec8b740a1181da48424258e0a7bc0438ee9052893f` and
+  `6ffc2a6c1bf024f7e57eb13a923dd9acf13983471697665a2a6856fc99761190`;
+  both bind identity `e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8`.
+- Built ten unlabeled, source-game-disjoint pools (one per policy family and
+  target archetype), 50 positions per pool. Their ordinary heuristic actions
+  were not converted to policy labels.
+- Added deterministic stratification when `audit-macro-candidate-support`
+  receives a row limit: prioritize underrepresented opponent archetypes, then
+  position stage, split, and source game. Unit coverage verifies repeatability
+  and breadth across those dimensions. This avoids a misleading first-N sample
+  dominated by the earliest matchup.
+- Screened five positions per pool, with one sampled opponent matchup for each
+  target deck and a mixture of position stages/splits. Python support was
+  21/25 and TypeScript support 23/25 (44/50 overall); all six unsupported
+  positions failed closed at the existing 128-candidate cap. These are small,
+  stratified diagnostic samples, not estimates of population support and not
+  evidence of strategic quality. Every sampled position that was supported
+  had at least one complete executable candidate; no rollout, label, ranker,
+  supervised training, PPO, or promotion was run.
+- The cap overflows occurred in late positions with large branching factors
+  across several archetypes, confirming that planner support—not data capture—
+  is the immediate macro-learning blocker. Do not raise the cap or drop plans
+  without a separately versioned and tested coverage policy.
+- Full audit summaries, report hashes, and file checksums are in
+  `macro-support-stratified-screen-v11-2026-09-23.json`; raw replays, pools,
+  and detailed support reports remain ignored local artifacts. PPO,
+  continuous operation, and trusted promotion remain disabled.

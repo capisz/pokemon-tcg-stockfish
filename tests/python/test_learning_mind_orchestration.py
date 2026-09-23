@@ -437,6 +437,7 @@ def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path
     report = candidate_support.audit_macro_candidate_support(
         root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
     assert report["status"] == "no-rollouts-no-labels"
+    assert report["sampleSelection"] == "all-rows"
     assert report["statusCounts"] == {"supported": 1}
     assert report["completeCandidates"] == 1
     assert report["positions"][0]["hypothesisId"] == "public-fixture"
@@ -444,6 +445,26 @@ def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path
     with pytest.raises(ValueError, match="immutable"):
         candidate_support.audit_macro_candidate_support(
             root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
+
+
+def test_candidate_support_limited_sample_balances_archetypes_then_context():
+    rows = [
+        {"positionHash": f"{opponent}-{stage}-{split}-{index}",
+         "opponentArchetype": opponent, "positionStage": stage,
+         "split": split, "sourceGameId": f"game-{index}"}
+        for opponent in ("crustle", "dragapult", "raging-bolt")
+        for stage in ("late", "midgame", "opening")
+        for split in ("train", "development", "heldout")
+        for index in range(2)
+    ]
+    sample = candidate_support._select_stratified_sample(rows, 9)
+    assert sample == candidate_support._select_stratified_sample(rows, 9)
+    assert len(sample) == 9
+    assert {row["opponentArchetype"] for row in sample} == {
+        "crustle", "dragapult", "raging-bolt",
+    }
+    assert {row["positionStage"] for row in sample} == {"opening", "midgame", "late"}
+    assert {row["split"] for row in sample} == {"train", "development", "heldout"}
 
 
 def test_candidate_support_audit_fails_closed_on_unsupported_and_identity_drift(tmp_path, monkeypatch):

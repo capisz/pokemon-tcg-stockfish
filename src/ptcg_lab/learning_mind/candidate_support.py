@@ -13,6 +13,30 @@ from .experiment import generate_transition_candidates, transition_generator_ide
 from .schema import IdentityError, UnsupportedPosition, identity_hash
 
 
+def _select_stratified_sample(rows: list[dict], limit: int) -> list[dict]:
+    """Deterministically sample broadly across archetype, stage, and split."""
+    remaining = list(rows)
+    selected: list[dict] = []
+    counts: dict[str, Counter] = {
+        name: Counter() for name in (
+            "opponentArchetype", "positionStage", "split", "sourceGameId",
+        )
+    }
+    while remaining and len(selected) < limit:
+        row = min(remaining, key=lambda item: (
+            counts["opponentArchetype"][str(item.get("opponentArchetype", "unknown"))],
+            counts["positionStage"][str(item.get("positionStage", "unknown"))],
+            counts["split"][str(item.get("split", "unknown"))],
+            counts["sourceGameId"][str(item.get("sourceGameId", "unknown"))],
+            str(item.get("positionHash", "")),
+        ))
+        selected.append(row)
+        remaining.remove(row)
+        for name, counter in counts.items():
+            counter[str(row.get(name, "unknown"))] += 1
+    return selected
+
+
 def audit_macro_candidate_support(*, root: Path, dataset_dir: Path, output: Path,
                                   identity: dict, workers: int = 1,
                                   limit: int | None = None) -> dict:
@@ -25,7 +49,7 @@ def audit_macro_candidate_support(*, root: Path, dataset_dir: Path, output: Path
         raise ValueError("candidate support audit outputs are immutable; choose a new directory")
     root, dataset_dir, output = root.resolve(), dataset_dir.resolve(), output.resolve()
     manifest, rows = load_dataset(dataset_dir, identity=identity)
-    selected = rows[:limit] if limit is not None else rows
+    selected = _select_stratified_sample(rows, limit) if limit is not None else rows
     generator_identity = transition_generator_identity(root)
 
     def inspect(row: dict) -> dict:
@@ -89,6 +113,7 @@ def audit_macro_candidate_support(*, root: Path, dataset_dir: Path, output: Path
         "candidateGeneratorIdentity": generator_identity,
         "workers": workers,
         "requestedLimit": limit,
+        "sampleSelection": "deterministic-stratified-v1" if limit is not None else "all-rows",
         "rows": len(selected),
         "statusCounts": dict(sorted(statuses.items())),
         "supportedPositions": statuses["supported"],

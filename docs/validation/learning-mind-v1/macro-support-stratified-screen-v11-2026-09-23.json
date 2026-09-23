@@ -1,0 +1,173 @@
+{
+  "schemaVersion": 1,
+  "audit": "macro-candidate-support-stratified-screen-v11",
+  "status": "no-rollouts-no-labels",
+  "identity": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "sourceRuns": {
+    "python": {
+      "path": "artifacts/learning-mind-v1/fresh-actor-positions-v11-five-archetypes-python/run-manifest.json",
+      "manifestHash": "cb13edf1b0c9fac08970fb00e8c6e34e9b5bd3c758e9dbf5373e90864ff389c6",
+      "fileSha256": "f96ab09610515840a11d3dec8b740a1181da48424258e0a7bc0438ee9052893f",
+      "scheduledGames": 60,
+      "finished": 60,
+      "truncated": 0,
+      "errors": 0,
+      "replayFilesMissing": 0,
+      "replayHashMismatches": 0
+    },
+    "typescript": {
+      "path": "artifacts/learning-mind-v1/fresh-actor-positions-v11-five-archetypes-typescript/run-manifest.json",
+      "manifestHash": "3100ec480ada40c403de73cd3e8fa2d609c3d6c9169e1732ae197fa5f7d623de",
+      "fileSha256": "6ffc2a6c1bf024f7e57eb13a923dd9acf13983471697665a2a6856fc99761190",
+      "scheduledGames": 60,
+      "finished": 60,
+      "truncated": 0,
+      "errors": 0,
+      "replayFilesMissing": 0,
+      "replayHashMismatches": 0
+    }
+  },
+  "matchupSchedule": {
+    "archetypes": ["crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario"],
+    "unorderedCellsIncludingMirrors": 15,
+    "gamesPerCell": 4,
+    "gamesPerPolicy": 60
+  },
+  "poolPolicy": "50 deterministic actor-visible positions per target deck and source policy family; ordinary heuristic actions are not policy labels; source-game splits are disjoint",
+  "supportSample": {
+    "method": "deterministic-stratified-v1",
+    "positionsPerPool": 5,
+    "poolCount": 10,
+    "sampledPositions": 50,
+    "supported": 44,
+    "unsupported": 6,
+    "noCompleteCandidate": 0,
+    "unsupportedReason": "complete macro candidate cap exceeded at 128",
+    "populationEstimate": false,
+    "strategicQualityEvidence": false
+  },
+  "poolsAndReports": {
+    "python/crustle": {
+      "poolManifestHash": "1cde13e3fa3e5c0e95a77e94b1d04b18fc1bcf5c13072a782d9738f02ddf3832",
+      "poolManifestFileSha256": "383a6bdac748c4973a321c063cf47ab51f3220cb56ba8d05091351157fc36e90",
+      "poolRows": 50,
+      "poolRowsSha256": "add937c66ff0a8a13aa65fc73abc308fbef65cbdf7b23613b72aace95c3de75d",
+      "supportReportHash": "d9e881bfc7fde6219bc726edd5696d666c9e9acdb90c58030c5fa19a28e4e55c",
+      "supportReportFileSha256": "c175e693274ad6afce8f8d02c263897bf862fc5b223d98c0ce21536fb7f945bc",
+      "sampled": 5,
+      "supported": 5,
+      "unsupported": 0
+    },
+    "python/dragapult": {
+      "poolManifestHash": "eb3efd5acb4fcadc132757e69f928eb13f72551277d697790e4562c974739160",
+      "poolManifestFileSha256": "f46c7e733591fdabf5d8ec6f77febfdf9d3970fd82b0e7fca527b479a2816689",
+      "poolRows": 50,
+      "poolRowsSha256": "4051cdda9e043e028207118b76959026cc5dd05f6469e300dfa5ff54a1a13e5f",
+      "supportReportHash": "8019b75ad58714a5b3e38d199940db98fbfd61918fb422e11c274daa22cb1b31",
+      "supportReportFileSha256": "eb3399183d9256f978b174cfced45de94431b80f54dfd770b4dd4f1d67881cf4",
+      "sampled": 5,
+      "supported": 3,
+      "unsupported": 2
+    },
+    "python/raging-bolt": {
+      "poolManifestHash": "d3ed1c8a14cd6e70902d19a06e8c6c22892b433859ff90f372650b6a91f383bd",
+      "poolManifestFileSha256": "36433ce1cc146a9a01e68479950d43b9626a5344284b33629a33fd5d7114ea14",
+      "poolRows": 50,
+      "poolRowsSha256": "8c36525ee15c1e14b24d04978a201683aeac9b5738774c72000deb84c078b339",
+      "supportReportHash": "934e7416d54766f57f0578dcb44ae01dfd7b7c577623f54ffd276ba9e575eedb",
+      "supportReportFileSha256": "744d697d5f415095ff3ce1d2317dc6c30e79449d7e2603116aab6b10090df779",
+      "sampled": 5,
+      "supported": 4,
+      "unsupported": 1
+    },
+    "python/grimmsnarl": {
+      "poolManifestHash": "64ef3b6a9042646d9192a42b3c7d3ed54b0b788e53717412165e0ed534073b7c",
+      "poolManifestFileSha256": "16d7811b280f753b944d787ce66bcd11d6cfd64ad8767f410e613d6f46aa9b55",
+      "poolRows": 50,
+      "poolRowsSha256": "ff2a09ec548204c64797bbb601b80181decc56ec47db1a7987fc1b91e116e6f3",
+      "supportReportHash": "2cf26a61c8c097149d9a9d3d42e4a800475b37f8987c854201e8dc239058b887",
+      "supportReportFileSha256": "666724dd9304694104ca4df567208fff0fd2febf66425465113e14ad934d9d8c",
+      "sampled": 5,
+      "supported": 4,
+      "unsupported": 1
+    },
+    "python/mega-lucario": {
+      "poolManifestHash": "6cad465e21a4ec47d3ba9546e86a6c1d4d91ede19d9d9bec57c980ea873cd0dd",
+      "poolManifestFileSha256": "2f23f649384a0fc0d27b953d5fe19d45a4885046c33694f33f17edc58019a9ce",
+      "poolRows": 50,
+      "poolRowsSha256": "73574f1af675574d5262860893917de720708fd709eeddf4f4e3a05027bd6de2",
+      "supportReportHash": "616fcaa1559b7f8fdee766ed1ee5a8b2cc6aad096382dfcaea64f468d974d1a6",
+      "supportReportFileSha256": "adbab2a2293cec2e8fad2bda986b5df3d54c9027d1e3726b4da39a141cf5f6c8",
+      "sampled": 5,
+      "supported": 5,
+      "unsupported": 0
+    },
+    "typescript/crustle": {
+      "poolManifestHash": "cb3ea5e5a8b5d96bb7f8cefbaed49b96489c3d678c14a7481f3bec1d598fd3c6",
+      "poolManifestFileSha256": "b856ea799ef7c31205f2b20b83c38fc53fd75e761ffec701cdd6895830323b32",
+      "poolRows": 50,
+      "poolRowsSha256": "c3329159f2e212f8e22e665423cc2e55d07386695b6e022e21d98c1c5c74ed19",
+      "supportReportHash": "78b837b4ac19cd859a36e7c97935ade2a7cdaf3d2dc2e0b1584a17bd94c92cbb",
+      "supportReportFileSha256": "aeeac01c9539ca1af83b03ce915d5826311645a4968d7fab92bf0222eed7e577",
+      "sampled": 5,
+      "supported": 5,
+      "unsupported": 0
+    },
+    "typescript/dragapult": {
+      "poolManifestHash": "baa66ff528e543f656fb0cbd4da5958501de9ce0d8163fa17e54923c694666f9",
+      "poolManifestFileSha256": "00bf185e981ef44d9c561e6064c1fbb9fd2855453a3c81d181ff3eede2d89ca0",
+      "poolRows": 50,
+      "poolRowsSha256": "4e6cd43bf141b2e9aa6d57da7b9d6c1de6bb50667ac2a6171cf243dd2b5aa730",
+      "supportReportHash": "7f2c1d5bf7b080a89d432f16482131e71580c0f1b7d1132f243f2ca3e7ac0a52",
+      "supportReportFileSha256": "2f3622ef771a889bfcc53aa36a45ff7f459f75f2bfdb99662be577e10aded27a",
+      "sampled": 5,
+      "supported": 4,
+      "unsupported": 1
+    },
+    "typescript/raging-bolt": {
+      "poolManifestHash": "18ab6df77024a72b5a783717163eb88d7ef5620b495e048bfaf0d14bb08ebf29",
+      "poolManifestFileSha256": "3eb398c0c9c1db2335da3cf78b071b4faddcd4e1ba877105980755e01ccbadde",
+      "poolRows": 50,
+      "poolRowsSha256": "a6bea497f3d87a0c3940584c60fabebe874cd88a5cefb576c7c72ac3fa0bd677",
+      "supportReportHash": "48fc1fc2346deea7b553b79c5be35df26dc479f2e318fd9ffb4e5783e853cbc3",
+      "supportReportFileSha256": "591d32ee238d4e6d318ffdf85ce7cf0171972c5650c5dda01646ccacc4ca505b",
+      "sampled": 5,
+      "supported": 4,
+      "unsupported": 1
+    },
+    "typescript/grimmsnarl": {
+      "poolManifestHash": "f536eb9b3d84f5980eba21616b266221ce90a8b35c0d1468312d462ea1386ac8",
+      "poolManifestFileSha256": "9669d4454ce10974522efa0af1529e6fe208b7a41518e7603aedb0b0d2d23e92",
+      "poolRows": 50,
+      "poolRowsSha256": "60b6f46ed2d485c7fbb5d8f5e71c6912dfa843daf380d185bf3f1b1dcf72bdd4",
+      "supportReportHash": "270def4e4765548f15176cbf03bdb5ab94562825c0fe59ce817752fea54663ee",
+      "supportReportFileSha256": "f9c34feb1df9eda97348c9ec942d97f8bdd604221a1853da90a032853228c1f1",
+      "sampled": 5,
+      "supported": 5,
+      "unsupported": 0
+    },
+    "typescript/mega-lucario": {
+      "poolManifestHash": "9131f5899cab684c510f6a75bd7f300f48d978e50acfe99559800549fb179d0d",
+      "poolManifestFileSha256": "217e26a833f7bb827d7cb9b47e2eeef7331ab9acf164396c1bf2ca2498cc5daa",
+      "poolRows": 50,
+      "poolRowsSha256": "2e60bd94a5674dbd6a8b5fc523bedb6483d8e50f9a31d7608cb680361ff8e4c2",
+      "supportReportHash": "a02fd50d4bfb889e242fdbb8a77d7b0f946b7dfea1383509d3d907cb4d270ca4",
+      "supportReportFileSha256": "97b0783e45d8abfb93fcf30cdb2d16bd277409c36a3ac2e2a49a5ad9df2ff08c",
+      "sampled": 5,
+      "supported": 5,
+      "unsupported": 0
+    }
+  },
+  "interpretation": "All six unsupported positions were late-game plan-branching overflows at the frozen 128-candidate cap. This sample is for diagnostic triage only; it is not a support-rate estimate, label set, model fit, or strategic-strength result.",
+  "nextGate": "Examine the overflowing plan trees and design a versioned, tested candidate-coverage strategy that does not silently discard legal or strategically distinct plan classes; then run a wider preregistered support audit and collect additional game-disjoint positions before rollout labels or ranker fitting.",
+  "gates": {
+    "rolloutLabelsCollected": false,
+    "rankerFit": false,
+    "supervisedTraining": false,
+    "heldOutLabelWin": false,
+    "targetProbeWin": false,
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false,
+    "trustedPromotion": false
+  }
+}
