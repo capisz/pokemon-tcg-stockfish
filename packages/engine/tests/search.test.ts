@@ -44,12 +44,14 @@ test('belief determinization preserves observable public restriction and Team Ro
   const env = ready(); const viewer = env.actor;
   const sourcePlayer = env.store.state.players[viewer];
   sourcePlayer.cannotPlayItemCards = true; sourcePlayer.rocketSupporter = true;
+  sourcePlayer.playLocksTurnsRemaining = 2;
   env.store.state.players[1 - viewer].active.cannotRetreatNextTurn = true;
   const position = env.observe().searchPosition!;
   const opponentDeck = viewer === 0 ? 'mega-lucario' : 'crustle';
   const sampled = Environment.fromPublicPosition(position, 977, opponentDeck, env.decisionIndex);
   assert.equal(sampled.store.state.players[viewer].cannotPlayItemCards, true);
   assert.equal(sampled.store.state.players[viewer].rocketSupporter, true);
+  assert.equal(sampled.store.state.players[viewer].playLocksTurnsRemaining, 2);
   assert.equal(sampled.store.state.players[1 - viewer].active.cannotRetreatNextTurn, true);
 });
 

@@ -77,7 +77,8 @@ export class Environment {
   private knownNonPrizeCounts:Map<string,number>[]=[new Map(),new Map()];
   private knownOpponentHand: Map<string,number>[]=[new Map(),new Map()];
   private opponentRevealedCounts: Map<string,number>[]=[new Map(),new Map()];
-  private activePeek: {viewer:number;kind:'recon'|'pokegear'}|undefined;
+  private activePeek: {viewer:number;kind:'recon'|'pokegear'|'ultra-ball'|'crispin'}|undefined;
+  private pendingCrispinReveals: {viewer:number;cards:Card[]}[]=[];
   private effectStartHands:Set<Card>[]|undefined;
   private effectReveals:Set<Card>[]=[new Set(),new Set()];
   private activeEffectCardId:string|undefined;
@@ -101,7 +102,7 @@ export class Environment {
     if(firstPlayer!==undefined&&firstPlayer!==0&&firstPlayer!==1)throw new Error("firstPlayer must be 0 or 1.");
     this.firstPlayer=firstPlayer;this.selection=[];this.selectionPrompt=undefined;this.knowledge=[[],[]];this.seenKnowledge=new WeakSet();this.knowledgeRestricted=[false,false];this.ownPrizeKnowledge=[undefined,undefined];this.knownTop=[[],[]];
     this.knownBottom=[[],[]];this.knownNonPrizeCounts=[new Map(),new Map()];this.knownOpponentHand=[new Map(),new Map()];this.opponentRevealedCounts=[new Map(),new Map()];this.activePeek=undefined;
-    this.effectStartHands=undefined;this.effectReveals=[new Set(),new Set()];
+    this.effectStartHands=undefined;this.effectReveals=[new Set(),new Set()];this.pendingCrispinReveals=[];
     this.activeEffectCardId=undefined;
     if (!Number.isSafeInteger(seed) || seed < 0 || seed > 0xffffffff) throw new Error('Seed must be a uint32 integer.');
     if (!Array.isArray(decks) || decks.length !== 2) throw new Error('Exactly two deck IDs are required.');
@@ -246,6 +247,7 @@ export class Environment {
     const prompt: any = this.pending();
     let searchPosition: PublicPosition | undefined; let searchUnavailableReason: string | undefined;
     this.captureKnowledge();
+    this.reconcilePendingCrispinReveals();
     if (playerId === actor && this.status === 'running') {
       try { if(this.knowledgeRestricted[playerId])throw new Error('Search is unavailable: revealed-card or known-order history must be incorporated before sampling hidden states.'); if(this.hypotheticalOpponent)throw new Error('Nested sampling is unavailable for synthetic hypotheses.'); searchPosition = projectPublicPosition(state, playerId, this.decks[playerId]);
         if(this.ownPrizeKnowledge[playerId]) {
@@ -309,7 +311,11 @@ export class Environment {
           const opponent=this.store.state.players[1-viewer];
           // Ordinary search reveals occur with the selected cards already in hand.
           // Other show-card destinations need their own effect-specific contract.
-          if(cards.every(c=>opponent.hand.cards.includes(c))){
+          if(this.activePeek?.viewer===viewer&&this.activePeek.kind==='crispin'){
+            // Crispin reveals before the selected cards leave a temporary zone.
+            // Defer hand/public-zone reconciliation until its prompts finish.
+            this.pendingCrispinReveals.push({viewer,cards:[...cards]});
+          }else if(cards.every(c=>opponent.hand.cards.includes(c))){
             const gained=this.cardCounts(cards.filter(c=>this.effectStartHands&&!this.effectStartHands[1-viewer].has(c)&&!this.effectReveals[viewer].has(c)));
             const shown=this.cardCounts(cards);for(const[id,n]of shown)this.knownOpponentHand[viewer].set(id,Math.max(n,(this.knownOpponentHand[viewer].get(id)??0)+(gained.get(id)??0)));
             cards.forEach(c=>this.effectReveals[viewer].add(c));
@@ -339,6 +345,18 @@ export class Environment {
     const counts=this.cardCounts(this.publicCards(this.store.state.players[1-viewer]));
     for(const[id,n]of this.knownOpponentHand[viewer])counts.set(id,(counts.get(id)??0)+n);
     for(const[id,n]of counts)this.opponentRevealedCounts[viewer].set(id,Math.max(n,this.opponentRevealedCounts[viewer].get(id)??0));
+  }
+  private reconcilePendingCrispinReveals(){
+    if(this.store.state.prompts.some(prompt=>prompt.result===undefined)||!this.pendingCrispinReveals.length)return;
+    for(const{viewer,cards}of this.pendingCrispinReveals){
+      const opponent=this.store.state.players[1-viewer];
+      const inHand=this.cardCounts(cards.filter(card=>opponent.hand.cards.includes(card)));
+      for(const[id,n]of inHand)this.knownOpponentHand[viewer].set(id,(this.knownOpponentHand[viewer].get(id)??0)+n);
+      if([...this.knownOpponentHand[viewer].values()].reduce((a,b)=>a+b,0)>opponent.hand.cards.length)
+        this.knowledgeRestricted[viewer]=true;
+      this.rememberOpponentCounts(viewer);
+    }
+    this.pendingCrispinReveals=[];
   }
   private reconcilePublicKnowledge(before:Map<string,number>[]){
     for(const viewer of[0,1]){
@@ -370,7 +388,7 @@ export class Environment {
         this.effectStartHands=this.store.state.players.map(p=>new Set(p.hand.cards));this.effectReveals=[new Set(),new Set()];
         this.activeEffectCardId=chosen.view.cardId;
         this.store.state.players.forEach((_,index)=>this.rememberNonPrize(index));
-        this.activePeek=chosen.action instanceof UseAbilityAction&&chosen.view.cardId==='TWM-129'&&chosen.action.name==='Recon Directive'?{viewer:this.actor,kind:'recon'}:chosen.action instanceof PlayCardAction&&chosen.view.cardId==='BLK-84'?{viewer:this.actor,kind:'pokegear'}:undefined;
+        this.activePeek=chosen.action instanceof UseAbilityAction&&chosen.view.cardId==='TWM-129'&&chosen.action.name==='Recon Directive'?{viewer:this.actor,kind:'recon'}:chosen.action instanceof PlayCardAction&&chosen.view.cardId==='BLK-84'?{viewer:this.actor,kind:'pokegear'}:chosen.action instanceof PlayCardAction&&chosen.view.cardId==='MEG-131'?{viewer:this.actor,kind:'ultra-ball'}:chosen.action instanceof PlayCardAction&&chosen.view.cardId==='SCR-133'?{viewer:1-this.actor,kind:'crispin'}:undefined;
       }
       if(chosen.stage){this.selection=[...chosen.stage.selection];}
       else if (prompt) {

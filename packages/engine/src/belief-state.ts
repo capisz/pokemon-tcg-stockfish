@@ -13,7 +13,8 @@ export type DeckHypothesis = string | DeckManifest;
 const PLAYER_FIELDS = ['supporterTurn', 'retreatedTurn', 'energyPlayedTurn', 'stadiumPlayedTurn', 'stadiumUsedTurn',
   'usedTableTurner', 'pokemonKnockedOutDuringOpponentsLastTurn', 'pokemonKnockedOutByAttackDuringOpponentsLastTurn',
   'pokemonKnockedOutLastTurnEntries', 'prizesTaken', 'prizesTakenThisTurn', 'prizesTakenLastTurn', 'canEvolve',
-  'ancientPokemonAttackedLastTurn', 'usedRunErrand', 'usedLunarCycle', 'cannotPlayItemCards', 'rocketSupporter'];
+  'ancientPokemonAttackedLastTurn', 'usedRunErrand', 'usedLunarCycle', 'cannotPlayItemCards', 'rocketSupporter',
+  'playLocksTurnsRemaining'];
 const BOARD_FIELDS = ['damage', 'hp', 'hpBonus', 'specialConditions', 'poisonDamage', 'burnDamage', 'confusionDamage',
   'pokemonPlayedTurn', 'abilityLockActivationOrder', 'sleepFlips', 'boardEffect', 'attacksThisTurn',
   'cannotUseAttacksNextTurn', 'cannotUseAttacksNextTurnPending', 'noAbilities', 'noAbilitiesAttackerId', 'noAbilitiesClearArmed',

@@ -13,6 +13,31 @@ test('actual Pokegear peek survives its shuffle as deck membership, without reta
   const p=e.observe().searchPosition!;assert.ok(p);assert.ok(p.ownDeckKnown!.length>=6);assert.deepEqual(p.ownDeckTop,[]);assert.deepEqual(p.ownDeckBottom,[]);assertConservation(e);
   for(const seed of[1,2,42,731]){const sample=Environment.fromPublicPosition(p,seed,'dragapult'),deck=counts(sample.store.state.players[0].deck.cards.map(printedId));for(const[id,n]of counts(p.ownDeckKnown!))assert.ok((deck.get(id)??0)>=n);assertConservation(sample);}
 });
+test('Ultra Ball reveal preserves surviving actor-deck identities as known non-Prizes',()=>{
+  const e=fixtureEnvironment('delay-prize',1);hand(e,0,'MEG-131');
+  e.step(e.observe().legalActions.find(a=>a.cardId==='MEG-131'&&a.type==='play-trainer')!.id);settle(e);
+  const observation=e.observe(),position=observation.searchPosition!;assert.ok(position);assertConservation(e);
+  const reveal=(observation.knowledge??[]).filter((event:any)=>event.type==='temporary-zone-reveal').at(-1);
+  assert.ok(reveal);const deck=e.store.state.players[0].deck.cards.map(printedId),known=counts(position.ownDeckKnown??[]);
+  for(const[id,n]of counts((reveal.cards??[]).map((card:any)=>card.id)))
+    assert.ok((known.get(id)??0)>=Math.min(n,deck.filter(cardId=>cardId===id).length),`${id} must not be sampled into Prizes`);
+  for(const seed of[17,83,411]){const sampled=Environment.fromPublicPosition(position,seed,'dragapult'),prizes=sampled.store.state.players[0].prizes.flatMap(prize=>prize.cards.map(printedId));
+    for(const[id,n]of known)assert.ok((sampled.store.state.players[0].deck.cards.map(printedId).filter(cardId=>cardId===id).length)>=n,`${id} remains in sampled deck`);
+    assertConservation(sampled);assert.ok(prizes.length>0);}
+});
+test('Crispin reveal reconstructs opponent-known hand identities after its prompts resolve',()=>{
+  const e=fixtureEnvironment('information-order',1),viewer=e.actor;hand(e,viewer,'SCR-133');
+  e.step(e.observe().legalActions.find(a=>a.cardId==='SCR-133'&&a.type==='play-trainer')!.id);settle(e);
+  const revealView=e.observe(1-viewer),revealed=(revealView.knowledge??[]).filter((event:any)=>event.type==='revealed-cards').at(-1);
+  assert.ok(revealed);const opponentHandIds=e.store.state.players[viewer].hand.cards.map(printedId);
+  const knownHand=(revealed.cards??[]).map((card:any)=>card.id).filter((id:string)=>opponentHandIds.includes(id));
+  const endTurn=e.observe().legalActions.find(action=>action.type==='pass');assert.ok(endTurn);e.step(endTurn.id);settle(e);
+  const observation=e.observe(),position=observation.searchPosition!;assert.ok(position);assertConservation(e);
+  for(const id of knownHand)assert.ok(position.knownOpponentHand?.includes(id),`${id} remains known in the opponent's hand`);
+  for(const seed of[29,311,907]){const sampled=Environment.fromPublicPosition(position,seed,'dragapult');assertConservation(sampled);
+    const sampledHand=sampled.store.state.players[viewer].hand.cards.map(printedId);
+    for(const id of position.knownOpponentHand??[])assert.ok(sampledHand.includes(id),`${id} must remain in the sampled known hand`);}
+});
 test('actual Eri preserves the surviving revealed hand after Item discards',()=>{
   const e=fixtureEnvironment('delay-prize',1);hand(e,0,'TEF-146');e.step(e.observe().legalActions.find(a=>a.cardId==='TEF-146'&&a.type==='play-trainer')!.id);settle(e);
   const p=e.observe().searchPosition!;assert.ok(p);assert.deepEqual(p.knownOpponentHand?.sort(),e.store.state.players[1].hand.cards.map(printedId).sort());assertConservation(e);
