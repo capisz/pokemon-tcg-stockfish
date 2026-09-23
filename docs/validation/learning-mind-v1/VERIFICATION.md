@@ -173,6 +173,33 @@ Base: `7543298`
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
 
+## Five-archetype generalist pools and label collection (2026-09-23)
+
+- A fresh matched epoch collected 60/60 games for each heuristic policy family
+  across all 15 five-archetype matchup cells. Both families had zero
+  truncations, engine errors, missing replays, or replay-hash mismatches.
+- Generalist pool v13 contains 250 actor-visible positions per policy family,
+  balanced to 50 for each target deck. Game-disjoint splits contain 172 train,
+  39 development, and 39 held-out rows. Exact pool manifests and source replay
+  identities remain under ignored local artifacts.
+- Target-deck-stratified 10-position support screens passed 9/10 positions for
+  each family; one position per family failed closed at the 128-candidate cap.
+  These small screens are diagnostic, not support-rate estimates.
+- A second exact-position audit selected five supported train positions, one
+  per target deck, from five distinct source games. Candidate counts are 18,
+  70, 5, 20, and 8. The matched adaptive 16-to-64 rollout collection is in
+  progress; no ranker has been fit from it and no development or held-out rows
+  enter labels.
+- Harness increment `cc3802e` adds target-deck round-robin pool selection,
+  deterministic target-deck-stratified support sampling, exact repeated
+  position-hash CLI selection, split guards, and the engine's 500-step horizon
+  cap. The focused orchestration suite passed 21 tests, TypeScript typecheck
+  passed, and `git diff --check` passed before commit. The commit is pushed to
+  `codex/learning-mind-v1`.
+- PPO, continuous operation, and trusted promotion remain disabled. The next
+  gate is completed label evidence plus independent, game-disjoint ranker
+  evaluation; this batch alone is not strength or policy-improvement evidence.
+
 ## Fresh source-game-balanced coverage and macro labeler diagnostic (2026-09-23)
 
 - Epoch `coverage-2026-09c` completed 60/60 games across the Python and
