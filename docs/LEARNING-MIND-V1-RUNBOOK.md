@@ -402,6 +402,9 @@ planner identities, selected positions, horizon, rollout budget, and allocation
 settings. Candidates at one position share common random numbers; a changed
 configuration receives a separate deterministic seed stream. Do not combine
 labels from different rollout identities as if they were independent samples.
+Adaptive allocation compares conservative 95% Hoeffding intervals over the
+bounded [0, 1] outcomes, not just raw means, so a candidate with few completed
+rollouts is not prematurely excluded after many truncations.
 
 Start with a small smoke set covering:
 

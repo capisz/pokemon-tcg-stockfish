@@ -75,6 +75,14 @@ def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
     with pytest.raises(ValueError, match="promotion"): label_candidates(candidates, "p", rollout, namespace="promotion")
 
 
+def test_adaptive_rollouts_extend_when_small_sample_intervals_overlap():
+    candidates = generate_candidates(observation())[:2]
+    rows = label_candidates(candidates, "uncertain-position",
+        lambda candidate, _seed: {"status": "finished", "score": 1.0 if candidate == candidates[0] else 0.0},
+        initial=2, maximum=4, close_margin=0.0)
+    assert [row["completedRollouts"] for row in rows] == [4, 4]
+
+
 def test_rollout_errors_are_not_fabricated_scores():
     candidate = generate_candidates(observation())[:1]
     rows = label_candidates(candidate, "position", lambda c, s: {"status": "truncated", "reason": "fixed-horizon"}, initial=2, maximum=2)

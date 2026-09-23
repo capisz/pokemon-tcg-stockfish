@@ -129,7 +129,10 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
                 "candidateGeneratorIdentity": generator_identity,
-                "rolloutSeedVersion": "configuration-bound-v1"}
+                "rolloutSeedVersion": "configuration-bound-v1",
+                "adaptiveAllocationVersion": "bounded-outcome-95pct-hoeffding-v1",
+                "labelCollectorVersion": "macro-rollout-labeler-v2",
+                "labelCollectorSha256": file_sha256(Path(__file__))}
     rollout_identity = identity_hash(settings)
     settings["rolloutIdentity"] = rollout_identity
     manifest_path = output / "manifest.json"

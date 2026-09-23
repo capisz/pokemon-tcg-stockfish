@@ -151,6 +151,8 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
         raise ValueError("label generation may not consume promotion seeds")
     if not candidates or not 1 <= initial <= maximum <= 64:
         raise ValueError("invalid rollout allocation")
+    if not isinstance(close_margin, (int, float)) or isinstance(close_margin, bool) or not math.isfinite(close_margin) or not 0 <= close_margin <= 1:
+        raise ValueError("close margin must be finite and between 0 and 1")
     if not isinstance(rollout_workers, int) or isinstance(rollout_workers, bool) or not 1 <= rollout_workers <= 8:
         raise ValueError("rollout workers must be an integer from 1 to 8")
     candidate_hashes = [item.key() for item in candidates]
@@ -228,11 +230,22 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
     try:
         run(range(initial), candidates, extension=False)
         if close_candidate_hashes is None:
-            means = {key: sum(record["scores"]) / len(record["scores"]) if record["scores"] else -math.inf
-                     for key, record in records.items()}
-            best = max(means.values())
+            # W/D/L-derived scores are bounded in [0, 1]. Use conservative
+            # 95% Hoeffding intervals so tiny completed samples do not make a
+            # candidate look confidently worse merely because many attempts
+            # were truncated.
+            intervals = {}
+            for key, record in records.items():
+                scores = record["scores"]
+                if not scores:
+                    intervals[key] = (0.0, 1.0)
+                    continue
+                mean = sum(scores) / len(scores)
+                radius = math.sqrt(math.log(40.0) / (2 * len(scores)))
+                intervals[key] = (max(0.0, mean - radius), min(1.0, mean + radius))
+            best_lower = max(lower for lower, _upper in intervals.values())
             close_candidate_hashes = [candidate.key() for candidate in candidates
-                                      if best - means[candidate.key()] <= close_margin]
+                                      if intervals[candidate.key()][1] >= best_lower - close_margin]
             save_progress()
         close = [candidate for candidate in candidates if candidate.key() in set(close_candidate_hashes)]
         if maximum > initial and len(close) > 1:
