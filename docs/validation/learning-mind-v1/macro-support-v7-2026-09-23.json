@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "audit": "actor-visible-macro-candidate-support-only",
+  "date": "2026-09-23",
+  "status": "no-rollouts-no-labels",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "engineBuildSha256": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+  "plannerBundleSha256": "ffc636cbd7d439ecf3726eaaf991339ec49adda6ad12ac6363c96aefb5a47a21",
+  "pool": {
+    "manifestHash": "faeb6363a15b99357918113799847e3202ce951da96a7609080cb16b39ea56ae",
+    "manifestFileSha256": "3427a8b59e44086b453599474ff92a1b640040db796adf81ba4f6753542426a8",
+    "rowsSha256": "783ba16f359d30aa85242f1872fbd7ecdb7341f65655904b5a6eaa75129a895d",
+    "sourceManifestSha256": "d26b267d20e771f20e01d847ab729b73b5fa8f6e7de9823343658709e5e4f712"
+  },
+  "results": {
+    "positions": 18,
+    "supportedPositions": 18,
+    "unsupportedPositions": 0,
+    "completeCandidates": 435,
+    "candidateCountPerPosition": {"minimum": 1, "maximum": 116},
+    "cap": 128,
+    "completeCandidateDepthCounts": {"1": 19, "2": 100, "3": 316}
+  },
+  "limitations": [
+    "The pool contains only three source games, one per split, and one opponent-policy family.",
+    "Support means transition-aware candidate generation completed under this exact identity; it does not establish candidate quality or playing strength.",
+    "No rollout labels, ranker fit, supervised training, PPO, or promotion occurred."
+  ],
+  "localArtifact": "artifacts/learning-mind-v1/fresh-actor-positions-v7/macro-support-audit-v1.json",
+  "localArtifactReportHash": "c5edb780b45e739b3d05a7d2a3086352aad283c606d2776170395498cd2158eb"
+}

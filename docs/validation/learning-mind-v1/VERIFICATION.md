@@ -456,3 +456,18 @@ strength or autonomous improvement.
   supervised training, PPO, promotion, or service installation occurred.
   Next gate: add diverse actor-visible source games/policy families, then
   re-audit v7 candidate support and tracker parity before collecting labels.
+
+## v7 transition-candidate support audit (2026-09-23)
+
+- Revalidated the immutable 18-position actor-visible pool against its exact
+  current engine/feature identity and planner bundle. All 18 positions generated
+  complete attack/no-attack candidate sets: 435 candidates total, 1–116 per
+  position under the cap of 128. Candidate depths were 19 at depth one, 100 at
+  depth two, and 316 at depth three.
+- This ran candidate generation only. No rollouts, labels, ranker fitting, or
+  training occurred. Support is not candidate quality or strategy evidence.
+- Source limitations are unchanged: three games (one per split), one opponent
+  policy family. Broaden independent source-game and policy-family coverage
+  before collecting labels. Checksums and exact identities are in
+  `macro-support-v7-2026-09-23.json`; detailed ignored local audit is retained
+  under `artifacts/learning-mind-v1/fresh-actor-positions-v7/`.

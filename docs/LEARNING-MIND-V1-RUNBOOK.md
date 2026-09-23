@@ -77,11 +77,15 @@ identity. Do not use it for ranker fitting or claim independent held-out
 performance.
 
 The next safe gate is to broaden fresh, privacy-audited coverage across source
-games and frozen opponent families, then rerun candidate-support and tracker
-parity checks under the exact v7 engine identity. Keep unsupported positions
-fail-closed. Only after that audit should we decide whether there is enough
-diverse support to collect labels. PPO, 24/7 operation, promotion, and service
-installation remain disabled.
+games and frozen opponent families. The v7 candidate-support audit is now
+complete: all 18 positions produce complete candidates under the exact current
+identity (435 candidates total; at most 116 per position). This is support
+only, with no rollout labels, and does not resolve the three-game/one-policy
+diversity limitation. See
+`docs/validation/learning-mind-v1/macro-support-v7-2026-09-23.json`. Keep
+unsupported positions fail-closed. Broaden independent sources before deciding
+whether there is enough diverse support to collect labels. PPO, 24/7 operation,
+promotion, and service installation remain disabled.
 
 ## 3. Prepare an isolated environment
 
