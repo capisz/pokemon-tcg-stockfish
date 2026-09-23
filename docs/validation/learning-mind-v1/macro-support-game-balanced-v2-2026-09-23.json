@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "audit": "actor-visible-macro-candidate-support-only",
+  "status": "no-rollouts-no-labels",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "engineBuildHash": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+  "candidateGeneratorIdentity": {
+    "version": "transition-aware-public-determinization-v5-cjs-runtime",
+    "plannerSha256": "73305eecb41f3c8b1da2fc2f8b5b40434bd68a287beff046c9bd27a7d6fa755e",
+    "actionKeySha256": "b3f0256747420a0fc122d185d7c2c9bb893f8e1826390da392c4c003211021b7",
+    "plannerWorkerSha256": "9d0975455c6c4986274fb39992d45bd0c14f07ffc0887c9c08052616bed4ce15",
+    "plannerBundleSha256": "ffc636cbd7d439ecf3726eaaf991339ec49adda6ad12ac6363c96aefb5a47a21",
+    "adapterSha256": "ea5ddf5c677c817f1deea124d5465580eb6cc025b9b3525cf023cdfaf6613fff"
+  },
+  "families": {
+    "python-heuristic": {
+      "poolManifestHash": "51f37bb3b148d9d66348b54a2fd6f85ad97bb05213e7fc6735a83cd1cf879f99",
+      "poolManifestFileSha256": "bea557e9153ded7699ac1a4095a73cd785c21005c977ab9ccd1571f8128269d9",
+      "poolRowsSha256": "2037c7a6af38e15ac6ad4227b1c08e1677b09f52e378ecda62979b911ecb80d6",
+      "auditReportHash": "369667ebb27bd795119d4695ce02cffbf9fe8c4d1ef215e15d27c1b29ab47e57",
+      "auditFileSha256": "96a16d4514f067292177963dba56077eb11ecce51e1006a6785c3c7c4928ed48",
+      "rows": 144,
+      "supported": 138,
+      "unsupportedCandidateCap": 6,
+      "noCompleteCandidate": 0,
+      "completeCandidates": 2519,
+      "splitRows": {
+        "train": 91,
+        "development": 29,
+        "heldout": 24
+      },
+      "sourceGamesBySplit": {
+        "train": 6,
+        "development": 2,
+        "heldout": 2
+      },
+      "stageRows": {
+        "opening": 48,
+        "midgame": 48,
+        "late": 48
+      },
+      "artifact": "artifacts/learning-mind-v1/fresh-actor-positions-v9-python/support-audit-game-balanced-v2/report.json"
+    },
+    "typescript-heuristic": {
+      "poolManifestHash": "846c167d498ad4f16791b03a922bb635f479d88ad7338c5d0c3f0d448a1caefc",
+      "poolManifestFileSha256": "f5aff229c092dc02f467a3a83ac42033013001ecc1575d3e063b4aa817ef7798",
+      "poolRowsSha256": "4eb9a50dcdf2f67686fab872d9faffb8381fc2226d39535d3a64c797c30e04f5",
+      "auditReportHash": "526db54f94c97e740c6401d85b6cb81b1249575c1038f0a74cc8fc3ce0d4e7b1",
+      "auditFileSha256": "795b7e415b61d41461f72f14b4a402fc4017ea81115a4f02f1439c3271d97da1",
+      "rows": 144,
+      "supported": 142,
+      "unsupportedCandidateCap": 2,
+      "noCompleteCandidate": 0,
+      "completeCandidates": 3561,
+      "splitRows": {
+        "train": 68,
+        "development": 39,
+        "heldout": 37
+      },
+      "sourceGamesBySplit": {
+        "train": 5,
+        "development": 2,
+        "heldout": 2
+      },
+      "stageRows": {
+        "opening": 48,
+        "midgame": 48,
+        "late": 48
+      },
+      "artifact": "artifacts/learning-mind-v1/fresh-actor-positions-v9-typescript/support-audit-game-balanced-v2/report.json"
+    }
+  },
+  "nextGate": "Review principled candidate-cap handling and expand independent source games before rollout labels or model fitting."
+}

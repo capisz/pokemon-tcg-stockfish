@@ -131,6 +131,20 @@ TypeScript 68/39/37 rows across 5/2/2 games and Python 91/29/24 rows across
 6/2/2 games (train/development/held-out). This is more useful but still too
 small for robust policy-family generalization.
 
+The exact v2 pools have now passed a full transition-candidate support audit:
+288/288 positions were checked under the recorded engine, feature, tracker,
+deck, and planner identities. Python supports 138/144 positions (2,519 complete
+candidates); TypeScript supports 142/144 (3,561 complete candidates). The ten
+unsupported positions all fail closed because the complete candidate set
+exceeds the configured 128-candidate cap; none has zero candidates. These rows
+must not be silently pruned or treated as labeled. Keep rollout labels and
+model fitting gated until candidate-cap handling is explicitly reviewed and
+the small game-heldout sets are expanded. Full counts, hashes, and artifact
+locations are in
+`docs/validation/learning-mind-v1/macro-support-game-balanced-v2-2026-09-23.json`.
+No rollout, label generation, ranker fit, supervised training, PPO, or promotion
+was run as part of this audit.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

@@ -529,3 +529,33 @@ strength or autonomous improvement.
 - Candidate support has not been audited on these 288 exact rows. No rollout
   labels, ranker fit, supervised training, PPO, or promotion occurred. Run and
   pool hashes are in `fresh-position-coverage-v9-2026-09-23.json`.
+
+## Game-balanced macro-pool support audit v2 (2026-09-23)
+
+- Rebuilt the exact epoch-B pools with source-game-disjoint balanced splits:
+  Python 91/29/24 rows from 6/2/2 games and TypeScript 68/39/37 rows from
+  5/2/2 games (train/development/heldout); each pool has 48 rows per stage.
+- Audited all 144 rows per family using the committed
+  `audit-macro-candidate-support` CLI. It re-encodes observations against the
+  frozen feature identity and generates transition candidates only. Status is
+  `no-rollouts-no-labels`; no outcomes, labels, fitting, training, or promotion
+  were produced.
+- Python: 138 supported, 6 fail-closed due to the 128-candidate cap, 2,519
+  complete candidates. TypeScript: 142 supported, 2 fail-closed due to that
+  cap, 3,561 complete candidates. Every one of the 288 positions had at least
+  one complete candidate before cap enforcement. Do not silently drop the ten
+  unsupported positions or call the support rate a strategic result.
+- Both audits share identity
+  `e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8` and
+  planner bundle SHA-256
+  `ffc636cbd7d439ecf3726eaaf991339ec49adda6ad12ac6363c96aefb5a47a21`.
+  Python pool manifest/rows SHA-256 are
+  `51f37bb3b148d9d66348b54a2fd6f85ad97bb05213e7fc6735a83cd1cf879f99` /
+  `2037c7a6af38e15ac6ad4227b1c08e1677b09f52e378ecda62979b911ecb80d6`;
+  TypeScript values are
+  `846c167d498ad4f16791b03a922bb635f479d88ad7338c5d0c3f0d448a1caefc` /
+  `4eb9a50dcdf2f67686fab872d9faffb8381fc2226d39535d3a64c797c30e04f5`.
+- The complete ignored reports and their file checksums are recorded in
+  `macro-support-game-balanced-v2-2026-09-23.json`. Current gate: investigate
+  principled candidate-cap handling and collect more independent source games
+  before rollout labeling or model fitting.
