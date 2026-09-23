@@ -2,13 +2,14 @@ from __future__ import annotations
 
 import hashlib
 import math
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import asdict, dataclass
 from typing import Callable, Iterable
 
 from .schema import UnsupportedPosition, identity_hash
 
 MAX_CANDIDATES = 128
-CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v4-complete-candidate-cap"
+CANDIDATE_GENERATOR_VERSION = "transition-aware-public-determinization-v5-cjs-runtime"
 
 
 @dataclass(frozen=True)
@@ -136,42 +137,102 @@ def rollout_seed(namespace: str, position_hash: str, rollout_index: int) -> int:
 def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                      rollout: Callable[[MacroCandidateV1, int], dict], *,
                      namespace: str = "training", initial: int = 16,
-                     maximum: int = 64, close_margin: float = .10) -> list[dict]:
+                     maximum: int = 64, close_margin: float = .10,
+                     rollout_workers: int = 1, resume_state: dict | None = None,
+                     checkpoint: Callable[[dict], None] | None = None) -> list[dict]:
     if namespace == "promotion":
         raise ValueError("label generation may not consume promotion seeds")
     if not candidates or not 1 <= initial <= maximum <= 64:
         raise ValueError("invalid rollout allocation")
-    records = {item.key(): {"scores": [], "finished": 0, "truncated": 0, "error": 0, "reasons": {}}
-               for item in candidates}
+    if not isinstance(rollout_workers, int) or isinstance(rollout_workers, bool) or not 1 <= rollout_workers <= 8:
+        raise ValueError("rollout workers must be an integer from 1 to 8")
+    candidate_hashes = [item.key() for item in candidates]
+    if len(set(candidate_hashes)) != len(candidate_hashes):
+        raise ValueError("macro candidates must have unique hashes")
+    records = {key: {"scores": [], "finished": 0, "truncated": 0, "error": 0,
+                     "reasons": {}, "decisionCounts": {}} for key in candidate_hashes}
+    completed_initial: set[int] = set()
+    completed_extension: set[int] = set()
+    close_candidate_hashes: list[str] | None = None
+    if resume_state is not None:
+        if resume_state.get("candidateHashes") != candidate_hashes:
+            raise ValueError("macro rollout checkpoint candidate set mismatch")
+        prior_records = resume_state.get("records")
+        if not isinstance(prior_records, dict) or set(prior_records) != set(candidate_hashes):
+            raise ValueError("macro rollout checkpoint records mismatch")
+        records = prior_records
+        completed_initial = set(resume_state.get("completedInitialIndices", []))
+        completed_extension = set(resume_state.get("completedExtensionIndices", []))
+        if (any(type(index) is not int or not 0 <= index < initial for index in completed_initial)
+                or any(type(index) is not int or not initial <= index < maximum for index in completed_extension)):
+            raise ValueError("macro rollout checkpoint contains invalid sample indices")
+        close_candidate_hashes = resume_state.get("closeCandidateHashes")
+        if close_candidate_hashes is not None and (not isinstance(close_candidate_hashes, list)
+                or any(key not in records for key in close_candidate_hashes)):
+            raise ValueError("macro rollout checkpoint close-candidate set mismatch")
 
-    def run(indices, selected):
+    def save_progress():
+        if checkpoint is not None:
+            checkpoint({"candidateHashes": candidate_hashes, "records": records,
+                        "completedInitialIndices": sorted(completed_initial),
+                        "completedExtensionIndices": sorted(completed_extension),
+                        "closeCandidateHashes": close_candidate_hashes})
+
+    def consume(candidate, outcome):
+        status = outcome.get("status")
+        score = outcome.get("score")
+        if (status == "finished" and isinstance(score, (int, float))
+                and not isinstance(score, bool) and math.isfinite(score)
+                and 0 <= score <= 1):
+            record = records[candidate.key()]
+            record["scores"].append(float(score))
+            record["finished"] += 1
+            decision_count = outcome.get("decisionCount")
+            if isinstance(decision_count, int) and not isinstance(decision_count, bool) and decision_count >= 0:
+                key = str(decision_count)
+                record["decisionCounts"][key] = record["decisionCounts"].get(key, 0) + 1
+        elif status in {"truncated", "error"}:
+            record = records[candidate.key()]
+            record[status] += 1
+            reason = outcome.get("reason")
+            if isinstance(reason, str) and reason:
+                record["reasons"][reason] = record["reasons"].get(reason, 0) + 1
+            decision_count = outcome.get("decisionCount")
+            if isinstance(decision_count, int) and not isinstance(decision_count, bool) and decision_count >= 0:
+                key = str(decision_count)
+                record["decisionCounts"][key] = record["decisionCounts"].get(key, 0) + 1
+        else:
+            raise ValueError("rollout returned an invalid status")
+
+    executor = ThreadPoolExecutor(max_workers=rollout_workers) if rollout_workers > 1 else None
+    def run(indices, selected, *, extension: bool):
         for index in indices:
+            completed = completed_extension if extension else completed_initial
+            if index in completed:
+                continue
             seed = rollout_seed(namespace, position_hash, index)
-            for candidate in selected:
-                outcome = rollout(candidate, seed)
-                status = outcome.get("status")
-                score = outcome.get("score")
-                if (status == "finished" and isinstance(score, (int, float))
-                        and not isinstance(score, bool) and math.isfinite(score)
-                        and 0 <= score <= 1):
-                    records[candidate.key()]["scores"].append(float(score))
-                    records[candidate.key()]["finished"] += 1
-                elif status in {"truncated", "error"}:
-                    record = records[candidate.key()]
-                    record[status] += 1
-                    reason = outcome.get("reason")
-                    if isinstance(reason, str) and reason:
-                        record["reasons"][reason] = record["reasons"].get(reason, 0) + 1
-                else:
-                    raise ValueError("rollout returned an invalid status")
+            outcomes = ([rollout(candidate, seed) for candidate in selected] if executor is None
+                        else list(executor.map(lambda candidate: rollout(candidate, seed), selected)))
+            for candidate, outcome in zip(selected, outcomes):
+                consume(candidate, outcome)
+            completed.add(index)
+            save_progress()
 
-    run(range(initial), candidates)
-    means = {key: sum(record["scores"]) / len(record["scores"]) if record["scores"] else -math.inf
-             for key, record in records.items()}
-    best = max(means.values())
-    close = [candidate for candidate in candidates if best - means[candidate.key()] <= close_margin]
-    if maximum > initial and len(close) > 1:
-        run(range(initial, maximum), close)
+    try:
+        run(range(initial), candidates, extension=False)
+        if close_candidate_hashes is None:
+            means = {key: sum(record["scores"]) / len(record["scores"]) if record["scores"] else -math.inf
+                     for key, record in records.items()}
+            best = max(means.values())
+            close_candidate_hashes = [candidate.key() for candidate in candidates
+                                      if best - means[candidate.key()] <= close_margin]
+            save_progress()
+        close = [candidate for candidate in candidates if candidate.key() in set(close_candidate_hashes)]
+        if maximum > initial and len(close) > 1:
+            run(range(initial, maximum), close, extension=True)
+    finally:
+        if executor is not None:
+            executor.shutdown(wait=True)
     finite_means = [sum(record["scores"]) / len(record["scores"])
                     for record in records.values() if record["scores"]]
     center = max(finite_means) if finite_means else 0.0
@@ -185,6 +246,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                        "completedRollouts": len(scores), "attemptedRollouts": maximum if candidate in close and len(close) > 1 else initial,
                        "outcomes": {key: record[key] for key in ("finished", "truncated", "error")},
                        "outcomeReasons": dict(sorted(record["reasons"].items())),
+                       "decisionCountDistribution": dict(sorted(record["decisionCounts"].items(), key=lambda item: int(item[0]))),
                        "expectedResult": mean, "relativeResult": mean - center if mean is not None else None,
                        "uncertainty": uncertainty, "weight": 0 if not scores else len(scores) / (1 + uncertainty)})
     return output

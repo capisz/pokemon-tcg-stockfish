@@ -7,7 +7,7 @@ import { SeededRandom } from '../../packages/engine/src/random';
 import type { LegalAction, Observation } from '../../packages/engine/src/types';
 import { TrainerType } from '../../vendor/twinleaf/ptcg-server/src/game/store/card/card-types';
 
-export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v4-complete-candidate-cap';
+export const TRANSITION_MACRO_PLANNER_VERSION = 'transition-aware-public-determinization-v5-cjs-runtime';
 export const TRANSITION_MACRO_MAX_CANDIDATES = 128;
 export const TRANSITION_MACRO_MAX_STEPS = 3;
 export const TRANSITION_MACRO_MAX_EXPANSION_PREFIXES = 4096;

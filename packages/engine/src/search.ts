@@ -9,7 +9,8 @@ import {loadLeafModel, type LeafEnvelope} from './learned-value';
 interface ContinuationStep { playerId: number; label: string; type: string }
 interface Continuation {
   conditional: true; representative: true; description: string; opponentArchetype: string;
-  steps: ContinuationStep[]; end: 'terminal' | 'cutoff'; outcome?: Replay['outcome'];
+  steps: ContinuationStep[]; decisionCount: number; end: 'terminal' | 'cutoff';
+  cutoffReason?: 'budget' | 'horizon'; outcome?: Replay['outcome'];
 }
 interface Edge { prior?:number; visits: number; total: number; squares: number; action: LegalAction; continuation?: Continuation }
 /** A sampled opponent's private prompt choice is never presented as a public line. */
@@ -31,7 +32,9 @@ function leafResult(o: Observation, root: number): number {
 }
 
 /** Executable imperfect-information research search. No live Environment or true hidden state input. */
-export function search(params: {observation: Observation; method?: 'rollout' | 'ismcts'; budgetMs?: number; seed?: number; iterations?: number; maxRolloutDecisions?: number; knownOpponentDeckId?: string; priorRevealedCards?: string[]; rootPriors?: {actionId:string; probability:number}[]; macroPlanActions?: LegalAction[]; leafModel?:LeafEnvelope}) {
+export function search(params: {observation: Observation; method?: 'rollout' | 'ismcts'; budgetMs?: number; seed?: number; iterations?: number; maxRolloutDecisions?: number; knownOpponentDeckId?: string; priorRevealedCards?: string[]; rootPriors?: {actionId:string; probability:number}[]; macroPlanActions?: LegalAction[]; leafModel?:LeafEnvelope;
+  /** Research-only common-random-number controls; omitted values preserve ordinary search sampling. */
+  researchHypothesisId?: string; researchDeterminizationSeed?: number; researchMaxRolloutDecisions?: number}) {
   const start = performance.now();
   const o = params.observation;
   const method = params.method ?? 'rollout';
@@ -39,18 +42,30 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
   if (method !== 'rollout' && method !== 'ismcts') throw new Error('Unknown search method.');
   const budget = Math.max(1, Math.min(120000, params.budgetMs ?? 1000));
   const limit = Math.max(1, Math.min(1000, params.iterations ?? 100));
-  const horizon = Math.max(1, Math.min(80, params.maxRolloutDecisions ?? 16));
+  const horizon = params.researchHypothesisId
+    ? params.researchMaxRolloutDecisions ?? params.maxRolloutDecisions ?? 16
+    : Math.max(1, Math.min(80, params.maxRolloutDecisions ?? 16));
   const warnings = new Set<string>([learned?'Experimental search: cutoff values use a frozen outcome model; scores are not calibrated probabilities.':'Experimental search: rollout cutoffs use an untrained resource heuristic; scores are not calibrated probabilities.',
     'Beliefs include main/training lists and observation-constrained unknown variants; heldout exact lists require explicit known-list mode. Unsupported knowledge histories refuse search.',
     'Determinized continuations can suffer strategy fusion; no optimal-play claim.']);
   const unavailable = (reason: string) => ({status: 'unavailable' as const, method, alternatives: [], iterations: 0, elapsedMs: performance.now() - start, warnings: [reason]});
   if (!o?.searchPosition) return unavailable(o?.searchUnavailableReason ?? 'A stable public search position is required.');
   if (o.playerId !== o.decisionPlayer || !o.legalActions.length) return unavailable('Observation must belong to the current decision player.');
+  const horizonCap = params.researchHypothesisId ? 500 : 80;
+  if (!Number.isInteger(horizon) || horizon < 1 || horizon > horizonCap)
+    return unavailable(`Rollout decision horizon must be an integer from 1 to ${horizonCap}.`);
+  if (params.researchMaxRolloutDecisions !== undefined && !params.researchHypothesisId)
+    return unavailable('Extended rollout horizons require a pinned research hypothesis.');
   const rng = new SeededRandom(params.seed ?? 42);
-  const hypotheses=opponentHypotheses(o.searchPosition,params.priorRevealedCards,params.knownOpponentDeckId).filter(h=>{
+  let researchPromptRng: SeededRandom | null = null;
+  const hypotheses=opponentHypotheses(o.searchPosition,params.priorRevealedCards,params.knownOpponentDeckId)
+    .filter(h=>!params.researchHypothesisId || h.id===params.researchHypothesisId).filter(h=>{
     try {Environment.fromPublicPosition(o.searchPosition!,0,h.kind==='unknown-variant'?h.deck:h.id);return true;}catch{return false;}
   });
   if (!hypotheses.length) return unavailable('No supported deck hypothesis matches the visible cards and public state.');
+  if (params.researchDeterminizationSeed !== undefined
+      && (!Number.isInteger(params.researchDeterminizationSeed) || params.researchDeterminizationSeed < 0 || params.researchDeterminizationSeed > 0xffffffff))
+    return unavailable('Research determinization seed must be a uint32 integer.');
   const totalWeight=hypotheses.reduce((n,h)=>n+h.weight,0);
   hypotheses.forEach(h=>h.weight/=totalWeight);
   const roots = new Map<string, Edge>(o.legalActions.map(action => [legalActionKey(action), {visits: 0, total: 0, squares: 0, action}]));
@@ -75,7 +90,8 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
   while (iterations + aborted < limit && performance.now() - start < budget) {
     let sample=rng.uint32()/0x100000000;
     const hypothesis=hypotheses.find(h=>(sample-=h.weight)<0)??hypotheses[hypotheses.length-1];
-    const env = Environment.fromPublicPosition(o.searchPosition, rng.uint32(), hypothesis.kind==='unknown-variant'?hypothesis.deck:hypothesis.id, Number(o.legalActions[0].id.split(':')[0]));
+    const envSeed = params.researchDeterminizationSeed ?? rng.uint32();
+    const env = Environment.fromPublicPosition(o.searchPosition, envSeed, hypothesis.kind==='unknown-variant'?hypothesis.deck:hypothesis.id, Number(o.legalActions[0].id.split(':')[0]));
     const rootObservation = env.observe();
     const rootChoices = rootObservation.legalActions;
     const available = rootChoices.map(a => roots.get(legalActionKey(a))).filter((e): e is Edge => !!e);
@@ -86,8 +102,10 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
     const rootAction = rootChoices.find(a => legalActionKey(a) === legalActionKey(root.action))!;
     const path: {edge: Edge; node?: Node}[] = [{edge: root}];
     const steps = [continuationStep(rootObservation, rootAction, o.playerId)];
+    let rolloutDecisions = 0;
     try {
       env.step(rootAction.id);
+      rolloutDecisions++;
       let planCursor = macroPlan.length ? 1 : 0;
       let expanded = false;
       for (let depth = 1; depth < horizon && env.status === 'running'; depth++) {
@@ -97,12 +115,16 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
         if (planCursor < macroPlan.length) {
           if (obs.playerId !== o.playerId || obs.turn !== rootObservation.turn)
             throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:turn-ended`);
-          if (obs.prompt) chosen = chooseAction(obs, 'heuristic', rng);
+          if (obs.prompt) {
+            if (params.researchHypothesisId)
+              researchPromptRng ??= new SeededRandom((params.researchDeterminizationSeed ?? params.seed ?? 42) ^ 0x6a09e667);
+            chosen = chooseAction(obs, 'heuristic', params.researchHypothesisId ? researchPromptRng! : rng);
+          }
           else {
             const intended = macroPlan[planCursor];
             const match = obs.legalActions.find(action => legalActionKey(action) === legalActionKey(intended));
             if (!match) throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:action-not-legal`);
-            chosen = match; planCursor++;
+            chosen = match; planCursor++; researchPromptRng = null;
           }
         } else if (method === 'ismcts' && !expanded) {
           const key = infoKey(obs);
@@ -117,6 +139,7 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
         } else chosen = chooseAction(obs, 'heuristic', rng);
         if (steps.length < 8) steps.push(continuationStep(obs, chosen, o.playerId));
         env.step(chosen.id);
+        rolloutDecisions++;
       }
       if (planCursor < macroPlan.length) throw new Error(`MACRO_PLAN_UNEXECUTABLE:${planCursor}:horizon-ended`);
       if (macroPlan.length) planCompleted++;
@@ -130,7 +153,9 @@ export function search(params: {observation: Observation; method?: 'rollout' | '
       root.continuation ??= {
         conditional: true, representative: true,
         description: 'Illustrative sampled continuation; not a forced or proven best line. Subsequent choices depend on sampled draws and hidden information.',
-        opponentArchetype: hypothesis.archetype, steps, end: env.status === 'finished' ? 'terminal' : 'cutoff',
+        opponentArchetype: hypothesis.archetype, steps, decisionCount: rolloutDecisions,
+        end: env.status === 'finished' ? 'terminal' : 'cutoff',
+        ...(env.status !== 'finished' ? {cutoffReason: performance.now() - start >= budget ? 'budget' : 'horizon'} : {}),
         ...(outcome ? {outcome} : {}),
       };
       for (const {edge, node} of path) {edge.visits++; edge.total += value; edge.squares += value * value; if (node) node.visits++;}

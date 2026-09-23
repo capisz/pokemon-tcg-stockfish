@@ -210,11 +210,27 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
     store = Store(experimental_root)
     candidates = []
     sources = []
+    source_engine_versions = set()
+
+    def position_stage(observation: dict) -> str:
+        turn = observation.get("turn")
+        prizes = [player.get("prizesRemaining") for player in observation.get("players", [])]
+        visible_prizes = [value for value in prizes if isinstance(value, int) and not isinstance(value, bool)]
+        if isinstance(turn, int) and turn <= 2 and len(visible_prizes) == len(prizes) and all(value >= 5 for value in visible_prizes):
+            return "opening"
+        if ((isinstance(turn, int) and turn >= 8)
+                or (visible_prizes and min(visible_prizes) <= 3)):
+            return "late"
+        return "midgame"
     for item in sorted(source.get("replays", []), key=lambda row: row["id"]):
         if not any(str(deck).replace("-training", "") == target_deck for deck in item.get("decks", [])):
             continue
         replay = store.get("replays", item["id"])
-        sources.append({"replayId": item["id"], "sha256": file_sha256(store.location("replays", item["id"]))})
+        source_engine_version = replay.get("engineVersion") or item.get("engineVersion")
+        if isinstance(source_engine_version, str) and source_engine_version:
+            source_engine_versions.add(source_engine_version)
+        sources.append({"replayId": item["id"], "sha256": file_sha256(store.location("replays", item["id"])),
+                        "engineVersion": source_engine_version})
         trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
         for frame in replay.get("frames", []):
             actor = frame.get("actor")
@@ -238,31 +254,56 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
                 "sourceGameId": replay["id"], "sourceDecisionIndex": frame["decisionIndex"], "actor": actor,
                 "deckHash": (replay.get("deckHashes") or [None, None])[actor],
                 "opponentArchetype": opponent, "opponentPolicyFamily": str(policies[1 - actor]),
+                "positionStage": position_stage(observation),
                 "featureIdentityHash": encoded.identity, "policyLabelSource": None,
                 "acceptableActionIndices": None, "policyDistribution": None,
                 "observation": observation, "tracker": snapshot})
-    # Round-robin across opponent archetype and policy family before taking the cap.
+    # A repeated visible state is one position even if several replay records contain it.
+    unique_candidates = {}
+    for row in candidates:
+        unique_candidates.setdefault(row["positionHash"], row)
+    candidates = list(unique_candidates.values())
+
+    # Round-robin across matchup, policy family, and observable game stage.
     buckets = defaultdict(list)
     for row in candidates:
-        buckets[(row["opponentArchetype"], row["opponentPolicyFamily"])].append(row)
+        buckets[(row["opponentArchetype"], row["opponentPolicyFamily"], row["positionStage"])].append(row)
     selected = []
     while len(selected) < limit and any(buckets.values()):
         for key in sorted(buckets):
             if buckets[key] and len(selected) < limit:
                 selected.append(buckets[key].pop(0))
-    for index, row in enumerate(selected):
-        row["split"] = "development" if index % 6 == 0 else "heldout" if index % 6 == 1 else "train"
+    game_rows = defaultdict(list)
+    for row in selected:
+        game_rows[row["sourceGameId"]].append(row)
+    ordered_games = sorted(game_rows, key=lambda game_id: (
+        game_rows[game_id][0]["opponentArchetype"], game_rows[game_id][0]["opponentPolicyFamily"], game_id))
+    game_splits = {}
+    if len(ordered_games) < 3:
+        game_splits = {game_id: "development" for game_id in ordered_games}
+    else:
+        development_index = max(1, int(len(ordered_games) * .6))
+        heldout_index = max(development_index + 1, int(len(ordered_games) * .8))
+        for index, game_id in enumerate(ordered_games):
+            game_splits[game_id] = ("development" if index == development_index else
+                                    "heldout" if index == heldout_index else "train")
+    for row in selected:
+        row["split"] = game_splits[row["sourceGameId"]]
     output.mkdir(parents=True)
     rows_path = output / "rows.jsonl"
     _atomic_text(rows_path, "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in selected))
     manifest = {"schemaVersion": 1, "id": "learning-mind-macro-position-pool-v1",
                 "identity": identity.record(), "targetDeck": target_deck, "rows": len(selected),
                 "rowsSha256": file_sha256(rows_path), "sourceManifestSha256": file_sha256(source_dataset_manifest),
-                "sources": sources, "ordinarySelfPlayPolicyLabels": 0,
+                "sources": sources, "sourceEngineVersions": sorted(source_engine_versions),
+                "ordinarySelfPlayPolicyLabels": 0,
                 "splitCounts": dict(sorted(Counter(row["split"] for row in selected).items())),
                 "opponentArchetypes": sorted({row["opponentArchetype"] for row in selected}),
                 "opponentPolicyFamilies": sorted({row["opponentPolicyFamily"] for row in selected}),
-                "selection": "deterministic round-robin by opponent archetype and policy family"}
+                "positionStages": sorted({row["positionStage"] for row in selected}),
+                "positionStageCounts": dict(sorted(Counter(row["positionStage"] for row in selected).items())),
+                "sourceGameSplitCounts": dict(sorted(Counter(game_splits.values()).items())),
+                "selection": "deterministic round-robin by opponent archetype, policy family, and position stage; disjoint source-game splits"}
     manifest["manifestHash"] = identity_hash(manifest)
     _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")
     return manifest

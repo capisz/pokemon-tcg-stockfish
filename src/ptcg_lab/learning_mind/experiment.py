@@ -6,13 +6,14 @@ import json
 import math
 import os
 import subprocess
+from contextlib import closing
 from collections import Counter
 from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
 
-from ptcg_lab.engine import EngineClient
+from ptcg_lab.engine import EngineClient, EnginePool
 from ptcg_lab.features import heuristic_action_score
 
 from .dataset_v1 import file_sha256, load_dataset, training_records
@@ -27,19 +28,24 @@ from .training import require_checkpoint_identity, train_supervised
 
 def transition_generator_identity(root: Path) -> dict:
     planner = root / "research/learning_mind/transition_macro_planner.ts"
+    planner_worker = root / "research/learning_mind/planner_worker.ts"
+    planner_bundle = root / "packages/engine/dist/learning-mind-planner.cjs"
     action_key = root / "packages/engine/src/action-key.ts"
     adapter = Path(__file__).with_name("macro.py")
-    if not planner.is_file() or not action_key.is_file():
-        raise FileNotFoundError(f"transition planner/action identity helper missing: {planner} / {action_key}")
+    if not all(path.is_file() for path in (planner, planner_worker, planner_bundle, action_key)):
+        raise FileNotFoundError("transition planner bundle missing; run npm run engine:build before macro collection")
     return {"version": CANDIDATE_GENERATOR_VERSION,
             "plannerSha256": file_sha256(planner), "actionKeySha256": file_sha256(action_key),
+            "plannerWorkerSha256": file_sha256(planner_worker),
+            "plannerBundleSha256": file_sha256(planner_bundle),
             "adapterSha256": file_sha256(adapter)}
 
 
 def generate_transition_candidates(root: Path, observation: dict, seed: int):
-    planner = root / "research/learning_mind/transition_macro_planner.ts"
-    runner = root / "node_modules/.bin/tsx"
-    result = subprocess.run([str(runner), str(planner)], cwd=root,
+    planner = root / "packages/engine/dist/learning-mind-planner.cjs"
+    if not planner.is_file():
+        raise FileNotFoundError("transition planner bundle missing; run npm run engine:build before macro collection")
+    result = subprocess.run(["node", str(planner)], cwd=root,
         input=json.dumps({"observation": observation, "seed": seed}, separators=(",", ":")),
         text=True, capture_output=True, timeout=180, check=False)
     if result.returncode:
@@ -96,7 +102,13 @@ def _atomic_json(path: Path, value: object) -> None:
 
 def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identity: dict,
                          limit: int = 20, initial: int = 16, maximum: int = 64,
-                         horizon: int = 16, position_hash: str | None = None) -> dict:
+                         horizon: int = 16, rollout_budget_ms: int = 1000,
+                         rollout_workers: int = 1,
+                         position_hash: str | None = None) -> dict:
+    if not isinstance(rollout_budget_ms, int) or isinstance(rollout_budget_ms, bool) or not 1 <= rollout_budget_ms <= 120000:
+        raise ValueError("rollout budget must be an integer from 1 to 120000 milliseconds")
+    if not isinstance(rollout_workers, int) or isinstance(rollout_workers, bool) or not 1 <= rollout_workers <= 8:
+        raise ValueError("rollout workers must be an integer from 1 to 8")
     manifest, rows = load_dataset(dataset_dir, identity=identity)
     output.mkdir(parents=True, exist_ok=True)
     if position_hash is not None:
@@ -109,6 +121,8 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
                 "maximumRollouts": maximum, "horizon": horizon,
+                "rolloutBudgetMs": rollout_budget_ms,
+                "rolloutWorkers": rollout_workers,
                 "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
                 "candidateGeneratorIdentity": generator_identity}
@@ -134,7 +148,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
             if record.get("identity") != identity or record.get("datasetManifestHash") != manifest["manifestHash"]:
                 raise ValueError(f"unpublished macro-label checkpoint identity drift: {path.name}")
             completed.add(path.stem)
-    with EngineClient(root, timeout=300) as engine:
+    with closing(EnginePool(root, size=rollout_workers, timeout=300)) as engine_pool:
         for row in selected:
             key = row["positionHash"]
             if key in completed: continue
@@ -172,6 +186,35 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 _atomic_json(output / f"{key}.json", record)
                 continue
 
+            progress_path = output / f".{key}.progress"
+            candidate_hashes = [candidate.key() for candidate in executable]
+            progress_identity = {"positionHash": key, "identity": identity,
+                "datasetManifestHash": manifest["manifestHash"], "generatorSeed": generator_seed,
+                "generatorHypothesisId": generation.get("hypothesisId"),
+                "candidateHashes": candidate_hashes, "initialRollouts": initial,
+                "maximumRollouts": maximum, "horizon": horizon,
+                "rolloutBudgetMs": rollout_budget_ms, "rolloutWorkers": rollout_workers,
+                "seedNamespace": "training" if row["split"] == "train" else "development",
+                "candidateGeneratorIdentity": generator_identity}
+            progress_identity_hash = identity_hash(progress_identity)
+            resume_state = None
+            if progress_path.exists():
+                progress = json.loads(progress_path.read_text())
+                progress_hash = progress.pop("progressHash", None)
+                if progress_hash != identity_hash(progress):
+                    raise ValueError(f"macro rollout checkpoint hash mismatch: {progress_path.name}")
+                if progress.get("identityHash") != progress_identity_hash:
+                    raise ValueError(f"macro rollout checkpoint identity hash mismatch: {progress_path.name}")
+                if progress.get("identity") != progress_identity:
+                    raise ValueError(f"macro rollout checkpoint identity/configuration drift: {progress_path.name}")
+                resume_state = progress.get("state")
+
+            def save_progress(state):
+                progress = {"schemaVersion": 1, "identityHash": progress_identity_hash,
+                            "identity": progress_identity, "state": state}
+                progress["progressHash"] = identity_hash(progress)
+                _atomic_json(progress_path, progress)
+
             def rollout(candidate, seed):
                 root_action = legal.get(candidate.action_ids[0])
                 if root_action is None: return {"status": "error", "reason": "macro-root-no-longer-legal"}
@@ -179,10 +222,13 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 plan_actions = list(candidate.action_sequence)
                 if not plan_actions or plan_actions[0].get("id") != root_action["id"]:
                     return {"status": "error", "reason": "macro-plan-root-mismatch"}
-                result = engine.request("search", {"observation": narrowed, "seed": seed, "budgetMs": 120000,
-                                                    "method": "rollout", "iterations": 1,
-                                                    "maxRolloutDecisions": horizon,
-                                                    "macroPlanActions": plan_actions})
+                with engine_pool.lease() as engine:
+                    result = engine.request("search", {"observation": narrowed, "seed": int(seed) & 0xffffffff,
+                        "budgetMs": rollout_budget_ms, "method": "rollout", "iterations": 1,
+                        "maxRolloutDecisions": horizon, "macroPlanActions": plan_actions,
+                        "researchHypothesisId": generation.get("hypothesisId"),
+                        "researchDeterminizationSeed": generator_seed,
+                        "researchMaxRolloutDecisions": horizon})
                 alternative = next((item for item in result.get("alternatives", [])
                                     if item.get("actionId") == root_action["id"] and item.get("visits", 0) > 0), None)
                 execution = result.get("macroPlanExecution") or {}
@@ -193,17 +239,23 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                     return {"status": "error", "reason": "search-rollout-unavailable"}
                 continuation = alternative.get("continuation") or {}
                 if continuation.get("end") != "terminal":
-                    return {"status": "truncated", "reason": "search-rollout-horizon-cutoff"}
+                    cutoff = continuation.get("cutoffReason")
+                    reason = "search-rollout-budget-cutoff" if cutoff == "budget" else "search-rollout-horizon-cutoff"
+                    return {"status": "truncated", "reason": reason,
+                            "decisionCount": continuation.get("decisionCount")}
                 outcome = continuation.get("outcome")
                 winner = outcome.get("winner") if isinstance(outcome, dict) else "invalid"
                 if winner is not None and (type(winner) is not int or winner not in (0, 1)):
                     return {"status": "error", "reason": "terminal-rollout-missing-valid-outcome"}
                 score = .5 if winner is None else 1. if winner == observation["playerId"] else 0.
-                return {"status": "finished", "score": score}
+                return {"status": "finished", "score": score,
+                        "decisionCount": continuation.get("decisionCount")}
 
             namespace = "training" if row["split"] == "train" else "development"
             labels = label_candidates(executable, key, rollout, namespace=namespace,
-                                      initial=initial, maximum=maximum)
+                                      initial=initial, maximum=maximum,
+                                      rollout_workers=rollout_workers,
+                                      resume_state=resume_state, checkpoint=save_progress)
             record = {"schemaVersion": 1, "positionHash": key, "split": row["split"],
                       "identity": identity, "datasetManifestHash": manifest["manifestHash"],
                       "familyId": row["familyId"], "opponentArchetype": row["opponentArchetype"],
@@ -212,12 +264,14 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "status": "collected", "generatorSeed": generator_seed,
                       "generatorHypothesisId": generation.get("hypothesisId"),
                       "candidateCount": len(executable),
+                      "rolloutBudgetMs": rollout_budget_ms,
                       "exploredPrefixCount": generation.get("exploredPrefixCount"),
                       "seedNamespace": namespace,
                       "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
                       "semantics": "complete transition-aware attack or deliberate no-attack candidates only; incomplete traversal prefixes do not consume candidate cap or receive labels; later steps are revalidated at rollout",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)
+            progress_path.unlink(missing_ok=True)
     files = sorted(path for path in output.glob("*.json") if path.name != "manifest.json")
     records = [json.loads(path.read_text()) for path in files]
     result = {"schemaVersion": 1, **settings, "positions": len(files),

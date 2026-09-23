@@ -17,4 +17,5 @@ const paths = (await Promise.all(['packages/engine/src', 'vendor/twinleaf/ptcg-s
 for (const path of paths) hash.update(path).update('\0').update(await readFile(path));
 const fingerprint = hash.digest('hex').slice(0, 16);
 await build({entryPoints: ['packages/engine/src/worker.ts'], outfile: 'packages/engine/dist/worker.cjs', bundle: true, platform: 'node', format: 'cjs', target: 'node22', sourcemap: true, logLevel: 'info', tsconfig: 'tsconfig.json', define: {__ENGINE_BUILD__: JSON.stringify(fingerprint)}});
+await build({entryPoints: ['research/learning_mind/planner_worker.ts'], outfile: 'packages/engine/dist/learning-mind-planner.cjs', bundle: true, platform: 'node', format: 'cjs', target: 'node22', sourcemap: true, logLevel: 'info', tsconfig: 'tsconfig.json'});
 console.log(`Engine source fingerprint: ${fingerprint}`);

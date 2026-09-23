@@ -8,6 +8,7 @@ from .audit import audit_manifest
 from .dataset_v1 import build_dataset, build_macro_position_pool
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
+from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .supervisor import MindSupervisor
 
@@ -45,7 +46,19 @@ def main(argv=None) -> int:
     collect.add_argument("--initial", type=int, default=16)
     collect.add_argument("--maximum", type=int, default=64)
     collect.add_argument("--horizon", type=int, default=16)
+    collect.add_argument("--rollout-budget-ms", type=int, default=1000,
+                         help="per-candidate search time cap; cutoffs are recorded as truncated")
+    collect.add_argument("--rollout-workers", type=int, default=1,
+                         help="parallel engine workers (1-8); use 1 for the serial reference run")
     collect.add_argument("--position-hash", help="collect one exact position from the frozen dataset")
+    fresh = sub.add_parser("collect-fresh-positions", help="collect small resumable current-engine research games")
+    fresh.add_argument("--root", type=Path, required=True)
+    fresh.add_argument("--output", type=Path, required=True,
+                       help="ignored local artifact directory; never point at data/competitive")
+    fresh.add_argument("--games-per-matchup", type=int, default=2)
+    fresh.add_argument("--policy", choices=("typescript-heuristic", "python-heuristic"),
+                       default="typescript-heuristic")
+    fresh.add_argument("--max-decisions", type=int, default=1200)
     rank = sub.add_parser("fit-macro-ranker")
     rank.add_argument("--labels", type=Path, required=True)
     rank.add_argument("--output", type=Path, required=True)
@@ -82,7 +95,13 @@ def main(argv=None) -> int:
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = collect_macro_labels(root=root, dataset_dir=args.dataset.resolve(), output=args.output.resolve(),
                                       identity=identity, limit=args.limit, initial=args.initial, maximum=args.maximum,
-                                      horizon=args.horizon, position_hash=args.position_hash)
+                                      horizon=args.horizon, rollout_budget_ms=args.rollout_budget_ms,
+                                      rollout_workers=args.rollout_workers,
+                                      position_hash=args.position_hash)
+    elif args.command == "collect-fresh-positions":
+        result = collect_fresh_positions(root=args.root, output=args.output,
+            games_per_matchup=args.games_per_matchup, policy=args.policy,
+            max_decisions=args.max_decisions)
     elif args.command == "build-macro-position-pool":
         root = args.root.resolve(); identity = runtime_identity(root)
         result = build_macro_position_pool(output=args.output.resolve(),

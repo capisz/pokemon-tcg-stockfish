@@ -4,6 +4,7 @@ import { Environment } from '../src/environment';
 import { search, continuationStep } from '../src/search';
 import { chooseAction } from '../src/policies';
 import { SeededRandom } from '../src/random';
+import { opponentHypotheses } from '../src/hypotheses';
 
 function ready() {
   const env = new Environment(); env.reset(5, ['crustle', 'mega-lucario']);
@@ -40,6 +41,10 @@ test('flat rollouts and information-set UCB execute bounded sampled games', {tim
       assert.ok(alternative.continuation!.steps.length >= 1 && alternative.continuation!.steps.length <= 8);
       assert.equal(alternative.continuation!.steps[0].label, alternative.label);
       assert.ok(['cutoff', 'terminal'].includes(alternative.continuation!.end));
+      assert.ok(Number.isInteger(alternative.continuation!.decisionCount));
+      assert.ok(alternative.continuation!.decisionCount >= 1);
+      if (alternative.continuation!.end === 'cutoff')
+        assert.ok(['budget', 'horizon'].includes(alternative.continuation!.cutoffReason!));
       assert.ok(alternative.continuation!.opponentArchetype);
     }
   }
@@ -77,4 +82,22 @@ test('macro rollout re-resolves declared actions and reports typed execution fai
   assert.ok('macroPlanExecution' in impossible);
   assert.equal(impossible.macroPlanExecution.completed, 0);
   assert.match(impossible.macroPlanExecution.failures[0].reason, /^MACRO_PLAN_UNEXECUTABLE:/);
+});
+
+test('research rollout controls pin a public hypothesis and determinization seed', () => {
+  const observation = ready().observe();
+  const hypothesisId = opponentHypotheses(observation.searchPosition!)[0].id;
+  const params = {observation, method: 'rollout' as const, iterations: 2, maxRolloutDecisions: 4,
+    seed: 91, researchHypothesisId: hypothesisId, researchDeterminizationSeed: 1234};
+  const first = search(params);
+  const second = search(params);
+  assert.ok(first.status === 'complete');
+  assert.deepEqual(first.hypotheses, [hypothesisId]);
+  assert.deepEqual(first.alternatives, second.alternatives);
+  const rejected = search({...params, researchHypothesisId: 'not-a-public-hypothesis'});
+  assert.equal(rejected.status, 'unavailable');
+  assert.match(rejected.warnings[0], /No supported deck hypothesis/);
+  const overCap = search({...params, researchMaxRolloutDecisions: 501});
+  assert.equal(overCap.status, 'unavailable');
+  assert.match(overCap.warnings[0], /1 to 500/);
 });
