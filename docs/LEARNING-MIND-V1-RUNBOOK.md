@@ -114,6 +114,14 @@ independent games with stable later-turn observations rather than moving rows
 between splits; stage provenance is recorded in
 `docs/validation/learning-mind-v1/expanded-pool-stage-provenance-v8-2026-09-23.json`.
 
+A new `coverage-2026-09b` epoch has since produced 144-row pools for each
+heuristic family, with 48 rows per stage and seven source games per family
+contributing midgame/late positions. This improves coverage but not evaluation
+power: each family has only one held-out and one development source game, and
+candidate support has not been rerun for these exact pools. Keep labels and
+fitting disabled. See
+`docs/validation/learning-mind-v1/fresh-position-coverage-v9-2026-09-23.json`.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

@@ -1,0 +1,73 @@
+{
+  "schemaVersion": 1,
+  "experiment": "two-family-fresh-coverage-epoch-b",
+  "date": "2026-09-23",
+  "status": "coverage-only-not-policy-evaluation",
+  "collectionNamespace": "coverage-2026-09b",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "engineBuildSha256": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+  "runs": {
+    "python-heuristic": {
+      "runId": "bb54d7463cc5d8581ef7e75c2a102565",
+      "manifestHash": "79ba144ea65838cfc984dc0cb704b1587fa687422f9c4a20eb0ec1068ae82cf5",
+      "manifestFileSha256": "93f62be8aeca094595c15e1188d1ed45a3a0120fc73aa04764dd0c955f04517b",
+      "priorEpochSeedOverlap": 0,
+      "outcomes": {"scheduled": 12, "finished": 12, "truncated": 0, "errors": 0},
+      "decisions": 2442,
+      "actorOnlyFrames": 2454,
+      "actorSearchPositions": 1154,
+      "verifiedReplayHashes": 12,
+      "oppositePrivateViewsRetained": false,
+      "chanceRecordsRetained": false,
+      "replayBytes": 22919488
+    },
+    "typescript-heuristic": {
+      "runId": "57692d37d8f8fb000844debb702c8278",
+      "manifestHash": "32e8d941e8cb6f061556c9721fdd88989a1a5fe388620516f3984b8b34156f23",
+      "manifestFileSha256": "9a22cc20fae344d1a3aa789f984990e01c0c4840e282fb4dcffb676f5f4513dd",
+      "priorEpochSeedOverlap": 0,
+      "outcomes": {"scheduled": 12, "finished": 12, "truncated": 0, "errors": 0},
+      "decisions": 2015,
+      "actorOnlyFrames": 2027,
+      "actorSearchPositions": 910,
+      "verifiedReplayHashes": 12,
+      "oppositePrivateViewsRetained": false,
+      "chanceRecordsRetained": false,
+      "replayBytes": 17621145
+    }
+  },
+  "expandedPools": {
+    "python-heuristic": {
+      "poolManifestHash": "f85b4449ce35c2f9ab77e7d1983ce6d5f52b2a7c63a361dcf3ffdad4e7c90cbd",
+      "rowsSha256": "264ad222a70c216e4cf42aefaac11c2d6f1a4b11435d02c926b80fad923ff656",
+      "rows": 144,
+      "stageCounts": {"opening": 48, "midgame": 48, "late": 48},
+      "sourceGames": 10,
+      "gamesWithMidgameOrLate": 7,
+      "sourceGameSplitCounts": {"train": 8, "development": 1, "heldout": 1},
+      "rowSplitCounts": {"train": 100, "development": 10, "heldout": 34},
+      "candidateSupportAudited": false
+    },
+    "typescript-heuristic": {
+      "poolManifestHash": "a4821ef8430ed125f396c624715afef32923b13f34e634dbb4844efe64ad896f",
+      "rowsSha256": "a41d3ea49fe993154bda20904db568cb74625f6032af237c05d322e462351463",
+      "rows": 144,
+      "stageCounts": {"opening": 48, "midgame": 48, "late": 48},
+      "sourceGames": 9,
+      "gamesWithMidgameOrLate": 7,
+      "sourceGameSplitCounts": {"train": 7, "development": 1, "heldout": 1},
+      "rowSplitCounts": {"train": 102, "development": 6, "heldout": 36},
+      "candidateSupportAudited": false
+    }
+  },
+  "limitations": [
+    "The new epoch improves independent midgame/late source coverage from three to seven games per family in the selected pools.",
+    "Each family still has only one held-out source game and one development source game; row counts are uneven and do not establish generalization.",
+    "The expanded pools have not been candidate-support audited. No rollouts, labels, ranker fitting, supervised training, PPO, or promotion occurred.",
+    "All data remains experimental actor-visible position coverage, not playing-strength evidence."
+  ],
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v9-python/",
+    "artifacts/learning-mind-v1/fresh-actor-positions-v9-typescript/"
+  ]
+}

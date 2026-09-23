@@ -513,3 +513,19 @@ strength or autonomous improvement.
   independent games with stable mid/late observations, not moving positions
   across train/dev/held-out. See
   `expanded-pool-stage-provenance-v8-2026-09-23.json`.
+
+## Fresh coverage epoch B (2026-09-23)
+
+- Added a tested `--collection-namespace` slug to derive deterministic new
+  seeds and replay IDs; the default `main` schedule preserves its prior seed
+  derivation. The named `coverage-2026-09b` epoch completed 12/12 games for each
+  heuristic family, with no truncations/errors or overlap with that family's
+  prior seeds. All 24 replay hashes and compressed frame checksums passed;
+  actor-only views and empty chance records were verified.
+- Each family's new 144-row pool has 48 opening, 48 midgame, and 48 late rows.
+  Seven selected source games per family contribute midgame/late states, up
+  from three in the prior expanded pools. However, each family still has only
+  one development and one held-out source game, with imbalanced row counts.
+- Candidate support has not been audited on these 288 exact rows. No rollout
+  labels, ranker fit, supervised training, PPO, or promotion occurred. Run and
+  pool hashes are in `fresh-position-coverage-v9-2026-09-23.json`.
