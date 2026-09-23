@@ -135,9 +135,34 @@ def _assign_source_game_splits(game_rows: dict[str, list[dict]]) -> dict[str, st
 
 
 def _select_macro_positions(candidates: list[dict], limit: int) -> list[dict]:
-    """Round-robin context buckets and source games to avoid early-game bias."""
+    """Round-robin target decks, context buckets, and source games."""
     if type(limit) is not int or limit < 1:
         raise ValueError("macro position limit must be a positive integer")
+
+    target_groups: dict[str, list[dict]] = defaultdict(list)
+    for row in candidates:
+        target_groups[str(row.get("targetDeck", "unknown"))].append(row)
+    if len(target_groups) > 1:
+        per_target = {target: _select_macro_positions_for_target(rows, limit)
+                      for target, rows in target_groups.items()}
+        selected = []
+        offsets = {target: 0 for target in target_groups}
+        while len(selected) < limit:
+            added = False
+            for target in sorted(per_target):
+                offset = offsets[target]
+                if offset < len(per_target[target]) and len(selected) < limit:
+                    selected.append(per_target[target][offset])
+                    offsets[target] += 1
+                    added = True
+            if not added:
+                break
+        return selected
+    return _select_macro_positions_for_target(candidates, limit)
+
+
+def _select_macro_positions_for_target(candidates: list[dict], limit: int) -> list[dict]:
+    """Balance matchup, policy family, stage, and source games within one deck."""
     buckets: dict[tuple[str, str, str], dict[str, list[dict]]] = defaultdict(lambda: defaultdict(list))
     for row in candidates:
         context = (row["opponentArchetype"], row["opponentPolicyFamily"], row["positionStage"])
@@ -348,7 +373,8 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
             return "late"
         return "midgame"
     for item in sorted(source.get("replays", []), key=lambda row: row["id"]):
-        if not any(str(deck).replace("-training", "") == target_deck for deck in item.get("decks", [])):
+        if target_deck != "all" and not any(
+                str(deck).replace("-training", "") == target_deck for deck in item.get("decks", [])):
             continue
         replay = store.get("replays", item["id"])
         source_engine_version = replay.get("engineVersion") or item.get("engineVersion")
@@ -364,7 +390,8 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
             observation = frame["observations"][actor]
             snapshot = trackers[actor].update(observation)
             own_deck = str(replay.get("decks", ["", ""])[actor]).replace("-training", "")
-            if (own_deck != target_deck or observation.get("prompt") or observation.get("searchUnavailableReason")
+            if ((target_deck != "all" and own_deck != target_deck)
+                    or observation.get("prompt") or observation.get("searchUnavailableReason")
                     or str(observation.get("phase", "")).lower().replace("_", "-") != "player-turn"
                     or len(observation.get("legalActions", [])) < 2):
                 continue
@@ -375,8 +402,9 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
             opponent = str(replay.get("decks", ["unknown", "unknown"])[1 - actor]).replace("-training", "")
             policies = replay.get("policies") or ["unknown", "unknown"]
             candidates.append({"positionHash": position_hash,
-                "familyId": f"{target_deck}-macro-plan:{item['familyId']}",
+                "familyId": f"{own_deck}-macro-plan:{item['familyId']}",
                 "sourceGameId": replay["id"], "sourceDecisionIndex": frame["decisionIndex"], "actor": actor,
+                "targetDeck": own_deck,
                 "deckHash": (replay.get("deckHashes") or [None, None])[actor],
                 "opponentArchetype": opponent, "opponentPolicyFamily": str(policies[1 - actor]),
                 "positionStage": position_stage(observation),
@@ -411,8 +439,8 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
                 "positionStages": sorted({row["positionStage"] for row in selected}),
                 "positionStageCounts": dict(sorted(Counter(row["positionStage"] for row in selected).items())),
                 "sourceGameSplitCounts": dict(sorted(Counter(game_splits.values()).items())),
-                "poolBuilderVersion": "game-balanced-selection-v3",
-                "selection": "deterministic round-robin by matchup/policy/stage/source-game; stable row-balanced source-game assignments with matchup stratification and disjoint splits",
+                "poolBuilderVersion": "game-balanced-selection-v5-target-deck-round-robin",
+                "selection": "deterministic round-robin by target deck, then matchup/policy/stage/source-game; stable row-balanced source-game assignments with matchup stratification and disjoint splits",
                 "splitQuotasBySourceGame": dict(sorted(Counter(game_splits.values()).items()))}
     manifest["manifestHash"] = identity_hash(manifest)
     _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")

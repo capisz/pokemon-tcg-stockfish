@@ -18,6 +18,7 @@ from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCandidateV1,
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest
+from ptcg_lab.learning_mind.sampling import select_stratified_rows
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
 from test_learning_mind_representation import observation
@@ -200,14 +201,17 @@ def test_macro_collection_is_checkpointed_and_resume_does_not_replace_positions(
     output = tmp_path / "labels"
     first = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
                                             identity=identity, limit=1, initial=1, maximum=1,
-                                            position_hash="position")
+                                            position_hashes=["position"], split="train")
     call_count = len(calls)
     assert first["positions"] == 1 and first["highConfidencePolicyLabels"] == 0
     assert first["rolloutWorkers"] == 1
     assert first["candidateGeneratorVersion"] == CANDIDATE_GENERATOR_VERSION
     assert first["selectedPositionHashes"] == ["position"]
+    assert first["splitFilter"] == "train"
+    assert first["selectionMethod"] == "position-hash-list"
     second = experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output,
-                                             identity=identity, limit=1, initial=1, maximum=1)
+                                             identity=identity, limit=1, initial=1, maximum=1,
+                                             position_hashes=["position"], split="train")
     assert second["manifestHash"] == first["manifestHash"]
     assert len(calls) == call_count
     record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
@@ -240,6 +244,53 @@ def test_macro_collector_rejects_position_hash_outside_frozen_pool(tmp_path):
     with pytest.raises(ValueError, match="not present in the frozen dataset"):
         experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=tmp_path / "labels",
                                         identity=identity, position_hash="not-in-pool", initial=1, maximum=1)
+
+
+def test_macro_collector_rejects_horizon_above_engine_research_cap(tmp_path):
+    dataset, identity = frozen_dataset(tmp_path)
+    with pytest.raises(ValueError, match="horizon must be an integer from 1 to 500"):
+        experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=tmp_path / "labels",
+                                        identity=identity, initial=1, maximum=1, horizon=501)
+
+
+def test_macro_collector_rejects_position_outside_requested_split(tmp_path):
+    dataset, identity = frozen_dataset(tmp_path)
+    with pytest.raises(ValueError, match="not in the requested development split"):
+        experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset,
+                                        output=tmp_path / "labels", identity=identity,
+                                        initial=1, maximum=1, position_hash="position",
+                                        split="development")
+
+
+def test_macro_collector_preserves_engine_unavailable_diagnostic(tmp_path, monkeypatch):
+    dataset, identity = frozen_dataset(tmp_path)
+    row = json.loads((dataset / "rows.jsonl").read_text())
+    root_action = row["observation"]["legalActions"][0]
+    attack = {**row["observation"]["legalActions"][-1], "id": "attack:unavailable", "type": "attack"}
+
+    class UnavailableEngine:
+        def __init__(self, *args, **kwargs): pass
+        def __enter__(self): return self
+        def __exit__(self, *args): return False
+        def request(self, method, payload=None):
+            return {"status": "unavailable", "warnings": ["research horizon exceeds engine cap"],
+                    "macroPlanExecution": {"requested": True, "completed": 1, "failures": []}}
+
+    install_fake_engine_pool(monkeypatch, UnavailableEngine)
+    monkeypatch.setattr(experiment, "transition_generator_identity", lambda root: {
+        "version": CANDIDATE_GENERATOR_VERSION, "plannerSha256": "planner",
+        "actionKeySha256": "action-key", "adapterSha256": "adapter"})
+    monkeypatch.setattr(experiment, "generate_transition_candidates", lambda root, observation, seed: (
+        candidates_from_transition_plans([{"actions": [root_action, attack], "completion": "attack"}]),
+        {"hypothesisId": "unavailable-test"}))
+    output = tmp_path / "unavailable-labels"
+    experiment.collect_macro_labels(root=tmp_path, dataset_dir=dataset, output=output, identity=identity,
+                                    initial=1, maximum=1, position_hash="position")
+    record = json.loads(next(path for path in output.glob("*.json") if path.name != "manifest.json").read_text())
+    assert record["labels"][0]["outcomes"] == {"finished": 0, "truncated": 0, "error": 1}
+    assert record["labels"][0]["outcomeReasons"] == {
+        "search-result-unavailable: research horizon exceeds engine cap": 1,
+    }
 
 
 def test_macro_collector_treats_search_horizon_cutoff_as_truncated_not_a_label(tmp_path, monkeypatch):
@@ -342,11 +393,12 @@ def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
                                          source_dataset_manifest=source, identity=identity, limit=9)
     _, rows = load_dataset(output, identity=identity.record())
     assert manifest["ordinarySelfPlayPolicyLabels"] == 0
+    assert {row["targetDeck"] for row in rows} == {"raging-bolt"}
     assert manifest["sourceEngineVersions"] == ["test-engine-v1"]
     assert {row["split"] for row in rows} == {"train", "development", "heldout"}
     assert {row["positionStage"] for row in rows} == {"opening", "midgame", "late"}
     assert manifest["positionStageCounts"] == {"late": 3, "midgame": 3, "opening": 3}
-    assert manifest["poolBuilderVersion"] == "game-balanced-selection-v3"
+    assert manifest["poolBuilderVersion"] == "game-balanced-selection-v5-target-deck-round-robin"
     assert manifest["splitQuotasBySourceGame"] == {"development": 1, "heldout": 1, "train": 1}
     splits_by_game = {}
     for row in rows:
@@ -355,6 +407,30 @@ def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
     assert len({row["positionHash"] for row in rows}) == len(rows)
     assert all(row["policyLabelSource"] is None and row["observation"]["playerId"] == row["actor"]
                for row in rows)
+
+    generalist_output = tmp_path / "generalist-pool"
+    generalist = build_macro_position_pool(output=generalist_output, experimental_root=experimental,
+                                           source_dataset_manifest=source, identity=identity,
+                                           target_deck="all", limit=9)
+    _, generalist_rows = load_dataset(generalist_output, identity=identity.record())
+    assert generalist["targetDeck"] == "all"
+    assert {row["targetDeck"] for row in generalist_rows} == {"raging-bolt"}
+
+
+def test_macro_position_selection_round_robins_target_decks():
+    candidates = [
+        {"targetDeck": deck, "opponentArchetype": "same-opponent",
+         "opponentPolicyFamily": "same-policy", "positionStage": "midgame",
+         "sourceGameId": f"{deck}-game-{index}", "sourceDecisionIndex": index,
+         "positionHash": f"{deck}-{index}"}
+        for deck in ("crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario")
+        for index in range(10)
+    ]
+    selected = _select_macro_positions(candidates, 10)
+    assert Counter(row["targetDeck"] for row in selected) == {
+        "crustle": 2, "dragapult": 2, "raging-bolt": 2,
+        "grimmsnarl": 2, "mega-lucario": 2,
+    }
 
 
 def test_source_game_split_balances_rows_and_stratifies_by_matchup():
@@ -438,6 +514,7 @@ def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path
         root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
     assert report["status"] == "no-rollouts-no-labels"
     assert report["sampleSelection"] == "all-rows"
+    assert report["splitFilter"] is None
     assert report["statusCounts"] == {"supported": 1}
     assert report["completeCandidates"] == 1
     assert report["positions"][0]["hypothesisId"] == "public-fixture"
@@ -445,26 +522,46 @@ def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path
     with pytest.raises(ValueError, match="immutable"):
         candidate_support.audit_macro_candidate_support(
             root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
+    exact = candidate_support.audit_macro_candidate_support(
+        root=tmp_path, dataset_dir=dataset, output=tmp_path / "exact-support-audit",
+        identity=identity, split="train", position_hashes=["position"])
+    assert exact["sampleSelection"] == "position-hash-list"
+    assert exact["splitFilter"] == "train"
+    assert exact["selectedPositionHashes"] == ["position"]
 
 
 def test_candidate_support_limited_sample_balances_archetypes_then_context():
     rows = [
         {"positionHash": f"{opponent}-{stage}-{split}-{index}",
+         "targetDeck": deck,
          "opponentArchetype": opponent, "positionStage": stage,
          "split": split, "sourceGameId": f"game-{index}"}
-        for opponent in ("crustle", "dragapult", "raging-bolt")
+        for deck, opponent in zip(("deck-a", "deck-b", "deck-c"),
+                                  ("crustle", "dragapult", "raging-bolt"))
         for stage in ("late", "midgame", "opening")
         for split in ("train", "development", "heldout")
         for index in range(2)
     ]
-    sample = candidate_support._select_stratified_sample(rows, 9)
-    assert sample == candidate_support._select_stratified_sample(rows, 9)
+    sample = select_stratified_rows(rows, 9)
+    assert sample == select_stratified_rows(rows, 9)
     assert len(sample) == 9
+    assert {row["targetDeck"] for row in sample} == {"deck-a", "deck-b", "deck-c"}
     assert {row["opponentArchetype"] for row in sample} == {
         "crustle", "dragapult", "raging-bolt",
     }
     assert {row["positionStage"] for row in sample} == {"opening", "midgame", "late"}
     assert {row["split"] for row in sample} == {"train", "development", "heldout"}
+    target_rows = [
+        {"positionHash": f"{deck}-{index}", "targetDeck": deck,
+         "opponentArchetype": "same-opponent", "positionStage": "late",
+         "split": "train", "sourceGameId": f"game-{index}"}
+        for deck in ("crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario")
+        for index in range(3)
+    ]
+    target_sample = select_stratified_rows(target_rows, 5)
+    assert {row["targetDeck"] for row in target_sample} == {
+        "crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario",
+    }
 
 
 def test_candidate_support_audit_fails_closed_on_unsupported_and_identity_drift(tmp_path, monkeypatch):
@@ -478,6 +575,10 @@ def test_candidate_support_audit_fails_closed_on_unsupported_and_identity_drift(
         root=tmp_path, dataset_dir=dataset, output=tmp_path / "unsupported",
         identity=identity)
     assert report["statusCounts"] == {"unsupported": 1}
+    with pytest.raises(ValueError, match="no positions in the requested heldout split"):
+        candidate_support.audit_macro_candidate_support(
+            root=tmp_path, dataset_dir=dataset, output=tmp_path / "empty-split",
+            identity=identity, split="heldout")
     drift_root = tmp_path / "drift"
     drift_root.mkdir()
     dataset, identity = frozen_dataset(drift_root)

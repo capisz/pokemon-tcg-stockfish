@@ -22,6 +22,7 @@ from .macro import (CANDIDATE_GENERATOR_VERSION, candidates_from_transition_plan
                     label_candidates, rollout_seed)
 from .model import StrategyTransformerV1
 from .ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
+from .sampling import select_stratified_rows
 from .schema import IdentityManifest, UnsupportedPosition, identity_hash
 from .training import require_checkpoint_identity, train_supervised
 
@@ -108,19 +109,42 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                          extension_batch_size: int = 8,
                          horizon: int = 16, rollout_budget_ms: int = 1000,
                          rollout_workers: int = 1,
-                         position_hash: str | None = None) -> dict:
+                         position_hash: str | None = None,
+                         position_hashes: list[str] | None = None,
+                         split: str | None = None) -> dict:
+    if not isinstance(horizon, int) or isinstance(horizon, bool) or not 1 <= horizon <= 500:
+        raise ValueError("macro rollout horizon must be an integer from 1 to 500")
+    if split is not None and split not in {"train", "development", "heldout"}:
+        raise ValueError("macro label split must be train, development, or heldout")
     if not isinstance(rollout_budget_ms, int) or isinstance(rollout_budget_ms, bool) or not 1 <= rollout_budget_ms <= 120000:
         raise ValueError("rollout budget must be an integer from 1 to 120000 milliseconds")
     if not isinstance(rollout_workers, int) or isinstance(rollout_workers, bool) or not 1 <= rollout_workers <= 8:
         raise ValueError("rollout workers must be an integer from 1 to 8")
     manifest, rows = load_dataset(dataset_dir, identity=identity)
-    output.mkdir(parents=True, exist_ok=True)
-    if position_hash is not None:
-        selected = [row for row in rows if row["positionHash"] == position_hash]
-        if not selected:
-            raise ValueError(f"requested macro position is not present in the frozen dataset: {position_hash}")
+    if position_hash is not None and position_hashes:
+        raise ValueError("use either position_hash or position_hashes, not both")
+    requested_hashes = position_hashes or ([position_hash] if position_hash is not None else None)
+    if requested_hashes is not None:
+        if not requested_hashes or any(not isinstance(value, str) or not value for value in requested_hashes):
+            raise ValueError("position_hashes must contain one or more nonempty position hashes")
+        if len(requested_hashes) != len(set(requested_hashes)):
+            raise ValueError("position_hashes must not contain duplicates")
+        by_hash = {row["positionHash"]: row for row in rows}
+        missing = [key for key in requested_hashes if key not in by_hash]
+        if missing:
+            raise ValueError(f"requested macro positions are not present in the frozen dataset: {missing}")
+        selected = [by_hash[key] for key in requested_hashes]
+        if split is not None:
+            outside = [row["positionHash"] for row in selected if row.get("split") != split]
+            if outside:
+                raise ValueError(f"requested macro positions are not in the requested {split} split: {outside}")
     else:
-        selected = rows[:limit]
+        candidates = [row for row in rows if split is None or row.get("split") == split]
+        if not candidates:
+            raise ValueError(f"frozen dataset has no positions in the requested {split} split")
+        selected = (select_stratified_rows(candidates, limit)
+                    if split is not None else candidates[:limit])
+    output.mkdir(parents=True, exist_ok=True)
     generator_identity = transition_generator_identity(root)
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
@@ -128,6 +152,10 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 "horizon": horizon,
                 "rolloutBudgetMs": rollout_budget_ms,
                 "rolloutWorkers": rollout_workers,
+                "splitFilter": split,
+                "selectionMethod": "position-hash-list" if position_hashes else
+                    "position-hash" if position_hash is not None else
+                    "deterministic-stratified-v2-target-deck" if split is not None else "dataset-order",
                 "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
                 "candidateGeneratorIdentity": generator_identity,
@@ -247,8 +275,15 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 if execution.get("requested") and not execution.get("completed"):
                     reason = (execution.get("failures") or [{"reason": "macro-plan-unexecuted"}])[0]["reason"]
                     return {"status": "error", "reason": reason}
-                if result.get("status") != "complete" or alternative is None or alternative.get("score") is None:
-                    return {"status": "error", "reason": "search-rollout-unavailable"}
+                if result.get("status") != "complete":
+                    warnings = result.get("warnings") or []
+                    detail = warnings[0] if warnings and isinstance(warnings[0], str) else "no search warning supplied"
+                    return {"status": "error",
+                            "reason": f"search-result-{result.get('status', 'missing')}: {detail}"}
+                if alternative is None:
+                    return {"status": "error", "reason": "search-action-unvisited"}
+                if alternative.get("score") is None:
+                    return {"status": "error", "reason": "search-action-score-missing"}
                 continuation = alternative.get("continuation") or {}
                 if continuation.get("end") != "terminal":
                     cutoff = continuation.get("cutoffReason")

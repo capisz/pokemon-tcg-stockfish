@@ -37,7 +37,8 @@ def main(argv=None) -> int:
     pool.add_argument("--output", type=Path, required=True)
     pool.add_argument("--experimental-root", type=Path, required=True)
     pool.add_argument("--source-dataset-manifest", type=Path, required=True)
-    pool.add_argument("--target-deck", default="raging-bolt")
+    pool.add_argument("--target-deck", default="raging-bolt",
+                      help="one archetype deck name or 'all' for a generalist pool")
     pool.add_argument("--limit", type=int, default=18)
     support = sub.add_parser("audit-macro-candidate-support",
                              help="audit actor-visible candidate support without rollouts or labels")
@@ -46,6 +47,10 @@ def main(argv=None) -> int:
     support.add_argument("--output", type=Path, required=True)
     support.add_argument("--workers", type=int, default=1)
     support.add_argument("--limit", type=int)
+    support.add_argument("--split", choices=("train", "development", "heldout"),
+                         help="restrict the audit to one frozen game-disjoint split")
+    support.add_argument("--position-hash", action="append", default=[], metavar="HASH",
+                         help="audit an exact position from the frozen dataset; may be repeated")
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
     collect.add_argument("--dataset", type=Path, required=True)
@@ -59,7 +64,10 @@ def main(argv=None) -> int:
                          help="per-candidate search time cap; cutoffs are recorded as truncated")
     collect.add_argument("--rollout-workers", type=int, default=1,
                          help="parallel engine workers (1-8); use 1 for the serial reference run")
-    collect.add_argument("--position-hash", help="collect one exact position from the frozen dataset")
+    collect.add_argument("--position-hash", action="append", default=[], metavar="HASH",
+                         help="collect an exact position from the frozen dataset; may be repeated")
+    collect.add_argument("--split", choices=("train", "development", "heldout"),
+                         help="restrict collection to one frozen game-disjoint split")
     fresh = sub.add_parser("collect-fresh-positions", help="collect small resumable current-engine research games")
     fresh.add_argument("--root", type=Path, required=True)
     fresh.add_argument("--output", type=Path, required=True,
@@ -109,7 +117,7 @@ def main(argv=None) -> int:
                                       extension_batch_size=args.extension_batch_size,
                                       horizon=args.horizon, rollout_budget_ms=args.rollout_budget_ms,
                                       rollout_workers=args.rollout_workers,
-                                      position_hash=args.position_hash)
+                                      position_hashes=args.position_hash, split=args.split)
     elif args.command == "collect-fresh-positions":
         result = collect_fresh_positions(root=args.root, output=args.output,
             games_per_matchup=args.games_per_matchup, policy=args.policy,
@@ -123,7 +131,8 @@ def main(argv=None) -> int:
     elif args.command == "audit-macro-candidate-support":
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = audit_macro_candidate_support(root=root, dataset_dir=args.dataset.resolve(),
-            output=args.output.resolve(), identity=identity, workers=args.workers, limit=args.limit)
+            output=args.output.resolve(), identity=identity, workers=args.workers,
+            limit=args.limit, split=args.split, position_hashes=args.position_hash)
     elif args.command == "fit-macro-ranker":
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
