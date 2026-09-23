@@ -127,10 +127,16 @@ def execute_candidate(candidate: MacroCandidateV1, legal_actions: list[dict]) ->
     return [by_id[identifier] for identifier in candidate.action_ids]
 
 
-def rollout_seed(namespace: str, position_hash: str, rollout_index: int) -> int:
+def rollout_seed(namespace: str, position_hash: str, rollout_index: int,
+                 rollout_identity: str | None = None) -> int:
     if namespace not in {"training", "development", "promotion"}:
         raise ValueError("unknown seed namespace")
-    token = f"learning-mind-v1|{namespace}|{position_hash}|{rollout_index}".encode()
+    if rollout_identity is not None and (not isinstance(rollout_identity, str) or not rollout_identity):
+        raise ValueError("rollout identity must be a non-empty string when provided")
+    if rollout_identity is None:
+        token = f"learning-mind-v1|{namespace}|{position_hash}|{rollout_index}".encode()
+    else:
+        token = f"learning-mind-v1|{namespace}|{rollout_identity}|{position_hash}|{rollout_index}".encode()
     return int.from_bytes(hashlib.sha256(token).digest()[:8], "big")
 
 
@@ -139,7 +145,8 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                      namespace: str = "training", initial: int = 16,
                      maximum: int = 64, close_margin: float = .10,
                      rollout_workers: int = 1, resume_state: dict | None = None,
-                     checkpoint: Callable[[dict], None] | None = None) -> list[dict]:
+                     checkpoint: Callable[[dict], None] | None = None,
+                     rollout_identity: str | None = None) -> list[dict]:
     if namespace == "promotion":
         raise ValueError("label generation may not consume promotion seeds")
     if not candidates or not 1 <= initial <= maximum <= 64:
@@ -210,7 +217,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
             completed = completed_extension if extension else completed_initial
             if index in completed:
                 continue
-            seed = rollout_seed(namespace, position_hash, index)
+            seed = rollout_seed(namespace, position_hash, index, rollout_identity)
             outcomes = ([rollout(candidate, seed) for candidate in selected] if executor is None
                         else list(executor.map(lambda candidate: rollout(candidate, seed), selected)))
             for candidate, outcome in zip(selected, outcomes):

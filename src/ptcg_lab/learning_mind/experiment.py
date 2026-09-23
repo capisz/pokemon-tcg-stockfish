@@ -128,7 +128,10 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 "rolloutWorkers": rollout_workers,
                 "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
-                "candidateGeneratorIdentity": generator_identity}
+                "candidateGeneratorIdentity": generator_identity,
+                "rolloutSeedVersion": "configuration-bound-v1"}
+    rollout_identity = identity_hash(settings)
+    settings["rolloutIdentity"] = rollout_identity
     manifest_path = output / "manifest.json"
     completed = set()
     if manifest_path.exists():
@@ -197,6 +200,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 "candidateHashes": candidate_hashes, "initialRollouts": initial,
                 "maximumRollouts": maximum, "horizon": horizon,
                 "rolloutBudgetMs": rollout_budget_ms, "rolloutWorkers": rollout_workers,
+                "rolloutIdentity": rollout_identity,
                 "seedNamespace": "training" if row["split"] == "train" else "development",
                 "candidateGeneratorIdentity": generator_identity}
             progress_identity_hash = identity_hash(progress_identity)
@@ -258,7 +262,8 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
             labels = label_candidates(executable, key, rollout, namespace=namespace,
                                       initial=initial, maximum=maximum,
                                       rollout_workers=rollout_workers,
-                                      resume_state=resume_state, checkpoint=save_progress)
+                                      resume_state=resume_state, checkpoint=save_progress,
+                                      rollout_identity=rollout_identity)
             record = {"schemaVersion": 1, "positionHash": key, "split": row["split"],
                       "identity": identity, "datasetManifestHash": manifest["manifestHash"],
                       "familyId": row["familyId"], "opponentArchetype": row["opponentArchetype"],
@@ -270,7 +275,9 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                       "rolloutBudgetMs": rollout_budget_ms,
                       "exploredPrefixCount": generation.get("exploredPrefixCount"),
                       "seedNamespace": namespace,
-                      "rolloutSeeds": [rollout_seed(namespace, key, index) for index in range(maximum)],
+                      "rolloutIdentity": rollout_identity,
+                      "rolloutSeeds": [rollout_seed(namespace, key, index, rollout_identity)
+                                       for index in range(maximum)],
                       "semantics": "complete transition-aware attack or deliberate no-attack candidates only; incomplete traversal prefixes do not consume candidate cap or receive labels; later steps are revalidated at rollout",
                       "highConfidencePolicyEligible": False}
             _atomic_json(output / f"{key}.json", record)

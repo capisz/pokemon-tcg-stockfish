@@ -397,6 +397,12 @@ For every selected position:
 Use the `training` namespace for ranker labels and `development` for ranker
 selection. The labeler intentionally rejects `promotion` seeds.
 
+The label collector also binds rollout seeds to the frozen dataset, engine and
+planner identities, selected positions, horizon, rollout budget, and allocation
+settings. Candidates at one position share common random numbers; a changed
+configuration receives a separate deterministic seed stream. Do not combine
+labels from different rollout identities as if they were independent samples.
+
 Start with a small smoke set covering:
 
 - Raging Bolt plan fidelity;

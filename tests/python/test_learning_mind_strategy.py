@@ -63,12 +63,15 @@ def test_common_random_numbers_adaptive_rollouts_and_namespace_isolation():
     candidates = generate_candidates(observation())[:2]; calls = []
     def rollout(candidate, seed):
         calls.append((candidate.key(), seed)); return {"status": "finished", "score": .5}
-    rows = label_candidates(candidates, "position", rollout, initial=2, maximum=4)
+    rollout_identity = "frozen-config-a"
+    rows = label_candidates(candidates, "position", rollout, initial=2, maximum=4,
+                            rollout_identity=rollout_identity)
     assert all(row["completedRollouts"] == 4 for row in rows)
     for index in range(4):
-        expected = rollout_seed("training", "position", index)
+        expected = rollout_seed("training", "position", index, rollout_identity)
         assert sum(seed == expected for _, seed in calls) == 2
     assert rollout_seed("training", "position", 0) != rollout_seed("development", "position", 0)
+    assert rollout_seed("training", "position", 0, "config-a") != rollout_seed("training", "position", 0, "config-b")
     with pytest.raises(ValueError, match="promotion"): label_candidates(candidates, "p", rollout, namespace="promotion")
 
 
