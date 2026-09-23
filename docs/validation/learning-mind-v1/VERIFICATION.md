@@ -173,6 +173,33 @@ Base: `7543298`
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
 
+## Fresh source-game-balanced coverage and macro labeler diagnostic (2026-09-23)
+
+- Epoch `coverage-2026-09c` completed 60/60 games across the Python and
+  TypeScript heuristic families: 30 each, all finished, with zero truncations
+  and zero engine errors. Each family used 30 source games with game-disjoint
+  train/development/heldout splits of 20/5/5; selected pools contain 96/24/24
+  rows (opening/midgame/late coverage is approximately balanced). No seed
+  overlap with epoch v9, cross-family seed overlap, cross-family duplicate
+  positions, or source-game split violations were found.
+- The v3 balanced pool builder round-robins through source games within each
+  matchup/policy/stage bucket. Full support audits covered all 144 rows per
+  family. Python supports 125 rows and TypeScript 132; the remaining 19 and 12
+  rows respectively fail closed from candidate-cap overflow or infeasible
+  public-zone-count belief hypotheses. No candidates were silently dropped.
+- On one 11-candidate Raging Bolt position, the frozen 15-second budget and 16
+  common-seed rollouts per candidate yielded 174 terminal outcomes, two budget
+  truncations, and zero errors. Uncertainty remained as high as 0.1291, and no
+  high-confidence policy labels were emitted. This is a bounded runtime
+  diagnostic, not ranker, training, or playing-strength evidence.
+- Artifact identities and checksums are in
+  `fresh-coverage-v10-macro-label-diagnostic-2026-09-23.json`; full raw games,
+  pool rows, audit detail, and label output remain ignored locally under
+  `artifacts/learning-mind-v1/`.
+- Current gate: collect broader independent source-game coverage and improve
+  candidate support and label precision before serious ranker fitting. PPO,
+  continuous operation, and promotion remain disabled.
+
 ## Bound-action search and planner v2
 
 - Research search now keys choices by action type/card, target, label, source

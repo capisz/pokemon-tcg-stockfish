@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "status": "coverage-and-labeler-runtime-diagnostic-not-policy-evaluation",
+  "collectionNamespace": "coverage-2026-09c",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "engineBuildSha256": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+  "runs": {
+    "python-heuristic": {
+      "runId": "1dda7c3099868986e47db56b6e15a12c",
+      "manifestHash": "8229b1380fe8de02cb6c661aa896ee7471b851bc9153cd48f9f7b5de0aa2a13a",
+      "manifestFileSha256": "3c7209ebb9e4e98bb2574e9265475ac4452c9a7dcea54d544b6151a46327b53c",
+      "outcomes": {"scheduled": 30, "finished": 30, "truncated": 0, "errors": 0},
+      "replayBytes": 53326937,
+      "pool": {
+        "rows": 144,
+        "rowsSha256": "0375083b3ddcec04ee93c90a15e1b745d2dcaf6d6d9a1ffc0626bc6dd0d532e5",
+        "manifestHash": "ce40405159a6b2cae4dcbd7d1eff689e82dc90e920e8596ff329d55f0394139c",
+        "manifestFileSha256": "3f84627f9a85e59f29ed8c6cd83e60adfcfdc222501f9953fe0887025c0ccba3",
+        "sourceGames": 30,
+        "gameDisjointSourceSplit": {"train": 20, "development": 5, "heldout": 5},
+        "rowSplit": {"train": 96, "development": 24, "heldout": 24},
+        "stageCounts": {"opening": 50, "midgame": 50, "late": 44}
+      },
+      "supportAudit": {
+        "supported": 125,
+        "unsupported": 19,
+        "unsupportedReasons": {"candidate-cap": 17, "infeasible-public-zone-count": 2},
+        "completeCandidates": 3103,
+        "reportHash": "c28925e65ae1db4cda34d6ee448fbb41e33249f01bc98229dbb9e336843a362fe",
+        "reportFileSha256": "9980e2a85884cafc8b948c0fb994bfc27da34bbb0b2c5d0ab78213979fa39a9"
+      }
+    },
+    "typescript-heuristic": {
+      "runId": "19ad0a3be1c00f67213e7d45f57c59c6",
+      "manifestHash": "6d0b906d0b5a9c6345504cb27089fa2a0d34fa6e70b48c3846aef6544b571bcb",
+      "manifestFileSha256": "12cac7b1ac35b14ab8be6e2b799fdd09ab109796954035d7e222d916825f2c23",
+      "outcomes": {"scheduled": 30, "finished": 30, "truncated": 0, "errors": 0},
+      "replayBytes": 58887797,
+      "pool": {
+        "rows": 144,
+        "rowsSha256": "2c26dd54223610bb8be788ae085fdbcac171eb74e6cd896d7258b842b1c1dc7f",
+        "manifestHash": "e2ce9c158fbab15cfd02c6e5af13e43f504cb64bf2548ae538d8de3b9c38946e",
+        "manifestFileSha256": "beeee699e99ce2e7b0d965d8f4cf48ca5434ff631cbae48934be8d01bde5cd5a",
+        "sourceGames": 30,
+        "gameDisjointSourceSplit": {"train": 20, "development": 5, "heldout": 5},
+        "rowSplit": {"train": 96, "development": 24, "heldout": 24},
+        "stageCounts": {"opening": 50, "midgame": 49, "late": 45}
+      },
+      "supportAudit": {
+        "supported": 132,
+        "unsupported": 12,
+        "unsupportedReasons": {"candidate-cap": 11, "infeasible-public-zone-count": 1},
+        "completeCandidates": 3900,
+        "reportHash": "ac1366de9f80ab43f81cb77460464f63fbb9f42a40fef844d7607a8dcb49d07d",
+        "reportFileSha256": "900f300ae39315431c5844fdb581efbcb095d53cdbb56a65e8d67084a4ac50cb"
+      }
+    }
+  },
+  "independenceChecks": {
+    "v10VsV9SeedOverlapPerFamily": 0,
+    "crossFamilySeedOverlap": 0,
+    "crossFamilyDuplicatePositions": 0,
+    "sourceGameSplitViolations": 0
+  },
+  "labelerDiagnostic": {
+    "positionHash": "3bc61d1e33451c19e792144c8550400f7a07f313685feb0a3f3a51c63f2666be",
+    "candidateCount": 11,
+    "plannedRollouts": 176,
+    "finished": 174,
+    "truncated": 2,
+    "errors": 0,
+    "rolloutBudgetMs": 15000,
+    "initialAndMaximumPerCandidate": 16,
+    "minimumFinishedPerCandidate": 15,
+    "maximumFinishedPerCandidate": 16,
+    "maximumUncertainty": 0.12909944487358055,
+    "highConfidencePolicyLabels": 0,
+    "rolloutIdentity": "a39b72cd9ffc11d0353a6f353b2bf042702ca4fafa3bd54a2c915eb065eacb5c",
+    "manifestHash": "3abf68a49010bf739c43e96a4a812664e28990f759779d16c3ca1448cab50db6",
+    "manifestFileSha256": "7adb49242b114f15bcf91616a9d25a2ce8b9a91c413e244376aaebc38e546579",
+    "labelFileSha256": "7daec2d5426a52e57a761d120da0b224731014e3de5dfb25aa7cdd2e74186d2c",
+    "interpretation": "A 15-second budget produced substantially more terminal outcomes than the earlier 5-second Raging Bolt smoke, but 16 samples per candidate remain noisy and no high-confidence policy labels were emitted. This is runtime evidence only; no ranker fit or model training occurred."
+  },
+  "limitations": [
+    "The pools contain only 30 source games per family; despite game-disjoint 20/5/5 splits, this does not establish generalization.",
+    "Candidate-cap and public-zone-count failures remain fail-closed and are not silently dropped from coverage accounting.",
+    "The one-position macro diagnostic is too small and too uncertain to supply training labels or support a playing-strength claim.",
+    "PPO, continuous operation, automatic promotion, and production policy changes remain disabled."
+  ],
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v10-python/",
+    "artifacts/learning-mind-v1/fresh-actor-positions-v10-typescript/"
+  ]
+}
