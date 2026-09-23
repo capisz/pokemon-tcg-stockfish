@@ -108,6 +108,11 @@ The next implementation task is to repair and test selection/splitting so
 source games remain disjoint while each split gets enough balanced rows; then
 rerun identity and candidate-support audits. Details are in
 `docs/validation/learning-mind-v1/expanded-pool-integrity-v8-2026-09-23.json`.
+The imbalance is partly structural: only three games per family yielded
+midgame/late positions. Preserve game-level splits and collect additional
+independent games with stable later-turn observations rather than moving rows
+between splits; stage provenance is recorded in
+`docs/validation/learning-mind-v1/expanded-pool-stage-provenance-v8-2026-09-23.json`.
 
 ## 3. Prepare an isolated environment
 

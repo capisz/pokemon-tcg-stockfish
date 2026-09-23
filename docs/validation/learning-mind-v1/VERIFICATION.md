@@ -507,3 +507,9 @@ strength or autonomous improvement.
   game-level pool selection, then rerun feature and candidate-support audits.
 - Counts and per-game provenance are frozen in
   `expanded-pool-integrity-v8-2026-09-23.json`.
+- Stage-by-game analysis showed the root cause: only three games per family
+  contribute any midgame/late rows; the other three contribute opening rows
+  only. Keep game boundaries intact. The next data gate is additional
+  independent games with stable mid/late observations, not moving positions
+  across train/dev/held-out. See
+  `expanded-pool-stage-provenance-v8-2026-09-23.json`.

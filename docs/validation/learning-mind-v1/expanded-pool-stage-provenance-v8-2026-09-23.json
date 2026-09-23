@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 1,
+  "audit": "expanded-pool-stage-by-source-game",
+  "date": "2026-09-23",
+  "families": {
+    "typescript-heuristic": {
+      "poolManifestHash": "00bdaf9814ffc72e74bfd8102f10de739f693eeeb68b355f2ac2ef76693bce66",
+      "rowsBySourceGameAndStage": {
+        "fresh-v1-typescript-crustle-0": {"opening": 5, "midgame": 8, "late": 8},
+        "fresh-v1-typescript-crustle-1": {"opening": 3},
+        "fresh-v1-typescript-dragapult-0": {"opening": 3, "midgame": 8, "late": 8},
+        "fresh-v1-typescript-dragapult-1": {"opening": 4},
+        "fresh-v1-typescript-dragapult-2": {"opening": 1},
+        "fresh-v1-typescript-raging-bolt-0": {"opening": 8, "midgame": 8, "late": 8}
+      },
+      "gamesContributingMidgameOrLate": 3
+    },
+    "python-heuristic": {
+      "poolManifestHash": "6e17b1b9c11e475e1943df57bb2cc082bade8afbd25089b975a80e937b640b3d",
+      "rowsBySourceGameAndStage": {
+        "fresh-v1-python-crustle-0": {"opening": 7, "midgame": 8, "late": 8},
+        "fresh-v1-python-crustle-1": {"opening": 1},
+        "fresh-v1-python-dragapult-0": {"opening": 7, "midgame": 8, "late": 8},
+        "fresh-v1-python-dragapult-1": {"opening": 1},
+        "fresh-v1-python-raging-bolt-0": {"opening": 6, "midgame": 8, "late": 8},
+        "fresh-v1-python-raging-bolt-1": {"opening": 2}
+      },
+      "gamesContributingMidgameOrLate": 3
+    }
+  },
+  "interpretation": [
+    "In each pool, only three source games supply all midgame and late rows; the other three supply opening rows only.",
+    "Assigning those source games to disjoint splits creates severe stage and row imbalance. Reassigning individual positions across splits would leak game-level information.",
+    "The remedy is more independent games with stable mid/late actor-visible states, not weakening source-game-disjoint split rules."
+  ]
+}
