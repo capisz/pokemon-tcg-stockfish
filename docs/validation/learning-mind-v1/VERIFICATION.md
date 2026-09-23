@@ -219,6 +219,31 @@ strength or autonomous improvement.
   resumable checkpoints, then compare cost and top-plan ordering on frozen
   development positions. Do not scale labeling or enable PPO on this evidence.
 
+## Staged simultaneous-bound allocation validation (2026-09-23)
+
+- Harness commit `0ee5e2e` adds resumable eight-rollout extension stages,
+  monotone close-set reevaluation, a simultaneous Bonferroni-union Hoeffding
+  budget over candidates and planned looks, exact attempted-rollout counts,
+  and allocation settings in checkpoint/output identity.
+- Tests prove distant candidates can be pruned only after the declared bound
+  separates them, active candidates retain matched seed indices, interrupted
+  mid-stage collection resumes without replaying completed batches, and
+  results match an uninterrupted run.
+- Full validation passed: 321 Python tests, 80 engine tests, strategy v1.2
+  contract validation, TypeScript typecheck, and `git diff --check`.
+- The same frozen Raging Bolt position under the new collector completed
+  699/704 rollouts with five budget truncations and zero errors. All 11
+  candidates remained close through 64 attempts, so this diagnostic saved no
+  rollout compute. The top two observed means tied at 0.65625. The prior
+  adaptive64 run used a different configuration-bound seed stream and is not
+  directly comparable. No high-confidence labels, ranker fit, or training
+  resulted.
+- Checksums and identities are in
+  `macro-staged64-diagnostic-2026-09-23.json`; raw outputs remain ignored. Next
+  investigate per-index common-random-number paired differences as a
+  descriptive variance reduction on multiple frozen positions. Do not scale
+  label collection from this single-position result.
+
 ## Bound-action search and planner v2
 
 - Research search now keys choices by action type/card, target, label, source

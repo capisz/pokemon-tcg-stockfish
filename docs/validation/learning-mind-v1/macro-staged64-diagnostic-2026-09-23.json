@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "status": "single-position-staged-allocation-validation-not-training-evidence",
+  "positionHash": "3bc61d1e33451c19e792144c8550400f7a07f313685feb0a3f3a51c63f2666be",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "allocation": {
+    "initialRolloutsPerCandidate": 16,
+    "maximumRolloutsPerCandidate": 64,
+    "extensionBatchSize": 8,
+    "rolloutBudgetMs": 15000,
+    "workers": 4,
+    "confidenceRule": "95-percent simultaneous Bonferroni-union Hoeffding intervals across candidates and planned looks",
+    "closeCandidatesAfterInitialStage": 11,
+    "prunedAtExtensionStages": 0
+  },
+  "outcomes": {
+    "candidates": 11,
+    "attempted": 704,
+    "finished": 699,
+    "truncated": 5,
+    "errors": 0,
+    "attemptsPerCandidate": {"minimum": 64, "maximum": 64}
+  },
+  "topObservedCandidates": [
+    {"candidateHash": "2fe12edaae4a1ef44f036d20278312bf59fafd884299d632e185c8ae7465c791", "meanResult": 0.65625, "finished": 64},
+    {"candidateHash": "4312e0a0acc0317adef3666acd451bdb6ae61441ad1a260e9fcf2a4cb2c14466", "meanResult": 0.65625, "finished": 64}
+  ],
+  "highConfidencePolicyLabels": 0,
+  "rolloutIdentity": "379f49edd884a423802d665e46efac94a92bb39e688c922d078d38bb5d321513",
+  "manifestHash": "867fa9f88f7ff86ef28188b845f9d38da54fd978090471f4ab29e31143d7e5b0",
+  "manifestFileSha256": "1c5e553714e2bcb9e0e693f131e42e1ba92d25ce8a29816e53dd0e2de2ff407c",
+  "labelFileSha256": "27b082263b07dea27e7af7bd007ab91f766e690181e4a0574750608ebe10806a",
+  "comparisonCaveat": "The earlier adaptive64 run used an older collector version and a different configuration-bound rollout identity, so seed streams and observed means are not directly comparable. Candidate ordering overlap is descriptive only.",
+  "implementationValidation": {
+    "focusedLearningMindTests": "46 passed",
+    "fullPythonSuite": "321 passed",
+    "engineTests": "80 passed",
+    "strategyContractValidator": "passed; active revision v1.2",
+    "typescriptTypecheck": "passed",
+    "gitDiffCheck": "passed"
+  },
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v10-typescript/labels-raging-bolt-budget15s-staged-v1/"
+  ],
+  "interpretation": "Staged reevaluation and resume logic are test-validated, but the stricter simultaneous intervals retained all candidates and saved no rollouts on this position. The run is not ranker, strategy, or playing-strength evidence. Keep PPO, continuous operation, and trusted promotion disabled.",
+  "nextResearchGate": "Preserve per-rollout-index outcomes and assess common-random-number paired differences for descriptive variance reduction; then validate any allocation change on multiple frozen development positions before broad label collection. Candidate support and independent source-game coverage also remain limited."
+}
