@@ -87,6 +87,19 @@ unsupported positions fail-closed. Broaden independent sources before deciding
 whether there is enough diverse support to collect labels. PPO, 24/7 operation,
 promotion, and service installation remain disabled.
 
+### Second policy-family coverage result
+
+A separate Python-heuristic batch is now frozen alongside the TypeScript family.
+Each has a separate 72-row pool with six source games (four train, one
+development, one held out) and balanced opening/midgame/late coverage. This is
+useful for coverage expansion, but one held-out game per family is not enough
+for generalization. The initial Python 18-row support sample had three
+fail-closed candidate-cap overflows; do not transfer that support rate to the
+expanded pools. Full identities and caveats are in
+`docs/validation/learning-mind-v1/fresh-position-coverage-v8-2026-09-23.json`.
+The next gate is a tested multi-source pool/split audit plus support checks on
+the exact expanded rows—not rollouts or model fitting yet.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

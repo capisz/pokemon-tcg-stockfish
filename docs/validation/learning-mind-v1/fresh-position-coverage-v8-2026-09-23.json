@@ -1,0 +1,65 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-python-policy-coverage-and-two-family-pool-expansion",
+  "date": "2026-09-23",
+  "status": "coverage-only-not-policy-evaluation",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "engineBuildSha256": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+  "pythonHeuristicRun": {
+    "runId": "3e2dacd5fee9d77b5992301e26e97fd9",
+    "manifestHash": "2aab0bca1383903fadc448629cd8f44779532618078d15ea8327a7d0afbbd8f4",
+    "manifestFileSha256": "c462a36b2e892c076e7a1c643991c5d4c43cd556908d9503e7aaf25c2e360e3c",
+    "policy": "python-heuristic",
+    "schedule": {"games": 12, "gamesPerMatchup": 4, "matchups": ["raging-bolt-vs-crustle", "raging-bolt-vs-dragapult", "raging-bolt-vs-raging-bolt"]},
+    "outcomes": {"finished": 12, "truncated": 0, "errors": 0},
+    "decisions": 2447,
+    "actorOnlyFrames": 2459,
+    "actorSearchPositions": 1145,
+    "verifiedReplayHashes": 12,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false,
+    "replayBytes": 22928657
+  },
+  "identityMatchedSeparatePools": true,
+  "expandedPools": {
+    "typescript-heuristic": {
+      "sourceRunId": "2a058b628bc801feb4930d61ccd68c03",
+      "sourceManifestSha256": "d26b267d20e771f20e01d847ab729b73b5fa8f6e7de9823343658709e5e4f712",
+      "poolManifestHash": "00bdaf9814ffc72e74bfd8102f10de739f693eeeb68b355f2ac2ef76693bce66",
+      "rowsSha256": "762516a0942561684d64f68c64f29bbb00317683d6c09be194c45401446a43c1",
+      "rows": 72,
+      "stageCounts": {"opening": 24, "midgame": 24, "late": 24},
+      "sourceGames": 6,
+      "sourceGameSplitCounts": {"train": 4, "development": 1, "heldout": 1}
+    },
+    "python-heuristic": {
+      "sourceRunId": "3e2dacd5fee9d77b5992301e26e97fd9",
+      "sourceManifestSha256": "c462a36b2e892c076e7a1c643991c5d4c43cd556908d9503e7aaf25c2e360e3c",
+      "poolManifestHash": "6e17b1b9c11e475e1943df57bb2cc082bade8afbd25089b975a80e937b640b3d",
+      "rowsSha256": "2d7a987ae18e9e5a5ae68bb6444db3d18f5d7de830e80bcac29ce1d475348522",
+      "rows": 72,
+      "stageCounts": {"opening": 24, "midgame": 24, "late": 24},
+      "sourceGames": 6,
+      "sourceGameSplitCounts": {"train": 4, "development": 1, "heldout": 1}
+    }
+  },
+  "pythonInitial18PositionSupportAudit": {
+    "poolManifestHash": "92dd59defa323b073304b5716a4c7510464706828c67c8294eec306b81f1d796",
+    "rowsSha256": "507cf773f1ba6f68081f5c5cc066fe78f5eaf8469fd0f2f1dcee74f5793398be",
+    "supportAuditReportHash": "6cf03a333678be7f629ff3b5768584e1c69034f6c7e44ad281b82fa3f4a44e54",
+    "supported": 15,
+    "unsupported": 3,
+    "completeCandidates": 379,
+    "unsupportedReason": "All three failed closed at the complete-candidate cap of 128."
+  },
+  "limitations": [
+    "The expanded 72-row pools have not had candidate support re-audited; support counts from the separate 18-row samples do not transfer to them.",
+    "Each policy family currently contributes six source games, of which only one is held out and one is development; this is too small for robust generalization claims.",
+    "Pools remain separate; no combined cross-family dataset, rollout labels, ranker fit, supervised training, PPO, or policy promotion was performed.",
+    "These artifacts measure coverage and implementation support, not playing strength."
+  ],
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v8-python/",
+    "artifacts/learning-mind-v1/fresh-actor-positions-v7/"
+  ]
+}

@@ -471,3 +471,24 @@ strength or autonomous improvement.
   before collecting labels. Checksums and exact identities are in
   `macro-support-v7-2026-09-23.json`; detailed ignored local audit is retained
   under `artifacts/learning-mind-v1/fresh-actor-positions-v7/`.
+
+## Second frozen policy-family coverage batch (2026-09-23)
+
+- The Python heuristic collector completed a separate balanced 12-game batch
+  (four per Crustle, Dragapult, and Raging Bolt mirror cell): 12 finished,
+  zero truncations/errors, and 2,447 decisions. All 12 compressed replay file
+  hashes and embedded frame checksums passed. The 2,459 decoded frames contain
+  only the decision actor's view; opposite views are null and chance arrays are
+  empty. Raw local replay bytes: 22,928,657.
+- Built separate 72-position actor-visible pools for the TypeScript and Python
+  heuristic families under the same exact engine/feature identity. Each has 24
+  opening, 24 midgame, and 24 late rows across six source games, split by game
+  into four train, one development, and one held-out game. Pools are not merged.
+- On the Python family's initial 18-row subset, candidate generation supported
+  15/18 positions and produced 379 complete candidates; the other three failed
+  closed at the 128-candidate cap. This audit does not apply to the expanded
+  72-row pool. The expanded pools still need candidate-support and split-quality
+  audits; one held-out game per family is not robust generalization evidence.
+- Run, pool, and support-report hashes are in
+  `fresh-position-coverage-v8-2026-09-23.json`. No rollout labels, ranker fit,
+  supervised training, PPO, or promotion occurred.
