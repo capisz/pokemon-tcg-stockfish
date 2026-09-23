@@ -105,6 +105,7 @@ def _atomic_json(path: Path, value: object) -> None:
 
 def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identity: dict,
                          limit: int = 20, initial: int = 16, maximum: int = 64,
+                         extension_batch_size: int = 8,
                          horizon: int = 16, rollout_budget_ms: int = 1000,
                          rollout_workers: int = 1,
                          position_hash: str | None = None) -> dict:
@@ -123,15 +124,16 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     generator_identity = transition_generator_identity(root)
     settings = {"identity": identity, "datasetManifestHash": manifest["manifestHash"],
                 "requestedPositions": len(selected), "initialRollouts": initial,
-                "maximumRollouts": maximum, "horizon": horizon,
+                "maximumRollouts": maximum, "extensionBatchSize": extension_batch_size,
+                "horizon": horizon,
                 "rolloutBudgetMs": rollout_budget_ms,
                 "rolloutWorkers": rollout_workers,
                 "selectedPositionHashes": [row["positionHash"] for row in selected],
                 "candidateGeneratorVersion": CANDIDATE_GENERATOR_VERSION,
                 "candidateGeneratorIdentity": generator_identity,
                 "rolloutSeedVersion": "configuration-bound-v1",
-                "adaptiveAllocationVersion": "bounded-outcome-95pct-hoeffding-v1",
-                "labelCollectorVersion": "macro-rollout-labeler-v2",
+                "adaptiveAllocationVersion": "staged-monotone-simultaneous-hoeffding-v3",
+                "labelCollectorVersion": "macro-rollout-labeler-v4",
                 "labelCollectorSha256": file_sha256(Path(__file__))}
     rollout_identity = identity_hash(settings)
     settings["rolloutIdentity"] = rollout_identity
@@ -264,6 +266,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
             namespace = "training" if row["split"] == "train" else "development"
             labels = label_candidates(executable, key, rollout, namespace=namespace,
                                       initial=initial, maximum=maximum,
+                                      extension_batch_size=extension_batch_size,
                                       rollout_workers=rollout_workers,
                                       resume_state=resume_state, checkpoint=save_progress,
                                       rollout_identity=rollout_identity)

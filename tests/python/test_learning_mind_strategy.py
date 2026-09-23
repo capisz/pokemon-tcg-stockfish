@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
@@ -81,6 +83,53 @@ def test_adaptive_rollouts_extend_when_small_sample_intervals_overlap():
         lambda candidate, _seed: {"status": "finished", "score": 1.0 if candidate == candidates[0] else 0.0},
         initial=2, maximum=4, close_margin=0.0)
     assert [row["completedRollouts"] for row in rows] == [4, 4]
+
+
+def test_staged_rollouts_prune_distant_candidates_and_report_actual_attempts():
+    candidates = generate_candidates(observation())[:2]
+    seeds = {candidate.key(): [] for candidate in candidates}
+
+    def rollout(candidate, seed):
+        seeds[candidate.key()].append(seed)
+        return {"status": "finished", "score": 1.0 if candidate == candidates[0] else 0.0}
+
+    rows = label_candidates(candidates, "staged-position", rollout, initial=4, maximum=24,
+                            extension_batch_size=4, close_margin=.1)
+    assert rows[0]["attemptedRollouts"] == 24
+    assert rows[1]["attemptedRollouts"] == 16
+    assert seeds[candidates[0].key()] == [rollout_seed("training", "staged-position", i) for i in range(24)]
+    assert seeds[candidates[1].key()] == [rollout_seed("training", "staged-position", i) for i in range(16)]
+
+
+def test_staged_rollouts_resume_without_repeating_completed_seed_batches():
+    candidates = generate_candidates(observation())[:2]
+    checkpoints = []
+    seen = {candidate.key(): [] for candidate in candidates}
+
+    def rollout(candidate, seed):
+        seen[candidate.key()].append(seed)
+        return {"status": "finished", "score": 1.0 if candidate == candidates[0] else 0.0}
+
+    def interrupt_after_extension_seed(state):
+        checkpoints.append(json.loads(json.dumps(state)))
+        if state["completedExtensionIndices"] == [4]:
+            raise InterruptedError("simulated mid-stage interruption")
+
+    with pytest.raises(InterruptedError):
+        label_candidates(candidates, "staged-resume-position", rollout, initial=4, maximum=24,
+                         extension_batch_size=4, checkpoint=interrupt_after_extension_seed)
+    seen = {candidate.key(): [] for candidate in candidates}
+    resumed = label_candidates(candidates, "staged-resume-position", rollout, initial=4, maximum=24,
+                               extension_batch_size=4, resume_state=checkpoints[-1])
+    clean = label_candidates(candidates, "staged-resume-position",
+                             lambda candidate, _seed: {"status": "finished",
+                                 "score": 1.0 if candidate == candidates[0] else 0.0},
+                             initial=4, maximum=24, extension_batch_size=4)
+    assert resumed == clean
+    assert seen[candidates[0].key()] == [rollout_seed("training", "staged-resume-position", i)
+                                         for i in range(5, 24)]
+    assert seen[candidates[1].key()] == [rollout_seed("training", "staged-resume-position", i)
+                                         for i in range(5, 16)]
 
 
 def test_rollout_errors_are_not_fabricated_scores():

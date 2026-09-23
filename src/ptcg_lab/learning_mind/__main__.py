@@ -53,6 +53,7 @@ def main(argv=None) -> int:
     collect.add_argument("--limit", type=int, default=20)
     collect.add_argument("--initial", type=int, default=16)
     collect.add_argument("--maximum", type=int, default=64)
+    collect.add_argument("--extension-batch-size", type=int, default=8)
     collect.add_argument("--horizon", type=int, default=16)
     collect.add_argument("--rollout-budget-ms", type=int, default=1000,
                          help="per-candidate search time cap; cutoffs are recorded as truncated")
@@ -105,6 +106,7 @@ def main(argv=None) -> int:
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = collect_macro_labels(root=root, dataset_dir=args.dataset.resolve(), output=args.output.resolve(),
                                       identity=identity, limit=args.limit, initial=args.initial, maximum=args.maximum,
+                                      extension_batch_size=args.extension_batch_size,
                                       horizon=args.horizon, rollout_budget_ms=args.rollout_budget_ms,
                                       rollout_workers=args.rollout_workers,
                                       position_hash=args.position_hash)
