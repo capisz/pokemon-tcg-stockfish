@@ -200,6 +200,25 @@ strength or autonomous improvement.
   candidate support and label precision before serious ranker fitting. PPO,
   continuous operation, and promotion remain disabled.
 
+## Adaptive 64-rollout allocation diagnostic (2026-09-23)
+
+- A single 11-candidate Raging Bolt position completed 700/704 rollouts at a
+  15-second per-rollout budget: 700 terminal outcomes, four budget truncations,
+  and zero errors. Each candidate received 62–64 completed outcomes.
+- The top two observed mean results were 0.8125 and 0.6719. A post-hoc
+  per-candidate 95% Hoeffding radius at 64 outcomes is about 0.1699, so these
+  intervals still overlap. High-confidence policy eligibility is deliberately
+  disabled; this is not a policy label or a strategy result.
+- Harness inspection found that the close-candidate set is selected after the
+  initial 16 outcomes and then frozen through the 64-outcome maximum. It is not
+  reevaluated between extension stages, so every initially close candidate
+  receives the full extension even if later outcomes separate it.
+- Exact identities and hashes are recorded in
+  `macro-adaptive64-diagnostic-2026-09-23.json`; rollout outputs remain local
+  and ignored. Next, implement and test staged reevaluation/pruning with
+  resumable checkpoints, then compare cost and top-plan ordering on frozen
+  development positions. Do not scale labeling or enable PPO on this evidence.
+
 ## Bound-action search and planner v2
 
 - Research search now keys choices by action type/card, target, label, source

@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "status": "single-position-allocation-diagnostic-not-training-evidence",
+  "positionHash": "3bc61d1e33451c19e792144c8550400f7a07f313685feb0a3f3a51c63f2666be",
+  "candidateCount": 11,
+  "allocation": {
+    "initialRolloutsPerCandidate": 16,
+    "maximumRolloutsPerCandidate": 64,
+    "rolloutBudgetMs": 15000,
+    "workers": 4,
+    "closeCandidatesAfterInitialStage": 11,
+    "extensionIndicesCompleted": 48,
+    "implementationObservation": "The close-candidate set is computed after the initial stage and frozen in the resumable checkpoint; selected candidates are extended to the maximum without reevaluating or pruning the set between extension stages."
+  },
+  "outcomes": {
+    "attempted": 704,
+    "finished": 700,
+    "truncated": 4,
+    "errors": 0,
+    "finishedPerCandidate": {"minimum": 62, "maximum": 64}
+  },
+  "topCandidates": [
+    {"candidateHash": "2fe12edaae4a1ef44f036d20278312bf59fafd884299d632e185c8ae7465c791", "meanResult": 0.8125, "finished": 64},
+    {"candidateHash": "4312e0a0acc0317adef3666acd451bdb6ae61441ad1a260e9fcf2a4cb2c14466", "meanResult": 0.671875, "finished": 64}
+  ],
+  "confidence": {
+    "highConfidencePolicyLabels": 0,
+    "labelEligibilityIsEnabled": false,
+    "perCandidateHoeffdingRadiusAt64": 0.1699,
+    "topTwoMeanDifference": 0.140625,
+    "interpretation": "A post-hoc per-candidate 95% Hoeffding radius is larger than half the top-two mean difference, so their intervals overlap. The collector's high-confidence eligibility remains deliberately disabled; this run is not a usable policy label or strategy result."
+  },
+  "rolloutIdentity": "5bad48ee8a8cac2f030300a0544c2de4ec59c03477dde3c12d52107a546feab3",
+  "manifestHash": "d36280f4f47850a9206dbe92d9eb12e0d42c35c8032747de85300f4c6b804dd5",
+  "manifestFileSha256": "734ff9d88ea4df53b031d289ecb5b1c75dce5689146d398116b2fa5ba410aa05",
+  "labelFileSha256": "09c0da695f736d05d46daad95749d4e5d64f40d12cf2beb2a97287a1e2a39cc0",
+  "localArtifacts": [
+    "artifacts/learning-mind-v1/fresh-actor-positions-v10-typescript/labels-raging-bolt-budget15s-adaptive64-v1/"
+  ],
+  "nextResearchGate": "Implement staged confidence reevaluation and candidate pruning with checkpoint/resume identity coverage, then compare rollout cost and retained top-plan ordering on frozen development positions before scaling label collection. Keep high-confidence policy eligibility disabled until an independently validated criterion exists."
+}
