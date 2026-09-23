@@ -63,6 +63,26 @@ The following is not complete:
 The authoritative gate record is
 `docs/validation/learning-mind-v1/stage-gates.json`.
 
+### Latest actor-visible coverage boundary (2026-09-23)
+
+The v5-v7 matched coverage report is
+`docs/validation/learning-mind-v1/fresh-position-coverage-v5-v7-2026-09-23.json`.
+The narrow reveal-history fixes increased searchable frames in the sampled
+12-game batch from 266 to 929, while preserving actor-only replay storage and
+identical play. This is not complete representation parity. In particular,
+91 v7 frames still require hidden-marker provenance unavailable to the actor;
+they remain unsupported. The v7 pool has only three source games, one opponent
+family, and candidate support has not been re-audited under its current engine
+identity. Do not use it for ranker fitting or claim independent held-out
+performance.
+
+The next safe gate is to broaden fresh, privacy-audited coverage across source
+games and frozen opponent families, then rerun candidate-support and tracker
+parity checks under the exact v7 engine identity. Keep unsupported positions
+fail-closed. Only after that audit should we decide whether there is enough
+diverse support to collect labels. PPO, 24/7 operation, promotion, and service
+installation remain disabled.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:

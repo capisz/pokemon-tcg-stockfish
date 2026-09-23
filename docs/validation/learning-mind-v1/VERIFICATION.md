@@ -425,3 +425,34 @@ strength or autonomous improvement.
   knowledge-history restrictions still exclude mid/late states; no guard was
   bypassed. No model training, PPO, policy promotion, or service installation
   was started.
+
+## Actor-visible history coverage v5-v7 (2026-09-23)
+
+- Three matched 12-game collections used the same deterministic seeds, policy,
+  schedule, action sequences, and outcomes: 12 finished games per run, zero
+  truncations/errors, and 2,079 decisions. The research-only engine changes
+  affected information transport, not observed play. Full identities and
+  checksums are in
+  `fresh-position-coverage-v5-v7-2026-09-23.json`.
+- Searchable actor decision frames rose from 266 (v5) to 532 (v6) to 929 (v7).
+  The v6 change safely reconstructs Ultra Ball's own-deck reveal as known
+  non-Prize identities without inventing deck order. The v7 change records
+  Crispin's opponent-visible reveal only after its prompts resolve and the
+  final zone is observable. The v7 engine suite passes 80/80; typechecking
+  passes.
+- The v7 privacy audit verified 12 replay hashes and 2,091 actor-only frames;
+  opposite private views and chance records are absent. Its 18-position pool
+  spans opening/midgame/late, but has only three source games (one per split)
+  and one opponent-policy family. Candidate support was not re-audited under
+  the v7 identity and no rollout labels exist. These rows must not be fit as a
+  ranker dataset or treated as independent held-out evidence.
+- The generic revealed-card/known-order rejection is absent for stable v7
+  decisions in this sample. There are 1,059 non-stable awaiting-choice frames
+  and 91 hidden-marker-provenance frames. The latter remain fail-closed because
+  actor observations do not expose the hidden marker source; do not recover it
+  from the opposite view or private replay data.
+- This is sample-specific representation coverage, not complete representation
+  parity, strategic improvement, or playing-strength evidence. No ranker fit,
+  supervised training, PPO, promotion, or service installation occurred.
+  Next gate: add diverse actor-visible source games/policy families, then
+  re-audit v7 candidate support and tracker parity before collecting labels.

@@ -1,0 +1,88 @@
+{
+  "schemaVersion": 1,
+  "experiment": "fresh-current-engine-actor-position-coverage-v5-v7",
+  "status": "development-only-not-policy-evaluation",
+  "policy": "typescript-heuristic",
+  "matchedSchedule": {
+    "gamesPerRun": 12,
+    "gamesPerMatchup": 4,
+    "matchups": ["raging-bolt-vs-crustle", "raging-bolt-vs-dragapult", "raging-bolt-vs-raging-bolt"],
+    "sameSeedsAcrossV5V6V7": true,
+    "sameActionSequencesAndOutcomesAcrossV5V6V7": true,
+    "decisionsPerRun": 2079,
+    "gamesPerRunStatus": {"finished": 12, "truncated": 0, "errors": 0}
+  },
+  "runs": {
+    "v5": {
+      "path": "artifacts/learning-mind-v1/fresh-actor-positions-v5",
+      "runId": "1fc6284f35154852088a9bb1d5cf797d",
+      "manifestHash": "fa3fa2a76690531d1477a2b6bb9a364098f1ce77ed81207ad302ad9cccc97b7a",
+      "manifestFileSha256": "94f1f1823487c939408e3aa091c33b104da6ea393d7f7382771b0cbc7a2fb801",
+      "engineBuildSha256": "1e664f1adf275f50f754733ea4bbaf4638f4ab271d4268f5b9c683cd204e7ac6",
+      "runtimeIdentityHash": "7febf5013136a1e38a58a8caa3fa12907cd5481e895ffc1f381373641948accd",
+      "searchableActorDecisionFrames": 266,
+      "unavailableReasons": {
+        "awaiting-choice": 302,
+        "revealed-or-known-order-history": 1511
+      }
+    },
+    "v6": {
+      "path": "artifacts/learning-mind-v1/fresh-actor-positions-v6",
+      "runId": "230050b54d71cd85c5cff2522eb8ef93",
+      "manifestHash": "2abf813ca962d01775d5718634218788d4120ae4e5c0dc72c3192ad557f12042",
+      "manifestFileSha256": "005b626b4909b53b850d3e0f27e965b965ab184d5d20fbbac90f023cc8387c33",
+      "engineBuildSha256": "4c9e3972cec62ab48793128e5068abc06ab57c3e3c9ab464e7f3b598190b5f84",
+      "runtimeIdentityHash": "837dade869dec7b7cf30c3706487cb6dc64bf0129103175fc49b91c5574d6899",
+      "change": "Ultra Ball own-deck reveal cards are tracked as known non-Prizes without retaining unknown order.",
+      "searchableActorDecisionFrames": 532,
+      "unavailableReasons": {
+        "awaiting-choice": 630,
+        "revealed-or-known-order-history": 888,
+        "hidden-marker-provenance": 29
+      }
+    },
+    "v7": {
+      "path": "artifacts/learning-mind-v1/fresh-actor-positions-v7",
+      "runId": "2a058b628bc801feb4930d61ccd68c03",
+      "manifestHash": "e0fa1815ae59eb2fb258493cd1f745520c0e97adf38727870339d8fb97885fdc",
+      "manifestFileSha256": "d26b267d20e771f20e01d847ab729b73b5fa8f6e7de9823343658709e5e4f712",
+      "engineBuildSha256": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+      "runtimeIdentityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+      "change": "Crispin public reveal is recorded for the opponent and resolved after its prompts, preserving known-hand identity only after its final zone is observable.",
+      "searchableActorDecisionFrames": 929,
+      "unavailableReasons": {
+        "awaiting-choice": 1059,
+        "hidden-marker-provenance": 91
+      }
+    }
+  },
+  "v7PrivacyAudit": {
+    "verifiedReplayHashes": 12,
+    "actorOnlyFrames": 2091,
+    "oppositePrivateViewsRetained": false,
+    "chanceRecordsRetained": false,
+    "replayArtifactBytes": 18219311
+  },
+  "v7PositionPool": {
+    "path": "artifacts/learning-mind-v1/fresh-actor-positions-v7/macro-pool",
+    "rows": 18,
+    "rowsSha256": "783ba16f359d30aa85242f1872fbd7ecdb7341f65655904b5a6eaa75129a895d",
+    "manifestSha256": "faeb6363a15b99357918113799847e3202ce951da96a7609080cb16b39ea56ae",
+    "sourceManifestSha256": "d26b267d20e771f20e01d847ab729b73b5fa8f6e7de9823343658709e5e4f712",
+    "stages": {"opening": 6, "midgame": 6, "late": 6},
+    "rowSplits": {"train": 6, "development": 6, "heldout": 6},
+    "sourceGames": 3,
+    "sourceGamesPerSplit": 1,
+    "opponentPolicyFamilies": ["typescript-heuristic"],
+    "candidateSupportReauditedUnderV7Identity": false,
+    "rolloutLabels": 0
+  },
+  "interpretation": [
+    "The sampled v5-v7 comparison uses identical deterministic seeds, policy, schedule, action sequences, and outcomes. Only research-engine information transport changed.",
+    "Searchable actor decision frames rose from 266 in v5 to 532 in v6 and 929 in v7. This demonstrates sample-specific representation coverage, not strategic improvement or general coverage.",
+    "The generic revealed-card/known-order history restriction is absent from v7 stable decisions. Remaining prompt frames are non-stable decisions; they remain ineligible for search.",
+    "The 91 hidden-marker-provenance cases remain fail-closed. Actor views do not provide the hidden marker source identity needed to safely hydrate them.",
+    "The v7 pool has only three source games and one opponent policy family; its candidate support was not rerun under the v7 identity. Do not fit a ranker or treat these positions as labels.",
+    "No rollout labels, ranker fit, supervised training, PPO, policy promotion, or service installation occurred."
+  ]
+}
