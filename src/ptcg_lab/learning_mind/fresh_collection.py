@@ -24,17 +24,23 @@ DEFAULT_OPPONENTS = ("crustle", "dragapult", "raging-bolt")
 COLLECTOR_VERSION = "fresh-actor-position-collector-v3"
 
 
-def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuristic") -> list[dict]:
+def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuristic",
+                  collection_namespace: str = "main") -> list[dict]:
     if type(games_per_matchup) is not int or not 1 <= games_per_matchup <= 20:
         raise ValueError("games per matchup must be an integer from 1 to 20")
     if policy not in POLICY_NAMES:
         raise ValueError("unsupported frozen collection policy")
+    if (not isinstance(collection_namespace, str) or not collection_namespace
+            or len(collection_namespace) > 32
+            or any(not (char.isascii() and (char.isalnum() or char in "-_")) for char in collection_namespace)):
+        raise ValueError("collection namespace must be a 1-32 character ASCII slug")
     result = []
     used_seeds = set()
     for opponent in DEFAULT_OPPONENTS:
         cell_id = f"raging-bolt-vs-{opponent}"
         for game_index in range(games_per_matchup):
-            token = f"learning-mind-v1-fresh|{COLLECTOR_VERSION}|{policy}|{cell_id}|{game_index}".encode()
+            epoch = "" if collection_namespace == "main" else f"|{collection_namespace}"
+            token = f"learning-mind-v1-fresh|{COLLECTOR_VERSION}|{policy}{epoch}|{cell_id}|{game_index}".encode()
             seed = int.from_bytes(hashlib.sha256(token).digest()[:4], "big")
             while seed in used_seeds:
                 seed = (seed + 1) % 2**32
@@ -42,10 +48,12 @@ def game_schedule(*, games_per_matchup: int = 2, policy: str = "typescript-heuri
             decks = (["raging-bolt", opponent] if game_index % 2 == 0 or opponent == "raging-bolt"
                      else [opponent, "raging-bolt"])
             first_player = game_index % 2 if opponent == "raging-bolt" else (game_index // 2) % 2
+            epoch_label = "" if collection_namespace == "main" else f"-{collection_namespace}"
             result.append({"index": len(result), "cellId": cell_id, "gameIndex": game_index,
                            "seed": seed, "firstPlayer": first_player,
                            "decks": decks, "policy": policy,
-                           "replayId": f"fresh-v1-{policy.removesuffix('-heuristic')}-{opponent}-{game_index}"})
+                           "collectionNamespace": collection_namespace,
+                           "replayId": f"fresh-v1-{policy.removesuffix('-heuristic')}-{opponent}{epoch_label}-{game_index}"})
     return result
 
 
@@ -105,7 +113,8 @@ def _play_python_heuristic(engine: EngineClient, schedule: dict, max_decisions: 
 
 
 def collect_fresh_positions(*, root: Path, output: Path, games_per_matchup: int = 2,
-                            policy: str = "typescript-heuristic", max_decisions: int = 1200) -> dict:
+                            policy: str = "typescript-heuristic", max_decisions: int = 1200,
+                            collection_namespace: str = "main") -> dict:
     if type(max_decisions) is not int or not 1 <= max_decisions <= 5000:
         raise ValueError("max decisions must be an integer from 1 to 5000")
     root, output = root.resolve(), output.resolve()
@@ -114,9 +123,11 @@ def collect_fresh_positions(*, root: Path, output: Path, games_per_matchup: int 
         engine_identity = engine.request("health")
         if engine_identity.get("engineBuildHash") != identity.get("engine_build_hash"):
             raise ValueError("runtime identity and active engine bundle disagree")
-        schedule = game_schedule(games_per_matchup=games_per_matchup, policy=policy)
+        schedule = game_schedule(games_per_matchup=games_per_matchup, policy=policy,
+                                 collection_namespace=collection_namespace)
         settings = {"collectorVersion": COLLECTOR_VERSION, "identity": identity,
                     "engineIdentity": engine_identity, "policy": policy,
+                    "collectionNamespace": collection_namespace,
                     "gamesPerMatchup": games_per_matchup, "maxDecisions": max_decisions,
                     "schedule": schedule, "collectorCodeHash": file_sha256(Path(__file__))}
         run_id = identity_hash(settings)[:32]

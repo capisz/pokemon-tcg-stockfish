@@ -58,6 +58,8 @@ def main(argv=None) -> int:
     fresh.add_argument("--games-per-matchup", type=int, default=2)
     fresh.add_argument("--policy", choices=("typescript-heuristic", "python-heuristic"),
                        default="typescript-heuristic")
+    fresh.add_argument("--collection-namespace", default="main",
+                       help="seed/replay-ID epoch slug; default main preserves the original deterministic schedule")
     fresh.add_argument("--max-decisions", type=int, default=1200)
     rank = sub.add_parser("fit-macro-ranker")
     rank.add_argument("--labels", type=Path, required=True)
@@ -101,7 +103,7 @@ def main(argv=None) -> int:
     elif args.command == "collect-fresh-positions":
         result = collect_fresh_positions(root=args.root, output=args.output,
             games_per_matchup=args.games_per_matchup, policy=args.policy,
-            max_decisions=args.max_decisions)
+            max_decisions=args.max_decisions, collection_namespace=args.collection_namespace)
     elif args.command == "build-macro-position-pool":
         root = args.root.resolve(); identity = runtime_identity(root)
         result = build_macro_position_pool(output=args.output.resolve(),

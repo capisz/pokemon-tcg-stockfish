@@ -690,6 +690,22 @@ and alternates first player in mirror games. Seed derivation includes the
 collector version, so future batches do not repeat the exploratory v1/v2
 namespace. These are position-coverage games, not a performance benchmark.
 
+To collect a later deterministic seed epoch without colliding with the `main`
+schedule, supply a stable ASCII slug and use a new immutable output directory:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-fresh-positions \
+  --root . \
+  --output artifacts/learning-mind-v1/fresh-actor-positions-epoch-b-python \
+  --games-per-matchup 4 \
+  --policy python-heuristic \
+  --collection-namespace coverage-2026-09b
+```
+
+The namespace is part of the seed, replay IDs, schedule, and run identity.
+Omitting it or using `main` preserves the original deterministic schedule; do
+not reuse an epoch slug for a different experiment.
+
 The first exploratory six-game capture is frozen at
 `artifacts/learning-mind-v1/fresh-actor-positions-v1-2026-09-22`. It used six
 finished TypeScript-heuristic games (two each against Crustle, Dragapult, and

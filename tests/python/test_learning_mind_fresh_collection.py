@@ -30,6 +30,22 @@ def test_fresh_seed_namespace_changes_with_collector_version(monkeypatch):
     assert {row["seed"] for row in current}.isdisjoint({row["seed"] for row in next_version})
 
 
+def test_collection_epoch_is_deterministic_collision_free_and_legacy_default_stable():
+    legacy = game_schedule(games_per_matchup=4)
+    assert legacy == game_schedule(games_per_matchup=4, collection_namespace="main")
+    later = game_schedule(games_per_matchup=4, collection_namespace="coverage-2026-09b")
+    assert later == game_schedule(games_per_matchup=4, collection_namespace="coverage-2026-09b")
+    assert {row["seed"] for row in legacy}.isdisjoint({row["seed"] for row in later})
+    assert {row["replayId"] for row in legacy}.isdisjoint({row["replayId"] for row in later})
+    assert all(row["collectionNamespace"] == "coverage-2026-09b" for row in later)
+
+
+@pytest.mark.parametrize("namespace", ["", "has spaces", "x/../../tmp", "x" * 33, "époque"])
+def test_collection_epoch_requires_safe_ascii_slug(namespace):
+    with pytest.raises(ValueError, match="collection namespace"):
+        game_schedule(games_per_matchup=1, collection_namespace=namespace)
+
+
 @pytest.mark.parametrize("policy", ["typescript-heuristic", "python-heuristic"])
 def test_schedule_freezes_policy_and_game_boundary(policy):
     games = game_schedule(games_per_matchup=2, policy=policy)
