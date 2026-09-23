@@ -316,6 +316,7 @@ def label_candidates(candidates: list[MacroCandidateV1], position_hash: str,
                 standard_error = None
             paired[key] = {"leaderCandidateHash": leader_key, "commonFinishedRollouts": len(common),
                            "meanScoreDifference": mean_delta, "standardError": standard_error,
+                           "sampleStatus": "insufficient" if len(common) < 20 else "descriptive",
                            "interpretation": "descriptive-selected-leader-comparison-not-confidence-bound"}
     output = []
     attempted = {key: record["finished"] + record["truncated"] + record["error"]

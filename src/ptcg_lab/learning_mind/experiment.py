@@ -133,7 +133,7 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
                 "candidateGeneratorIdentity": generator_identity,
                 "rolloutSeedVersion": "configuration-bound-v1",
                 "adaptiveAllocationVersion": "staged-monotone-simultaneous-hoeffding-v3",
-                "labelCollectorVersion": "macro-rollout-labeler-v5",
+                "labelCollectorVersion": "macro-rollout-labeler-v6",
                 "labelCollectorSha256": file_sha256(Path(__file__))}
     rollout_identity = identity_hash(settings)
     settings["rolloutIdentity"] = rollout_identity

@@ -145,6 +145,7 @@ def test_common_seed_pairs_report_descriptive_paired_variability():
     assert paired["commonFinishedRollouts"] == 8
     assert paired["meanScoreDifference"] == 0
     assert paired["standardError"] == 0
+    assert paired["sampleStatus"] == "insufficient"
     assert paired["interpretation"] == "descriptive-selected-leader-comparison-not-confidence-bound"
 
 
