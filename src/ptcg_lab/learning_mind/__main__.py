@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .audit import audit_manifest
+from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import build_dataset, build_macro_position_pool
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
@@ -38,6 +39,13 @@ def main(argv=None) -> int:
     pool.add_argument("--source-dataset-manifest", type=Path, required=True)
     pool.add_argument("--target-deck", default="raging-bolt")
     pool.add_argument("--limit", type=int, default=18)
+    support = sub.add_parser("audit-macro-candidate-support",
+                             help="audit actor-visible candidate support without rollouts or labels")
+    support.add_argument("--root", type=Path, required=True)
+    support.add_argument("--dataset", type=Path, required=True)
+    support.add_argument("--output", type=Path, required=True)
+    support.add_argument("--workers", type=int, default=1)
+    support.add_argument("--limit", type=int)
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
     collect.add_argument("--dataset", type=Path, required=True)
@@ -110,6 +118,10 @@ def main(argv=None) -> int:
             experimental_root=args.experimental_root.resolve(),
             source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity,
             target_deck=args.target_deck, limit=args.limit)
+    elif args.command == "audit-macro-candidate-support":
+        root = args.root.resolve(); identity = runtime_identity(root).record()
+        result = audit_macro_candidate_support(root=root, dataset_dir=args.dataset.resolve(),
+            output=args.output.resolve(), identity=identity, workers=args.workers, limit=args.limit)
     elif args.command == "fit-macro-ranker":
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)

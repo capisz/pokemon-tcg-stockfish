@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import subprocess
+from collections import Counter
 from contextlib import contextmanager
 from threading import Lock
 from time import sleep
@@ -9,12 +10,13 @@ from time import sleep
 import pytest
 
 from ptcg_lab.learning_mind import experiment
-from ptcg_lab.learning_mind.dataset_v1 import (build_macro_position_pool, file_sha256,
+from ptcg_lab.learning_mind import candidate_support
+from ptcg_lab.learning_mind.dataset_v1 import (_assign_source_game_splits, build_macro_position_pool, file_sha256,
                                                load_dataset, training_records)
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCandidateV1,
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
-from ptcg_lab.learning_mind.schema import IdentityManifest
+from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
 from test_learning_mind_representation import observation
@@ -321,6 +323,8 @@ def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
     assert {row["split"] for row in rows} == {"train", "development", "heldout"}
     assert {row["positionStage"] for row in rows} == {"opening", "midgame", "late"}
     assert manifest["positionStageCounts"] == {"late": 3, "midgame": 3, "opening": 3}
+    assert manifest["poolBuilderVersion"] == "game-balanced-selection-v2"
+    assert manifest["splitQuotasBySourceGame"] == {"development": 1, "heldout": 1, "train": 1}
     splits_by_game = {}
     for row in rows:
         splits_by_game.setdefault(row["sourceGameId"], set()).add(row["split"])
@@ -328,3 +332,91 @@ def test_macro_position_pool_is_unlabeled_actor_visible_and_balanced(tmp_path):
     assert len({row["positionHash"] for row in rows}) == len(rows)
     assert all(row["policyLabelSource"] is None and row["observation"]["playerId"] == row["actor"]
                for row in rows)
+
+
+def test_source_game_split_balances_rows_and_stratifies_by_matchup():
+    counts = {
+        "crustle": (24, 14, 12),
+        "dragapult": (23, 15, 11),
+        "raging-bolt": (26, 13, 10),
+    }
+    games = {}
+    for matchup, sizes in counts.items():
+        for index, size in enumerate(sizes):
+            games[f"{matchup}-{index}"] = [{
+                "opponentArchetype": matchup,
+                "opponentPolicyFamily": "frozen-family",
+            } for _ in range(size)]
+    first = _assign_source_game_splits(games)
+    assert first == _assign_source_game_splits(games)
+    assert Counter(first.values()) == {"train": 5, "development": 2, "heldout": 2}
+    rows_by_split = Counter()
+    contexts_by_split = {name: set() for name in ("train", "development", "heldout")}
+    for game_id, split in first.items():
+        rows_by_split[split] += len(games[game_id])
+        contexts_by_split[split].add(games[game_id][0]["opponentArchetype"])
+    assert min(rows_by_split.values()) >= 30
+    assert max(rows_by_split.values()) / min(rows_by_split.values()) <= 2.7
+    assert all(contexts_by_split[split] for split in contexts_by_split)
+
+
+def test_source_game_split_large_collection_uses_bounded_deterministic_search():
+    games = {
+        f"game-{index:02d}": [{
+            "opponentArchetype": ("crustle", "dragapult", "raging-bolt")[index % 3],
+            "opponentPolicyFamily": "family-a" if index % 2 else "family-b",
+        } for _ in range(1 + (index * 7) % 19)]
+        for index in range(24)
+    }
+    first = _assign_source_game_splits(games)
+    assert first == _assign_source_game_splits(games)
+    assert Counter(first.values()) == {"train": 16, "development": 4, "heldout": 4}
+
+
+def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path, monkeypatch):
+    dataset, identity = frozen_dataset(tmp_path)
+    output = tmp_path / "support-audit"
+    monkeypatch.setattr(candidate_support, "transition_generator_identity",
+                        lambda _root: {"version": "fixture-v1"})
+    monkeypatch.setattr(candidate_support, "generate_transition_candidates",
+        lambda *_args: ([MacroCandidateV1(turn_intent="no-attack", action_ids=("pass",),
+                                          action_sequence=({"id": "pass", "type": "pass"},))],
+                        {"hypothesisId": "public-fixture"}))
+    report = candidate_support.audit_macro_candidate_support(
+        root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
+    assert report["status"] == "no-rollouts-no-labels"
+    assert report["statusCounts"] == {"supported": 1}
+    assert report["completeCandidates"] == 1
+    assert report["positions"][0]["hypothesisId"] == "public-fixture"
+    assert json.loads((output / "report.json").read_text())["reportHash"] == report["reportHash"]
+    with pytest.raises(ValueError, match="immutable"):
+        candidate_support.audit_macro_candidate_support(
+            root=tmp_path, dataset_dir=dataset, output=output, identity=identity)
+
+
+def test_candidate_support_audit_fails_closed_on_unsupported_and_identity_drift(tmp_path, monkeypatch):
+    dataset, identity = frozen_dataset(tmp_path)
+    monkeypatch.setattr(candidate_support, "transition_generator_identity", lambda _root: {})
+    def unsupported(*_args):
+        from ptcg_lab.learning_mind.schema import UnsupportedPosition
+        raise UnsupportedPosition("candidate cap")
+    monkeypatch.setattr(candidate_support, "generate_transition_candidates", unsupported)
+    report = candidate_support.audit_macro_candidate_support(
+        root=tmp_path, dataset_dir=dataset, output=tmp_path / "unsupported",
+        identity=identity)
+    assert report["statusCounts"] == {"unsupported": 1}
+    drift_root = tmp_path / "drift"
+    drift_root.mkdir()
+    dataset, identity = frozen_dataset(drift_root)
+    row_path = dataset / "rows.jsonl"
+    row = json.loads(row_path.read_text()); row["featureIdentityHash"] = "drift"
+    row_path.write_text(json.dumps(row) + "\n")
+    import hashlib
+    manifest_path = dataset / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["rowsSha256"] = hashlib.sha256(row_path.read_bytes()).hexdigest()
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(IdentityError, match="feature identity drift"):
+        candidate_support.audit_macro_candidate_support(
+            root=tmp_path, dataset_dir=dataset, output=tmp_path / "drift-audit",
+            identity=identity)

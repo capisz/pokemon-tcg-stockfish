@@ -122,6 +122,15 @@ candidate support has not been rerun for these exact pools. Keep labels and
 fitting disabled. See
 `docs/validation/learning-mind-v1/fresh-position-coverage-v9-2026-09-23.json`.
 
+The v2 game-level allocator is now implemented and tested. For pools with at
+least eight source games, it assigns at least two games to development and two
+to held-out while optimizing row balance and matchup representation; smaller
+collections retain the one-game-per-evaluation-split minimum. Every source
+game remains wholly within one split. The rebuilt epoch-B pools now split as
+TypeScript 68/39/37 rows across 5/2/2 games and Python 91/29/24 rows across
+6/2/2 games (train/development/held-out). This is more useful but still too
+small for robust policy-family generalization.
+
 ## 3. Prepare an isolated environment
 
 Open Terminal and enter the isolated worktree:
@@ -364,6 +373,25 @@ Start with a small smoke set covering:
 Do not scale collection until candidates reproduce their declared action plan
 or emit a typed `MacroExecutionFailure` on every smoke fixture, and the frozen
 pool's unsupported-position rate is measured and accepted.
+
+Use the support-only audit before rollout collection. It re-encodes every row
+against the frozen feature identity and runs only candidate generation; it
+does not invoke search, rollouts, or labels. Outputs are immutable, so select a
+new directory for each audit:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind \
+  audit-macro-candidate-support \
+  --root . \
+  --dataset artifacts/learning-mind-v1/fresh-actor-positions-v9-python/macro-pool-game-balanced-v2 \
+  --output artifacts/learning-mind-v1/fresh-actor-positions-v9-python/support-audit-v2 \
+  --workers 4
+```
+
+The report freezes dataset row/manifest hashes, engine/features, planner bundle,
+per-position support/failure reasons, and counts by matchup, policy family,
+stage, and split. Unsupported positions remain unsupported; never truncate the
+candidate list to force support.
 
 ## 7. Fit and evaluate the XGBoost macro ranker
 

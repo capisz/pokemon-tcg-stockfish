@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import itertools
 import json
 import os
 from collections import Counter, defaultdict
@@ -37,6 +38,100 @@ def file_sha256(path: Path) -> str:
 def stable_split(family: str) -> str:
     bucket = int(hashlib.sha256(f"learning-mind-v1|{family}".encode()).hexdigest()[:8], 16) % 10
     return "heldout" if bucket == 0 else "development" if bucket == 1 else "train"
+
+
+def _source_game_split_quotas(game_count: int) -> dict[str, int]:
+    if game_count < 3:
+        return {"train": 0, "development": game_count, "heldout": 0}
+    if game_count < 8:
+        return {"train": game_count - 2, "development": 1, "heldout": 1}
+    development = max(2, int(game_count * 0.15 + 0.5))
+    heldout = max(2, int(game_count * 0.15 + 0.5))
+    while game_count - development - heldout < 3:
+        if development >= heldout and development > 2:
+            development -= 1
+        elif heldout > 2:
+            heldout -= 1
+        else:
+            break
+    return {"train": game_count - development - heldout,
+            "development": development, "heldout": heldout}
+
+
+def _assign_source_game_splits(game_rows: dict[str, list[dict]]) -> dict[str, str]:
+    """Assign whole games to row-balanced splits, stratified by matchup/policy."""
+    game_ids = sorted(game_rows, key=lambda game_id: hashlib.sha256(
+        f"learning-mind-v1|macro-pool-split-v2|{game_id}".encode()).hexdigest())
+    quotas = _source_game_split_quotas(len(game_ids))
+    if len(game_ids) < 3:
+        return {game_id: "development" for game_id in game_ids}
+    contexts = {game_id: (game_rows[game_id][0]["opponentArchetype"],
+                          game_rows[game_id][0]["opponentPolicyFamily"])
+                for game_id in game_ids}
+    total_rows = sum(len(rows) for rows in game_rows.values())
+    fractions = {name: count / len(game_ids) for name, count in quotas.items()}
+    total_by_context = Counter(contexts.values())
+
+    def score(assignment: dict[str, str]) -> tuple[float, tuple[str, ...]]:
+        row_counts = Counter()
+        context_counts: dict[tuple[str, str], Counter] = defaultdict(Counter)
+        game_counts = Counter(assignment.values())
+        for game_id, split in assignment.items():
+            row_counts[split] += len(game_rows[game_id])
+            context_counts[contexts[game_id]][split] += 1
+        row_loss = sum(((row_counts[name] / total_rows - fractions[name]) ** 2)
+                       / max(fractions[name], 1e-9) for name in quotas if fractions[name])
+        game_loss = sum(((game_counts[name] - quotas[name]) / max(quotas[name], 1)) ** 2
+                        for name in quotas)
+        context_loss = 0.0
+        for context, context_total in total_by_context.items():
+            for name in quotas:
+                expected = context_total * fractions[name]
+                actual = context_counts[context][name]
+                context_loss += ((actual - expected) ** 2) / max(expected, 1.0)
+        signature = tuple(assignment[game_id] for game_id in game_ids)
+        return row_loss + 0.05 * game_loss + 0.10 * context_loss, signature
+
+    best: tuple[float, tuple[str, ...]] | None = None
+    best_assignment: dict[str, str] | None = None
+    if len(game_ids) <= 18:
+        for development_ids in itertools.combinations(game_ids, quotas["development"]):
+            remaining = [game_id for game_id in game_ids if game_id not in development_ids]
+            for heldout_ids in itertools.combinations(remaining, quotas["heldout"]):
+                dev, held = set(development_ids), set(heldout_ids)
+                assignment = {game_id: ("development" if game_id in dev else
+                                         "heldout" if game_id in held else "train")
+                              for game_id in game_ids}
+                candidate = score(assignment)
+                if best is None or candidate < best:
+                    best, best_assignment = candidate, assignment
+    else:
+        # Stable, bounded local search for larger collections; every swap keeps
+        # the exact game-count quotas and the source games remain disjoint.
+        labels = [name for name in ("train", "development", "heldout")
+                  for _ in range(quotas[name])]
+        assignment = dict(zip(game_ids, labels))
+        current = score(assignment)
+        improved = True
+        while improved:
+            improved = False
+            next_assignment = assignment
+            next_score = current
+            for left_index, left in enumerate(game_ids):
+                for right in game_ids[left_index + 1:]:
+                    if assignment[left] == assignment[right]:
+                        continue
+                    swapped = dict(assignment)
+                    swapped[left], swapped[right] = swapped[right], swapped[left]
+                    candidate = score(swapped)
+                    if candidate < next_score:
+                        next_assignment, next_score = swapped, candidate
+            if next_score < current:
+                assignment, current = next_assignment, next_score
+                improved = True
+        best_assignment = assignment
+    assert best_assignment is not None
+    return best_assignment
 
 
 def _map_acceptable(encoded, action_ids: set[str]) -> list[int]:
@@ -276,17 +371,7 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
     game_rows = defaultdict(list)
     for row in selected:
         game_rows[row["sourceGameId"]].append(row)
-    ordered_games = sorted(game_rows, key=lambda game_id: (
-        game_rows[game_id][0]["opponentArchetype"], game_rows[game_id][0]["opponentPolicyFamily"], game_id))
-    game_splits = {}
-    if len(ordered_games) < 3:
-        game_splits = {game_id: "development" for game_id in ordered_games}
-    else:
-        development_index = max(1, int(len(ordered_games) * .6))
-        heldout_index = max(development_index + 1, int(len(ordered_games) * .8))
-        for index, game_id in enumerate(ordered_games):
-            game_splits[game_id] = ("development" if index == development_index else
-                                    "heldout" if index == heldout_index else "train")
+    game_splits = _assign_source_game_splits(game_rows)
     for row in selected:
         row["split"] = game_splits[row["sourceGameId"]]
     output.mkdir(parents=True)
@@ -303,7 +388,9 @@ def build_macro_position_pool(*, output: Path, experimental_root: Path,
                 "positionStages": sorted({row["positionStage"] for row in selected}),
                 "positionStageCounts": dict(sorted(Counter(row["positionStage"] for row in selected).items())),
                 "sourceGameSplitCounts": dict(sorted(Counter(game_splits.values()).items())),
-                "selection": "deterministic round-robin by opponent archetype, policy family, and position stage; disjoint source-game splits"}
+                "poolBuilderVersion": "game-balanced-selection-v2",
+                "selection": "deterministic round-robin by matchup/policy/stage; stable row-balanced source-game assignments with matchup stratification and disjoint splits",
+                "splitQuotasBySourceGame": dict(sorted(Counter(game_splits.values()).items()))}
     manifest["manifestHash"] = identity_hash(manifest)
     _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")
     return manifest
