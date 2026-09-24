@@ -519,6 +519,10 @@ def test_candidate_support_audit_is_identity_bound_and_runs_no_rollouts(tmp_path
     assert report["completeCandidates"] == 1
     assert report["positions"][0]["hypothesisId"] == "public-fixture"
     assert json.loads((output / "report.json").read_text())["reportHash"] == report["reportHash"]
+    empty_hashes = candidate_support.audit_macro_candidate_support(
+        root=tmp_path, dataset_dir=dataset, output=tmp_path / "empty-hash-support-audit",
+        identity=identity, position_hashes=[])
+    assert empty_hashes["sampleSelection"] == "all-rows"
     with pytest.raises(ValueError, match="immutable"):
         candidate_support.audit_macro_candidate_support(
             root=tmp_path, dataset_dir=dataset, output=output, identity=identity)

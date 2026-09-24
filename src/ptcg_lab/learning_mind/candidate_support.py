@@ -20,6 +20,8 @@ def audit_macro_candidate_support(*, root: Path, dataset_dir: Path, output: Path
                                   split: str | None = None,
                                   position_hashes: list[str] | None = None) -> dict:
     """Audit executable candidate support only; never runs rollout search."""
+    if position_hashes == []:
+        position_hashes = None
     if not isinstance(workers, int) or isinstance(workers, bool) or not 1 <= workers <= 8:
         raise ValueError("support audit workers must be an integer from 1 to 8")
     if limit is not None and (not isinstance(limit, int) or isinstance(limit, bool) or limit < 1):
