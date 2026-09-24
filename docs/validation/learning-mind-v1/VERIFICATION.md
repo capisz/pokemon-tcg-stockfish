@@ -830,3 +830,17 @@ strength or autonomous improvement.
 - This is a precollection design gate only. Collect labels next; do not fit or
   promote a ranker from the ten pilot positions, and keep PPO, continuous
   operation, and trusted promotion disabled.
+
+### Cross-family macro-label aggregation
+
+- Added `combine-macro-label-runs` for the separate per-family collectors. It
+  verifies each manifest self-hash, frozen experiment identity, record hashes,
+  per-record dataset and rollout identities, filenames, and single-family
+  provenance before atomically publishing a combined ranker input. It rejects
+  duplicate positions and requires both approved policy families.
+- Aggregation tests cover successful train/development merging, corrupt record
+  rejection without publishing partial output, and frozen-identity rejection.
+  Combined with the selection/orchestration tests, 25 tests passed.
+- The combiner has not yet been run on experiment outputs; the expanded
+  Python-family label collector is active. PPO and all promotion gates remain
+  disabled.

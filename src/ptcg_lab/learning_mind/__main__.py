@@ -5,6 +5,7 @@ import json
 from pathlib import Path
 
 from .audit import audit_manifest
+from .aggregation import combine_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import build_dataset, build_macro_position_pool
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
@@ -61,6 +62,11 @@ def main(argv=None) -> int:
     selection.add_argument("--output", type=Path, required=True)
     selection.add_argument("--pinned-train-hash", action="append", default=[], metavar="FAMILY:HASH",
                            help="retain a prior train label position without recollecting it")
+    combine = sub.add_parser("combine-macro-label-runs",
+                             help="verify and combine separate frozen macro-label runs for ranker evaluation")
+    combine.add_argument("--input-dir", type=Path, action="append", required=True,
+                         help="frozen run directory; repeat once per policy-family run")
+    combine.add_argument("--output", type=Path, required=True)
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
     collect.add_argument("--dataset", type=Path, required=True)
@@ -155,6 +161,9 @@ def main(argv=None) -> int:
             datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
             support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
             output=args.output, identity=identity, pinned_train_hashes=pinned)
+    elif args.command == "combine-macro-label-runs":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity)
     elif args.command == "fit-macro-ranker":
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
