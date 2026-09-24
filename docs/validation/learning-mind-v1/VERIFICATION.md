@@ -785,3 +785,23 @@ strength or autonomous improvement.
   `macro-support-stratified-screen-v11-2026-09-23.json`; raw replays, pools,
   and detailed support reports remain ignored local artifacts. PPO,
   continuous operation, and trusted promotion remain disabled.
+### TypeScript-family macro-rollout label pilot (2026-09-23)
+
+- Completed five train-only positions from five distinct TypeScript-heuristic
+  source games, one position per target deck, using rollout identity
+  `86d7bf7ac54bebe7f844a57d923b4134df642b1ebdbd785db1b9036031b1785f`.
+- The immutable local manifest is
+  `artifacts/learning-mind-v1/macro-labels-v16-generalist-train-five-targets/typescript/manifest.json`
+  (manifest hash `bc87dc9d580c57a8218990fd7a7d7bf5b220c85ca0bcbcaecfba88520e718f9b`).
+  All five record hashes verified against that manifest.
+- The 31 candidates received 1,984 rollout attempts: 1,980 finished, four
+  horizon cutoffs, zero engine errors. The cutoffs are censored, not draws.
+  No record is eligible as a high-confidence policy label.
+- Compact provenance, per-position outcomes, record hashes, and limitations
+  are in `macro-labels-v16-typescript-five-train-2026-09-23.json`; raw records
+  remain ignored local artifacts.
+- Combined with the five-position Python-family pilot, the evidence now covers
+  10 source games, 152 candidates, 9,711 finished outcomes, 17 truncations,
+  zero engine errors, and zero high-confidence policy labels. This remains
+  insufficient for ranker fitting, supervised policy promotion, or strength
+  claims. PPO, continuous operation, and trusted promotion remain disabled.

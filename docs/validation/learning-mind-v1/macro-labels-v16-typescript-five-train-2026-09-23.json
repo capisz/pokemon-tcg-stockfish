@@ -1,0 +1,120 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-09-23",
+  "status": "completed-training-only-rollout-label-pilot-not-ranker-evidence",
+  "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8",
+  "datasetManifestHash": "cc289ac58539b5c48827f96d88dfdaf6cbc70842a8fc02b282fb08d9490d7e04",
+  "rolloutIdentity": "86d7bf7ac54bebe7f844a57d923b4134df642b1ebdbd785db1b9036031b1785f",
+  "manifestHash": "bc87dc9d580c57a8218990fd7a7d7bf5b220c85ca0bcbcaecfba88520e718f9b",
+  "manifestSha256": "3a191238a384fc3fc5820134a549d11b3c9ad0c0f2fbf1b817340fa6ec9549a2",
+  "localManifest": "artifacts/learning-mind-v1/macro-labels-v16-generalist-train-five-targets/typescript/manifest.json",
+  "localManifestBytes": 3664,
+  "configuration": {
+    "split": "train",
+    "positions": 5,
+    "initialRolloutsPerCandidate": 16,
+    "maximumRolloutsPerCandidate": 64,
+    "horizon": 500,
+    "perCandidateBudgetMs": 60000,
+    "workers": 4,
+    "candidateGenerator": "transition-aware-public-determinization-v5-cjs-runtime",
+    "allocation": "staged-monotone-simultaneous-hoeffding-v3"
+  },
+  "positions": [
+    {
+      "positionHash": "cfa36b5ca8a9eb355c5ffd085f48e994d0245b0dae44a58ee9ae0fa7f05e2c00",
+      "targetDeck": "crustle",
+      "sourceGameId": "fresh-v2-typescript-crustle-vs-grimmsnarl-coverage-2026-09d-0",
+      "opponentArchetype": "grimmsnarl",
+      "candidateCount": 6,
+      "attempted": 384,
+      "finished": 384,
+      "truncated": 0,
+      "errors": 0,
+      "recordPath": "cfa36b5ca8a9eb355c5ffd085f48e994d0245b0dae44a58ee9ae0fa7f05e2c00.json",
+      "recordBytes": 46142,
+      "recordSha256": "1b1b97219a1f172dfe41e953663e9797305c54cb877a729c7f829f8e449daea0"
+    },
+    {
+      "positionHash": "7dcafd8765624a0b733f80fe116287b96d99ab4d7b61955cc3c83f4f50566398",
+      "targetDeck": "dragapult",
+      "sourceGameId": "fresh-v2-typescript-dragapult-vs-raging-bolt-coverage-2026-09d-2",
+      "opponentArchetype": "raging-bolt",
+      "candidateCount": 6,
+      "attempted": 384,
+      "finished": 380,
+      "truncated": 4,
+      "errors": 0,
+      "recordPath": "7dcafd8765624a0b733f80fe116287b96d99ab4d7b61955cc3c83f4f50566398.json",
+      "recordBytes": 281150,
+      "recordSha256": "da55419047fe2e0652ba18d91e27f7fbca62718dd4e736f4b05af6f6b6590284"
+    },
+    {
+      "positionHash": "0504f8cf873aac798c1102e1ffb8026b0a4753788649567ad1c619460f4339e8",
+      "targetDeck": "grimmsnarl",
+      "sourceGameId": "fresh-v2-typescript-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+      "opponentArchetype": "crustle",
+      "candidateCount": 9,
+      "attempted": 576,
+      "finished": 576,
+      "truncated": 0,
+      "errors": 0,
+      "recordPath": "0504f8cf873aac798c1102e1ffb8026b0a4753788649567ad1c619460f4339e8.json",
+      "recordBytes": 168850,
+      "recordSha256": "0c8166726b704748bc2b0480d207cd841557a15241e90e58dbdbf5cea36aa7fd"
+    },
+    {
+      "positionHash": "26edccc3665e0cc2dcd2293146c0718898b53618363a1e2d057170dfdb6e97f5",
+      "targetDeck": "mega-lucario",
+      "sourceGameId": "fresh-v2-typescript-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+      "opponentArchetype": "dragapult",
+      "candidateCount": 5,
+      "attempted": 320,
+      "finished": 320,
+      "truncated": 0,
+      "errors": 0,
+      "recordPath": "26edccc3665e0cc2dcd2293146c0718898b53618363a1e2d057170dfdb6e97f5.json",
+      "recordBytes": 45273,
+      "recordSha256": "e566b615837cc2b982d39dbc95718711bbf6b5860aa4e93ee9bddde8266865f7"
+    },
+    {
+      "positionHash": "879ebe644b6bc9d677bb265016aa99f412e059c1f1c83d17f3c8e0e897f26946",
+      "targetDeck": "raging-bolt",
+      "sourceGameId": "fresh-v2-typescript-raging-bolt-vs-mega-lucario-coverage-2026-09d-1",
+      "opponentArchetype": "mega-lucario",
+      "candidateCount": 5,
+      "attempted": 320,
+      "finished": 320,
+      "truncated": 0,
+      "errors": 0,
+      "recordPath": "879ebe644b6bc9d677bb265016aa99f412e059c1f1c83d17f3c8e0e897f26946.json",
+      "recordBytes": 305523,
+      "recordSha256": "25d554403c040de22abaf2059101bc35ede14d2ed7d8e2af930c1ab800b9dc90"
+    }
+  ],
+  "totals": {
+    "candidatePlans": 31,
+    "attempted": 1984,
+    "finished": 1980,
+    "truncated": 4,
+    "engineErrors": 0,
+    "highConfidencePolicyLabels": 0
+  },
+  "coverageLimitations": [
+    "All five positions are from the TypeScript heuristic policy family; the batch does not compare label coverage across policy families.",
+    "There is one source game per target archetype and only five independent positions; this is insufficient for generalization or ranker acceptance.",
+    "No development or held-out positions were labeled, so independent ranker evaluation is unavailable.",
+    "The Dragapult position recorded four search-rollout-horizon-cutoff truncations across candidate seeds; truncations were excluded from expected-result denominators and were not treated as draws."
+  ],
+  "interpretation": "Collection, adaptive allocation, and hash integrity evidence only. Expected rollout outcomes are candidate-ranking targets, not evidence of policy improvement or playing strength.",
+  "gates": {
+    "rankerFit": false,
+    "supervisedPolicyTraining": false,
+    "heldOutLabelWin": false,
+    "targetProbeWin": false,
+    "ppoEnabled": false,
+    "continuousOperationEnabled": false,
+    "trustedPromotion": false
+  },
+  "rawArtifactsRemainIgnoredLocalData": true
+}
