@@ -11,6 +11,7 @@ from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
+from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 
 
@@ -51,6 +52,15 @@ def main(argv=None) -> int:
                          help="restrict the audit to one frozen game-disjoint split")
     support.add_argument("--position-hash", action="append", default=[], metavar="HASH",
                          help="audit an exact position from the frozen dataset; may be repeated")
+    selection = sub.add_parser("freeze-macro-label-selection",
+                               help="freeze supported train/development positions by source game")
+    selection.add_argument("--python-dataset", type=Path, required=True)
+    selection.add_argument("--typescript-dataset", type=Path, required=True)
+    selection.add_argument("--python-support", type=Path, required=True)
+    selection.add_argument("--typescript-support", type=Path, required=True)
+    selection.add_argument("--output", type=Path, required=True)
+    selection.add_argument("--pinned-train-hash", action="append", default=[], metavar="FAMILY:HASH",
+                           help="retain a prior train label position without recollecting it")
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
     collect.add_argument("--dataset", type=Path, required=True)
@@ -133,6 +143,18 @@ def main(argv=None) -> int:
         result = audit_macro_candidate_support(root=root, dataset_dir=args.dataset.resolve(),
             output=args.output.resolve(), identity=identity, workers=args.workers,
             limit=args.limit, split=args.split, position_hashes=args.position_hash)
+    elif args.command == "freeze-macro-label-selection":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        pinned = {"python-heuristic": [], "typescript-heuristic": []}
+        for value in args.pinned_train_hash:
+            family, separator, position_hash = value.partition(":")
+            if not separator or family not in pinned or not position_hash:
+                parser.error("--pinned-train-hash must be FAMILY:HASH for python-heuristic or typescript-heuristic")
+            pinned[family].append(position_hash)
+        result = freeze_macro_label_selection(
+            datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
+            output=args.output, identity=identity, pinned_train_hashes=pinned)
     elif args.command == "fit-macro-ranker":
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)

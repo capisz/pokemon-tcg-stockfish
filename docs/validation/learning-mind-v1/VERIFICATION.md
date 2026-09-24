@@ -805,3 +805,28 @@ strength or autonomous improvement.
   zero engine errors, and zero high-confidence policy labels. This remains
   insufficient for ranker fitting, supervised policy promotion, or strength
   claims. PPO, continuous operation, and trusted promotion remain disabled.
+
+### Game-balanced macro-label selection (2026-09-23)
+
+- Added `freeze-macro-label-selection`, which verifies both v13 pool/support
+  identities and hashes, selects supported rows only, pins existing train
+  labels, and chooses one row per source game using deterministic greedy
+  balance across target deck, opponent archetype, and stage. Heldout is not a
+  selectable split.
+- Frozen selection is in
+  `macro-label-selection-v17-generalist-balanced-2026-09-23.json` (selection
+  hash `c1fcb21d10ad38a799490fce3714fe18f72f0dc7e08dadf4431ca6ad1551ae4d`).
+  It includes 40 Python-family train games and 39 TypeScript-family train
+  games, plus nine development games per family. All five decks, three stages,
+  and five opponent archetypes are represented in each family/split.
+- The training selections contain 2,022 complete candidate plans and the
+  development selections 560. Ten existing pilot positions are pinned to
+  avoid replacing them in the selection, but will be regenerated under the
+  complete frozen run identity. No heldout positions were selected.
+- Selection regression tests: 22 orchestration tests passed. The report's
+  selection hash was recomputed and verified; both underlying source-pool
+  manifest/support hashes were validated by the CLI. No rollouts were run by
+  the selection command.
+- This is a precollection design gate only. Collect labels next; do not fit or
+  promote a ranker from the ten pilot positions, and keep PPO, continuous
+  operation, and trusted promotion disabled.

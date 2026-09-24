@@ -19,6 +19,7 @@ from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCand
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest
 from ptcg_lab.learning_mind.sampling import select_stratified_rows
+from ptcg_lab.learning_mind.selection import select_supported_source_game_positions
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
 from test_learning_mind_representation import observation
@@ -34,6 +35,32 @@ def install_fake_engine_pool(monkeypatch, engine_type):
             yield self.engine
 
     monkeypatch.setattr(experiment, "EnginePool", FakePool)
+
+
+def test_supported_source_game_selection_is_disjoint_balanced_and_deterministic():
+    rows = [
+        {"positionHash": "a", "sourceGameId": "g1", "split": "train", "targetDeck": "crustle",
+         "opponentArchetype": "dragapult", "positionStage": "opening"},
+        {"positionHash": "b", "sourceGameId": "g1", "split": "train", "targetDeck": "raging-bolt",
+         "opponentArchetype": "crustle", "positionStage": "late"},
+        {"positionHash": "c", "sourceGameId": "g2", "split": "train", "targetDeck": "crustle",
+         "opponentArchetype": "crustle", "positionStage": "midgame"},
+        {"positionHash": "d", "sourceGameId": "g3", "split": "train", "targetDeck": "dragapult",
+         "opponentArchetype": "raging-bolt", "positionStage": "late"},
+        {"positionHash": "e", "sourceGameId": "g4", "split": "development", "targetDeck": "crustle",
+         "opponentArchetype": "crustle", "positionStage": "opening"},
+    ]
+    selected = select_supported_source_game_positions(rows, {"a", "b", "c", "d", "e"}, split="train",
+                                                       pinned_hashes=["b"])
+    assert [row["positionHash"] for row in selected] == ["b", "d", "c"]
+    assert len({row["sourceGameId"] for row in selected}) == len(selected)
+    assert all(row["split"] == "train" for row in selected)
+    assert select_supported_source_game_positions(list(reversed(rows)), {"a", "b", "c", "d", "e"},
+                                                 split="train", pinned_hashes=["b"]) == selected
+    with pytest.raises(ValueError, match="heldout"):
+        select_supported_source_game_positions(rows, {"a", "b", "c", "d", "e"}, split="heldout")
+    with pytest.raises(ValueError, match="not supported"):
+        select_supported_source_game_positions(rows, {"a", "c", "d"}, split="train", pinned_hashes=["b"])
 
 
 def test_macro_rollout_workers_preserve_matched_seeds_and_candidate_order():
