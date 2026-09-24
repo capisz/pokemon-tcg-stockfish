@@ -187,9 +187,10 @@ strength or autonomous improvement.
   These small screens are diagnostic, not support-rate estimates.
 - A second exact-position audit selected five supported train positions, one
   per target deck, from five distinct source games. Candidate counts are 18,
-  70, 5, 20, and 8. The matched adaptive 16-to-64 rollout collection is in
-  progress; no ranker has been fit from it and no development or held-out rows
-  enter labels.
+  70, 5, 20, and 8. The adaptive 16-to-64 rollout collection subsequently
+  completed; the compact evidence and file hashes are in
+  `macro-labels-v13-generalist-five-train-2026-09-23.json`. No ranker has been
+  fit from it and no development or held-out rows enter labels.
 - Harness increment `cc3802e` adds target-deck round-robin pool selection,
   deterministic target-deck-stratified support sampling, exact repeated
   position-hash CLI selection, split guards, and the engine's 500-step horizon
@@ -199,6 +200,56 @@ strength or autonomous improvement.
 - PPO, continuous operation, and trusted promotion remain disabled. The next
   gate is completed label evidence plus independent, game-disjoint ranker
   evaluation; this batch alone is not strength or policy-improvement evidence.
+
+## Five-position generalist macro-label pilot (2026-09-23)
+
+- The resumable v13 training-only collector completed all five selected,
+  source-game-disjoint positions under identity
+  `e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8` and
+  rollout identity
+  `c4646ed7f00c80e3f54105ac2b266579ed64f5820ac08a2637cd4d0651a483b3`.
+  The local manifest and per-position file hashes are summarized in
+  `macro-labels-v13-generalist-five-train-2026-09-23.json`; raw records remain
+  ignored local artifacts.
+- All 121 candidate plans received 64 attempts each. The collector recorded
+  7,731 terminal outcomes, 13 budget truncations, and zero engine errors.
+  Truncations occurred only in the 70-candidate Dragapult mirror position;
+  they remain censored and were not converted into draws. All five records
+  explicitly report high-confidence policy eligibility as false.
+- The sample covers each target archetype and five distinct source games, but
+  every source is from the Python heuristic family and there are only five
+  independent positions. No development or held-out positions were labeled.
+  This is resume/hash/runtime evidence, not enough breadth to fit or accept a
+  ranker and not evidence of strategy improvement or playing strength.
+- No ranker fit, policy training, PPO, continuous operation, or trusted
+  promotion occurred. The next gate is a much broader training label set
+  balanced across both heuristic policy families and target archetypes, plus
+  independently labeled development positions and an untouched held-out set.
+
+## Full v13 candidate-support audit and CLI repair (2026-09-24)
+
+- Audited all 250 positions in each frozen v13 heuristic-family pool under
+  the same engine/feature identity and transition-aware planner bundle. Python
+  support: 231/250, including train/development/held-out counts 159/172,
+  37/39, and 35/39. TypeScript support: 235/250, with 162/172, 36/39, and
+  37/39. Combined: 466/500 supported and 13,954 complete candidate plans.
+- The remaining 34 positions fail closed at the declared candidate cap; zero
+  supported positions lacked a complete candidate. These are coverage results,
+  not strategic quality measures. No games, rollouts, labels, or model fits
+  were performed by the audits. Full report identities, sizes, and checksums
+  are in `macro-support-v13-generalist-full-2026-09-24.json`; detailed reports
+  remain ignored local artifacts.
+- Fixed the candidate-support CLI's default empty position-hash list, which
+  previously made ordinary all-row audits fail immediately. The focused
+  regression subset passed 2 tests and the full orchestration module passed
+  21 tests. The full Python suite hit the known XGBoost native segfault in
+  `xgboost/data.py`; rerunning with only that ranker test excluded passed
+  326 tests (one deselected). JSON validation and `git diff --check` passed.
+- The next data gate is a preregistered source-game-balanced subset across
+  both policy families and all five decks, with development labels separated
+  and held-out positions left untouched until the evaluator is frozen. The
+  existing five training labels do not justify ranker fitting. All promotion
+  gates remain disabled.
 
 ## Fresh source-game-balanced coverage and macro labeler diagnostic (2026-09-23)
 
