@@ -69,6 +69,11 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
                 raise ValueError(f"macro-label record lacks policy-family provenance: {source}")
             if record.get("status") != "collected":
                 raise ValueError(f"macro-label record is not collected: {source}")
+            if record.get("split") not in {"train", "development"}:
+                raise ValueError(
+                    f"ranker input may contain only train/development records; "
+                    f"held-out or unknown split is not publishable: {source}"
+                )
             position_hashes.add(key)
             families.add(family)
             records.append((source, item, record, family))

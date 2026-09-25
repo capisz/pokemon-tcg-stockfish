@@ -83,3 +83,17 @@ def test_combiner_rejects_a_run_from_a_different_frozen_identity(tmp_path):
     with pytest.raises(ValueError, match="experiment identity mismatch"):
         combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=tmp_path / "combined",
                                  identity=identity)
+
+
+@pytest.mark.parametrize("split", ["heldout", "unknown"])
+def test_combiner_rejects_heldout_or_unknown_splits(tmp_path, split):
+    identity = {"identityHash": "frozen-identity"}
+    python_dir = tmp_path / "python-run"
+    typescript_dir = tmp_path / "typescript-run"
+    _write_run(python_dir, "python-heuristic", "python-position", split, identity)
+    _write_run(typescript_dir, "typescript-heuristic", "typescript-position", "development", identity)
+    output = tmp_path / "combined"
+
+    with pytest.raises(ValueError, match="only train/development"):
+        combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=output, identity=identity)
+    assert not output.exists()

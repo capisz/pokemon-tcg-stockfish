@@ -844,3 +844,16 @@ strength or autonomous improvement.
 - The combiner has not yet been run on experiment outputs; the expanded
   Python-family label collector is active. PPO and all promotion gates remain
   disabled.
+
+### Held-out split isolation hardening (2026-09-25)
+
+- Review of the ranker path found that `fit_ranker` reports held-out metrics
+  from any held-out records in its input, while the v17 selection intentionally
+  excludes those rows until the evaluation protocol is frozen. The combined
+  ranker-input publisher now rejects held-out and unknown split labels; only
+  train/development records can cross that boundary.
+- Added regression coverage for both rejected split classes. Aggregation plus
+  macro-orchestration tests pass (27 passed), and `git diff --check` passes.
+- No collection, fitting, or held-out evaluation was started by this change.
+  The active label collector and its artifacts were left untouched; PPO,
+  continuous operation, and trusted promotion remain disabled.
