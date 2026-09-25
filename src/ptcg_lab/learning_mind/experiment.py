@@ -335,10 +335,67 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     return result
 
 
+def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
+    """Verify immutable combined train/development labels before any model fit."""
+    labels_dir = labels_dir.resolve()
+    manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("kind") != "combined-macro-label-runs-v1":
+        raise ValueError("ranker input must be a verified combined macro-label manifest")
+    recorded_hash = manifest.get("manifestHash")
+    if recorded_hash != identity_hash({key: value for key, value in manifest.items()
+                                        if key != "manifestHash"}):
+        raise ValueError("combined ranker-input manifest hash mismatch")
+    expected_families = ["python-heuristic", "typescript-heuristic"]
+    if manifest.get("policyFamilies") != expected_families:
+        raise ValueError("ranker input must contain both approved policy families")
+    files = manifest.get("files")
+    if not isinstance(files, list) or len(files) != manifest.get("positions"):
+        raise ValueError("combined ranker-input file list mismatch")
+    identity = manifest.get("identity")
+    seen_positions: set[str] = set()
+    records = []
+    observed_families = set()
+    observed_splits = Counter()
+    for item in files:
+        name = item.get("path") if isinstance(item, dict) else None
+        relative = Path(name) if isinstance(name, str) else None
+        if (relative is None or relative.is_absolute() or ".." in relative.parts
+                or not name.endswith(".json") or name == "manifest.json"):
+            raise ValueError("unsafe macro-label record path in combined ranker input")
+        source = (labels_dir / relative).resolve()
+        if not source.is_relative_to(labels_dir) or not source.is_file():
+            raise ValueError("macro-label record path escapes or is missing from ranker input")
+        if file_sha256(source) != item.get("sha256"):
+            raise ValueError(f"macro-label record hash mismatch: {relative}")
+        record = json.loads(source.read_text())
+        position_hash = record.get("positionHash")
+        if (not isinstance(position_hash, str) or source.name != f"{position_hash}.json"
+                or position_hash in seen_positions):
+            raise ValueError("macro-label record position identity mismatch or duplicate")
+        if record.get("identity") != identity:
+            raise ValueError(f"macro-label record frozen identity mismatch: {relative}")
+        if record.get("status") != "collected":
+            raise ValueError(f"ranker input contains an unsupported macro-label record: {relative}")
+        if record.get("split") not in {"train", "development"}:
+            raise ValueError("ranker input may contain only train/development records")
+        family = record.get("opponentPolicyFamily")
+        if family not in expected_families:
+            raise ValueError(f"ranker input has invalid policy-family provenance: {relative}")
+        seen_positions.add(position_hash)
+        observed_families.add(family)
+        observed_splits[record["split"]] += 1
+        records.append(record)
+    if observed_families != set(expected_families):
+        raise ValueError("ranker input records do not cover both approved policy families")
+    if dict(sorted(observed_splits.items())) != manifest.get("positionsBySplit"):
+        raise ValueError("ranker-input split counts do not match its records")
+    return manifest, records
+
+
 def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
                opponent_policy_hash: str, iteration: int = 1) -> dict:
-    manifest = json.loads((labels_dir / "manifest.json").read_text())
-    records = [json.loads((labels_dir / item["path"]).read_text()) for item in manifest["files"]]
+    manifest, records = _load_ranker_input(labels_dir)
     train = [record for record in records if record["split"] == "train"]
     if not train: raise ValueError("macro ranker has no training positions")
     def flatten(selected):

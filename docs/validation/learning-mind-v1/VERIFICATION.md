@@ -857,3 +857,18 @@ strength or autonomous improvement.
 - No collection, fitting, or held-out evaluation was started by this change.
   The active label collector and its artifacts were left untouched; PPO,
   continuous operation, and trusted promotion remain disabled.
+
+### Ranker input verification (2026-09-25)
+
+- Closed the direct-CLI bypass around the combiner: before fitting, the ranker
+  now requires the combined manifest format and verifies its self-hash, both
+  policy families, every safe in-directory record path and file hash, record
+  identity/status/split, unique position IDs, and split counts. Held-out and
+  unknown splits are rejected before model fitting.
+- Added tests for valid two-family input, held-out/unknown split rejection,
+  post-freeze record corruption, and manifest tampering. Combined aggregation,
+  ranker-input, and macro-orchestration tests pass (31 passed); `git diff
+  --check` passes.
+- No label fitting or collection was started. The active collector remains
+  untouched, and all PPO, continuous-operation, and trusted-promotion gates
+  remain disabled.
