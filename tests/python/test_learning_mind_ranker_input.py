@@ -3,7 +3,7 @@ import json
 import pytest
 
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
-from ptcg_lab.learning_mind.experiment import _load_ranker_input
+from ptcg_lab.learning_mind.experiment import _load_ranker_input, fit_ranker
 from ptcg_lab.learning_mind.schema import identity_hash
 
 
@@ -75,3 +75,15 @@ def test_ranker_input_rejects_manifest_tampering(tmp_path):
 
     with pytest.raises(ValueError, match="manifest hash mismatch"):
         _load_ranker_input(root)
+
+
+@pytest.mark.parametrize("existing_output", ["model", "manifest"])
+def test_ranker_fit_never_overwrites_existing_artifacts(tmp_path, existing_output):
+    output = tmp_path / "ranker.json"
+    existing_path = output if existing_output == "model" else output.with_suffix(".manifest.json")
+    existing_path.write_text("previous immutable artifact")
+
+    with pytest.raises(ValueError, match="outputs are immutable"):
+        fit_ranker(tmp_path / "labels-not-read", output,
+                   teacher_hash="teacher", opponent_policy_hash="opponent")
+    assert existing_path.read_text() == "previous immutable artifact"

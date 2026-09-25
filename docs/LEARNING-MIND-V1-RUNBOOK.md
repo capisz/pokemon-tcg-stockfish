@@ -452,7 +452,9 @@ completed-rollout/uncertainty weights. Evaluate:
 
 Freeze each teacher iteration with `FrozenIteration`. Permit at most six
 iterations. A new iteration must use a frozen prior teacher and a new manifest;
-it must not overwrite earlier labels or metrics.
+it must not overwrite earlier labels, metrics, model files, or manifests. The
+ranker CLI rejects an existing model or sidecar-manifest path and publishes a
+new model file atomically; use a new output filename for every iteration.
 
 Stop if improvement exists only against one buggy opponent policy or disappears
 under an archetype/policy-family holdout.

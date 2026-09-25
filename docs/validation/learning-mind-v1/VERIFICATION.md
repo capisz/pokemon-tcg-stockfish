@@ -872,3 +872,16 @@ strength or autonomous improvement.
 - No label fitting or collection was started. The active collector remains
   untouched, and all PPO, continuous-operation, and trusted-promotion gates
   remain disabled.
+
+### Immutable ranker artifacts (2026-09-25)
+
+- The ranker fit path now rejects an existing model or sidecar-manifest path
+  before reading inputs, calculates metrics before publication, and uses an
+  atomic no-replace model-file publication. Each frozen iteration must use a
+  fresh output path.
+- Regression tests verify existing model and manifest artifacts are retained
+  byte-for-byte and fitting is rejected before the input path is read. The
+  combined aggregation, ranker-input, and macro-orchestration tests pass
+  (33 passed); `git diff --check` passes.
+- This did not start a fit or collection. PPO, continuous operation, and
+  trusted promotion remain disabled.

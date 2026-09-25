@@ -6,6 +6,7 @@ import json
 import math
 import os
 import subprocess
+import tempfile
 from contextlib import closing
 from collections import Counter
 from dataclasses import asdict
@@ -395,6 +396,10 @@ def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
 
 def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
                opponent_policy_hash: str, iteration: int = 1) -> dict:
+    output = output.resolve()
+    manifest_output = output.with_suffix(".manifest.json")
+    if output.exists() or manifest_output.exists():
+        raise ValueError("macro ranker outputs are immutable; choose a new output path")
     manifest, records = _load_ranker_input(labels_dir)
     train = [record for record in records if record["split"] == "train"]
     if not train: raise ValueError("macro ranker has no training positions")
@@ -452,7 +457,6 @@ def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
 
     frozen = FrozenIteration(iteration, teacher_hash, opponent_policy_hash, manifest["manifestHash"], tuple(positions))
     ranker = XGBoostMacroRanker().fit(features, labels, groups, weights)
-    output.parent.mkdir(parents=True, exist_ok=True); ranker.model.save_model(output)
     train_metrics = metrics(ranker, train)
     development_metrics = metrics(ranker, [record for record in records if record["split"] == "development"])
     heldout_metrics = metrics(ranker, [record for record in records if record["split"] == "heldout"])
@@ -466,7 +470,21 @@ def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
             continue
         held_model = XGBoostMacroRanker().fit(hx, hy, hg, hw)
         holdouts.append({**split, "status": "measured", "metrics": metrics(held_model, test_records)})
-    result = {**ranker.manifest(frozen), "modelPath": str(output), "modelSha256": file_sha256(output),
+    output.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(prefix=f".{output.stem}.", suffix=output.suffix,
+                                     dir=output.parent, delete=False) as temporary_file:
+        temporary_model = Path(temporary_file.name)
+    try:
+        ranker.model.save_model(temporary_model)
+        with temporary_model.open("rb") as source:
+            os.fsync(source.fileno())
+        model_sha256 = file_sha256(temporary_model)
+        # Hard-link publication is atomic and fails instead of replacing a
+        # model created concurrently by another iteration.
+        os.link(temporary_model, output)
+    finally:
+        temporary_model.unlink(missing_ok=True)
+    result = {**ranker.manifest(frozen), "modelPath": str(output), "modelSha256": model_sha256,
               "trainingPositions": len(groups), "trainingCandidates": len(labels),
               "training": train_metrics, "development": development_metrics,
               "heldout": heldout_metrics,
@@ -474,7 +492,9 @@ def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
               "acceptance": "insufficient" if development_metrics["status"] != "measured"
                             or heldout_metrics["status"] != "measured"
                             or any(item["status"] != "measured" for item in holdouts) else "review-required"}
-    _atomic_json(output.with_suffix(".manifest.json"), result)
+    if manifest_output.exists():
+        raise ValueError("macro ranker manifest output is immutable; choose a new output path")
+    _atomic_json(manifest_output, result)
     return result
 
 
