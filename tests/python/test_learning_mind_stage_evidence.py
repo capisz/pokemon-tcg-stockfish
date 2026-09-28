@@ -100,7 +100,8 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     torch = pytest.importorskip("torch")
     from ptcg_lab.learning_mind.encoding import collate
     from ptcg_lab.learning_mind.model import StrategyTransformerV1
-    from ptcg_lab.learning_mind.training import ppo_policy_fingerprint, ppo_update
+    from ptcg_lab.learning_mind.training import (load_ppo_checkpoint, ppo_policy_fingerprint,
+        ppo_update, save_ppo_checkpoint)
     from test_learning_mind_representation import encoded
 
     torch.manual_seed(4)
@@ -116,18 +117,51 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     row = {"episodeId": "completed-0", "episodeStatus": "finished", "episodeEnd": True,
         "reward": 1, "encoded": decision, "selectedAction": 0, "oldLogProb": old_log_prob,
         "return": value, "advantage": 1., "behaviorPolicyHash": ppo_policy_fingerprint(model)}
-    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-    update = ppo_update(model, optimizer, [row], stage_record=capability)
-    assert update["acceptedMinibatches"] == 1 and update["optimizationEpochs"] == 1
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
+    checkpoint_path = tmp_path / "ppo-update-000000.pt"
+    experience_hash = "a" * 64
+    checkpoint_hash = save_ppo_checkpoint(checkpoint_path, model, optimizer,
+        update_index=0, experiment_identity={"engine": "frozen"},
+        experience_manifest_sha256=experience_hash, stage_record=capability)
+    restored = StrategyTransformerV1()
+    restored_optimizer = torch.optim.AdamW(restored.parameters(), lr=1e-4, weight_decay=1e-4)
+    restored_state = load_ppo_checkpoint(checkpoint_path, restored, restored_optimizer,
+        expected_sha256=checkpoint_hash, experiment_identity={"engine": "frozen"},
+        experience_manifest_sha256=experience_hash, stage_record=capability)
+    assert restored_state["updateIndex"] == 0 and restored_state["nextUpdateIndex"] == 1
+    assert all(torch.equal(model.state_dict()[key], restored.state_dict()[key])
+               for key in model.state_dict())
+    uninterrupted_update = ppo_update(model, optimizer, [row], stage_record=capability)
+    resumed_update = ppo_update(restored, restored_optimizer, [row], stage_record=capability)
+    assert uninterrupted_update == resumed_update
+    assert uninterrupted_update["acceptedMinibatches"] == 1
+    assert uninterrupted_update["optimizationEpochs"] == 1
+    assert all(torch.equal(model.state_dict()[key], restored.state_dict()[key])
+               for key in model.state_dict())
+    for key, value in optimizer.state_dict()["state"].items():
+        for field, moment in value.items():
+            assert torch.equal(moment, restored_optimizer.state_dict()["state"][key][field])
+    with pytest.raises(ValueError, match="identity/configuration"):
+        load_ppo_checkpoint(checkpoint_path, restored, restored_optimizer,
+            expected_sha256=checkpoint_hash, experiment_identity={"engine": "changed"},
+            experience_manifest_sha256=experience_hash, stage_record=capability)
+    with pytest.raises(ValueError, match="every ten updates"):
+        save_ppo_checkpoint(tmp_path / "bad-index.pt", model, optimizer,
+            update_index=1, experiment_identity={"engine": "frozen"},
+            experience_manifest_sha256=experience_hash, stage_record=capability)
 
     stale_model = StrategyTransformerV1()
     stale_model.load_state_dict(behavior_weights)
     stale_row = {**row, "oldLogProb": row["oldLogProb"] + 1e-3}
-    stale_optimizer = torch.optim.AdamW(stale_model.parameters(), lr=1e-4)
+    stale_optimizer = torch.optim.AdamW(stale_model.parameters(), lr=1e-4, weight_decay=1e-4)
     before_stale = {key: value.clone() for key, value in stale_model.state_dict().items()}
     with pytest.raises(ValueError, match="oldLogProb does not match"):
         ppo_update(stale_model, stale_optimizer, [stale_row], stage_record=capability)
     assert all(torch.equal(before_stale[key], stale_model.state_dict()[key]) for key in before_stale)
+
+    wrong_optimizer = torch.optim.AdamW(stale_model.parameters(), lr=1e-4)
+    with pytest.raises(ValueError, match="learning rate and weight decay"):
+        ppo_update(stale_model, wrong_optimizer, [row], stage_record=capability)
 
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):

@@ -1,14 +1,16 @@
 from __future__ import annotations
 
+import copy
 import hashlib
 import io
 import json
 import math
 import os
 import platform
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import MappingProxyType
+import tempfile
 from typing import Iterable
 
 import torch
@@ -17,6 +19,7 @@ from .encoding import EncodedDecision, collate
 from .model import StrategyTransformerV1
 from . import dataset_v1 as dataset_module, encoding as encoding_module, model as model_module
 from . import tracker as tracker_module, value_targets as value_target_module
+from .schema import identity_hash
 
 POLICY_LABEL_SOURCES = frozenset({"exact-search-distribution", "compatible-reviewed-acceptable-set",
                                   "high-confidence-macro-plan", "macro-ranker-distillation"})
@@ -211,6 +214,18 @@ class PPOConfig:
             raise ValueError("Autonomous Learning Mind v1 PPO hyperparameters are frozen")
 
 
+def validate_ppo_optimizer(optimizer, config: PPOConfig = PPOConfig()) -> None:
+    config.validate()
+    if not isinstance(optimizer, torch.optim.AdamW):
+        raise ValueError("PPO v1 requires AdamW")
+    if not optimizer.param_groups:
+        raise ValueError("PPO optimizer has no parameter groups")
+    for group in optimizer.param_groups:
+        if (group.get("lr") != config.learning_rate
+                or group.get("weight_decay") != config.weight_decay):
+            raise ValueError("PPO AdamW learning rate and weight decay must match the frozen profile")
+
+
 def _ppo_episode_groups(records: list[dict]) -> list[tuple[str, str, list[int]]]:
     groups: list[tuple[str, str, list[int]]] = []
     seen: set[str] = set()
@@ -376,6 +391,110 @@ def ppo_enablement(stage_record: VerifiedPPOStageRecord | None) -> dict:
             "humanEnableRequired": True}
 
 
+def _is_sha256(value: object) -> bool:
+    return (isinstance(value, str) and len(value) == 64
+            and all(character in "0123456789abcdef" for character in value))
+
+
+def save_ppo_checkpoint(path: Path, model: StrategyTransformerV1, optimizer, *,
+        update_index: int, experiment_identity: dict, experience_manifest_sha256: str,
+        stage_record: VerifiedPPOStageRecord) -> str:
+    """Atomically create a new CPU checkpoint at update zero or each ten-update boundary."""
+    path = Path(path).resolve()
+    if path.exists():
+        raise ValueError("PPO checkpoints are immutable; choose a new update-index path")
+    if type(update_index) is not int or update_index < 0 or update_index % 10:
+        raise ValueError("PPO checkpoints are saved at update zero and every ten updates")
+    if not isinstance(experiment_identity, dict) or not experiment_identity:
+        raise ValueError("PPO checkpoint requires a frozen experiment identity")
+    if not _is_sha256(experience_manifest_sha256):
+        raise ValueError("PPO checkpoint requires the exact experience-manifest SHA-256")
+    if not ppo_enablement(stage_record)["enabled"]:
+        raise PermissionError("PPO checkpoint requires verified supervised evidence and explicit human enablement")
+    validate_ppo_optimizer(optimizer)
+    if any(parameter.device.type != "cpu" for parameter in model.parameters()):
+        raise ValueError("PPO v1 checkpoint profile is CPU-only")
+    stage_hash = identity_hash(dict(stage_record._values))
+    metadata = {"schemaVersion": 1, "kind": "learning-mind-ppo-checkpoint-v1",
+        "updateIndex": update_index, "experimentIdentity": experiment_identity,
+        "experimentIdentityHash": identity_hash(experiment_identity),
+        "implementationIdentity": supervised_implementation_identity(),
+        "ppoConfig": asdict(PPOConfig()), "experienceManifestSha256": experience_manifest_sha256,
+        "stageEvidenceHash": stage_hash, "behaviorPolicyHash": ppo_policy_fingerprint(model),
+        "device": "cpu"}
+    payload = {**metadata, "manifestHash": identity_hash(metadata),
+        "model": model.state_dict(), "optimizer": optimizer.state_dict(),
+        "torchRngState": torch.get_rng_state()}
+    path.parent.mkdir(parents=True, exist_ok=True)
+    with tempfile.NamedTemporaryFile(dir=path.parent, prefix=f".{path.name}.", delete=False) as temporary:
+        temporary_path = Path(temporary.name)
+    try:
+        torch.save(payload, temporary_path)
+        with temporary_path.open("rb") as source:
+            os.fsync(source.fileno())
+        os.link(temporary_path, path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def load_ppo_checkpoint(path: Path, model: StrategyTransformerV1, optimizer, *,
+        expected_sha256: str, experiment_identity: dict, experience_manifest_sha256: str,
+        stage_record: VerifiedPPOStageRecord) -> dict:
+    """Restore optimizer/model/RNG only after validating every frozen input identity."""
+    path = Path(path).resolve()
+    if not isinstance(stage_record, VerifiedPPOStageRecord) or not ppo_enablement(stage_record)["enabled"]:
+        raise PermissionError("PPO resume requires verified supervised evidence and explicit human enablement")
+    if (not isinstance(experiment_identity, dict) or not experiment_identity
+            or not _is_sha256(experience_manifest_sha256)):
+        raise ValueError("PPO resume requires the exact frozen experiment and experience identities")
+    if not _is_sha256(expected_sha256) or _source_sha256(path) != expected_sha256:
+        raise ValueError("PPO checkpoint file checksum differs from its frozen manifest")
+    payload = torch.load(path, map_location="cpu", weights_only=False)
+    if not isinstance(payload, dict) or payload.get("kind") != "learning-mind-ppo-checkpoint-v1":
+        raise ValueError("not a StrategyTransformerV1 PPO checkpoint")
+    metadata = {key: value for key, value in payload.items()
+                if key not in {"manifestHash", "model", "optimizer", "torchRngState"}}
+    if (payload.get("schemaVersion") != 1
+            or payload.get("manifestHash") != identity_hash(metadata)
+            or payload.get("experimentIdentity") != experiment_identity
+            or payload.get("experimentIdentityHash") != identity_hash(experiment_identity)
+            or payload.get("implementationIdentity") != supervised_implementation_identity()
+            or payload.get("ppoConfig") != asdict(PPOConfig())
+            or payload.get("experienceManifestSha256") != experience_manifest_sha256
+            or payload.get("stageEvidenceHash") != identity_hash(dict(stage_record._values))
+            or payload.get("device") != "cpu"
+            or type(payload.get("updateIndex")) is not int
+            or payload["updateIndex"] < 0 or payload["updateIndex"] % 10):
+        raise ValueError("PPO checkpoint identity/configuration differs from the accepted run")
+    saved_model = payload.get("model")
+    saved_optimizer = payload.get("optimizer")
+    rng_state = payload.get("torchRngState")
+    if not isinstance(saved_model, dict) or not isinstance(saved_optimizer, dict):
+        raise ValueError("PPO checkpoint is missing model or optimizer state")
+    if not isinstance(rng_state, torch.Tensor) or rng_state.dtype != torch.uint8:
+        raise ValueError("PPO checkpoint is missing its CPU RNG state")
+    previous_model = {key: value.detach().clone() for key, value in model.state_dict().items()}
+    previous_optimizer = copy.deepcopy(optimizer.state_dict())
+    previous_rng = torch.get_rng_state()
+    try:
+        model.load_state_dict(saved_model, strict=True)
+        if ppo_policy_fingerprint(model) != payload.get("behaviorPolicyHash"):
+            raise ValueError("PPO checkpoint model fingerprint mismatch")
+        optimizer.load_state_dict(saved_optimizer)
+        validate_ppo_optimizer(optimizer)
+        torch.set_rng_state(rng_state)
+    except Exception:
+        model.load_state_dict(previous_model, strict=True)
+        optimizer.load_state_dict(previous_optimizer)
+        torch.set_rng_state(previous_rng)
+        raise
+    return {"updateIndex": payload["updateIndex"], "nextUpdateIndex": payload["updateIndex"] + 1,
+        "behaviorPolicyHash": payload["behaviorPolicyHash"],
+        "experienceManifestSha256": payload["experienceManifestSha256"],
+        "stageEvidenceHash": payload["stageEvidenceHash"]}
+
+
 def eligible_ppo_records(records: Iterable[dict]) -> list[dict]:
     rows = list(records)
     _ppo_episode_groups(rows)
@@ -403,7 +522,7 @@ def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
     """One frozen PPO epoch; rejected minibatches do not mutate the model."""
     if stage_record is None or not ppo_enablement(stage_record)["enabled"]:
         raise PermissionError("PPO update requires passed supervised/macro evidence and explicit human enablement")
-    config.validate(); records = eligible_ppo_records(records)
+    validate_ppo_optimizer(optimizer, config); records = eligible_ppo_records(records)
     if not records: raise ValueError("no completed PPO traces")
     _verify_ppo_behavior_policy(model, records, minibatch=config.minibatch)
     order = torch.randperm(len(records), generator=torch.Generator().manual_seed(seed)).tolist()

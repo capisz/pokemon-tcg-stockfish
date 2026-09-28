@@ -12,7 +12,7 @@ from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, h
 from ptcg_lab.learning_mind.experiment import _ranker_evidence_status, _ranker_holdout_rows
 from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
     eligible_ppo_records, generalized_advantages, ppo_enablement, supervised_policy_rows,
-    update_guard)
+    update_guard, validate_ppo_optimizer)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
 from test_learning_mind_representation import observation
@@ -287,6 +287,16 @@ def test_truncation_ends_advantage_trace_and_guards_skip_updates():
     assert eligible_ppo_records(truncated_rows + completed_rows) == completed_rows
     assert update_guard(approximate_kl=.051, value_loss=.1) == (False, "approximate-kl-exceeded")
     assert update_guard(approximate_kl=.01, value_loss=.51) == (False, "value-loss-exceeded")
+
+
+def test_ppo_optimizer_must_match_frozen_adamw_profile():
+    torch = pytest.importorskip("torch")
+    parameter = torch.nn.Parameter(torch.zeros(()))
+    validate_ppo_optimizer(torch.optim.AdamW([parameter], lr=1e-4, weight_decay=1e-4))
+    with pytest.raises(ValueError, match="AdamW learning rate and weight decay"):
+        validate_ppo_optimizer(torch.optim.AdamW([parameter], lr=1e-4))
+    with pytest.raises(ValueError, match="requires AdamW"):
+        validate_ppo_optimizer(torch.optim.SGD([parameter], lr=1e-4))
 
 
 def test_sequential_evaluation_and_manual_promotion_gate():

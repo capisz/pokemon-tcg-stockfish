@@ -769,6 +769,12 @@ mutation, the trainer hashes its current model and recomputes every stored
 `oldLogProb`. Mixed-policy batches and stale/mismatched probabilities fail
 closed before changing parameters.
 
+PPO state checkpoints are immutable CPU artifacts bound to the experiment
+identity, accepted stage-evidence hash, exact experience-manifest hash,
+implementation identity, optimizer state, model fingerprint, and PyTorch RNG
+state. Create them at update zero and every ten completed updates; resume only
+with the same identities and an externally recorded file checksum.
+
 Before mutating parameters, `ppo_update` calculates its KL and value loss. A
 minibatch is rejected if approximate KL exceeds `0.05` or value loss exceeds
 `0.5`. Non-finite values are an immediate pause. Three rejected updates or
