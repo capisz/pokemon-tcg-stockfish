@@ -1141,3 +1141,20 @@ strength or autonomous improvement.
   full Python suite passes (394, with two existing deprecation warnings). No
   real dataset was frozen and no collector, PPO, service, or promotion was
   started.
+
+### Verified macro-ranker policy distillation (2026-09-28)
+
+- Added a research-only path from a verified portable ranker-v2 model to
+  train-only supervised legal-action distributions. It binds the exact ranker,
+  report, combined labels, frozen selection, and macro-position-pool artifacts;
+  checks measured archetype and policy-family holdouts; revalidates source
+  candidate seeds/legal root actions; and aggregates candidate softmax mass
+  into the encoder's semantic action classes. The result can be included when
+  creating a new immutable supervised dataset. It does not change the teacher's
+  `review-required` status or enable promotion.
+- Verification: focused distillation/dataset tests pass (8), including a
+  synthetic end-to-end ranker-to-action distribution and rejection of an
+  unmeasured holdout. CLI help renders; full Python suite passes (396, with two
+  existing deprecation warnings); `git diff --check` passes.
+- No experiment data was consumed, no ranker fit or game simulation was run,
+  and no collector, PPO, autonomous service, or promotion was started.

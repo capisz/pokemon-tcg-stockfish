@@ -18,6 +18,7 @@ from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .ranker_v2 import fit_macro_ranker_v2, verify_macro_ranker_v2_artifact
+from .ranker_distillation import build_macro_ranker_distillation
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
@@ -41,6 +42,18 @@ def main(argv=None) -> int:
     freeze.add_argument("--review-root", type=Path, required=True)
     freeze.add_argument("--experimental-root", type=Path, required=True)
     freeze.add_argument("--source-dataset-manifest", type=Path, required=True)
+    freeze.add_argument("--ranker-distillation-dir", type=Path,
+                        help="optional verified train-only macro-ranker distribution dataset")
+    distill = sub.add_parser("build-macro-ranker-distillation",
+        help="freeze train-only legal-action distributions from a verified macro ranker")
+    distill.add_argument("--root", type=Path, required=True)
+    distill.add_argument("--macro-position-pool", type=Path, required=True)
+    distill.add_argument("--labels", type=Path, required=True)
+    distill.add_argument("--selection", type=Path, required=True)
+    distill.add_argument("--model", type=Path, required=True)
+    distill.add_argument("--report", type=Path, required=True)
+    distill.add_argument("--output", type=Path, required=True)
+    distill.add_argument("--temperature", type=float, default=1.0)
     pool = sub.add_parser("build-macro-position-pool")
     pool.add_argument("--root", type=Path, required=True)
     pool.add_argument("--output", type=Path, required=True)
@@ -195,7 +208,15 @@ def main(argv=None) -> int:
         root = args.root.resolve(); identity = runtime_identity(root)
         result = build_dataset(root=root, output=args.output.resolve(), review_root=args.review_root.resolve(),
                                experimental_root=args.experimental_root.resolve(),
-                               source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity)
+                               source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity,
+                               ranker_distillation_dir=(args.ranker_distillation_dir.resolve()
+                                   if args.ranker_distillation_dir else None))
+    elif args.command == "build-macro-ranker-distillation":
+        root = args.root.resolve(); identity = runtime_identity(root).record()
+        result = build_macro_ranker_distillation(output=args.output.resolve(),
+            macro_position_pool=args.macro_position_pool.resolve(), labels_dir=args.labels.resolve(),
+            selection_path=args.selection.resolve(), model_path=args.model.resolve(),
+            report_path=args.report.resolve(), identity=identity, temperature=args.temperature)
     elif args.command == "collect-macro-labels":
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = collect_macro_labels(root=root, dataset_dir=args.dataset.resolve(), output=args.output.resolve(),

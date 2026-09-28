@@ -309,7 +309,7 @@ def _atomic_text(path: Path, text: str) -> None:
 
 def build_dataset(*, root: Path, output: Path, review_root: Path,
                   experimental_root: Path, source_dataset_manifest: Path,
-                  identity: IdentityManifest) -> dict:
+                  identity: IdentityManifest, ranker_distillation_dir: Path | None = None) -> dict:
     output = output.resolve()
     if output.exists(): raise ValueError("dataset outputs are immutable; choose a new directory")
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -318,9 +318,18 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
         reviews, review_sources = _review_rows(review_root)
         searches, search_sources = _search_rows(experimental_root, source_dataset_manifest,
                                                 identity.record())
+        distillation_rows, distillation_sources = [], []
+        if ranker_distillation_dir is not None:
+            from .ranker_distillation import load_macro_ranker_distillation
+            distillation_manifest, distillation_rows = load_macro_ranker_distillation(
+                ranker_distillation_dir, identity=identity.record())
+            distillation_sources = [{"kind": "macro-ranker-distillation",
+                "path": str((ranker_distillation_dir / "manifest.json").resolve()),
+                "sha256": file_sha256(ranker_distillation_dir / "manifest.json"),
+                "manifestHash": distillation_manifest["manifestHash"]}]
         unique = {}
         exclusions = []
-        for row in reviews + searches:
+        for row in reviews + searches + distillation_rows:
             key = row["positionHash"]
             if key in unique:
                 exclusions.append({"positionHash": row["positionHash"], "reason": "duplicate-actor-visible-position",
@@ -342,12 +351,13 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
                     "countsByDimension": dimensions,
                     "families": sorted({row["familyId"] for row in rows}),
                     "searchConfigurationHashes": search_configurations,
-                    "sources": review_sources + search_sources, "exclusions": exclusions,
+                    "sources": review_sources + search_sources + distillation_sources, "exclusions": exclusions,
                     "staleReviewsExcluded": list(STALE_REVIEWS),
                     "policyLabelSources": sorted({row["policyLabelSource"] for row in rows}),
                     "ordinarySelfPlayPolicyLabels": 0,
                     "splitPolicy": "review partition retained; search families use sha256 stable 80/10/10 split"}
         manifest["manifestHash"] = identity_hash(manifest)
+        _validate_supervised_rows(manifest, rows)
         _atomic_text(temporary_root / "manifest.json", json.dumps(manifest, indent=2) + "\n")
         temporary_root.replace(output)
         return manifest
@@ -550,7 +560,7 @@ def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
                     "policyLabelSource", "acceptableActionIndices", "policyDistribution", "split",
                     "observation", "tracker"}
         if (not isinstance(row, dict) or not required <= set(row)
-                or set(row) - required - {"reviewHashes", "searchTarget"}):
+                or set(row) - required - {"reviewHashes", "searchTarget", "rankerDistillation"}):
             raise ValueError("supervised row fields violate the frozen row schema")
         source = row["policyLabelSource"]
         split = row["split"]
@@ -598,6 +608,21 @@ def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
             raise ValueError("review row target provenance is invalid")
         if source != "compatible-reviewed-acceptable-set" and row.get("reviewHashes") is not None:
             raise ValueError("non-review row contains review provenance")
+        if source == "macro-ranker-distillation":
+            provenance = row.get("rankerDistillation")
+            if (not isinstance(provenance, dict)
+                    or set(provenance) != {"modelSha256", "reportHash", "inputManifestSha256",
+                                          "selectionManifestSha256", "candidateSetHash",
+                                          "candidateCount", "temperature"}
+                    or any(not isinstance(provenance.get(key), str) or len(provenance[key]) != 64
+                           for key in ("modelSha256", "reportHash", "inputManifestSha256",
+                                       "selectionManifestSha256", "candidateSetHash"))
+                    or type(provenance.get("candidateCount")) is not int or provenance["candidateCount"] < 2
+                    or type(provenance.get("temperature")) not in {int, float}
+                    or not math.isfinite(provenance["temperature"]) or provenance["temperature"] <= 0):
+                raise ValueError("macro-ranker distillation provenance is invalid")
+        elif row.get("rankerDistillation") is not None:
+            raise ValueError("non-distilled row contains ranker provenance")
         if distribution is not None:
             if (acceptable is not None or not isinstance(distribution, list)
                     or len(distribution) != len(encoded.action_classes) + 1

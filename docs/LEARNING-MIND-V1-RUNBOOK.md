@@ -513,6 +513,29 @@ XGBoost candidate scores. The verifier checks the report, schema/source and
 inference implementation hashes, input dimension, and artifact checksum
 without invoking native model loading.
 
+After the fit report has measured development, archetype holdout, and frozen
+policy-family holdout results, its distribution may be used as a research-only
+supervised teacher. Distillation is train-split-only, maps complete candidate
+plans back to their exact actor-visible legal root actions, merges probabilities
+only across the encoder's semantic action classes, and records the verified
+model/report/selection/input hashes. `review-required` remains a research
+status—not policy acceptance, promotion, or proof of playing-strength gain.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind build-macro-ranker-distillation \
+  --root . \
+  --macro-position-pool artifacts/learning-mind-v1/macro-position-pool \
+  --labels artifacts/learning-mind-v1/COMBINED_LABELS \
+  --selection artifacts/learning-mind-v1/FROZEN_SELECTION.json \
+  --model artifacts/learning-mind-v1/ranker-v2-iteration-1.json \
+  --report artifacts/learning-mind-v1/ranker-v2-iteration-1.manifest.json \
+  --output artifacts/learning-mind-v1/ranker-distillation-iteration-1
+```
+
+Pass the resulting directory as `--ranker-distillation-dir` when building a
+new immutable supervised dataset. The loader rechecks every frozen teacher
+source and rejects any held-out or development row in the distillation set.
+
 For each position, supply candidate features, relative labels, group sizes, and
 completed-rollout/uncertainty weights. Evaluate:
 
