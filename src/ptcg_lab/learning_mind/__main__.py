@@ -25,6 +25,7 @@ from .supervised_evidence import audit_supervised_evaluation
 from .value_targets import (build_value_target_dataset, load_value_target_dataset,
                             training_records as value_training_records)
 from .training import train_supervised
+from .value_evaluation import evaluate_value_head
 
 
 def main(argv=None) -> int:
@@ -166,6 +167,12 @@ def main(argv=None) -> int:
                        help="optional immutable terminal-outcome dataset for value-only examples")
     train.add_argument("--output", type=Path, required=True)
     train.add_argument("--epochs", type=int, default=1)
+    evaluate_value = sub.add_parser("evaluate-value-head",
+        help="score a frozen value head on development or held-out terminal outcomes")
+    evaluate_value.add_argument("--dataset", type=Path, required=True)
+    evaluate_value.add_argument("--checkpoint", type=Path, required=True)
+    evaluate_value.add_argument("--output", type=Path, required=True)
+    evaluate_value.add_argument("--split", choices=("development", "heldout"), default="heldout")
     evaluate = sub.add_parser("evaluate-supervised")
     evaluate.add_argument("--dataset", type=Path, required=True)
     evaluate.add_argument("--probe-dataset", type=Path, required=True,
@@ -310,6 +317,9 @@ def main(argv=None) -> int:
                 value_dataset_manifest_hash=value_manifest["manifestHash"])
             result = {**result, "datasetManifestHash": policy_manifest["manifestHash"],
                       "valueDatasetManifestHash": value_manifest["manifestHash"]}
+    elif args.command == "evaluate-value-head":
+        result = evaluate_value_head(dataset_dir=args.dataset.resolve(),
+            checkpoint_path=args.checkpoint.resolve(), output=args.output.resolve(), split=args.split)
     elif args.command == "evaluate-supervised":
         result = evaluate_candidate(args.dataset.resolve(), args.checkpoint.resolve(),
                                     args.probe_dataset.resolve())

@@ -1227,3 +1227,18 @@ strength or autonomous improvement.
   validator, CLI help checks, TypeScript typecheck, and `git diff --check` pass.
   No real value dataset was built and no training run, collector, PPO update,
   service, or promotion was started.
+
+### Hash-bound held-out value-head diagnostics (2026-09-28)
+
+- Added a separate development/held-out value evaluator. It verifies the
+  checkpoint's exact value-dataset hash and implementation identity, refuses
+  the training split, and emits an immutable report tied to the dataset,
+  checkpoint, and evaluator source hashes. Metrics include per-record and
+  per-unique-position MSE/MAE, 10-bin bounded-outcome calibration, and
+  game-side summaries; it makes no promotion decision.
+- A synthetic train/held-out dataset and value-only checkpoint exercise the
+  full evaluator and its training-split rejection. No live or real value
+  dataset was read.
+- Full Python suite: 409 passed; strategy-contract v1.2 validator, value CLI
+  help checks, TypeScript typecheck, `git diff --check`, and the frozen
+  `experiment.py` source-identity check passed.

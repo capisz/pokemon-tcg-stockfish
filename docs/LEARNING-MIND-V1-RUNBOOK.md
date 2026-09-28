@@ -386,6 +386,21 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind train-supervised \
   --output artifacts/learning-mind-v1/checkpoints/value-bootstrap-EPOCH.pt
 ```
 
+Measure the value head separately on the untouched held-out split (or on
+development only while refining the experiment):
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind evaluate-value-head \
+  --dataset VALUE_DATASET --checkpoint CHECKPOINT \
+  --output artifacts/learning-mind-v1/evaluations/value-head-EPOCH.json \
+  --split heldout
+```
+
+The immutable report is bound to the exact value dataset, checkpoint, and
+evaluator code. It reports per-record and per-unique-position MSE/MAE,
+calibration bins, and game-side summaries. These are diagnostics, not a playing
+strength or policy-promotion result.
+
 The command uses only each dataset's `train` split. Development and held-out
 value outcomes remain untouched. An empty eligible value dataset is evidence
 that the source games were not authorized for learning, not a reason to relax

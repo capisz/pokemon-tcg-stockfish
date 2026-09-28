@@ -4,9 +4,13 @@ import copy
 import json
 
 import pytest
+import torch
 
 from ptcg_lab.storage import Store
+from ptcg_lab.learning_mind.dataset_v1 import stable_split
 from ptcg_lab.learning_mind.schema import identity_hash
+from ptcg_lab.learning_mind.training import train_supervised
+from ptcg_lab.learning_mind.value_evaluation import evaluate_value_head
 from ptcg_lab.learning_mind.value_targets import (build_value_target_dataset,
     load_value_target_dataset, training_records)
 from test_learning_mind_representation import observation
@@ -107,3 +111,49 @@ def test_value_targets_reject_manifest_drift_and_nonrules_draw(tmp_path):
         build_value_target_dataset(output=output, experimental_root=experimental,
             source_manifest_path=source, identity=identity)
     assert not output.exists()
+
+
+def test_value_head_evaluation_is_hash_bound_and_heldout_only(tmp_path):
+    experimental, identity, source = _source(tmp_path)
+    source_record = json.loads(source.read_text())
+    heldout_family = next(f"heldout-{index}" for index in range(1000)
+                          if stable_split(f"heldout-{index}") == "heldout")
+    train_family = next(f"train-{index}" for index in range(1000)
+                        if stable_split(f"train-{index}") == "train")
+    source_record["replays"][0]["familyId"] = heldout_family
+    store = Store(experimental)
+    training_replay = store.get("replays", "game-1")
+    training_replay.update({"id": "game-2", "outcome": {"winner": 1, "reason": "rules-prizes"}})
+    store.put("replays", "game-2", training_replay)
+    source_record["replays"].append({"id": "game-2", "familyId": train_family, "status": "finished"})
+    source_record["manifestHash"] = identity_hash({key: value for key, value in source_record.items()
+                                                    if key != "manifestHash"})
+    source.write_text(json.dumps(source_record))
+
+    dataset = tmp_path / "train-and-heldout-values"
+    manifest = build_value_target_dataset(output=dataset, experimental_root=experimental,
+        source_manifest_path=source, identity=identity)
+    _, rows = load_value_target_dataset(dataset, identity=identity)
+    training_rows = training_records(rows, "train")
+    assert training_rows
+    checkpoint = tmp_path / "value-head.pt"
+    train_supervised(training_rows, checkpoint, identity, batch_size=2,
+        dataset_manifest_hash="d" * 64, value_dataset_manifest_hash=manifest["manifestHash"])
+
+    report = evaluate_value_head(dataset_dir=dataset, checkpoint_path=checkpoint,
+        output=tmp_path / "value-evaluation.json", split="heldout")
+    assert report["split"] == "heldout" and report["perRecord"]["records"] == 2
+    assert report["perUniquePosition"]["records"] >= 1
+    assert report["calibration"]["binCount"] == 10
+    assert len(report["evaluatorSha256"]) == 64
+    assert report["checkpointSha256"] and report["reportHash"]
+    mismatched_checkpoint = tmp_path / "mismatched-value-checkpoint.pt"
+    checkpoint_record = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    checkpoint_record["trainingConfig"]["valueDatasetManifestHash"] = "0" * 64
+    torch.save(checkpoint_record, mismatched_checkpoint)
+    with pytest.raises(ValueError, match="value-dataset hash mismatch"):
+        evaluate_value_head(dataset_dir=dataset, checkpoint_path=mismatched_checkpoint,
+            output=tmp_path / "mismatched-value-evaluation.json", split="heldout")
+    with pytest.raises(ValueError, match="never training"):
+        evaluate_value_head(dataset_dir=dataset, checkpoint_path=checkpoint,
+            output=tmp_path / "forbidden-training-evaluation.json", split="train")
