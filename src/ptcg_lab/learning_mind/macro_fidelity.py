@@ -155,6 +155,10 @@ def _load_label_run(*, root: Path, family: str, dataset_path: Path, labels_path:
     if not isinstance(files, list) or len(files) != len(expected) or manifest.get("positions") != len(expected):
         raise ValueError("macro-label run file list differs from frozen position selection")
     expected_paths = {f"{position}.json" for position in expected}
+    listed_paths = [item.get("path") if isinstance(item, dict) else None for item in files]
+    if (any(not isinstance(name, str) or Path(name).name != name for name in listed_paths)
+            or len(set(listed_paths)) != len(expected) or set(listed_paths) != expected_paths):
+        raise ValueError("macro-label manifest does not list every frozen position exactly once")
     actual_paths = {path.name for path in labels_path.glob("*.json") if path.name != "manifest.json"}
     if actual_paths != expected_paths:
         raise ValueError("macro-label run has missing or unexpected position files")

@@ -150,3 +150,19 @@ def test_macro_fidelity_audit_rejects_root_action_not_in_frozen_actor_view(tmp_p
             python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
             python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],
             output=tmp_path / "fidelity.json")
+
+
+def test_macro_fidelity_audit_rejects_duplicate_manifest_file_entry(tmp_path):
+    _identity, selection, inputs = _fixture(tmp_path)
+    labels_dir = inputs[FAMILIES[0]][1]
+    manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["files"][1] = copy.deepcopy(manifest["files"][0])
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="every frozen position exactly once"):
+        audit_raging_bolt_macro_fidelity(root=ROOT, selection_path=selection,
+            python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
+            python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],
+            output=tmp_path / "fidelity.json")
