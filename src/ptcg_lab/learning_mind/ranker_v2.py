@@ -16,6 +16,7 @@ from .ranker_features import (MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH,
                               candidate_features_v2)
 from .schema import identity_hash
 from .macro_fidelity import _validate_rollout_label
+from .macro import rollout_seed
 from ptcg_lab.storage import digest as observation_digest
 
 
@@ -105,7 +106,7 @@ def predict_macro_ranker_v2(artifact: dict, features) -> np.ndarray:
                        for row in matrix], dtype=np.float32)
 
 
-def _validated_macro_labels(record: dict) -> list[dict]:
+def _validated_macro_labels(record: dict, *, expected_rollout_identity: str | None = None) -> list[dict]:
     labels = record.get("labels")
     if (not isinstance(labels, list) or not labels
             or type(record.get("candidateCount")) is not int
@@ -114,11 +115,27 @@ def _validated_macro_labels(record: dict) -> list[dict]:
     observation = record.get("observation")
     if observation_digest(observation) != record.get("positionHash"):
         raise ValueError("ranker v2 record actor observation hash mismatch")
+    split = record.get("split")
+    expected_namespace = {"train": "training", "development": "development"}.get(split)
+    namespace = record.get("seedNamespace")
+    rollout_identity = record.get("rolloutIdentity")
+    if (namespace != expected_namespace or not isinstance(rollout_identity, str) or not rollout_identity
+            or (expected_rollout_identity is not None and rollout_identity != expected_rollout_identity)):
+        raise ValueError("ranker v2 record seed namespace or rollout identity mismatch")
+    seeds = record.get("rolloutSeeds")
+    if (not isinstance(seeds, list) or not seeds
+            or any(type(seed) is not int for seed in seeds)
+            or len(set(seeds)) != len(seeds)
+            or seeds != [rollout_seed(namespace, record["positionHash"], index, rollout_identity)
+                         for index in range(len(seeds))]):
+        raise ValueError("ranker v2 record seed list does not match its frozen namespace and identity")
     legal_actions = {str(action.get("id")): action
                      for action in observation.get("legalActions", []) if isinstance(action, dict)}
     candidates = set()
     for label in labels:
         evidence = _validate_rollout_label(label)
+        if evidence["attemptedRollouts"] > len(seeds):
+            raise ValueError("ranker v2 candidate attempted more rollouts than its frozen seed list")
         candidate = evidence["candidate"]
         if candidate.key() in candidates:
             raise ValueError("ranker v2 record repeats a macro candidate")
@@ -185,6 +202,21 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     if output.exists() or report_path.exists():
         raise ValueError("macro ranker v2 outputs are immutable; choose new output paths")
     labels_manifest, records = _load_ranker_input(labels_dir.resolve(), selection_path.resolve())
+    source_runs = labels_manifest.get("sourceRuns")
+    expected_rollout_identities = {}
+    if not isinstance(source_runs, list):
+        raise ValueError("ranker v2 combined labels omit source-run rollout identities")
+    for source_run in source_runs:
+        families = source_run.get("policyFamilies") if isinstance(source_run, dict) else None
+        rollout_identity = source_run.get("rolloutIdentity") if isinstance(source_run, dict) else None
+        if (not isinstance(families, list) or len(families) != 1
+                or families[0] not in {"python-heuristic", "typescript-heuristic"}
+                or not isinstance(rollout_identity, str) or not rollout_identity
+                or families[0] in expected_rollout_identities):
+            raise ValueError("ranker v2 source-run family/rollout identity is ambiguous")
+        expected_rollout_identities[families[0]] = rollout_identity
+    if set(expected_rollout_identities) != {"python-heuristic", "typescript-heuristic"}:
+        raise ValueError("ranker v2 requires one frozen rollout identity per policy family")
     train_records = [record for record in records if record["split"] == "train"]
     development_records = [record for record in records if record["split"] == "development"]
     if not train_records:
@@ -193,7 +225,8 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     def flatten(selected):
         features, labels, weights, groups, positions, metadata = [], [], [], [], [], []
         for record in selected:
-            usable = _validated_macro_labels(record)
+            usable = _validated_macro_labels(record,
+                expected_rollout_identity=expected_rollout_identities[record["opponentPolicyFamily"]])
             if len(usable) < 2:
                 continue
             groups.append(len(usable))

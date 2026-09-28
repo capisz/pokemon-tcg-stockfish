@@ -1082,8 +1082,11 @@ strength or autonomous improvement.
 - Before fitting, v2 also independently validates candidate identities,
   actor-visible legal root actions, rollout count/reason reconciliation,
   result and uncertainty bounds, evidence-derived weights, and the per-position
-  relative-result center. Truncated/error-only candidates remain unlabelled.
-- Verification: full Python suite 377 passed, strategy contract v1.2 validator,
+  relative-result center. It binds each family to its source-run rollout
+  identity and recomputes recorded seeds by split/position/index; promotion
+  seeds and altered streams fail closed. Truncated/error-only candidates remain
+  unlabelled.
+- Verification: full Python suite 380 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,

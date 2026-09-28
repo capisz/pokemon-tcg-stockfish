@@ -10,7 +10,7 @@ import pytest
 from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
     MACRO_FEATURE_SCHEMA, candidate_features_v2)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
-from ptcg_lab.learning_mind.macro import MacroCandidateV1
+from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
     _bootstrap_mean, fit_macro_ranker_v2, predict_macro_ranker_v2,
@@ -130,6 +130,7 @@ def _write_ranker_v2_fit_fixture(root):
     selection_entries = []
     records = []
     position_index = 0
+    rollout_identities = {family: f"synthetic-rollout-{family}" for family in families}
     for family in families:
         for split in splits:
             hashes = []
@@ -157,10 +158,14 @@ def _write_ranker_v2_fit_fixture(root):
                         "outcomeReasons": {}, "expectedResult": result,
                         "relativeResult": result - 1.0, "uncertainty": uncertainty,
                         "weight": 2 / (1 + uncertainty)})
+                namespace = "training" if split == "train" else "development"
                 records.append({"positionHash": position_hash, "identity": identity,
                     "opponentPolicyFamily": family, "opponentArchetype": archetype,
                     "split": split, "status": "collected", "observation": obs,
                     "candidateCount": len(labels), "sourceGameId": f"source-{position_index}",
+                    "seedNamespace": namespace, "rolloutIdentity": rollout_identities[family],
+                    "rolloutSeeds": [rollout_seed(namespace, position_hash, index,
+                        rollout_identities[family]) for index in range(2)],
                     "labels": labels})
             selection_entries.append({"policyFamily": family, "split": split,
                 "sourceGames": len(hashes), "positionHashes": hashes})
@@ -183,7 +188,9 @@ def _write_ranker_v2_fit_fixture(root):
         "selectedPositionHashes": sorted(row["positionHash"] for row in records),
         "positionsByFamilySplit": {family: {split: len(archetypes) for split in splits} for family in families},
         "positionsBySplit": {split: sum(row["split"] == split for row in records) for split in splits},
-        "policyFamilies": list(families), "positions": len(records), "files": files}
+        "policyFamilies": list(families), "positions": len(records), "files": files,
+        "sourceRuns": [{"policyFamilies": [family], "rolloutIdentity": rollout_identities[family]}
+                       for family in families]}
     manifest["manifestHash"] = identity_hash(manifest)
     (labels_dir / "manifest.json").write_text(json.dumps(manifest))
     return labels_dir, selection_path
@@ -216,4 +223,21 @@ def test_ranker_v2_rejects_relative_targets_not_centered_on_best_completed_plan(
     record = json.loads(record_path.read_text())
     record["labels"][0]["relativeResult"] = 0.25
     with pytest.raises(ValueError, match="best completed result"):
+        _validated_macro_labels(record)
+
+
+@pytest.mark.parametrize("tamper", ("promotion-namespace", "seed", "rollout-identity"))
+def test_ranker_v2_rejects_seed_namespace_or_identity_drift(tmp_path, tamper):
+    labels_dir, _selection = _write_ranker_v2_fit_fixture(tmp_path)
+    record_path = next((labels_dir / "python-heuristic").glob("*.json"))
+    record = json.loads(record_path.read_text())
+    if tamper == "promotion-namespace":
+        record["seedNamespace"] = "promotion"
+    elif tamper == "seed":
+        record["rolloutSeeds"][0] += 1
+    else:
+        with pytest.raises(ValueError, match="rollout identity"):
+            _validated_macro_labels(record, expected_rollout_identity="wrong-family-run")
+        return
+    with pytest.raises(ValueError, match="seed namespace or rollout identity|seed list"):
         _validated_macro_labels(record)

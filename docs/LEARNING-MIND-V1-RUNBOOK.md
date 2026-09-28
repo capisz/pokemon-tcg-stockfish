@@ -481,6 +481,11 @@ and uncertainty, evidence-derived weight, and relative target centered on the
 best completed candidate in that position. Truncated and error-only candidates
 remain unlabelled; they never receive fabricated targets.
 
+It also binds each family to exactly one source-run rollout identity and
+recomputes every recorded seed from `(split namespace, position hash, index,
+rollout identity)`. Train positions must use `training`, development positions
+must use `development`, and `promotion` seeds are rejected before any model fit.
+
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind fit-macro-ranker-v2 \
   --labels artifacts/learning-mind-v1/COMBINED_LABELS \
