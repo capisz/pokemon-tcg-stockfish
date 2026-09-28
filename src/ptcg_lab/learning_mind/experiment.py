@@ -430,6 +430,17 @@ def _ranker_holdout_rows(records: list[dict]) -> list[dict]:
     return result
 
 
+def _ranker_evidence_status(development: dict, holdouts: list[dict]) -> str:
+    """Report readiness for human review, never a win or promotion decision."""
+    required_kinds = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
+    observed_kinds = {row.get("kind") for row in holdouts}
+    if (development.get("status") != "measured" or not holdouts
+            or not required_kinds.issubset(observed_kinds)
+            or any(row.get("status") != "measured" for row in holdouts)):
+        return "insufficient"
+    return "review-required"
+
+
 def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_hash: str,
                opponent_policy_hash: str, iteration: int = 1) -> dict:
     output = output.resolve()
@@ -525,8 +536,8 @@ def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_
               "heldout": {"status": "not-included",
                           "reason": "the frozen ranker selection excludes the separate heldout split"},
               "holdouts": holdouts,
-              "acceptance": "insufficient" if development_metrics["status"] != "measured"
-                            or any(item["status"] != "measured" for item in holdouts) else "review-required"}
+              "acceptance": _ranker_evidence_status(development_metrics, holdouts),
+              "automaticPromotion": False}
     if manifest_output.exists():
         raise ValueError("macro ranker manifest output is immutable; choose a new output path")
     _atomic_json(manifest_output, result)

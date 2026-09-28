@@ -9,7 +9,7 @@ from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosi
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
-from ptcg_lab.learning_mind.experiment import _ranker_holdout_rows
+from ptcg_lab.learning_mind.experiment import _ranker_evidence_status, _ranker_holdout_rows
 from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
@@ -196,6 +196,16 @@ def test_ranker_holdouts_train_only_on_train_rows_and_evaluate_only_development(
         else:
             assert all(row["opponentPolicyFamily"] != holdout["heldOut"] for row in train_rows)
             assert all(row["opponentPolicyFamily"] == holdout["heldOut"] for row in test_rows)
+
+
+def test_ranker_evidence_never_claims_a_win_and_requires_both_holdout_axes():
+    measured = {"status": "measured"}
+    archetype = {"kind": "leave-one-opponent-archetype-out", "status": "measured"}
+    family = {"kind": "frozen-policy-family", "status": "measured"}
+    assert _ranker_evidence_status(measured, [archetype, family]) == "review-required"
+    assert _ranker_evidence_status(measured, [archetype]) == "insufficient"
+    assert _ranker_evidence_status(measured, [archetype, {**family, "status": "insufficient"}]) == "insufficient"
+    assert _ranker_evidence_status({"status": "insufficient"}, [archetype, family]) == "insufficient"
 
 
 def test_xgboost_ranker_accepts_rollout_group_weights():

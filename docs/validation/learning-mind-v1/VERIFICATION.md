@@ -934,6 +934,8 @@ strength or autonomous improvement.
   positions inside that group. Missing coverage remains `insufficient`.
 - Added regression coverage for family and archetype separation, and for
   train/development split isolation. The targeted strategy, orchestration, and
-  ranker-input tests pass (44); the full Python suite passes (336), and
-  `git diff --check` passes. The existing heldout label pool is not read or
-  modified, and no ranker was fit from experiment data.
+  ranker-input tests pass (45); the full Python suite passes (337), and
+  `git diff --check` passes. Ranker evidence now explicitly requires both
+  holdout axes and can report only `insufficient` or `review-required`; it
+  cannot claim a win or promotion. The existing heldout label pool is not read
+  or modified, and no ranker was fit from experiment data.
