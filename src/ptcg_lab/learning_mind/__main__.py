@@ -17,7 +17,7 @@ from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
-from .ranker_v2 import fit_macro_ranker_v2
+from .ranker_v2 import fit_macro_ranker_v2, verify_macro_ranker_v2_artifact
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
@@ -134,6 +134,10 @@ def main(argv=None) -> int:
     rank_v2.add_argument("--teacher-hash", required=True)
     rank_v2.add_argument("--opponent-policy-hash", required=True)
     rank_v2.add_argument("--iteration", type=int, default=1)
+    verify_ranker_v2 = sub.add_parser("verify-macro-ranker-v2",
+        help="verify v2 report/schema and model checksum without loading native XGBoost code")
+    verify_ranker_v2.add_argument("--model", type=Path, required=True)
+    verify_ranker_v2.add_argument("--report", type=Path, required=True)
     train = sub.add_parser("train-supervised")
     train.add_argument("--dataset", type=Path, required=True)
     train.add_argument("--output", type=Path, required=True)
@@ -249,6 +253,12 @@ def main(argv=None) -> int:
         result = fit_macro_ranker_v2(args.labels.resolve(), args.output.resolve(),
             selection_path=args.selection.resolve(), teacher_hash=args.teacher_hash,
             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
+    elif args.command == "verify-macro-ranker-v2":
+        verified = verify_macro_ranker_v2_artifact(args.model, args.report)
+        report = verified["report"]
+        result = {"verified": True, "modelSha256": report["modelSha256"],
+            "featureSchemaHash": report["featureSchemaHash"],
+            "featureImplementationSha256": report["featureImplementationSha256"]}
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
     elif args.command == "evaluate-supervised":

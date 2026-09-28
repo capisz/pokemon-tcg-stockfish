@@ -1067,7 +1067,14 @@ strength or autonomous improvement.
   to preserve the active label collector's frozen source identity. Ranker v2
   was not fitted: no finalized labels were consumed and no model-quality claim
   is made. The old ranker remains available as a separate baseline.
-- Verification: full Python suite 373 passed, strategy contract v1.2 validator,
+- A synthetic native XGBoost deserialization attempt caused a segmentation
+  fault in the configured runtime. To keep future inference out of that native
+  load path, v2 exports a portable JSON tree ensemble with a Python scorer.
+  Its synthetic prediction scores match native XGBoost to 1e-6, and artifact
+  verification checks report/schema/source/model hashes and feature dimension.
+  No ranker was fit from the finalized game labels, so real-data quality and
+  held-out performance remain unverified.
+- Verification: full Python suite 374 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,

@@ -29,6 +29,64 @@ def validate_ranker_v2_report(report: dict) -> None:
         raise ValueError("macro ranker v2 report hash mismatch")
 
 
+def verify_macro_ranker_v2_artifact(model_path: Path, report_path: Path) -> dict:
+    """Verify a portable ranker artifact without invoking native XGBoost loading."""
+    report = json.loads(report_path.read_text())
+    validate_ranker_v2_report(report)
+    model_path = model_path.resolve()
+    if not model_path.is_file() or file_sha256(model_path) != report.get("modelSha256"):
+        raise ValueError("macro ranker v2 model checksum mismatch")
+    artifact = json.loads(model_path.read_text())
+    if (artifact.get("kind") != "xgboost-macro-ranker-v2-portable"
+            or artifact.get("featureSchemaHash") != MACRO_FEATURE_SCHEMA_HASH
+            or artifact.get("featureImplementationSha256") != report.get("featureImplementationSha256")
+            or artifact.get("featureCount") != MACRO_FEATURE_SCHEMA["dimension"]
+            or report.get("modelFeatureCount") != MACRO_FEATURE_SCHEMA["dimension"]
+            or not isinstance(artifact.get("trees"), list) or not artifact["trees"]):
+        raise ValueError("macro ranker v2 model feature dimension mismatch")
+    return {"report": report, "artifact": artifact}
+
+
+def _tree_score(node: dict, row: np.ndarray) -> float:
+    if "leaf" in node:
+        return float(node["leaf"])
+    split = node.get("split")
+    if not isinstance(split, str) or not split.startswith("f") or not split[1:].isdigit():
+        raise ValueError("portable ranker tree contains an invalid feature split")
+    feature = int(split[1:])
+    if not 0 <= feature < row.shape[0]:
+        raise ValueError("portable ranker tree split exceeds the feature dimension")
+    value = float(row[feature])
+    if not np.isfinite(value):
+        child_id = node.get("missing")
+    else:
+        child_id = node.get("yes") if value < float(node["split_condition"]) else node.get("no")
+    children = node.get("children")
+    if not isinstance(children, list):
+        raise ValueError("portable ranker tree split has no children")
+    child = next((item for item in children if item.get("nodeid") == child_id), None)
+    if child is None:
+        raise ValueError("portable ranker tree points to a missing child")
+    return _tree_score(child, row)
+
+
+def predict_macro_ranker_v2(artifact: dict, features) -> np.ndarray:
+    """Score candidate vectors using the portable tree dump (ranking margins)."""
+    if (not isinstance(artifact, dict) or artifact.get("kind") != "xgboost-macro-ranker-v2-portable"
+            or artifact.get("featureSchemaHash") != MACRO_FEATURE_SCHEMA_HASH
+            or artifact.get("featureCount") != MACRO_FEATURE_SCHEMA["dimension"]
+            or artifact.get("featureImplementationSha256") != file_sha256(
+                Path(__file__).with_name("ranker_features.py"))):
+        raise ValueError("portable macro ranker feature identity mismatch")
+    matrix = np.asarray(features, dtype=np.float32)
+    if matrix.ndim != 2 or matrix.shape[1] != MACRO_FEATURE_SCHEMA["dimension"]:
+        raise ValueError("portable macro ranker expects a [batch, 640] feature matrix")
+    if not isinstance(artifact.get("trees"), list) or not artifact["trees"]:
+        raise ValueError("portable macro ranker has no trees")
+    return np.asarray([sum(_tree_score(tree, row) for tree in artifact["trees"])
+                       for row in matrix], dtype=np.float32)
+
+
 def _publish_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
@@ -135,12 +193,23 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         held_model = XGBoostMacroRanker().fit(hx, hy, hg, hw)
         holdouts.append({**split, "status": "measured", "metrics": metrics(held_model, held_test)})
 
+    model_artifact = {
+        "schemaVersion": 1,
+        "kind": "xgboost-macro-ranker-v2-portable",
+        "objective": "rank:pairwise",
+        "featureCount": int(ranker.model.num_features()),
+        "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
+        "featureImplementationSha256": source_hash,
+        "trees": [json.loads(tree) for tree in ranker.model.get_dump(dump_format="json")],
+    }
+    if model_artifact["featureCount"] != MACRO_FEATURE_SCHEMA["dimension"]:
+        raise ValueError("trained XGBoost model has a feature count inconsistent with ranker v2")
     output.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(prefix=f".{output.stem}.", suffix=output.suffix,
                                      dir=output.parent, delete=False) as temporary:
         temporary_model = Path(temporary.name)
     try:
-        ranker.model.save_model(temporary_model)
+        temporary_model.write_text(json.dumps(model_artifact, sort_keys=True, separators=(",", ":")) + "\n")
         with temporary_model.open("rb") as stream:
             os.fsync(stream.fileno())
         model_hash = file_sha256(temporary_model)
@@ -162,6 +231,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "selectionManifestSha256": file_sha256(selection_path.resolve()),
         "modelPath": str(output),
         "modelSha256": model_hash,
+        "modelFeatureCount": int(ranker.model.num_features()),
         "trainingPositions": len(groups),
         "trainingCandidates": len(labels),
         "training": training_metrics,
