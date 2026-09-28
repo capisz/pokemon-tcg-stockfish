@@ -990,3 +990,16 @@ strength or autonomous improvement.
 - Verification: full Python suite 348 passed; TypeScript typecheck and
   `git diff --check` passed. No model fit, games, or collector activity was
   started by this change.
+
+### Continuous-operation supervisor gate (2026-09-28)
+
+- The supervisor's `start` method previously accepted only a human boolean and
+  could persist `RUNNING` without checking whether the learning stages had
+  passed. It now requires exact accepted-stage flags for PPO, specialization,
+  continuous operation, and a separate human continuous-operation approval.
+- Startup after reboot remains `PAUSED`. Tests verify every individual gate,
+  reject truthy non-boolean substitutes, and retain the three-strike/failure
+  pause behavior. The protocol records these prerequisites and keeps the
+  continuous-operation default disabled.
+- Verification: learning-mind supervisor tests, full Python suite, typecheck,
+  and `git diff --check` pass. No service was started or installed.

@@ -11,6 +11,17 @@ from pathlib import Path
 PHASES = ("collection", "training", "evaluation", "retention")
 
 
+def continuous_operation_enablement(stage_record: dict | None) -> dict:
+    """Keep the always-on supervisor closed until PPO and specialization are accepted."""
+    prerequisites = (isinstance(stage_record, dict)
+        and stage_record.get("ppoEnabled") is True
+        and stage_record.get("specialistCurriculumPassed") is True
+        and stage_record.get("continuousOperationEnabled") is True
+        and stage_record.get("humanEnableContinuousOperation") is True)
+    return {"enabled": bool(prerequisites),
+            "reason": None if prerequisites else "PPO, specialization, continuous-operation gate, and human approval are all required"}
+
+
 @dataclass
 class MindState:
     status: str = "PAUSED"
@@ -43,8 +54,10 @@ class MindSupervisor:
         with temporary.open("rb") as source: os.fsync(source.fileno())
         temporary.replace(self.state_path)
 
-    def start(self, *, human_enabled: bool) -> None:
+    def start(self, *, human_enabled: bool, stage_record: dict | None = None) -> None:
         if not human_enabled: raise PermissionError("a human must explicitly enable each run")
+        if not continuous_operation_enablement(stage_record)["enabled"]:
+            raise PermissionError("continuous operation is not enabled by the accepted stage record")
         self.check_disk(); self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
 
     def pause(self, reason: str, *, notify: bool = True) -> None:

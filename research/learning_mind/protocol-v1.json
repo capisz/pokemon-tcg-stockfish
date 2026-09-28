@@ -18,6 +18,12 @@
     "terminalReward": [1, 0, -1],
     "truncationPolicy": "terminate trace, exclude reward, never bootstrap across reset"
   },
+  "continuousOperation": {
+    "enabled": false,
+    "prerequisites": ["ppoEnabled", "specialistCurriculumPassed", "continuousOperationEnabled",
+      "humanEnableContinuousOperation"],
+    "startupStatusAfterReboot": "PAUSED"
+  },
   "promotion": {"automatic": false, "humanApprovalRequired": true},
   "initialAcceptanceTargets": [
     "Raging Bolt macro-plan fidelity",
