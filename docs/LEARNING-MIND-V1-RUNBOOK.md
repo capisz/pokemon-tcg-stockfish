@@ -475,6 +475,12 @@ feature implementation source hash. This representation changes the model
 input contract, so do not compare its raw metrics to ranker v1 as if only the
 training data had changed.
 
+Before fitting, v2 revalidates every candidate hash and uniqueness, rollout
+outcome reconciliation, legal actor-visible root action, finite expected result
+and uncertainty, evidence-derived weight, and relative target centered on the
+best completed candidate in that position. Truncated and error-only candidates
+remain unlabelled; they never receive fabricated targets.
+
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind fit-macro-ranker-v2 \
   --labels artifacts/learning-mind-v1/COMBINED_LABELS \

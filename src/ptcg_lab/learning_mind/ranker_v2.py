@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import hashlib
+import math
 import os
 from pathlib import Path
 import tempfile
@@ -14,6 +15,8 @@ from .ranker import FrozenIteration, XGBoostMacroRanker
 from .ranker_features import (MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH,
                               candidate_features_v2)
 from .schema import identity_hash
+from .macro_fidelity import _validate_rollout_label
+from ptcg_lab.storage import digest as observation_digest
 
 
 def _bootstrap_mean(values: list[float], *, seed_material: str, replicates: int = 2000) -> dict:
@@ -102,6 +105,62 @@ def predict_macro_ranker_v2(artifact: dict, features) -> np.ndarray:
                        for row in matrix], dtype=np.float32)
 
 
+def _validated_macro_labels(record: dict) -> list[dict]:
+    labels = record.get("labels")
+    if (not isinstance(labels, list) or not labels
+            or type(record.get("candidateCount")) is not int
+            or record["candidateCount"] != len(labels)):
+        raise ValueError("ranker v2 record candidate labels are incomplete")
+    observation = record.get("observation")
+    if observation_digest(observation) != record.get("positionHash"):
+        raise ValueError("ranker v2 record actor observation hash mismatch")
+    legal_actions = {str(action.get("id")): action
+                     for action in observation.get("legalActions", []) if isinstance(action, dict)}
+    candidates = set()
+    for label in labels:
+        evidence = _validate_rollout_label(label)
+        candidate = evidence["candidate"]
+        if candidate.key() in candidates:
+            raise ValueError("ranker v2 record repeats a macro candidate")
+        candidates.add(candidate.key())
+        first = candidate.action_sequence[0]
+        if legal_actions.get(str(first.get("id"))) != first:
+            raise ValueError("ranker v2 candidate root action is not actor-visible and legal")
+    completed = []
+    for label in labels:
+        expected = label.get("expectedResult")
+        relative = label.get("relativeResult")
+        uncertainty = label.get("uncertainty")
+        weight = label.get("weight")
+        finished = label["outcomes"]["finished"]
+        if expected is None:
+            if finished != 0 or relative is not None or uncertainty is not None or weight != 0:
+                raise ValueError("ranker v2 missing-score label contains inconsistent targets")
+            continue
+        if (isinstance(expected, bool) or not isinstance(expected, (int, float))
+                or not math.isfinite(expected) or not 0 <= expected <= 1
+                or isinstance(relative, bool) or not isinstance(relative, (int, float))
+                or not math.isfinite(relative)
+                or isinstance(uncertainty, bool) or not isinstance(uncertainty, (int, float))
+                or not math.isfinite(uncertainty) or uncertainty < 0
+                or isinstance(weight, bool) or not isinstance(weight, (int, float))
+                or not math.isfinite(weight) or weight <= 0 or finished <= 0):
+            raise ValueError("ranker v2 label has invalid expected result, relative target, or weight")
+        expected_uncertainty = math.sqrt(max(float(expected) * (1 - float(expected)), .25) / finished)
+        if not math.isclose(float(uncertainty), expected_uncertainty, rel_tol=1e-6, abs_tol=1e-8):
+            raise ValueError("ranker v2 uncertainty does not match completed-rollout count")
+        expected_weight = finished / (1 + expected_uncertainty)
+        if not math.isclose(float(weight), expected_weight, rel_tol=1e-6, abs_tol=1e-8):
+            raise ValueError("ranker v2 rollout weight does not match completed evidence")
+        completed.append(label)
+    center = max(float(label["expectedResult"]) for label in completed) if completed else 0.0
+    for label in completed:
+        if not math.isclose(float(label["relativeResult"]),
+                            float(label["expectedResult"]) - center, rel_tol=1e-6, abs_tol=1e-8):
+            raise ValueError("ranker v2 relative target does not match the position's best completed result")
+    return completed
+
+
 def _publish_json(path: Path, value: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=path.parent,
@@ -134,7 +193,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     def flatten(selected):
         features, labels, weights, groups, positions, metadata = [], [], [], [], [], []
         for record in selected:
-            usable = [item for item in record["labels"] if item.get("expectedResult") is not None]
+            usable = _validated_macro_labels(record)
             if len(usable) < 2:
                 continue
             groups.append(len(usable))

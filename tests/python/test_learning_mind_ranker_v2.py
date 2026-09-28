@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from dataclasses import asdict
 from pathlib import Path
 
 import numpy as np
@@ -9,12 +10,14 @@ import pytest
 from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
     MACRO_FEATURE_SCHEMA, candidate_features_v2)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
+from ptcg_lab.learning_mind.macro import MacroCandidateV1
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
     _bootstrap_mean, fit_macro_ranker_v2, predict_macro_ranker_v2,
-    verify_macro_ranker_v2_artifact)
+    verify_macro_ranker_v2_artifact, _validated_macro_labels)
 from ptcg_lab.learning_mind.schema import identity_hash
 from test_learning_mind_representation import observation
+from ptcg_lab.storage import digest as observation_digest
 
 
 def test_ranker_v2_features_are_deterministic_state_and_plan_sensitive():
@@ -126,6 +129,7 @@ def _write_ranker_v2_fit_fixture(root):
     identity = {"fixtureIdentity": "synthetic-ranker-v2"}
     selection_entries = []
     records = []
+    position_index = 0
     for family in families:
         for split in splits:
             hashes = []
@@ -134,18 +138,29 @@ def _write_ranker_v2_fit_fixture(root):
                 hashes.append(position_hash)
                 obs = observation()
                 obs["players"][1]["active"]["card"]["id"] = f"PUBLIC-{archetype}"
+                obs["turn"] += position_index
+                position_index += 1
+                position_hash = observation_digest(obs)
+                hashes[-1] = position_hash
                 labels = []
                 for choice in (0, 1):
-                    candidate = {"turn_intent": "attack", "intended_attack": f"attack-{choice}",
-                        "action_sequence": [{"type": "attack", "cardId": f"attack-{choice}",
-                            "targetRef": {"playerId": 1, "zone": "active" if choice == 0 else "bench",
-                                **({"index": 0} if choice else {})}}]}
+                    action = obs["legalActions"][2 + choice]
+                    candidate_value = MacroCandidateV1(turn_intent="attack",
+                        intended_attack=str(action.get("label")), action_ids=(str(action["id"]),),
+                        action_sequence=(action,))
+                    candidate = asdict(candidate_value)
                     result = float(1 - choice)
-                    labels.append({"candidate": candidate, "expectedResult": result,
-                        "relativeResult": result, "weight": 1.0})
+                    uncertainty = (0.25 / 2) ** 0.5
+                    labels.append({"candidate": candidate, "candidateHash": candidate_value.key(),
+                        "attemptedRollouts": 2, "completedRollouts": 2,
+                        "outcomes": {"finished": 2, "truncated": 0, "error": 0},
+                        "outcomeReasons": {}, "expectedResult": result,
+                        "relativeResult": result - 1.0, "uncertainty": uncertainty,
+                        "weight": 2 / (1 + uncertainty)})
                 records.append({"positionHash": position_hash, "identity": identity,
                     "opponentPolicyFamily": family, "opponentArchetype": archetype,
                     "split": split, "status": "collected", "observation": obs,
+                    "candidateCount": len(labels), "sourceGameId": f"source-{position_index}",
                     "labels": labels})
             selection_entries.append({"policyFamily": family, "split": split,
                 "sourceGames": len(hashes), "positionHashes": hashes})
@@ -193,3 +208,12 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     verified = verify_macro_ranker_v2_artifact(model_path, model_path.with_suffix(".manifest.json"))
     assert verified["report"]["reportHash"] == report["reportHash"]
     assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
+
+
+def test_ranker_v2_rejects_relative_targets_not_centered_on_best_completed_plan(tmp_path):
+    labels_dir, _selection = _write_ranker_v2_fit_fixture(tmp_path)
+    record_path = next((labels_dir / "python-heuristic").glob("*.json"))
+    record = json.loads(record_path.read_text())
+    record["labels"][0]["relativeResult"] = 0.25
+    with pytest.raises(ValueError, match="best completed result"):
+        _validated_macro_labels(record)

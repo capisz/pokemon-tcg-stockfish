@@ -1079,7 +1079,11 @@ strength or autonomous improvement.
   intervals by independent selected position, overall and by archetype and
   policy family; the report records each interval's deterministic seed and
   replicate count. This quantifies uncertainty within the frozen sample only.
-- Verification: full Python suite 376 passed, strategy contract v1.2 validator,
+- Before fitting, v2 also independently validates candidate identities,
+  actor-visible legal root actions, rollout count/reason reconciliation,
+  result and uncertainty bounds, evidence-derived weights, and the per-position
+  relative-result center. Truncated/error-only candidates remain unlabelled.
+- Verification: full Python suite 377 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,
