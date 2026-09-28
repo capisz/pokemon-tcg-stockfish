@@ -22,6 +22,12 @@ from test_learning_mind_representation import observation
 from ptcg_lab.storage import digest as observation_digest
 
 
+def _measured_report_metrics(position_hash="fixture-position"):
+    return {"status": "measured", "requestedPositions": 1, "positions": 1,
+        "insufficientPositionHashes": [], "pairwiseComparisons": 1,
+        "details": [{"positionHash": position_hash, "pairwiseComparisons": 1}]}
+
+
 def test_ranker_v2_features_are_deterministic_state_and_plan_sensitive():
     obs = observation()
     candidate = {"turn_intent": "attack", "intended_attack": "Eon Blade",
@@ -65,7 +71,11 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
         "inferenceImplementationSha256": inference_implementation_sha256(),
-        "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__))}
+        "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
+        "training": _measured_report_metrics(), "development": _measured_report_metrics(),
+        "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
+            for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
+        "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
     validate_ranker_v2_report(report)
     changed = {**report, "featureSchemaHash": "wrong"}
@@ -130,7 +140,11 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
-        "modelSha256": file_sha256(model_path), "modelFeatureCount": 640}
+        "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
+        "training": _measured_report_metrics(), "development": _measured_report_metrics(),
+        "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
+            for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
+        "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
     report_path = tmp_path / "ranker.manifest.json"
     report_path.write_text(json.dumps(report))
@@ -245,6 +259,13 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     verified = verify_macro_ranker_v2_artifact(model_path, model_path.with_suffix(".manifest.json"))
     assert verified["report"]["reportHash"] == report["reportHash"]
     assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
+
+    forged_report = json.loads(model_path.with_suffix(".manifest.json").read_text())
+    forged_report["development"]["positions"] = 0
+    forged_report["reportHash"] = identity_hash({key: value for key, value in forged_report.items()
+                                                  if key != "reportHash"})
+    with pytest.raises(ValueError, match="measured status contradicts"):
+        validate_ranker_v2_report(forged_report)
 
 
 @pytest.mark.parametrize("incomplete_split", ("train", "development"))

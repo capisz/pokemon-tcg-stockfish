@@ -100,7 +100,8 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "trees": [{"nodeid": 0, "leaf": 0.0}]}
     model_path.write_text(json.dumps(artifact))
     complete_coverage = {"status": "measured", "requestedPositions": 1, "positions": 1,
-        "insufficientPositionHashes": []}
+        "insufficientPositionHashes": [], "pairwiseComparisons": 1,
+        "details": [{"positionHash": "fixture-position", "pairwiseComparisons": 1}]}
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": artifact["featureImplementationSha256"],
@@ -111,7 +112,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "selectionManifestSha256": file_sha256(selection_path),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "training": complete_coverage, "development": complete_coverage,
-        "holdouts": [{"kind": kind, "status": "measured"} for kind in
+        "holdouts": [{"kind": kind, "status": "measured", "metrics": complete_coverage} for kind in
             ("leave-one-opponent-archetype-out", "frozen-policy-family")],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
@@ -159,7 +160,7 @@ def test_ranker_distillation_rejects_teacher_report_with_unmeasured_holdout(tmp_
     report["reportHash"] = identity_hash({key: value for key, value in report.items()
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
-    with pytest.raises(ValueError, match="measured archetype and policy-family"):
+    with pytest.raises(ValueError, match="acceptance contradicts measured evidence"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)
@@ -173,7 +174,7 @@ def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkey
     report["reportHash"] = identity_hash({key: value for key, value in report.items()
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
-    with pytest.raises(ValueError, match="complete, measured train label coverage"):
+    with pytest.raises(ValueError, match="measured status contradicts its coverage/details"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)

@@ -105,6 +105,53 @@ def validate_ranker_v2_report(report: dict) -> None:
         raise ValueError("macro ranker v2 inference implementation mismatch")
     if report.get("evaluationImplementationSha256") != file_sha256(Path(__file__)):
         raise ValueError("macro ranker v2 evaluation implementation mismatch")
+    training = report.get("training")
+    development = report.get("development")
+    for name, metrics in (("training", training), ("development", development)):
+        if not isinstance(metrics, dict) or metrics.get("status") not in {"measured", "insufficient"}:
+            raise ValueError(f"macro ranker v2 {name} metrics are missing or invalid")
+        requested, positions = metrics.get("requestedPositions"), metrics.get("positions")
+        missing = metrics.get("insufficientPositionHashes")
+        if (type(requested) is not int or requested < 0 or type(positions) is not int
+                or positions < 0 or positions > requested or not isinstance(missing, list)
+                or any(not isinstance(value, str) or not value for value in missing)):
+            raise ValueError(f"macro ranker v2 {name} coverage counts are malformed")
+        if metrics["status"] == "measured":
+            details = metrics.get("details")
+            comparisons = metrics.get("pairwiseComparisons")
+            detail_hashes = ([row.get("positionHash") for row in details]
+                             if isinstance(details, list) and all(isinstance(row, dict) for row in details)
+                             else [])
+            detail_comparisons = ([row.get("pairwiseComparisons") for row in details]
+                                  if isinstance(details, list) and all(isinstance(row, dict) for row in details)
+                                  else [])
+            if (requested == 0 or positions != requested or missing
+                    or not isinstance(details, list) or len(details) != positions
+                    or type(comparisons) is not int or comparisons <= 0
+                    or any(not isinstance(value, str) or not value for value in detail_hashes)
+                    or len(set(detail_hashes)) != positions
+                    or any(type(value) is not int or value < 0 for value in detail_comparisons)
+                    or sum(detail_comparisons) != comparisons):
+                raise ValueError(f"macro ranker v2 {name} measured status contradicts its coverage/details")
+    holdouts = report.get("holdouts")
+    if not isinstance(holdouts, list):
+        raise ValueError("macro ranker v2 holdouts are missing")
+    for row in holdouts:
+        if (not isinstance(row, dict) or row.get("status") not in {"measured", "insufficient"}
+                or (row.get("status") == "measured"
+                    and (not isinstance(row.get("metrics"), dict)
+                         or row["metrics"].get("status") != "measured"))):
+            raise ValueError("macro ranker v2 holdout status contradicts its metrics")
+    required_holdout_kinds = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
+    measured_kinds = {row.get("kind") for row in holdouts if row.get("status") == "measured"}
+    expected_acceptance = ("review-required" if development.get("status") == "measured"
+        and holdouts and all(row["status"] == "measured" for row in holdouts)
+        and required_holdout_kinds.issubset(measured_kinds) else "insufficient")
+    if training.get("status") != "measured":
+        expected_acceptance = "insufficient"
+    if (report.get("acceptance") != expected_acceptance
+            or report.get("automaticPromotion") is not False):
+        raise ValueError("macro ranker v2 acceptance contradicts measured evidence")
     if report.get("reportHash") != identity_hash({key: value for key, value in report.items()
                                                    if key != "reportHash"}):
         raise ValueError("macro ranker v2 report hash mismatch")
@@ -324,6 +371,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
             "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
                           "seed": overall["seed"], "independentSourceGames": overall["independentUnits"]},
             "top3Recall": sum(row["top3Recall"] for row in details) / len(details),
+            "pairwiseComparisons": pair_count,
             "pairwiseOrderingAccuracy": (sum(row["pairwiseCorrect"] for row in details) / pair_count
                                          if pair_count else None),
             "byOpponentArchetype": by_archetype,
