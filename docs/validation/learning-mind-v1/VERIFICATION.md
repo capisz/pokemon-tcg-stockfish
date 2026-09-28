@@ -1109,3 +1109,15 @@ strength or autonomous improvement.
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,
   collector checkpoint, PPO update, service, or promotion were run.
+
+### Supervised target validation (2026-09-28)
+
+- Tightened the policy-label boundary: each supervised row must provide exactly
+  one nonempty target form, and soft action distributions must be one-dimensional,
+  numeric, finite, nonnegative, normalized within `1e-6`, and mass only on legal
+  options. Acceptable-action labels must be integer indices. This prevents
+  malformed or contradictory evidence from silently entering policy loss.
+- Verification: focused model/strategy tests pass (39); full Python suite passes
+  (388, with two existing deprecation warnings); `git diff --check` passes.
+  Collector-bound `experiment.py` is unchanged; no labels were fit and no PPO,
+  autonomous service, or promotion was started.

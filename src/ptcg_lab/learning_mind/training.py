@@ -26,8 +26,12 @@ def supervised_policy_rows(rows: Iterable[dict]) -> list[dict]:
             continue
         if source not in POLICY_LABEL_SOURCES:
             raise ValueError(f"unsupported policy label source: {source}")
-        if not (row.get("acceptableActionIndices") or row.get("policyDistribution")):
-            raise ValueError("policy-labelled row has no target")
+        acceptable = row.get("acceptableActionIndices")
+        distribution = row.get("policyDistribution")
+        has_acceptable = isinstance(acceptable, list) and bool(acceptable)
+        has_distribution = distribution is not None
+        if has_acceptable == has_distribution:
+            raise ValueError("policy-labelled row must have exactly one nonempty target form")
         accepted.append(row)
     return accepted
 
@@ -37,8 +41,16 @@ def acceptable_set_loss(logits: torch.Tensor, mask: torch.Tensor, rows: list[dic
     losses = []
     for index, row in enumerate(rows):
         if row.get("policyDistribution") is not None:
-            target = torch.as_tensor(row["policyDistribution"], dtype=logits.dtype, device=logits.device)
-            if target.numel() != logits.shape[1] or not torch.isclose(target.sum(), torch.tensor(1., device=logits.device)):
+            raw_target = row["policyDistribution"]
+            if (not isinstance(raw_target, list)
+                    or any(type(value) not in {int, float} for value in raw_target)):
+                raise ValueError("invalid policy distribution")
+            target = torch.as_tensor(raw_target, dtype=logits.dtype, device=logits.device)
+            total = target.sum()
+            if (target.ndim != 1 or target.numel() != logits.shape[1]
+                    or not torch.isfinite(target).all() or (target < 0).any()
+                    or not torch.isclose(total, torch.tensor(1., dtype=logits.dtype,
+                                                              device=logits.device), rtol=1e-6, atol=1e-6)):
                 raise ValueError("invalid policy distribution")
             positive = target > 0
             if not positive.any() or not mask[index, positive].all():
@@ -46,7 +58,11 @@ def acceptable_set_loss(logits: torch.Tensor, mask: torch.Tensor, rows: list[dic
             # Avoid the undefined 0 * -inf produced by padded, masked options.
             losses.append(-(target[positive] * log_probs[index, positive]).sum())
         else:
-            actions = sorted(set(int(value) for value in row["acceptableActionIndices"]))
+            raw_actions = row["acceptableActionIndices"]
+            if (not isinstance(raw_actions, list)
+                    or any(type(value) is not int for value in raw_actions)):
+                raise ValueError("acceptable actions must be integer indices")
+            actions = sorted(set(raw_actions))
             if not actions or any(value < 0 or value >= logits.shape[1] or not mask[index, value] for value in actions):
                 raise ValueError("acceptable action is not represented")
             losses.append(-torch.logsumexp(log_probs[index, actions], dim=0))

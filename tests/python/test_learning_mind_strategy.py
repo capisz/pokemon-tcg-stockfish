@@ -222,6 +222,12 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
             {"playedAction": 1}]
     assert supervised_policy_rows(rows) == rows[:1]
     with pytest.raises(ValueError): supervised_policy_rows([{"policyLabelSource": "ordinary-self-play", "acceptableActionIndices": [0]}])
+    with pytest.raises(ValueError, match="exactly one"):
+        supervised_policy_rows([{"policyLabelSource": "exact-search-distribution",
+                                 "acceptableActionIndices": [0], "policyDistribution": [1.]}])
+    with pytest.raises(ValueError, match="exactly one"):
+        supervised_policy_rows([{"policyLabelSource": "exact-search-distribution",
+                                 "acceptableActionIndices": [], "policyDistribution": None}])
     stage = {"representationParity": True, "heldOutLabelWin": True,
              "heldOutLabelEvidenceStatus": "supported-improvement", "targetProbeWin": True,
              "blindOpponentPolicyFamilyStatus": "supported-improvement",

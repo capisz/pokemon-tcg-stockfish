@@ -109,6 +109,28 @@ def test_search_distribution_loss_ignores_zero_mass_padded_options():
         acceptable_set_loss(logits, mask, [{"policyDistribution": [.5, 0., .5, 0.]}])
 
 
+@pytest.mark.parametrize("target", [
+    [1.1, -.1, 0., 0.],
+    [float("nan"), 0., 0., 0.],
+    [float("inf"), 0., 0., 0.],
+    [1., 0., 0.],
+    ["1", 0., 0., 0.],
+    [True, 0., 0., 0.],
+])
+def test_search_distribution_loss_rejects_malformed_targets(target):
+    logits = torch.tensor([[1., 2., 3., 0.]])
+    mask = torch.tensor([[True, True, True, True]])
+    with pytest.raises(ValueError, match="invalid policy distribution"):
+        acceptable_set_loss(logits, mask, [{"policyDistribution": target}])
+
+
+def test_acceptable_set_loss_rejects_noninteger_acceptable_actions():
+    logits = torch.tensor([[1., 2.]])
+    mask = torch.tensor([[True, True]])
+    with pytest.raises(ValueError, match="integer indices"):
+        acceptable_set_loss(logits, mask, [{"acceptableActionIndices": [0.5]}])
+
+
 def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
     torch.manual_seed(4); model = StrategyTransformerV1(); decision = encoded()
     batch = tensors(collate([decision]))
