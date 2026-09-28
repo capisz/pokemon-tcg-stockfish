@@ -92,6 +92,89 @@ def _validate_source_game_units(selection_path: Path, records: list[dict]) -> No
             raise ValueError("ranker v2 record source game differs from frozen selection")
 
 
+def _validate_ranker_metrics(metrics: dict, *, name: str) -> None:
+    requested, positions = metrics["requestedPositions"], metrics["positions"]
+    missing = metrics["insufficientPositionHashes"]
+    if positions == 0:
+        if len(missing) != requested or len(set(missing)) != len(missing):
+            raise ValueError(f"macro ranker v2 {name} empty coverage does not reconcile")
+        return
+    details = metrics.get("details")
+    if not isinstance(details, list) or len(details) != positions:
+        raise ValueError(f"macro ranker v2 {name} detail rows do not match covered positions")
+    if (len({row.get("positionHash") for row in details if isinstance(row, dict)}) != positions
+            or any(not isinstance(row, dict) for row in details)):
+        raise ValueError(f"macro ranker v2 {name} detail positions are invalid or duplicated")
+    detail_hashes = {row["positionHash"] for row in details}
+    if (any(not isinstance(value, str) or not value for value in detail_hashes)
+            or len(missing) != requested - positions or detail_hashes.intersection(missing)):
+        raise ValueError(f"macro ranker v2 {name} missing-position list does not reconcile")
+    for row in details:
+        if (not isinstance(row.get("sourceGameId"), str) or not row["sourceGameId"]
+                or not isinstance(row.get("opponentArchetype"), str) or not row["opponentArchetype"]
+                or not isinstance(row.get("opponentPolicyFamily"), str) or not row["opponentPolicyFamily"]
+                or type(row.get("candidates")) is not int or row["candidates"] < 2
+                or type(row.get("top3Recall")) is not bool
+                or type(row.get("pairwiseCorrect")) is not int or row["pairwiseCorrect"] < 0
+                or type(row.get("pairwiseComparisons")) is not int
+                or row["pairwiseComparisons"] < row["pairwiseCorrect"]
+                or isinstance(row.get("top1RelativeRegret"), bool)
+                or not isinstance(row.get("top1RelativeRegret"), (int, float))
+                or not math.isfinite(row["top1RelativeRegret"])
+                or not 0 <= row["top1RelativeRegret"] <= 1):
+            raise ValueError(f"macro ranker v2 {name} position metrics are malformed")
+
+    def close(actual, expected):
+        if expected is None:
+            return actual is None
+        return (not isinstance(actual, bool) and isinstance(actual, (int, float))
+                and math.isfinite(actual) and math.isclose(float(actual), float(expected),
+                    rel_tol=1e-9, abs_tol=1e-10))
+
+    regrets = [float(row["top1RelativeRegret"]) for row in details]
+    source_games = [row["sourceGameId"] for row in details]
+    position_hashes = sorted(row["positionHash"] for row in details)
+    overall = _bootstrap_mean(regrets, group_ids=source_games,
+        seed_material="macro-ranker-v2|all|" + "|".join(position_hashes))
+    bootstrap = metrics.get("bootstrap")
+    interval = metrics.get("meanTop1RelativeRegretCI95")
+    pair_count = sum(row["pairwiseComparisons"] for row in details)
+    correct_count = sum(row["pairwiseCorrect"] for row in details)
+    top3 = sum(row["top3Recall"] for row in details) / positions
+    if (not isinstance(bootstrap, dict) or bootstrap.get("method") != overall["method"]
+            or bootstrap.get("replicates") != overall["replicates"]
+            or bootstrap.get("seed") != overall["seed"]
+            or bootstrap.get("independentSourceGames") != overall["independentUnits"]
+            or not isinstance(interval, dict)
+            or not close(metrics.get("meanTop1RelativeRegret"), overall["mean"])
+            or not close(interval.get("low"), overall["interval95"]["low"])
+            or not close(interval.get("high"), overall["interval95"]["high"])
+            or not close(metrics.get("top3Recall"), top3)
+            or metrics.get("pairwiseComparisons") != pair_count
+            or not close(metrics.get("pairwiseOrderingAccuracy"), correct_count / pair_count if pair_count else None)):
+        raise ValueError(f"macro ranker v2 {name} aggregate metrics do not recompute from position details")
+
+    for field, key in (("opponentArchetype", "byOpponentArchetype"),
+                       ("opponentPolicyFamily", "byOpponentPolicyFamily")):
+        groups = metrics.get(key)
+        expected_values = sorted({row[field] for row in details})
+        if not isinstance(groups, dict) or sorted(groups) != expected_values:
+            raise ValueError(f"macro ranker v2 {name} {field} summary coverage mismatch")
+        for value in expected_values:
+            subset = [row for row in details if row[field] == value]
+            summary = _bootstrap_mean([float(row["top1RelativeRegret"]) for row in subset],
+                group_ids=[row["sourceGameId"] for row in subset],
+                seed_material=f"macro-ranker-v2|{field}|{value}|" +
+                    "|".join(sorted(row["positionHash"] for row in subset)))
+            supplied = groups[value]
+            if (not isinstance(supplied, dict) or supplied.get("positions") != len(subset)
+                    or supplied.get("bootstrapSeed") != summary["seed"]
+                    or supplied.get("independentSourceGames") != summary["independentUnits"]
+                    or not close(supplied.get("meanTop1RelativeRegret"), summary["mean"])
+                    or supplied.get("meanTop1RelativeRegretCI95") != summary["interval95"]):
+                raise ValueError(f"macro ranker v2 {name} {field} aggregate does not recompute")
+
+
 def validate_ranker_v2_report(report: dict) -> None:
     if not isinstance(report, dict) or report.get("kind") != "xgboost-macro-ranker-v2":
         raise ValueError("not a macro ranker v2 report")
@@ -116,6 +199,7 @@ def validate_ranker_v2_report(report: dict) -> None:
                 or positions < 0 or positions > requested or not isinstance(missing, list)
                 or any(not isinstance(value, str) or not value for value in missing)):
             raise ValueError(f"macro ranker v2 {name} coverage counts are malformed")
+        _validate_ranker_metrics(metrics, name=name)
         if metrics["status"] == "measured":
             details = metrics.get("details")
             comparisons = metrics.get("pairwiseComparisons")
@@ -142,6 +226,8 @@ def validate_ranker_v2_report(report: dict) -> None:
                     and (not isinstance(row.get("metrics"), dict)
                          or row["metrics"].get("status") != "measured"))):
             raise ValueError("macro ranker v2 holdout status contradicts its metrics")
+        if isinstance(row.get("metrics"), dict):
+            _validate_ranker_metrics(row["metrics"], name="holdout")
     required_holdout_kinds = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
     measured_kinds = {row.get("kind") for row in holdouts if row.get("status") == "measured"}
     expected_acceptance = ("review-required" if development.get("status") == "measured"

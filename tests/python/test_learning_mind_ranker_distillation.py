@@ -99,9 +99,29 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "trees": [{"nodeid": 0, "leaf": 0.0}]}
     model_path.write_text(json.dumps(artifact))
+    detail = {"positionHash": "fixture-position", "sourceGameId": "fixture-game",
+        "opponentArchetype": "crustle", "opponentPolicyFamily": "python-heuristic",
+        "candidates": 2, "top1RelativeRegret": 0.0, "top3Recall": True,
+        "pairwiseCorrect": 1, "pairwiseComparisons": 1}
+    overall = ranker_v2._bootstrap_mean([0.0], seed_material="macro-ranker-v2|all|fixture-position",
+                                        group_ids=["fixture-game"])
+    group_summaries = {}
+    for field in ("opponentArchetype", "opponentPolicyFamily"):
+        value = detail[field]
+        summary = ranker_v2._bootstrap_mean([0.0],
+            seed_material=f"macro-ranker-v2|{field}|{value}|fixture-position",
+            group_ids=["fixture-game"])
+        group_summaries[field] = {value: {"positions": 1, "meanTop1RelativeRegret": 0.0,
+            "meanTop1RelativeRegretCI95": summary["interval95"], "bootstrapSeed": summary["seed"],
+            "independentSourceGames": summary["independentUnits"]}}
     complete_coverage = {"status": "measured", "requestedPositions": 1, "positions": 1,
-        "insufficientPositionHashes": [], "pairwiseComparisons": 1,
-        "details": [{"positionHash": "fixture-position", "pairwiseComparisons": 1}]}
+        "insufficientPositionHashes": [], "meanTop1RelativeRegret": 0.0,
+        "meanTop1RelativeRegretCI95": overall["interval95"],
+        "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
+            "seed": overall["seed"], "independentSourceGames": overall["independentUnits"]},
+        "top3Recall": 1.0, "pairwiseComparisons": 1, "pairwiseOrderingAccuracy": 1.0,
+        "byOpponentArchetype": group_summaries["opponentArchetype"],
+        "byOpponentPolicyFamily": group_summaries["opponentPolicyFamily"], "details": [detail]}
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": artifact["featureImplementationSha256"],
@@ -174,7 +194,7 @@ def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkey
     report["reportHash"] = identity_hash({key: value for key, value in report.items()
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
-    with pytest.raises(ValueError, match="measured status contradicts its coverage/details"):
+    with pytest.raises(ValueError, match="empty coverage does not reconcile"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)

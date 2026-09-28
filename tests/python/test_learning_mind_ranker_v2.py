@@ -23,9 +23,28 @@ from ptcg_lab.storage import digest as observation_digest
 
 
 def _measured_report_metrics(position_hash="fixture-position"):
+    detail = {"positionHash": position_hash, "sourceGameId": "fixture-game",
+        "opponentArchetype": "crustle", "opponentPolicyFamily": "python-heuristic",
+        "candidates": 2, "top1RelativeRegret": 0.0, "top3Recall": True,
+        "pairwiseCorrect": 1, "pairwiseComparisons": 1}
+    overall = _bootstrap_mean([0.0], seed_material=f"macro-ranker-v2|all|{position_hash}",
+                              group_ids=["fixture-game"])
+    groups = {}
+    for field in ("opponentArchetype", "opponentPolicyFamily"):
+        value = detail[field]
+        result = _bootstrap_mean([0.0], seed_material=f"macro-ranker-v2|{field}|{value}|{position_hash}",
+                                 group_ids=["fixture-game"])
+        groups[field] = {value: {"positions": 1, "meanTop1RelativeRegret": 0.0,
+            "meanTop1RelativeRegretCI95": result["interval95"], "bootstrapSeed": result["seed"],
+            "independentSourceGames": result["independentUnits"]}}
     return {"status": "measured", "requestedPositions": 1, "positions": 1,
-        "insufficientPositionHashes": [], "pairwiseComparisons": 1,
-        "details": [{"positionHash": position_hash, "pairwiseComparisons": 1}]}
+        "insufficientPositionHashes": [], "meanTop1RelativeRegret": 0.0,
+        "meanTop1RelativeRegretCI95": overall["interval95"],
+        "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
+            "seed": overall["seed"], "independentSourceGames": overall["independentUnits"]},
+        "top3Recall": 1.0, "pairwiseComparisons": 1, "pairwiseOrderingAccuracy": 1.0,
+        "byOpponentArchetype": groups["opponentArchetype"],
+        "byOpponentPolicyFamily": groups["opponentPolicyFamily"], "details": [detail]}
 
 
 def test_ranker_v2_features_are_deterministic_state_and_plan_sensitive():
@@ -264,8 +283,15 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     forged_report["development"]["positions"] = 0
     forged_report["reportHash"] = identity_hash({key: value for key, value in forged_report.items()
                                                   if key != "reportHash"})
-    with pytest.raises(ValueError, match="measured status contradicts"):
+    with pytest.raises(ValueError, match="empty coverage does not reconcile"):
         validate_ranker_v2_report(forged_report)
+
+    forged_summary = json.loads(model_path.with_suffix(".manifest.json").read_text())
+    forged_summary["development"]["top3Recall"] = 0.123
+    forged_summary["reportHash"] = identity_hash({key: value for key, value in forged_summary.items()
+                                                    if key != "reportHash"})
+    with pytest.raises(ValueError, match="aggregate metrics do not recompute"):
+        validate_ranker_v2_report(forged_summary)
 
 
 @pytest.mark.parametrize("incomplete_split", ("train", "development"))
