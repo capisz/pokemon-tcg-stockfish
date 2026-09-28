@@ -1064,9 +1064,10 @@ strength or autonomous improvement.
   simulation-generated action IDs do not enter the features.
 - The v2 report binds its model to the feature-schema hash and feature-source
   hash. The existing `experiment.py` collector/ranker-v1 module is unchanged
-  to preserve the active label collector's frozen source identity. Ranker v2
-  was not fitted: no finalized labels were consumed and no model-quality claim
-  is made. The old ranker remains available as a separate baseline.
+  to preserve the active label collector's frozen source identity. A synthetic
+  fixture fits the complete v2 path and exercises all archetype and family
+  holdouts; no finalized labels were consumed and no real-data model-quality
+  claim is made. The old ranker remains available as a separate baseline.
 - A synthetic native XGBoost deserialization attempt caused a segmentation
   fault in the configured runtime. To keep future inference out of that native
   load path, v2 exports a portable JSON tree ensemble with a Python scorer.
@@ -1074,7 +1075,7 @@ strength or autonomous improvement.
   verification checks report/schema/source/model hashes and feature dimension.
   No ranker was fit from the finalized game labels, so real-data quality and
   held-out performance remain unverified.
-- Verification: full Python suite 374 passed, strategy contract v1.2 validator,
+- Verification: full Python suite 375 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,

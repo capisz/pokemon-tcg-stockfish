@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import numpy as np
 import pytest
@@ -10,7 +11,7 @@ from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
-    predict_macro_ranker_v2, verify_macro_ranker_v2_artifact)
+    fit_macro_ranker_v2, predict_macro_ranker_v2, verify_macro_ranker_v2_artifact)
 from ptcg_lab.learning_mind.schema import identity_hash
 from test_learning_mind_representation import observation
 
@@ -105,3 +106,76 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
     model_path.write_bytes(model_path.read_bytes() + b"tamper")
     with pytest.raises(ValueError, match="checksum"):
         verify_macro_ranker_v2_artifact(model_path, report_path)
+
+
+def _write_ranker_v2_fit_fixture(root):
+    families = ("python-heuristic", "typescript-heuristic")
+    splits = ("train", "development")
+    archetypes = ("crustle", "dragapult")
+    identity = {"fixtureIdentity": "synthetic-ranker-v2"}
+    selection_entries = []
+    records = []
+    for family in families:
+        for split in splits:
+            hashes = []
+            for archetype in archetypes:
+                position_hash = f"{family}-{split}-{archetype}"
+                hashes.append(position_hash)
+                obs = observation()
+                obs["players"][1]["active"]["card"]["id"] = f"PUBLIC-{archetype}"
+                labels = []
+                for choice in (0, 1):
+                    candidate = {"turn_intent": "attack", "intended_attack": f"attack-{choice}",
+                        "action_sequence": [{"type": "attack", "cardId": f"attack-{choice}",
+                            "targetRef": {"playerId": 1, "zone": "active" if choice == 0 else "bench",
+                                **({"index": 0} if choice else {})}}]}
+                    result = float(1 - choice)
+                    labels.append({"candidate": candidate, "expectedResult": result,
+                        "relativeResult": result, "weight": 1.0})
+                records.append({"positionHash": position_hash, "identity": identity,
+                    "opponentPolicyFamily": family, "opponentArchetype": archetype,
+                    "split": split, "status": "collected", "observation": obs,
+                    "labels": labels})
+            selection_entries.append({"policyFamily": family, "split": split,
+                "sourceGames": len(hashes), "positionHashes": hashes})
+
+    selection = {"schemaVersion": 1, "identity": identity, "splits": selection_entries}
+    selection["selectionHash"] = identity_hash(selection)
+    selection_path = root / "selection.json"
+    selection_path.write_text(json.dumps(selection))
+    labels_dir = root / "combined"
+    files = []
+    for row in records:
+        relative = Path(row["opponentPolicyFamily"]) / f"{row['positionHash']}.json"
+        destination = labels_dir / relative
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        destination.write_text(json.dumps(row, sort_keys=True, separators=(",", ":")))
+        files.append({"path": relative.as_posix(), "sha256": file_sha256(destination)})
+    manifest = {"schemaVersion": 1, "kind": "combined-macro-label-runs-v1", "identity": identity,
+        "selectionHash": selection["selectionHash"],
+        "selectionManifestSha256": file_sha256(selection_path),
+        "selectedPositionHashes": sorted(row["positionHash"] for row in records),
+        "positionsByFamilySplit": {family: {split: len(archetypes) for split in splits} for family in families},
+        "positionsBySplit": {split: sum(row["split"] == split for row in records) for split in splits},
+        "policyFamilies": list(families), "positions": len(records), "files": files}
+    manifest["manifestHash"] = identity_hash(manifest)
+    (labels_dir / "manifest.json").write_text(json.dumps(manifest))
+    return labels_dir, selection_path
+
+
+def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import ranker_v2
+    from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
+    monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
+        lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
+    labels, selection = _write_ranker_v2_fit_fixture(tmp_path)
+    model_path = tmp_path / "ranker.json"
+    report = fit_macro_ranker_v2(labels, model_path, selection_path=selection,
+        teacher_hash="frozen-teacher", opponent_policy_hash="frozen-opponent-set")
+    assert report["kind"] == "xgboost-macro-ranker-v2"
+    assert report["acceptance"] == "review-required"
+    assert report["development"]["positions"] == 4
+    assert len(report["holdouts"]) == 4
+    verified = verify_macro_ranker_v2_artifact(model_path, model_path.with_suffix(".manifest.json"))
+    assert verified["report"]["reportHash"] == report["reportHash"]
+    assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
