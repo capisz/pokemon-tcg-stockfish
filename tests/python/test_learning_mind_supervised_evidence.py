@@ -153,6 +153,22 @@ def test_human_disagreement_review_is_actor_view_only_and_hash_bound(tmp_path):
     assert receipt["automaticPromotion"] is False
 
 
+def test_downstream_review_rejects_self_rehashed_forged_audit_conclusion(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=2)
+    audit_path = tmp_path / "audit.json"
+    audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, output=audit_path)
+    claimed = json.loads(audit_path.read_text())
+    claimed["heldOutLabelWin"] = True
+    claimed["status"] = "supported-improvement"
+    claimed["reportHash"] = identity_hash({key: value for key, value in claimed.items()
+                                           if key != "reportHash"})
+    audit_path.write_text(json.dumps(claimed))
+    with pytest.raises(ValueError, match="fresh recomputation"):
+        build_disagreement_review_packet(dataset_dir=dataset, checkpoint=checkpoint,
+            evaluation_path=evaluation, audit_path=audit_path, output=tmp_path / "packet.json")
+
+
 def test_human_disagreement_review_requires_every_action_to_be_acceptable(tmp_path):
     dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
     audit_path = tmp_path / "audit.json"

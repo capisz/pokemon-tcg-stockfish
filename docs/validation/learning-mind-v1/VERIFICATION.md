@@ -208,6 +208,9 @@ strength or autonomous improvement.
   cover every packet position with a named reviewer, a finding, and rationale;
   the receipt marks the PPO review prerequisite true only when all findings are
   `acceptable`. Concerns and follow-ups remain unresolved and keep the gate shut.
+- Before producing safety or review receipts, downstream commands now rerun
+  the supervised audit from its frozen inputs and compare the complete report;
+  a recomputed self-hash alone cannot make a forged pass status valid.
 - This gate only strengthens supervised evidence. It does not enable PPO,
   automatic promotion, or continuous operation; those still require all
   existing stage gates and explicit human authorization.

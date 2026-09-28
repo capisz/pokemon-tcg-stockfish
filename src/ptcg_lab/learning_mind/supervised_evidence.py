@@ -235,3 +235,23 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
     finally:
         temporary_path.unlink(missing_ok=True)
     return report
+
+
+def verify_supervised_audit_report(*, dataset_dir: Path, checkpoint: Path,
+                                   evaluation_path: Path, audit_path: Path) -> dict:
+    """Recompute a prior audit and reject reports whose self-hash hides forged conclusions."""
+    claimed = json.loads(audit_path.read_text())
+    recorded_hash = claimed.get("reportHash")
+    if recorded_hash != identity_hash({key: value for key, value in claimed.items()
+                                       if key != "reportHash"}):
+        raise ValueError("supervised evidence audit report hash mismatch")
+    minimum = claimed.get("minimumIndependentGameSides")
+    if type(minimum) is not int or minimum < MINIMUM_INDEPENDENT_GAME_SIDES:
+        raise ValueError("supervised evidence audit does not use the frozen independent-side threshold")
+    with tempfile.TemporaryDirectory(prefix="learning-mind-audit-verify-") as directory:
+        recomputed = audit_supervised_evaluation(dataset_dir=dataset_dir, checkpoint=checkpoint,
+            evaluation_path=evaluation_path, output=Path(directory) / "verified.json",
+            minimum_game_sides=minimum)
+    if claimed != recomputed:
+        raise ValueError("supervised evidence audit conclusions do not match a fresh recomputation")
+    return recomputed

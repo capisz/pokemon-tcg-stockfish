@@ -8,14 +8,13 @@ import tempfile
 from .dataset_v1 import file_sha256, load_dataset
 from .encoding import encode_decision
 from .schema import identity_hash
+from .supervised_evidence import verify_supervised_audit_report
 
 
 def _read_verified_audit(*, dataset_dir: Path, checkpoint: Path,
                          evaluation_path: Path, audit_path: Path) -> tuple[dict, dict, list[dict]]:
-    audit = json.loads(audit_path.read_text())
-    recorded_hash = audit.get("reportHash")
-    if recorded_hash != identity_hash({key: value for key, value in audit.items() if key != "reportHash"}):
-        raise ValueError("supervised evidence audit report hash mismatch")
+    audit = verify_supervised_audit_report(dataset_dir=dataset_dir, checkpoint=checkpoint,
+        evaluation_path=evaluation_path, audit_path=audit_path)
     manifest, rows = load_dataset(dataset_dir)
     if (audit.get("datasetManifestHash") != manifest.get("manifestHash")
             or audit.get("datasetManifestSha256") != file_sha256(dataset_dir / "manifest.json")):
