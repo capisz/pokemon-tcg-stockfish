@@ -1182,7 +1182,10 @@ strength or autonomous improvement.
   treated as non-regressions; malformed, duplicate, or missing matchup records
   are rejected.
 - Sequential evaluation now identifies supported non-regression when the
-  decisive-game Wilson lower bound clears the frozen five-point margin. The
+  decisive-game Wilson lower bound clears the frozen five-point margin, but
+  will not issue any supported status until at least 100 decisive games exist;
+  draw-heavy cells continue to 250/500 and become inconclusive at the cap if
+  decisive evidence remains sparse. The
   gate also requires an explicit empty severity-three regression list, passing
   blind-family evidence, exact identities, and human approval. Automatic
   promotion remains impossible.

@@ -32,6 +32,12 @@ def sequential_decision(records: list[dict], *, non_regression_margin: float = .
     interval = wilson(wins, decisive)
     if n < 100:
         status = "continue-to-100"
+    elif decisive < 100 and n < 250:
+        status = "continue-to-250"
+    elif decisive < 100 and n < 500:
+        status = "continue-to-500"
+    elif decisive < 100:
+        status = "inconclusive-at-cap"
     elif interval["low"] is not None and interval["low"] > .5:
         status = "supported-improvement"
     elif interval["high"] is not None and interval["high"] < .5 - non_regression_margin:
@@ -44,7 +50,8 @@ def sequential_decision(records: list[dict], *, non_regression_margin: float = .
         status = "continue-to-500"
     else:
         status = "inconclusive-at-cap"
-    return {"status": status, "completed": n, "wins": wins, "draws": n - decisive, "losses": losses,
+    return {"status": status, "completed": n, "decisive": decisive,
+            "wins": wins, "draws": n - decisive, "losses": losses,
             "unfinished": {key: counts[key] for key in ("truncated", "error")}, "wilson95DecisiveWinRate": interval}
 
 
@@ -54,6 +61,8 @@ def promotion_gate(*, aggregate: dict, matchups: list[dict], strategy: dict,
     if aggregate.get("status") != "supported-improvement": reasons.append("aggregate improvement unsupported")
     if type(aggregate.get("completed")) is not int or aggregate["completed"] < 100:
         reasons.append("aggregate minimum of 100 completed games not met")
+    if type(aggregate.get("decisive")) is not int or aggregate["decisive"] < 100:
+        reasons.append("aggregate minimum of 100 decisive games for Wilson support not met")
     if not isinstance(matchups, list):
         reasons.append("ordered matchup evidence is malformed")
     else:
@@ -67,6 +76,8 @@ def promotion_gate(*, aggregate: dict, matchups: list[dict], strategy: dict,
             if (key not in PROMOTION_MATCHUPS or key in observed
                     or type(row.get("completed")) is not int
                     or row["completed"] < 100
+                    or type(row.get("decisive")) is not int
+                    or row["decisive"] < 100
                     or row.get("status") not in {"supported-improvement", "supported-non-regression"}
                     or type(row.get("regressionPoints")) not in {int, float}
                     or not math.isfinite(row["regressionPoints"])):

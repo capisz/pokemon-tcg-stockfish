@@ -269,6 +269,10 @@ def test_truncation_ends_advantage_trace_and_guards_skip_updates():
 def test_sequential_evaluation_and_manual_promotion_gate():
     records = [{"status": "finished", "score": 1}] * 100
     assert sequential_decision(records)["status"] == "supported-improvement"
+    draw_heavy = [{"status": "finished", "score": 1}] * 5 + [{"status": "finished", "score": .5}] * 95
+    assert sequential_decision(draw_heavy)["status"] == "continue-to-250"
+    assert sequential_decision(draw_heavy * 3)["status"] == "continue-to-500"
+    assert sequential_decision(draw_heavy * 5)["status"] == "inconclusive-at-cap"
     non_regression = sequential_decision([{"status": "finished", "score": 1}] * 55
                                         + [{"status": "finished", "score": 0}] * 45)
     assert non_regression["status"] == "supported-non-regression"
@@ -277,7 +281,7 @@ def test_sequential_evaluation_and_manual_promotion_gate():
                           identities_match=True, human_approved=False)
     assert not gate["promotable"] and gate["automaticPromotion"] is False
     complete_matchups = [{"ownArchetype": own, "opponentArchetype": opponent,
-        "completed": 100, "status": "supported-non-regression", "regressionPoints": 0}
+        "completed": 100, "decisive": 100, "status": "supported-non-regression", "regressionPoints": 0}
         for own, opponent in sorted(PROMOTION_MATCHUPS)]
     passed = promotion_gate(aggregate=sequential_decision(records), matchups=complete_matchups,
         strategy={"severityThreeRegressions": []}, blind_family_passed=True,
