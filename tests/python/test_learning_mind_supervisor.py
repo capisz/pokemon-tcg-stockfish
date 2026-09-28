@@ -48,6 +48,30 @@ def test_continuous_operation_requires_every_exact_gate(field, value):
     assert continuous_operation_enablement(record)["enabled"] is False
 
 
+def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp_path):
+    record = approved_continuous_record()
+    supervisor = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000)
+    supervisor.start(human_enabled=True, stage_record=record)
+    supervisor.record_progress({"positionIndex": 7, "optimizerBatch": 2})
+    supervisor.pause("planned checkpoint", notify=False)
+
+    restarted = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000)
+    assert restarted.state.status == "PAUSED"
+    assert restarted.state.phase == "collection"
+    assert restarted.state.cursor == {"positionIndex": 7, "optimizerBatch": 2}
+    with pytest.raises(PermissionError, match="only while the supervisor is running"):
+        restarted.record_progress({"positionIndex": 8})
+    restarted.start(human_enabled=True, stage_record=record)
+    with pytest.raises(ValueError, match="must advance"):
+        restarted.advance_phase("evaluation")
+    restarted.advance_phase("training", next_cursor={"epoch": 0, "batch": 0})
+    assert restarted.state.phase == "training"
+    assert restarted.state.cursor == {"epoch": 0, "batch": 0}
+    with pytest.raises(ValueError, match="finite JSON values"):
+        restarted.record_progress({"unsafe": float("nan")})
+    assert restarted.state.cursor == {"epoch": 0, "batch": 0}
+
+
 def test_cpu_worker_profile():
     assert cpu_worker_count(16) == 12
     assert cpu_worker_count(8) == 6

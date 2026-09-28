@@ -1001,5 +1001,10 @@ strength or autonomous improvement.
   reject truthy non-boolean substitutes, and retain the three-strike/failure
   pause behavior. The protocol records these prerequisites and keeps the
   continuous-operation default disabled.
+- Added running-only JSON cursor checkpoints and sequential collection →
+  training → evaluation → retention phase transitions. Cursor values must be
+  finite JSON data and survive pause/restart; phase transitions are rejected
+  while paused, when skipped, or when malformed. The service remains
+  uninstalled and its default state remains paused.
 - Verification: learning-mind supervisor tests, full Python suite, typecheck,
   and `git diff --check` pass. No service was started or installed.

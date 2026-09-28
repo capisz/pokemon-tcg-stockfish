@@ -22,6 +22,8 @@
     "enabled": false,
     "prerequisites": ["ppoEnabled", "specialistCurriculumPassed", "continuousOperationEnabled",
       "humanEnableContinuousOperation"],
+    "phases": ["collection", "training", "evaluation", "retention"],
+    "phaseCursorPersistence": "atomic-json-checkpoint; restart always paused",
     "startupStatusAfterReboot": "PAUSED"
   },
   "promotion": {"automatic": false, "humanApprovalRequired": true},

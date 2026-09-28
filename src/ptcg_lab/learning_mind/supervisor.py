@@ -60,6 +60,36 @@ class MindSupervisor:
             raise PermissionError("continuous operation is not enabled by the accepted stage record")
         self.check_disk(); self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
 
+    def record_progress(self, cursor: dict) -> None:
+        if self.state.status != "RUNNING":
+            raise PermissionError("progress can be checkpointed only while the supervisor is running")
+        if not isinstance(cursor, dict):
+            raise ValueError("phase cursor must be a JSON object")
+        try:
+            frozen = json.loads(json.dumps(cursor, allow_nan=False))
+        except (TypeError, ValueError) as error:
+            raise ValueError("phase cursor must contain finite JSON values only") from error
+        self.state.cursor = frozen
+        self.persist()
+
+    def advance_phase(self, next_phase: str, *, next_cursor: dict | None = None) -> None:
+        if self.state.status != "RUNNING":
+            raise PermissionError("phase transitions require a running supervisor")
+        if self.state.phase not in PHASES or next_phase not in PHASES:
+            raise ValueError("unknown learning phase")
+        expected = PHASES[(PHASES.index(self.state.phase) + 1) % len(PHASES)]
+        if next_phase != expected:
+            raise ValueError(f"phase transition must advance from {self.state.phase} to {expected}")
+        if next_cursor is not None and not isinstance(next_cursor, dict):
+            raise ValueError("next phase cursor must be a JSON object")
+        try:
+            frozen = json.loads(json.dumps(next_cursor or {}, allow_nan=False))
+        except (TypeError, ValueError) as error:
+            raise ValueError("next phase cursor must contain finite JSON values only") from error
+        self.state.phase = next_phase
+        self.state.cursor = frozen
+        self.persist()
+
     def pause(self, reason: str, *, notify: bool = True) -> None:
         self.state.status = "PAUSED"; self.state.pause_reason = reason; self.persist()
         if notify: self.notifier({"kind": "pause", "reason": reason})
