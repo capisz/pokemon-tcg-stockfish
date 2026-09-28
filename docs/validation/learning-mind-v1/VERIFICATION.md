@@ -969,3 +969,21 @@ strength or autonomous improvement.
   CLI help checks, TypeScript
   typecheck, and `git diff --check` pass. No games were simulated and no label
   collector/checkpoint was read or changed.
+
+### Supervised resume and promotion-evidence integrity (2026-09-28)
+
+- A pause after the final minibatch of an epoch previously saved a cursor past
+  the end of the batch order without preserving partial-epoch loss totals; a
+  resume could then divide by an empty loss list. The checkpoint now persists
+  batch/loss progress and final-batch cursors, and a final-minibatch interrupt
+  resumes bit-equivalently to an uninterrupted run.
+- Resume now rejects changes to seed, batch size, epoch target, optimizer/model
+  configuration, or source dataset-manifest hash. Dataset loading verifies the
+  manifest self-hash as well as the rows hash, and trained checkpoints bind to
+  the exact supervised dataset manifest that evaluation must use.
+- PPO's evidence prerequisite now requires adequate severity-three probe
+  coverage in addition to a held-out label win, targeted probe win, and no
+  severity-three regression. Human enablement remains independently required.
+- Verification: full Python suite 348 passed; TypeScript typecheck and
+  `git diff --check` passed. No model fit, games, or collector activity was
+  started by this change.

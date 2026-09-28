@@ -124,10 +124,12 @@ def update_guard(*, approximate_kl: float, value_loss: float, finite: bool = Tru
 
 def ppo_enablement(stage_record: dict) -> dict:
     passed = bool(stage_record.get("representationParity") and stage_record.get("heldOutLabelWin")
-                  and stage_record.get("targetProbeWin") and not stage_record.get("severityThreeRegression"))
+                  and stage_record.get("targetProbeWin")
+                  and stage_record.get("severityThreeProbeCoverage") == "sufficient"
+                  and not stage_record.get("severityThreeRegression"))
     return {"enabled": passed and bool(stage_record.get("humanEnablePPO")),
             "prerequisitesPassed": passed,
-            "reason": None if passed else "supervised milestone has not passed",
+            "reason": None if passed else "supervised milestone evidence is incomplete or not improved",
             "humanEnableRequired": True}
 
 
@@ -216,27 +218,58 @@ def _tensor_batch(records: list[dict], indices: list[int]):
 
 def train_supervised(records: list[dict], output: Path, identity: dict, *, epochs: int = 1,
                      batch_size: int = 32, seed: int = 7543298, resume: Path | None = None,
-                     stop_after_batches: int | None = None) -> dict:
+                     stop_after_batches: int | None = None,
+                     dataset_manifest_hash: str | None = None) -> dict:
     """Deterministic same-device bootstrap with durable optimizer/RNG cursor."""
     records = supervised_policy_rows(records)
     if not records: raise ValueError("supervised bootstrap has no approved labels")
+    if type(epochs) is not int or epochs < 1 or type(batch_size) is not int or batch_size < 1:
+        raise ValueError("supervised epochs and batch size must be positive integers")
+    if type(seed) is not int:
+        raise ValueError("supervised seed must be an integer")
+    training_config = {"seed": seed, "batchSize": batch_size, "epochs": epochs,
+                       "optimizer": "AdamW", "learningRate": 1e-4, "weightDecay": 1e-4,
+                       "model": "StrategyTransformerV1",
+                       "datasetManifestHash": dataset_manifest_hash}
     torch.manual_seed(seed)
     model = StrategyTransformerV1()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
     start_epoch = start_batch = 0; history = []
+    current_epoch_loss_sum = 0.0
+    current_epoch_batches = 0
     if resume:
         checkpoint = torch.load(resume, map_location="cpu", weights_only=False)
         require_checkpoint_identity(checkpoint, identity)
+        if checkpoint.get("kind") != "StrategyTransformerV1-supervised" or checkpoint.get("trainingConfig") != training_config:
+            raise ValueError("supervised resume training configuration mismatch")
         model.load_state_dict(checkpoint["model"]); optimizer.load_state_dict(checkpoint["optimizer"])
         torch.set_rng_state(checkpoint["rngState"])
         start_epoch, start_batch = checkpoint["epoch"], checkpoint["nextBatch"]
         history = checkpoint.get("history", [])
+        current_epoch_loss_sum = checkpoint.get("currentEpochLossSum", 0.0)
+        current_epoch_batches = checkpoint.get("currentEpochBatches", 0)
+        if (type(start_epoch) is not int or not 0 <= start_epoch <= epochs
+                or type(start_batch) is not int or start_batch < 0 or start_batch > len(records)
+                or (start_epoch < epochs and start_batch not in {len(records), *range(0, len(records), batch_size)})
+                or type(current_epoch_batches) is not int or current_epoch_batches < 0
+                or not isinstance(current_epoch_loss_sum, (int, float))
+                or not math.isfinite(current_epoch_loss_sum) or current_epoch_loss_sum < 0
+                or (current_epoch_batches == 0 and current_epoch_loss_sum != 0.0)
+                or len(history) != start_epoch):
+            raise ValueError("supervised checkpoint cursor or epoch metrics are invalid")
+        if (start_epoch < epochs and start_batch == 0 and current_epoch_batches != 0
+                or start_batch > 0 and current_epoch_batches != math.ceil(start_batch / batch_size)):
+            raise ValueError("supervised checkpoint batch metrics do not match its cursor")
 
     def save(epoch, next_batch):
         payload = {"schemaVersion": 1, "kind": "StrategyTransformerV1-supervised", "identity": identity,
-                   "epoch": epoch, "nextBatch": next_batch, "seed": seed, "batchSize": batch_size,
+                   "trainingConfig": training_config, "datasetManifestHash": dataset_manifest_hash,
+                   "epoch": epoch, "nextBatch": next_batch,
+                   "seed": seed, "batchSize": batch_size,
                    "model": model.state_dict(), "optimizer": optimizer.state_dict(),
                    "rngState": torch.get_rng_state(), "history": history,
+                   "currentEpochLossSum": current_epoch_loss_sum,
+                   "currentEpochBatches": current_epoch_batches,
                    "policyLabelSources": sorted(POLICY_LABEL_SOURCES)}
         return atomic_checkpoint(output, payload)
 
@@ -244,7 +277,7 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
     for epoch in range(start_epoch, epochs):
         generator = torch.Generator().manual_seed(seed + epoch)
         order = torch.randperm(len(records), generator=generator).tolist()
-        model.train(); losses = []
+        model.train()
         offset = start_batch if epoch == start_epoch else 0
         for start in range(offset, len(order), batch_size):
             tensors, labels = _tensor_batch(records, order[start:start + batch_size])
@@ -252,12 +285,19 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
             loss = acceptable_set_loss(logits, tensors["option_mask"], labels)
             if not torch.isfinite(loss): raise RuntimeError("non-finite supervised loss")
             optimizer.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0); optimizer.step()
-            losses.append(float(loss.detach())); save(epoch, start + batch_size)
+            current_epoch_loss_sum += float(loss.detach())
+            current_epoch_batches += 1
+            next_batch = min(start + batch_size, len(order))
+            save(epoch, next_batch)
             completed_batches += 1
             if stop_after_batches is not None and completed_batches >= stop_after_batches:
                 return {"status": "paused", "checkpoint": str(output), "epoch": epoch,
-                        "nextBatch": start + batch_size, "examples": len(records)}
-        history.append({"epoch": epoch + 1, "policyLoss": sum(losses) / len(losses)})
+                        "nextBatch": next_batch, "examples": len(records)}
+        if current_epoch_batches == 0:
+            raise ValueError("supervised resume cursor skipped an epoch without saved batch metrics")
+        history.append({"epoch": epoch + 1, "policyLoss": current_epoch_loss_sum / current_epoch_batches})
+        current_epoch_loss_sum = 0.0
+        current_epoch_batches = 0
         save(epoch + 1, 0); start_batch = 0
     digest = save(epochs, 0)
     return {"status": "completed", "checkpoint": str(output), "sha256": digest, "epochs": epochs,

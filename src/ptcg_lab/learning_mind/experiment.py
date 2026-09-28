@@ -557,7 +557,8 @@ def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_
 def train_candidate(dataset_dir: Path, output: Path, *, epochs: int = 1) -> dict:
     manifest, rows = load_dataset(dataset_dir)
     records = training_records(rows, "train")
-    result = train_supervised(records, output, manifest["identity"], epochs=epochs)
+    result = train_supervised(records, output, manifest["identity"], epochs=epochs,
+                              dataset_manifest_hash=manifest["manifestHash"])
     return {**result, "datasetManifestHash": manifest["manifestHash"]}
 
 
@@ -680,6 +681,8 @@ def evaluate_candidate(dataset_dir: Path, checkpoint: Path, probe_dataset_dir: P
     manifest, rows = load_dataset(dataset_dir)
     saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
     require_checkpoint_identity(saved, manifest["identity"])
+    if saved.get("datasetManifestHash") != manifest.get("manifestHash"):
+        raise ValueError("supervised checkpoint was not trained from this frozen dataset manifest")
     model = StrategyTransformerV1(); model.load_state_dict(saved["model"]); model.eval()
     evaluated = []
     for row in rows:

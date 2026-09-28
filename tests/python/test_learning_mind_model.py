@@ -67,6 +67,39 @@ def test_supervised_resume_is_bit_equivalent_on_same_device(tmp_path):
     assert all(torch.equal(left[key], right[key]) for key in left)
 
 
+def test_supervised_resume_after_final_batch_completes_epoch_bit_equivalently(tmp_path):
+    decisions = [encoded(), encoded(observation())]
+    records = [{"encoded": item, "policyLabelSource": "compatible-reviewed-acceptable-set",
+                "acceptableActionIndices": [0]} for item in decisions]
+    identity = {"identityHash": "fixed"}
+    interrupted = tmp_path / "final-batch.pt"
+    paused = train_supervised(records, interrupted, identity, batch_size=1, stop_after_batches=2)
+    assert paused["status"] == "paused" and paused["nextBatch"] == len(records)
+    resumed = train_supervised(records, interrupted, identity, batch_size=1, resume=interrupted)
+    complete_path = tmp_path / "complete.pt"
+    complete = train_supervised(records, complete_path, identity, batch_size=1)
+    left = torch.load(resumed["checkpoint"], weights_only=False)
+    right = torch.load(complete_path, weights_only=False)
+    assert resumed["history"] == complete["history"]
+    assert all(torch.equal(left["model"][key], right["model"][key]) for key in left["model"])
+
+
+@pytest.mark.parametrize("changed", [{"seed": 7}, {"batch_size": 2}, {"epochs": 2},
+                                      {"dataset_manifest_hash": "data-b"}])
+def test_supervised_resume_rejects_training_configuration_drift(tmp_path, changed):
+    records = [{"encoded": encoded(), "policyLabelSource": "compatible-reviewed-acceptable-set",
+                "acceptableActionIndices": [0]}]
+    identity = {"identityHash": "fixed"}
+    checkpoint = tmp_path / "config-drift.pt"
+    train_supervised(records, checkpoint, identity, batch_size=1, stop_after_batches=1,
+                     dataset_manifest_hash="data-a")
+    options = {"seed": 7543298, "batch_size": 1, "epochs": 1,
+               "dataset_manifest_hash": "data-a"}
+    options.update(changed)
+    with pytest.raises(ValueError, match="training configuration mismatch"):
+        train_supervised(records, checkpoint, identity, resume=checkpoint, **options)
+
+
 def test_search_distribution_loss_ignores_zero_mass_padded_options():
     mask = torch.tensor([[True, True, False, True]])
     logits = torch.tensor([[1., 0., -torch.inf, -1.]])

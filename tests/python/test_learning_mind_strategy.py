@@ -223,9 +223,13 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
     assert supervised_policy_rows(rows) == rows[:1]
     with pytest.raises(ValueError): supervised_policy_rows([{"policyLabelSource": "ordinary-self-play", "acceptableActionIndices": [0]}])
     stage = {"representationParity": True, "heldOutLabelWin": True, "targetProbeWin": True,
-             "severityThreeRegression": False}
+             "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False}
     assert not ppo_enablement(stage)["enabled"]
     assert ppo_enablement({**stage, "humanEnablePPO": True})["enabled"]
+    assert not ppo_enablement({**stage, "severityThreeProbeCoverage": "insufficient",
+                               "humanEnablePPO": True})["enabled"]
+    assert not ppo_enablement({**stage, "severityThreeRegression": True,
+                               "humanEnablePPO": True})["enabled"]
 
 
 def test_truncation_ends_advantage_trace_and_guards_skip_updates():

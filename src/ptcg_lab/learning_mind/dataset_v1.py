@@ -502,6 +502,9 @@ def load_strategy_probe_dataset(path: Path, *, identity: dict) -> tuple[dict, li
 
 def load_dataset(path: Path, *, identity: dict | None = None) -> tuple[dict, list[dict]]:
     manifest = json.loads((path / "manifest.json").read_text())
+    if manifest.get("manifestHash") != identity_hash({key: value for key, value in manifest.items()
+                                                       if key != "manifestHash"}):
+        raise ValueError("dataset manifest hash mismatch")
     if file_sha256(path / "rows.jsonl") != manifest["rowsSha256"]: raise ValueError("dataset rows hash mismatch")
     if identity is not None and manifest["identity"] != identity: raise ValueError("dataset identity mismatch")
     rows = [json.loads(line) for line in (path / "rows.jsonl").read_text().splitlines()]

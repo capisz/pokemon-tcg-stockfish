@@ -17,7 +17,7 @@ from ptcg_lab.learning_mind.dataset_v1 import (_assign_source_game_splits, _sele
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCandidateV1,
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
-from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest
+from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.sampling import select_stratified_rows
 from ptcg_lab.learning_mind.selection import select_supported_source_game_positions
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
@@ -132,7 +132,8 @@ def frozen_dataset(tmp_path):
     rows.write_text(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n")
     identity = {"identityHash": "fixture"}
     manifest = {"schemaVersion": 1, "identity": identity, "rows": 1,
-                "rowsSha256": file_sha256(rows), "manifestHash": "dataset-manifest"}
+                "rowsSha256": file_sha256(rows)}
+    manifest["manifestHash"] = identity_hash(manifest)
     (dataset / "manifest.json").write_text(json.dumps(manifest))
     return dataset, identity
 
@@ -143,6 +144,14 @@ def test_dataset_hash_identity_and_feature_identity_are_enforced(tmp_path):
     assert len(training_records(rows)) == 1
     with pytest.raises(ValueError, match="identity mismatch"):
         load_dataset(dataset, identity={"identityHash": "drift"})
+    tampered = json.loads((dataset / "manifest.json").read_text())
+    tampered["identity"] = {"identityHash": "tampered"}
+    (dataset / "manifest.json").write_text(json.dumps(tampered))
+    with pytest.raises(ValueError, match="manifest hash mismatch"):
+        load_dataset(dataset)
+    fresh_root = tmp_path / "fresh"
+    fresh_root.mkdir()
+    dataset, identity = frozen_dataset(fresh_root)
     with (dataset / "rows.jsonl").open("a") as target:
         target.write("{}\n")
     with pytest.raises(ValueError, match="rows hash mismatch"):
@@ -620,6 +629,8 @@ def test_candidate_support_audit_fails_closed_on_unsupported_and_identity_drift(
     manifest_path = dataset / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     manifest["rowsSha256"] = hashlib.sha256(row_path.read_bytes()).hexdigest()
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                              if key != "manifestHash"})
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(IdentityError, match="feature identity drift"):
         candidate_support.audit_macro_candidate_support(
