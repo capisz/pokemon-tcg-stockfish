@@ -148,8 +148,11 @@ def eligible_ppo_records(records: Iterable[dict]) -> list[dict]:
 
 
 def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
-               config: PPOConfig = PPOConfig(), seed: int = 7543298) -> dict:
+               config: PPOConfig = PPOConfig(), seed: int = 7543298,
+               stage_record: dict | None = None) -> dict:
     """One frozen PPO epoch; rejected minibatches do not mutate the model."""
+    if stage_record is None or not ppo_enablement(stage_record)["enabled"]:
+        raise PermissionError("PPO update requires passed supervised/macro evidence and explicit human enablement")
     config.validate(); records = eligible_ppo_records(records)
     if not records: raise ValueError("no completed PPO traces")
     order = torch.randperm(len(records), generator=torch.Generator().manual_seed(seed)).tolist()

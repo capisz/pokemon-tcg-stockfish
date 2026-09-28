@@ -985,7 +985,8 @@ strength or autonomous improvement.
   coverage, a passed Raging Bolt macro-plan-fidelity gate, a held-out label
   win, a targeted probe win, and an explicit no-regression result. Gate values
   must be exact booleans/statuses, not merely truthy/falsy substitutes. Human
-  enablement remains independently required.
+  enablement remains independently required, and the optimizer entry point
+  refuses updates unless that full gate record passes.
 - Verification: full Python suite 348 passed; TypeScript typecheck and
   `git diff --check` passed. No model fit, games, or collector activity was
   started by this change.
