@@ -922,3 +922,18 @@ strength or autonomous improvement.
 - Full Python validation passes (335 tests), the learning-mind modules pass
   (76 tests), the TypeScript engine suite passes (80 tests), and `npm run
   typecheck` and `git diff --check` pass.
+
+### Ranker holdout split isolation (2026-09-28)
+
+- The frozen ranker input excludes the separate heldout split by design, so
+  requiring a measured `heldout` metric made the ranker acceptance result
+  permanently insufficient. The prior family/archetype holdout loop also
+  allowed training rows into its evaluation subset. It now reports the
+  separate split as `not-included`; each holdout model trains only on train
+  positions outside the held-out group and evaluates only development
+  positions inside that group. Missing coverage remains `insufficient`.
+- Added regression coverage for family and archetype separation, and for
+  train/development split isolation. The targeted strategy, orchestration, and
+  ranker-input tests pass (44); the full Python suite passes (336), and
+  `git diff --check` passes. The existing heldout label pool is not read or
+  modified, and no ranker was fit from experiment data.

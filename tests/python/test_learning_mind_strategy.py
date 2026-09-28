@@ -9,6 +9,7 @@ from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosi
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
+from ptcg_lab.learning_mind.experiment import _ranker_holdout_rows
 from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
@@ -171,6 +172,30 @@ def test_holdouts_and_refit_limit():
             {"opponentArchetype": "b", "opponentPolicyFamily": "new"}]
     assert len(holdout_splits(rows)) == 4
     with pytest.raises(ValueError, match="six"): FrozenIteration(7, "t", "o", "i", ("p",))
+
+
+def test_ranker_holdouts_train_only_on_train_rows_and_evaluate_only_development():
+    records = []
+    for family in ("python-heuristic", "typescript-heuristic"):
+        for archetype in ("crustle", "dragapult"):
+            for split in ("train", "development", "heldout"):
+                records.append({"positionHash": f"{family}-{archetype}-{split}",
+                    "opponentPolicyFamily": family, "opponentArchetype": archetype, "split": split})
+
+    holdouts = _ranker_holdout_rows(records)
+    assert len(holdouts) == 4
+    for holdout in holdouts:
+        train_rows = [records[index] for index in holdout["train"]]
+        test_rows = [records[index] for index in holdout["test"]]
+        assert train_rows and test_rows
+        assert all(row["split"] == "train" for row in train_rows)
+        assert all(row["split"] == "development" for row in test_rows)
+        if holdout["kind"] == "leave-one-opponent-archetype-out":
+            assert all(row["opponentArchetype"] != holdout["heldOut"] for row in train_rows)
+            assert all(row["opponentArchetype"] == holdout["heldOut"] for row in test_rows)
+        else:
+            assert all(row["opponentPolicyFamily"] != holdout["heldOut"] for row in train_rows)
+            assert all(row["opponentPolicyFamily"] == holdout["heldOut"] for row in test_rows)
 
 
 def test_xgboost_ranker_accepts_rollout_group_weights():

@@ -418,6 +418,18 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
     return manifest, records
 
 
+def _ranker_holdout_rows(records: list[dict]) -> list[dict]:
+    """Build leakage-safe holdouts: train split only, development split only for evaluation."""
+    result = []
+    for split in holdout_splits(records):
+        training_indices = [index for index in split["train"]
+                            if records[index].get("split") == "train"]
+        evaluation_indices = [index for index in split["test"]
+                              if records[index].get("split") == "development"]
+        result.append({**split, "train": training_indices, "test": evaluation_indices})
+    return result
+
+
 def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_hash: str,
                opponent_policy_hash: str, iteration: int = 1) -> dict:
     output = output.resolve()
@@ -483,10 +495,9 @@ def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_
     ranker = XGBoostMacroRanker().fit(features, labels, groups, weights)
     train_metrics = metrics(ranker, train)
     development_metrics = metrics(ranker, [record for record in records if record["split"] == "development"])
-    heldout_metrics = metrics(ranker, [record for record in records if record["split"] == "heldout"])
     holdouts = []
-    for split in holdout_splits(records):
-        train_records = [records[index] for index in split["train"] if records[index]["split"] == "train"]
+    for split in _ranker_holdout_rows(records):
+        train_records = [records[index] for index in split["train"]]
         test_records = [records[index] for index in split["test"]]
         hx, hy, hw, hg, _, _ = flatten(train_records)
         if not hg or not test_records:
@@ -511,10 +522,10 @@ def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_
     result = {**ranker.manifest(frozen), "modelPath": str(output), "modelSha256": model_sha256,
               "trainingPositions": len(groups), "trainingCandidates": len(labels),
               "training": train_metrics, "development": development_metrics,
-              "heldout": heldout_metrics,
+              "heldout": {"status": "not-included",
+                          "reason": "the frozen ranker selection excludes the separate heldout split"},
               "holdouts": holdouts,
               "acceptance": "insufficient" if development_metrics["status"] != "measured"
-                            or heldout_metrics["status"] != "measured"
                             or any(item["status"] != "measured" for item in holdouts) else "review-required"}
     if manifest_output.exists():
         raise ValueError("macro ranker manifest output is immutable; choose a new output path")
