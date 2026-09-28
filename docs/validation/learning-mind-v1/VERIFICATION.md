@@ -1075,10 +1075,14 @@ strength or autonomous improvement.
   verification checks report/schema/source/model hashes and feature dimension.
   No ranker was fit from the finalized game labels, so real-data quality and
   held-out performance remain unverified.
-- Ranker-v2 top-1 regret now includes reproducible 95% percentile bootstrap
-  intervals by independent selected position, overall and by archetype and
-  policy family; the report records each interval's deterministic seed and
-  replicate count. This quantifies uncertainty within the frozen sample only.
+- Ranker-v2 top-1 regret now includes reproducible 95% source-game
+  cluster-bootstrap intervals, overall and by archetype and policy family; the
+  report records each interval's deterministic seed, replicate count, and
+  independent source-game count. This quantifies uncertainty within the
+  frozen sample only.
+- The fitter verifies every record's source game against the frozen selection,
+  rejects duplicate source games within a family/split and train/development
+  overlap, and clusters cross-family reuse for confidence intervals.
 - Before fitting, v2 also independently validates candidate identities,
   actor-visible legal root actions, rollout count/reason reconciliation,
   result and uncertainty bounds, evidence-derived weights, and the per-position
@@ -1086,7 +1090,7 @@ strength or autonomous improvement.
   identity and recomputes recorded seeds by split/position/index; promotion
   seeds and altered streams fail closed. Truncated/error-only candidates remain
   unlabelled.
-- Verification: full Python suite 380 passed, strategy contract v1.2 validator,
+- Verification: full Python suite 381 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,

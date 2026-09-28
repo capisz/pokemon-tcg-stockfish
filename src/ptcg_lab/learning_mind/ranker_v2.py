@@ -20,18 +20,75 @@ from .macro import rollout_seed
 from ptcg_lab.storage import digest as observation_digest
 
 
-def _bootstrap_mean(values: list[float], *, seed_material: str, replicates: int = 2000) -> dict:
+def _bootstrap_mean(values: list[float], *, seed_material: str, group_ids: list[str] | None = None,
+                    replicates: int = 2000) -> dict:
     if not values:
         return {"mean": None, "interval95": {"low": None, "high": None},
-                "method": "position-bootstrap-percentile-v1", "replicates": replicates, "seed": None}
+                "method": "source-game-cluster-bootstrap-percentile-v1",
+                "replicates": replicates, "seed": None, "independentUnits": 0}
     values_array = np.asarray(values, dtype=np.float64)
+    if group_ids is None:
+        group_ids = [f"position-{index}" for index in range(len(values))]
+    if len(group_ids) != len(values) or any(not isinstance(value, str) or not value for value in group_ids):
+        raise ValueError("bootstrap cluster IDs must be nonempty and match the values")
+    clusters: dict[str, list[float]] = {}
+    for group_id, value in zip(group_ids, values_array):
+        clusters.setdefault(group_id, []).append(float(value))
+    cluster_keys = sorted(clusters)
     seed = int.from_bytes(hashlib.sha256(seed_material.encode("utf-8")).digest()[:8], "big")
     rng = np.random.default_rng(seed)
-    samples = rng.choice(values_array, size=(replicates, len(values_array)), replace=True).mean(axis=1)
+    samples = np.empty(replicates, dtype=np.float64)
+    for sample_index in range(replicates):
+        drawn = rng.integers(0, len(cluster_keys), size=len(cluster_keys))
+        cluster_values = [value for index in drawn for value in clusters[cluster_keys[int(index)]]]
+        samples[sample_index] = float(np.mean(cluster_values))
     low, high = np.quantile(samples, [0.025, 0.975])
     return {"mean": float(values_array.mean()),
             "interval95": {"low": float(low), "high": float(high)},
-            "method": "position-bootstrap-percentile-v1", "replicates": replicates, "seed": seed}
+            "method": "source-game-cluster-bootstrap-percentile-v1", "replicates": replicates,
+            "seed": seed, "independentUnits": len(cluster_keys)}
+
+
+def _validate_source_game_units(selection_path: Path, records: list[dict]) -> None:
+    selection = json.loads(selection_path.read_text())
+    selected_source_games = {}
+    split_rows = selection.get("splits")
+    if not isinstance(split_rows, list):
+        raise ValueError("ranker v2 selection has no split records")
+    for item in split_rows:
+        family, split = item.get("policyFamily"), item.get("split")
+        positions = item.get("positions")
+        hashes = item.get("positionHashes")
+        if (family not in {"python-heuristic", "typescript-heuristic"}
+                or split not in {"train", "development"}
+                or not isinstance(positions, list) or not isinstance(hashes, list)
+                or len(positions) != len(hashes) or item.get("sourceGames") != len(hashes)
+                or (family, split) in selected_source_games):
+            raise ValueError("ranker v2 selection omits source-game position metadata")
+        position_games = {}
+        for position in positions:
+            if (not isinstance(position, dict) or position.get("positionHash") not in hashes
+                    or not isinstance(position.get("sourceGameId"), str)
+                    or not position["sourceGameId"]
+                    or position["positionHash"] in position_games):
+                raise ValueError("ranker v2 frozen selection has invalid source-game metadata")
+            position_games[position["positionHash"]] = position["sourceGameId"]
+        if set(position_games) != set(hashes) or len(set(position_games.values())) != len(position_games):
+            raise ValueError("ranker v2 selection reuses or omits a source game within a split")
+        selected_source_games[(family, split)] = position_games
+    required = {(family, split) for family in ("python-heuristic", "typescript-heuristic")
+                for split in ("train", "development")}
+    if set(selected_source_games) != required:
+        raise ValueError("ranker v2 selection source-game metadata has incomplete family/split coverage")
+    for family in ("python-heuristic", "typescript-heuristic"):
+        if (set(selected_source_games[(family, "train")].values())
+                & set(selected_source_games[(family, "development")].values())):
+            raise ValueError("ranker v2 train and development selections reuse a source game")
+    for record in records:
+        key = (record.get("opponentPolicyFamily"), record.get("split"))
+        expected_game = selected_source_games.get(key, {}).get(record.get("positionHash"))
+        if (expected_game is None or record.get("sourceGameId") != expected_game):
+            raise ValueError("ranker v2 record source game differs from frozen selection")
 
 
 def validate_ranker_v2_report(report: dict) -> None:
@@ -202,6 +259,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     if output.exists() or report_path.exists():
         raise ValueError("macro ranker v2 outputs are immutable; choose new output paths")
     labels_manifest, records = _load_ranker_input(labels_dir.resolve(), selection_path.resolve())
+    _validate_source_game_units(selection_path.resolve(), records)
     source_runs = labels_manifest.get("sourceRuns")
     expected_rollout_identities = {}
     if not isinstance(source_runs, list):
@@ -269,6 +327,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
             offset += size
         pair_count = sum(row["pairwiseComparisons"] for row in details)
         overall = _bootstrap_mean([row["top1RelativeRegret"] for row in details],
+            group_ids=[row["sourceGameId"] for row in details],
             seed_material="macro-ranker-v2|all|" + "|".join(sorted(row["positionHash"] for row in details)))
         by_archetype, by_family = {}, {}
         for field, destination in (("opponentArchetype", by_archetype),
@@ -276,17 +335,19 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
             for value in sorted({row[field] for row in details}):
                 subset = [row for row in details if row[field] == value]
                 summary = _bootstrap_mean([row["top1RelativeRegret"] for row in subset],
+                    group_ids=[row["sourceGameId"] for row in subset],
                     seed_material=f"macro-ranker-v2|{field}|{value}|" +
                         "|".join(sorted(row["positionHash"] for row in subset)))
                 destination[value] = {"positions": len(subset),
                     "meanTop1RelativeRegret": summary["mean"],
                     "meanTop1RelativeRegretCI95": summary["interval95"],
-                    "bootstrapSeed": summary["seed"]}
+                    "bootstrapSeed": summary["seed"],
+                    "independentSourceGames": summary["independentUnits"]}
         return {"status": "measured", "positions": len(details),
             "meanTop1RelativeRegret": overall["mean"],
             "meanTop1RelativeRegretCI95": overall["interval95"],
             "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
-                          "seed": overall["seed"]},
+                          "seed": overall["seed"], "independentSourceGames": overall["independentUnits"]},
             "top3Recall": sum(row["top3Recall"] for row in details) / len(details),
             "pairwiseOrderingAccuracy": (sum(row["pairwiseCorrect"] for row in details) / pair_count
                                          if pair_count else None),

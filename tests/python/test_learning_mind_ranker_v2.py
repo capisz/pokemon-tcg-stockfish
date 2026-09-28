@@ -14,7 +14,7 @@ from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
     _bootstrap_mean, fit_macro_ranker_v2, predict_macro_ranker_v2,
-    verify_macro_ranker_v2_artifact, _validated_macro_labels)
+    verify_macro_ranker_v2_artifact, _validated_macro_labels, _validate_source_game_units)
 from ptcg_lab.learning_mind.schema import identity_hash
 from test_learning_mind_representation import observation
 from ptcg_lab.storage import digest as observation_digest
@@ -80,8 +80,13 @@ def test_ranker_v2_position_bootstrap_is_reproducible_and_reports_empty_samples(
     second = _bootstrap_mean(values, seed_material="frozen-position-set")
     assert first == second
     assert first["interval95"]["low"] <= first["mean"] <= first["interval95"]["high"]
-    assert first["replicates"] == 2000 and first["method"] == "position-bootstrap-percentile-v1"
+    assert first["replicates"] == 2000
+    assert first["method"] == "source-game-cluster-bootstrap-percentile-v1"
+    assert first["independentUnits"] == len(values)
     assert _bootstrap_mean([], seed_material="empty")["interval95"] == {"low": None, "high": None}
+    clustered = _bootstrap_mean([0.0, 1.0, 0.5], seed_material="clustered",
+                                group_ids=["same-game", "same-game", "other-game"])
+    assert clustered["independentUnits"] == 2
 
 
 def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_path):
@@ -134,6 +139,7 @@ def _write_ranker_v2_fit_fixture(root):
     for family in families:
         for split in splits:
             hashes = []
+            selected_positions = []
             for archetype in archetypes:
                 position_hash = f"{family}-{split}-{archetype}"
                 hashes.append(position_hash)
@@ -143,6 +149,9 @@ def _write_ranker_v2_fit_fixture(root):
                 position_index += 1
                 position_hash = observation_digest(obs)
                 hashes[-1] = position_hash
+                source_game_id = f"source-{position_index}"
+                selected_positions.append({"positionHash": position_hash,
+                    "sourceGameId": source_game_id})
                 labels = []
                 for choice in (0, 1):
                     action = obs["legalActions"][2 + choice]
@@ -162,13 +171,14 @@ def _write_ranker_v2_fit_fixture(root):
                 records.append({"positionHash": position_hash, "identity": identity,
                     "opponentPolicyFamily": family, "opponentArchetype": archetype,
                     "split": split, "status": "collected", "observation": obs,
-                    "candidateCount": len(labels), "sourceGameId": f"source-{position_index}",
+                    "candidateCount": len(labels), "sourceGameId": source_game_id,
                     "seedNamespace": namespace, "rolloutIdentity": rollout_identities[family],
                     "rolloutSeeds": [rollout_seed(namespace, position_hash, index,
                         rollout_identities[family]) for index in range(2)],
                     "labels": labels})
             selection_entries.append({"policyFamily": family, "split": split,
-                "sourceGames": len(hashes), "positionHashes": hashes})
+                "sourceGames": len(hashes), "positionHashes": hashes,
+                "positions": selected_positions})
 
     selection = {"schemaVersion": 1, "identity": identity, "splits": selection_entries}
     selection["selectionHash"] = identity_hash(selection)
@@ -241,3 +251,17 @@ def test_ranker_v2_rejects_seed_namespace_or_identity_drift(tmp_path, tamper):
         return
     with pytest.raises(ValueError, match="seed namespace or rollout identity|seed list"):
         _validated_macro_labels(record)
+
+
+def test_ranker_v2_bootstrap_units_must_match_frozen_unique_source_games(tmp_path):
+    labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
+    records = [json.loads(path.read_text()) for family in ("python-heuristic", "typescript-heuristic")
+               for path in (labels_dir / family).glob("*.json")]
+    _validate_source_game_units(selection_path, records)
+
+    selection = json.loads(selection_path.read_text())
+    first, second = selection["splits"][0]["positions"]
+    second["sourceGameId"] = first["sourceGameId"]
+    selection_path.write_text(json.dumps(selection))
+    with pytest.raises(ValueError, match="reuses or omits a source game"):
+        _validate_source_game_units(selection_path, records)
