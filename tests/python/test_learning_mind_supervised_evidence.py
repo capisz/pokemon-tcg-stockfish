@@ -113,6 +113,12 @@ def test_audit_does_not_call_a_seen_policy_family_blind(tmp_path):
     assert result["blindOpponentPolicyFamilies"] == {}
 
 
+def test_audit_refuses_a_threshold_below_the_frozen_minimum(tmp_path):
+    with pytest.raises(ValueError, match="cannot be lower than the frozen 20"):
+        audit_supervised_evaluation(dataset_dir=tmp_path / "missing", checkpoint=tmp_path / "missing.pt",
+            evaluation_path=tmp_path / "missing.json", output=tmp_path / "audit", minimum_game_sides=1)
+
+
 def test_paired_game_side_wilson_gate_requires_enough_supported_wins():
     winning = [{"modelAccuracy": 1.0, "heuristicAccuracy": 0.0} for _ in range(20)]
     result = summarize_paired_game_sides(winning)

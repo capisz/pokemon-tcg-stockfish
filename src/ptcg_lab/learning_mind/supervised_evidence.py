@@ -63,10 +63,14 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
                                 evaluation_path: Path, output: Path,
                                 minimum_game_sides: int = MINIMUM_INDEPENDENT_GAME_SIDES) -> dict:
     """Verify held-out predictions against frozen labels and require independent paired evidence."""
+    if type(minimum_game_sides) is not int or minimum_game_sides < MINIMUM_INDEPENDENT_GAME_SIDES:
+        raise ValueError(f"audit threshold cannot be lower than the frozen {MINIMUM_INDEPENDENT_GAME_SIDES} game-sides")
     output = output.resolve()
     if output.exists():
         raise ValueError("supervised evidence audit is immutable; choose a new output path")
     manifest, rows = load_dataset(dataset_dir)
+    if any(row.get("split") not in {"train", "development", "heldout"} for row in rows):
+        raise ValueError("supervised dataset contains an unknown split")
     checkpoint = checkpoint.resolve()
     evaluation_path = evaluation_path.resolve()
     checkpoint_record = torch.load(checkpoint, map_location="cpu", weights_only=False)
