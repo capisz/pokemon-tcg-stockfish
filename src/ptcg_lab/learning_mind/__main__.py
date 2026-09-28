@@ -17,6 +17,7 @@ from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
+from .ranker_v2 import fit_macro_ranker_v2
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
@@ -125,6 +126,14 @@ def main(argv=None) -> int:
     rank.add_argument("--teacher-hash", required=True)
     rank.add_argument("--opponent-policy-hash", required=True)
     rank.add_argument("--iteration", type=int, default=1)
+    rank_v2 = sub.add_parser("fit-macro-ranker-v2",
+        help="fit the actor-visible state/plan-feature ranker with a separately versioned model contract")
+    rank_v2.add_argument("--labels", type=Path, required=True)
+    rank_v2.add_argument("--selection", type=Path, required=True)
+    rank_v2.add_argument("--output", type=Path, required=True)
+    rank_v2.add_argument("--teacher-hash", required=True)
+    rank_v2.add_argument("--opponent-policy-hash", required=True)
+    rank_v2.add_argument("--iteration", type=int, default=1)
     train = sub.add_parser("train-supervised")
     train.add_argument("--dataset", type=Path, required=True)
     train.add_argument("--output", type=Path, required=True)
@@ -236,6 +245,10 @@ def main(argv=None) -> int:
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), selection_path=args.selection.resolve(),
                             teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
+    elif args.command == "fit-macro-ranker-v2":
+        result = fit_macro_ranker_v2(args.labels.resolve(), args.output.resolve(),
+            selection_path=args.selection.resolve(), teacher_hash=args.teacher_hash,
+            opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
     elif args.command == "evaluate-supervised":

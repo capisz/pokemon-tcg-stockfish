@@ -1054,3 +1054,21 @@ strength or autonomous improvement.
   uninstalled and its default state remains paused.
 - Verification: learning-mind supervisor tests, full Python suite, typecheck,
   and `git diff --check` pass. No service was started or installed.
+
+### Actor-visible macro-ranker v2 path (2026-09-28)
+
+- Added an isolated 640-value state/plan feature schema and a separate
+  `fit-macro-ranker-v2` path. It encodes actor-visible global context, the
+  actor's own hand, fixed public board slots, attached Energy, semantic macro
+  roles, and referenced target slots. Opponent private hand contents and
+  simulation-generated action IDs do not enter the features.
+- The v2 report binds its model to the feature-schema hash and feature-source
+  hash. The existing `experiment.py` collector/ranker-v1 module is unchanged
+  to preserve the active label collector's frozen source identity. Ranker v2
+  was not fitted: no finalized labels were consumed and no model-quality claim
+  is made. The old ranker remains available as a separate baseline.
+- Verification: full Python suite 373 passed, strategy contract v1.2 validator,
+  new CLI help, and `git diff --check` passed. Feature tests prove deterministic
+  encoding, visible-board and plan sensitivity, target-slot sensitivity, and
+  invariance to changed hidden opponent-hand contents. No games, labels,
+  collector checkpoint, PPO update, service, or promotion were run.

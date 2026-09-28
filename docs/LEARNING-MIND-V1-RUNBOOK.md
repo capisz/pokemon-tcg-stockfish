@@ -463,6 +463,27 @@ promotion approval.
 Use `XGBoostMacroRanker`. If XGBoost is unavailable, stop; do not silently use a
 different estimator.
 
+Use the separate `fit-macro-ranker-v2` CLI for the stronger learner; the
+existing `fit-macro-ranker` command remains as the frozen ranker-v1 baseline.
+Ranker v2 uses a fixed 640-value feature schema: actor-visible global context,
+an identity/count sketch of the actor's own hand, twelve stable active/bench
+slots with public Pokémon state and attached Energy, and semantic plan-role,
+target-slot, and action features. Opponent hand contents and simulation action
+IDs are excluded. Every ranker manifest records the schema hash; evaluation
+must compare that hash before using a model, and the fit receipt pins the
+feature implementation source hash. This representation changes the model
+input contract, so do not compare its raw metrics to ranker v1 as if only the
+training data had changed.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind fit-macro-ranker-v2 \
+  --labels artifacts/learning-mind-v1/COMBINED_LABELS \
+  --selection artifacts/learning-mind-v1/FROZEN_SELECTION.json \
+  --output artifacts/learning-mind-v1/ranker-v2-iteration-1.ubj \
+  --teacher-hash FROZEN_TEACHER_SHA256 \
+  --opponent-policy-hash FROZEN_OPPONENT_SET_SHA256
+```
+
 For each position, supply candidate features, relative labels, group sizes, and
 completed-rollout/uncertainty weights. Evaluate:
 
