@@ -87,6 +87,8 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
     model.eval()
 
     evaluation = json.loads(evaluation_path.read_text())
+    if evaluation.get("policyDecoder") != "greedy-autoregressive-one-legal-action-v1":
+        raise ValueError("evaluation does not identify the frozen executable policy decoder")
     checkpoint_hash = file_sha256(checkpoint)
     if evaluation.get("checkpointSha256") != checkpoint_hash:
         raise ValueError("evaluation checkpoint hash differs from the supplied checkpoint")

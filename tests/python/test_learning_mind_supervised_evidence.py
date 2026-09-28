@@ -99,6 +99,7 @@ def _dataset_and_evaluation(tmp_path, *, game_sides=2, positions_per_side=2,
     evaluation_path = tmp_path / "evaluation.json"
     evaluation_path.write_text(json.dumps({"checkpointSha256": file_sha256(checkpoint),
         "datasetManifestHash": manifest["manifestHash"], "positions": evaluations,
+        "policyDecoder": "greedy-autoregressive-one-legal-action-v1",
         "heldOutLabelWin": True}))
     return dataset, checkpoint, evaluation_path
 
@@ -122,6 +123,16 @@ def test_audit_recomputes_model_logits_and_rejects_forged_hits(tmp_path):
     value["positions"][0]["modelHit"] = True
     evaluation.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="frozen checkpoint logits"):
+        audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+            evaluation_path=evaluation, output=tmp_path / "audit")
+
+
+def test_audit_rejects_legacy_raw_argmax_evaluations(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
+    value = json.loads(evaluation.read_text())
+    value.pop("policyDecoder")
+    evaluation.write_text(json.dumps(value))
+    with pytest.raises(ValueError, match="does not identify the frozen executable policy decoder"):
         audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
             evaluation_path=evaluation, output=tmp_path / "audit")
 
@@ -267,6 +278,12 @@ def test_official_policy_evaluation_reports_legal_decoder_choice_when_stop_has_h
     assert report["positions"]
     for item in report["positions"]:
         assert 0 <= item["modelClass"] < 3
+
+    stale = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    stale["implementationIdentity"]["sources"]["policyEvaluatorSha256"] = "0" * 64
+    torch.save(stale, checkpoint)
+    with pytest.raises(ValueError, match="implementation identity mismatch"):
+        policy_evaluation.evaluate_candidate(dataset, checkpoint, probe_dir)
 
 
 def test_action_coverage_audit_detects_omission_and_duplicate_representation():

@@ -15,7 +15,7 @@ from .dataset_v1 import (file_sha256, load_dataset, load_strategy_probe_dataset)
 from .encoding import collate, encode_decision
 from .experiment import summarize_strategy_probe_decisions
 from .model import StrategyTransformerV1, greedy_single_action_class
-from .training import require_checkpoint_identity
+from .training import require_checkpoint_identity, require_checkpoint_implementation
 
 
 def _single_action(model, encoded):
@@ -74,6 +74,7 @@ def evaluate_candidate(dataset_dir: Path, checkpoint: Path, probe_dataset_dir: P
     manifest, rows = load_dataset(dataset_dir)
     saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
     require_checkpoint_identity(saved, manifest["identity"])
+    require_checkpoint_implementation(saved)
     if saved.get("datasetManifestHash") != manifest.get("manifestHash"):
         raise ValueError("supervised checkpoint was not trained from this frozen dataset manifest")
     model = StrategyTransformerV1()
