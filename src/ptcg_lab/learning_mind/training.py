@@ -38,6 +38,7 @@ def supervised_implementation_identity() -> dict:
         "trackerSha256": _source_sha256(Path(tracker_module.__file__)),
         "policyDatasetBuilderSha256": _source_sha256(Path(dataset_module.__file__)),
         "valueTargetBuilderSha256": _source_sha256(Path(value_target_module.__file__)),
+        "policyEvaluatorSha256": _source_sha256(Path(__file__).with_name("policy_evaluation.py")),
         "trainingCliSha256": _source_sha256(Path(__file__).with_name("__main__.py")),
     }, "runtime": {"device": "cpu", "pythonVersion": platform.python_version(),
         "torchVersion": str(torch.__version__), "torchThreads": torch.get_num_threads(),

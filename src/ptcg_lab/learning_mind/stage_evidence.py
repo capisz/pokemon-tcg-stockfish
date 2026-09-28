@@ -9,8 +9,8 @@ from .audit import audit_manifest
 from .candidate_safety import audit_candidate_safety
 from .dataset_v1 import file_sha256, load_dataset
 from .disagreement_review import audit_disagreement_review
-from .experiment import evaluate_candidate
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
+from .policy_evaluation import evaluate_candidate
 from .schema import identity_hash
 from .supervised_evidence import verify_supervised_audit_report
 from .training import VerifiedPPOStageRecord, _VERIFIED_PPO_STAGE_TOKEN

@@ -15,6 +15,7 @@ from ptcg_lab.learning_mind.candidate_safety import (audit_candidate_safety,
     _verify_legal_action_coverage)
 from ptcg_lab.learning_mind.encoding import collate, encode_decision
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, greedy_single_action_class
+from ptcg_lab.learning_mind import policy_evaluation
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.supervised_evidence import (audit_supervised_evaluation,
     summarize_blind_policy_families, summarize_paired_game_sides)
@@ -229,6 +230,43 @@ def test_candidate_safety_audits_all_actor_view_options_and_one_step_decoder(tmp
     assert report["illegalAutoregressiveSelection"] is False
     assert report["capOverflow"] is False
     assert report["maximumActionClasses"] <= 128
+
+
+def test_official_policy_evaluation_reports_legal_decoder_choice_when_stop_has_highest_logit(tmp_path, monkeypatch):
+    dataset, checkpoint, _evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
+    manifest_path = dataset / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["sources"] = [{"kind": "experimental-dataset-manifest", "sha256": "e" * 64}]
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+    saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    saved["datasetManifestHash"] = manifest["manifestHash"]
+    torch.save(saved, checkpoint)
+
+    class StopBiasedModel:
+        def __init__(self):
+            pass
+        def load_state_dict(self, _state):
+            return None
+        def eval(self):
+            return self
+        def policy_forward(self, *, option_mask, **_kwargs):
+            logits = torch.zeros(option_mask.shape, dtype=torch.float32)
+            logits[:, -1] = 100.0
+            return logits
+
+    monkeypatch.setattr(policy_evaluation, "StrategyTransformerV1", StopBiasedModel)
+    probe_dir = tmp_path / "probe"
+    probe_dir.mkdir()
+    (probe_dir / "manifest.json").write_text("{}\n")
+    monkeypatch.setattr(policy_evaluation, "load_strategy_probe_dataset", lambda *_args, **_kwargs: (
+        {"sourceDatasetManifestSha256": "e" * 64, "sourceGameCount": 0, "actorDecisionRows": 0}, []))
+    report = policy_evaluation.evaluate_candidate(dataset, checkpoint, probe_dir)
+    assert report["policyDecoder"] == "greedy-autoregressive-one-legal-action-v1"
+    assert report["positions"]
+    for item in report["positions"]:
+        assert 0 <= item["modelClass"] < 3
 
 
 def test_action_coverage_audit_detects_omission_and_duplicate_representation():

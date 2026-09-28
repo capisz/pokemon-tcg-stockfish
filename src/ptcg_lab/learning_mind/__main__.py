@@ -12,8 +12,9 @@ from .dataset_v1 import (build_dataset, build_macro_position_pool,
                          build_strategy_probe_dataset, load_dataset, training_records)
 from .disagreement_review import (audit_disagreement_review,
     build_disagreement_review_packet, write_disagreement_review_template)
-from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
+from .experiment import (collect_macro_labels, fit_ranker,
                          runtime_identity, train_candidate)
+from .policy_evaluation import evaluate_candidate
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
