@@ -17,6 +17,7 @@ import numpy as np
 from ptcg_lab.engine import EngineClient, EnginePool
 from ptcg_lab.features import heuristic_action_score
 
+from .aggregation import load_frozen_selection
 from .dataset_v1 import file_sha256, load_dataset, training_records
 from .encoding import encode_decision
 from .macro import (CANDIDATE_GENERATOR_VERSION, candidates_from_transition_plans,
@@ -336,9 +337,10 @@ def collect_macro_labels(*, root: Path, dataset_dir: Path, output: Path, identit
     return result
 
 
-def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
+def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, list[dict]]:
     """Verify immutable combined train/development labels before any model fit."""
     labels_dir = labels_dir.resolve()
+    selection_path = selection_path.resolve()
     manifest_path = labels_dir / "manifest.json"
     manifest = json.loads(manifest_path.read_text())
     if manifest.get("kind") != "combined-macro-label-runs-v1":
@@ -350,6 +352,23 @@ def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
     expected_families = ["python-heuristic", "typescript-heuristic"]
     if manifest.get("policyFamilies") != expected_families:
         raise ValueError("ranker input must contain both approved policy families")
+    selection, expected_positions = load_frozen_selection(
+        selection_path, identity=manifest.get("identity"))
+    if (manifest.get("selectionHash") != selection.get("selectionHash")
+            or manifest.get("selectionManifestSha256") != file_sha256(selection_path)):
+        raise ValueError("ranker input does not bind the supplied frozen position selection")
+    exact_selected = sorted(position for family in expected_families
+                            for split in ("train", "development")
+                            for position in expected_positions[family][split])
+    if manifest.get("selectedPositionHashes") != exact_selected:
+        raise ValueError("ranker input position universe differs from frozen selection")
+    expected_counts = {
+        family: {split: len(expected_positions[family][split])
+                 for split in ("development", "train")}
+        for family in expected_families
+    }
+    if manifest.get("positionsByFamilySplit") != expected_counts:
+        raise ValueError("ranker-input family/split counts differ from frozen selection")
     files = manifest.get("files")
     if not isinstance(files, list) or len(files) != manifest.get("positions"):
         raise ValueError("combined ranker-input file list mismatch")
@@ -358,6 +377,8 @@ def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
     records = []
     observed_families = set()
     observed_splits = Counter()
+    observed_by_family_split = {family: {split: set() for split in ("train", "development")}
+                                 for family in expected_families}
     for item in files:
         name = item.get("path") if isinstance(item, dict) else None
         relative = Path(name) if isinstance(name, str) else None
@@ -386,21 +407,24 @@ def _load_ranker_input(labels_dir: Path) -> tuple[dict, list[dict]]:
         seen_positions.add(position_hash)
         observed_families.add(family)
         observed_splits[record["split"]] += 1
+        observed_by_family_split[family][record["split"]].add(position_hash)
         records.append(record)
     if observed_families != set(expected_families):
         raise ValueError("ranker input records do not cover both approved policy families")
     if dict(sorted(observed_splits.items())) != manifest.get("positionsBySplit"):
         raise ValueError("ranker-input split counts do not match its records")
+    if observed_by_family_split != expected_positions:
+        raise ValueError("ranker input records do not exactly cover frozen train/development positions")
     return manifest, records
 
 
-def fit_ranker(labels_dir: Path, output: Path, *, teacher_hash: str,
+def fit_ranker(labels_dir: Path, output: Path, *, selection_path: Path, teacher_hash: str,
                opponent_policy_hash: str, iteration: int = 1) -> dict:
     output = output.resolve()
     manifest_output = output.with_suffix(".manifest.json")
     if output.exists() or manifest_output.exists():
         raise ValueError("macro ranker outputs are immutable; choose a new output path")
-    manifest, records = _load_ranker_input(labels_dir)
+    manifest, records = _load_ranker_input(labels_dir, selection_path)
     train = [record for record in records if record["split"] == "train"]
     if not train: raise ValueError("macro ranker has no training positions")
     def flatten(selected):

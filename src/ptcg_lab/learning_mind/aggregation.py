@@ -11,15 +11,64 @@ from .dataset_v1 import file_sha256
 from .schema import identity_hash
 
 POLICY_FAMILIES = {"python-heuristic", "typescript-heuristic"}
+RANKER_SPLITS = {"train", "development"}
 
 
-def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict) -> dict:
+def load_frozen_selection(path: Path, *, identity: dict) -> tuple[dict, dict[str, dict[str, set[str]]]]:
+    """Load and validate the exact train/development position universe for a ranker run."""
+    selection = json.loads(path.read_text())
+    if selection.get("schemaVersion") != 1:
+        raise ValueError("unsupported frozen macro-label selection schema")
+    if selection.get("identity") != identity:
+        raise ValueError("frozen macro-label selection identity mismatch")
+    recorded_hash = selection.get("selectionHash")
+    if recorded_hash != identity_hash({key: value for key, value in selection.items()
+                                       if key != "selectionHash"}):
+        raise ValueError("frozen macro-label selection hash mismatch")
+    splits = selection.get("splits")
+    if not isinstance(splits, list):
+        raise ValueError("frozen macro-label selection has no split records")
+    expected: dict[str, dict[str, set[str]]] = {
+        family: {split: set() for split in RANKER_SPLITS} for family in POLICY_FAMILIES
+    }
+    seen: set[tuple[str, str]] = set()
+    for item in splits:
+        if not isinstance(item, dict):
+            raise ValueError("invalid frozen macro-label selection split")
+        family, split = item.get("policyFamily"), item.get("split")
+        hashes = item.get("positionHashes")
+        if family not in POLICY_FAMILIES or split not in RANKER_SPLITS:
+            raise ValueError("frozen macro-label selection may contain only approved families and train/development")
+        if not isinstance(hashes, list) or not hashes or any(not isinstance(value, str) or not value for value in hashes):
+            raise ValueError("frozen macro-label selection has an empty or invalid position list")
+        if len(hashes) != len(set(hashes)):
+            raise ValueError("frozen macro-label selection contains duplicate positions")
+        key = (family, split)
+        if key in seen:
+            raise ValueError("frozen macro-label selection repeats a family/split")
+        seen.add(key)
+        if item.get("sourceGames") != len(hashes):
+            raise ValueError("frozen selection source-game count differs from its position list")
+        expected[family][split] = set(hashes)
+    required = {(family, split) for family in POLICY_FAMILIES for split in RANKER_SPLITS}
+    if seen != required:
+        raise ValueError("frozen selection must cover both families in train and development")
+    all_positions = [position for family in POLICY_FAMILIES for split in RANKER_SPLITS
+                     for position in expected[family][split]]
+    if len(all_positions) != len(set(all_positions)):
+        raise ValueError("frozen selection reuses a position across families or splits")
+    return selection, expected
+
+
+def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict,
+                             selection_path: Path) -> dict:
     """Verify separate policy-family label runs and combine them for ranker evaluation."""
     if not inputs:
         raise ValueError("at least one macro-label run is required")
     output = output.resolve()
     if output.exists():
         raise ValueError("combined macro-label outputs are immutable; choose a new directory")
+    selection, expected_positions = load_frozen_selection(selection_path, identity=identity)
     loaded = []
     position_hashes = set()
     families = set()
@@ -47,6 +96,8 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
               or manifest.get("labelCollectorSha256") != collector_sha):
             raise ValueError("macro-label runs use different candidate generators or collectors")
         records = []
+        run_positions: set[str] = set()
+        run_family = None
         for item in manifest["files"]:
             name = item.get("path")
             if not isinstance(name, str) or Path(name).name != name or not name.endswith(".json") or name == "manifest.json":
@@ -74,13 +125,28 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
                     f"ranker input may contain only train/development records; "
                     f"held-out or unknown split is not publishable: {source}"
                 )
+            if run_family is None:
+                run_family = family
+            elif family != run_family:
+                raise ValueError(f"each input run must contain exactly one policy family: {input_dir}")
             position_hashes.add(key)
+            run_positions.add(key)
             families.add(family)
             records.append((source, item, record, family))
         if len({record[3] for record in records}) != 1:
             raise ValueError(f"each input run must contain exactly one policy family: {input_dir}")
         if set(manifest.get("selectedPositionHashes", [])) != {record[2]["positionHash"] for record in records}:
             raise ValueError(f"selected positions differ from input records: {input_dir}")
+        expected_for_family = expected_positions[run_family]
+        observed_by_split = {split: {record[2]["positionHash"] for record in records
+                                     if record[2]["split"] == split} for split in RANKER_SPLITS}
+        if observed_by_split != expected_for_family or run_positions != set().union(*expected_for_family.values()):
+            missing = sorted(set().union(*expected_for_family.values()) - run_positions)
+            unexpected = sorted(run_positions - set().union(*expected_for_family.values()))
+            raise ValueError(
+                f"macro-label run does not exactly cover frozen {run_family} selection "
+                f"(missing={missing[:5]}, unexpected={unexpected[:5]})"
+            )
         loaded.append({"directory": input_dir, "manifestPath": manifest_path,
                        "manifest": manifest, "records": records})
 
@@ -109,6 +175,14 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
             "schemaVersion": 1,
             "kind": "combined-macro-label-runs-v1",
             "identity": identity,
+            "selectionHash": selection["selectionHash"],
+            "selectionManifestSha256": file_sha256(selection_path),
+            "selectedPositionHashes": sorted(position_hashes),
+            "positionsByFamilySplit": {
+                family: {split: len(expected_positions[family][split])
+                         for split in sorted(RANKER_SPLITS)}
+                for family in sorted(POLICY_FAMILIES)
+            },
             "candidateGeneratorIdentity": generator_identity,
             "labelCollectorVersion": collector_version,
             "labelCollectorSha256": collector_sha,

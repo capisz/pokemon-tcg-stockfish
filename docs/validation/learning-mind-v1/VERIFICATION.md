@@ -885,3 +885,25 @@ strength or autonomous improvement.
   (33 passed); `git diff --check` passes.
 - This did not start a fit or collection. PPO, continuous operation, and
   trusted promotion remain disabled.
+
+### Frozen-selection completeness binding (2026-09-28)
+
+- Further review found that self-consistent run manifests could still describe a
+  partial subset of the frozen v17 positions. The combiner and ranker input
+  verifier now require the original selection manifest, validate its identity
+  and self-hash, and require exact train/development position coverage for both
+  approved policy families before publishing or fitting. The combined manifest
+  records the selection hash, file hash, and family/split counts.
+- CLI usage now requires `--selection` for both `combine-macro-label-runs` and
+  `fit-macro-ranker`. Regression tests cover incomplete selection rejection at
+  both boundaries. The focused aggregation and ranker-input tests pass (7).
+- This change did not inspect or modify collector checkpoints or replay
+  artifacts, and it did not run simulations, combine active results, fit a
+  ranker, or enable later learning stages.
+- A broader learning-mind check passed 36 tests across aggregation, ranker
+  input, representation, supervision, orchestration-adjacent modules, and
+  supervisor checks. The separate strategy suite reaches its existing
+  XGBoost ranker smoke test, where the Python process segfaults inside the
+  installed XGBoost NumPy metadata path; the 22 orchestration tests pass when
+  run independently. This environment failure is not treated as a passing
+  ranker-training verification.

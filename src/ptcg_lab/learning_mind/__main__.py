@@ -66,6 +66,8 @@ def main(argv=None) -> int:
                              help="verify and combine separate frozen macro-label runs for ranker evaluation")
     combine.add_argument("--input-dir", type=Path, action="append", required=True,
                          help="frozen run directory; repeat once per policy-family run")
+    combine.add_argument("--selection", type=Path, required=True,
+                         help="frozen train/development selection manifest that every run must cover exactly")
     combine.add_argument("--output", type=Path, required=True)
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
@@ -96,6 +98,8 @@ def main(argv=None) -> int:
     fresh.add_argument("--max-decisions", type=int, default=1200)
     rank = sub.add_parser("fit-macro-ranker")
     rank.add_argument("--labels", type=Path, required=True)
+    rank.add_argument("--selection", type=Path, required=True,
+                      help="same frozen selection manifest used to verify complete macro-label coverage")
     rank.add_argument("--output", type=Path, required=True)
     rank.add_argument("--teacher-hash", required=True)
     rank.add_argument("--opponent-policy-hash", required=True)
@@ -163,9 +167,11 @@ def main(argv=None) -> int:
             output=args.output, identity=identity, pinned_train_hashes=pinned)
     elif args.command == "combine-macro-label-runs":
         root = Path.cwd().resolve(); identity = runtime_identity(root).record()
-        result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity)
+        result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity,
+                                          selection_path=args.selection.resolve())
     elif args.command == "fit-macro-ranker":
-        result = fit_ranker(args.labels.resolve(), args.output.resolve(), teacher_hash=args.teacher_hash,
+        result = fit_ranker(args.labels.resolve(), args.output.resolve(), selection_path=args.selection.resolve(),
+                            teacher_hash=args.teacher_hash,
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
