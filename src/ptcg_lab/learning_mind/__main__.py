@@ -4,6 +4,7 @@ import argparse
 import json
 from pathlib import Path
 
+from .candidate_safety import audit_candidate_safety
 from .audit import audit_manifest
 from .aggregation import combine_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
@@ -131,6 +132,13 @@ def main(argv=None) -> int:
     audit_supervised.add_argument("--evaluation", type=Path, required=True)
     audit_supervised.add_argument("--output", type=Path, required=True)
     audit_supervised.add_argument("--minimum-game-sides", type=int, default=20)
+    safety = sub.add_parser("audit-candidate-safety",
+        help="verify legal-option coverage, cap bounds, and one-action decoding")
+    safety.add_argument("--dataset", type=Path, required=True)
+    safety.add_argument("--checkpoint", type=Path, required=True)
+    safety.add_argument("--evaluation", type=Path, required=True)
+    safety.add_argument("--audit", type=Path, required=True)
+    safety.add_argument("--output", type=Path, required=True)
     review_packet = sub.add_parser("build-disagreement-review",
         help="build a hash-bound actor-view-only human review packet")
     review_packet.add_argument("--dataset", type=Path, required=True)
@@ -224,6 +232,10 @@ def main(argv=None) -> int:
         result = audit_supervised_evaluation(dataset_dir=args.dataset.resolve(),
             checkpoint=args.checkpoint.resolve(), evaluation_path=args.evaluation.resolve(),
             output=args.output.resolve(), minimum_game_sides=args.minimum_game_sides)
+    elif args.command == "audit-candidate-safety":
+        result = audit_candidate_safety(dataset_dir=args.dataset.resolve(), checkpoint=args.checkpoint.resolve(),
+            evaluation_path=args.evaluation.resolve(), audit_path=args.audit.resolve(),
+            output=args.output.resolve())
     elif args.command == "build-disagreement-review":
         result = build_disagreement_review_packet(dataset_dir=args.dataset.resolve(),
             checkpoint=args.checkpoint.resolve(), evaluation_path=args.evaluation.resolve(),

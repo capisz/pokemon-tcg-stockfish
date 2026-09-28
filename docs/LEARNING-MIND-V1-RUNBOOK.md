@@ -513,6 +513,15 @@ hide a failed supervised foundation.
 Update `stage-gates.json` only from generated evaluation evidence. Never edit a
 gate to `true` based on expectation.
 
+Produce the legal-option and decoder safety receipt from the audited evaluation
+before assembling the supervised acceptance record:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind audit-candidate-safety \
+  --dataset DATASET --checkpoint CHECKPOINT --evaluation EVALUATION \
+  --audit AUDIT_REPORT --output CANDIDATE_SAFETY.json
+```
+
 After a frozen supervised evaluation passes its machine audit, prepare the
 human disagreement review from the same dataset, checkpoint, evaluation, and
 audit report:

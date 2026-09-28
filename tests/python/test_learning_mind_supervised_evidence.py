@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import copy
 import json
+from types import SimpleNamespace
 
 import pytest
 import torch
@@ -10,6 +11,8 @@ from ptcg_lab.features import heuristic_action_score
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.disagreement_review import (audit_disagreement_review,
     build_disagreement_review_packet, write_disagreement_review_template)
+from ptcg_lab.learning_mind.candidate_safety import (audit_candidate_safety,
+    _verify_legal_action_coverage)
 from ptcg_lab.learning_mind.encoding import collate, encode_decision
 from ptcg_lab.learning_mind.model import StrategyTransformerV1
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
@@ -169,6 +172,32 @@ def test_human_disagreement_review_requires_every_action_to_be_acceptable(tmp_pa
         output=tmp_path / "receipt.json")
     assert receipt["representativeDisagreementsReviewed"] is False
     assert len(receipt["unresolvedPositions"]) == 1
+
+
+def test_candidate_safety_audits_all_actor_view_options_and_one_step_decoder(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=2, positions_per_side=2)
+    audit_path = tmp_path / "audit.json"
+    audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, output=audit_path)
+    report = audit_candidate_safety(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, audit_path=audit_path, output=tmp_path / "safety.json")
+    assert report["positionsChecked"] == 4
+    assert report["legalActionsChecked"] > report["positionsChecked"]
+    assert report["legalActionOmission"] is False
+    assert report["illegalAutoregressiveSelection"] is False
+    assert report["capOverflow"] is False
+    assert report["maximumActionClasses"] <= 128
+
+
+def test_action_coverage_audit_detects_omission_and_duplicate_representation():
+    legal = [{"id": "a"}, {"id": "b"}]
+    grouped = [SimpleNamespace(actions=({"id": "a"}, {"id": "b"}))]
+    assert _verify_legal_action_coverage(legal, grouped) == 2
+    with pytest.raises(ValueError, match="omit or duplicate"):
+        _verify_legal_action_coverage(legal, [SimpleNamespace(actions=({"id": "a"},))])
+    duplicated = [SimpleNamespace(actions=({"id": "a"}, {"id": "a"}, {"id": "b"}))]
+    with pytest.raises(ValueError, match="omit or duplicate"):
+        _verify_legal_action_coverage(legal, duplicated)
 
 
 def test_paired_game_side_wilson_gate_requires_enough_supported_wins():

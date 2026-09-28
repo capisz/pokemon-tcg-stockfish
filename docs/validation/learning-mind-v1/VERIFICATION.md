@@ -195,6 +195,11 @@ strength or autonomous improvement.
   coverage, autoregressive legality, candidate-cap integrity, exact evaluation
   identity, and human review of representative disagreements. These are
   separate evidence receipts; none is inferred from the label audit.
+- `audit-candidate-safety` re-encodes every non-training evaluation position,
+  compares the exact multiset of engine legal-action IDs to encoded action
+  classes, checks token/action caps and checkpoint logits, and exercises the
+  one-engine-action autoregressive decoder (`minimum=maximum=1`). Its immutable
+  receipt is tied to the supervised audit, checkpoint, and evaluation hashes.
 - `build-disagreement-review` creates an immutable packet containing every
   held-out position where the model and heuristic selected different action
   classes. It copies only `observation` for the acting player, includes the
