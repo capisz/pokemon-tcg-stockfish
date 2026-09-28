@@ -1132,6 +1132,12 @@ strength or autonomous improvement.
 - New fixtures prove actor-view-only row construction, search-distribution
   coverage including zero-mass legal actions, source hash and identity rejection,
   and cleanup after conversion failure.
-- Verification: full Python suite passes (392, with two existing deprecation
-  warnings). No real dataset was frozen and no collector, PPO, service, or
-  promotion was started.
+- The supervised loader now validates row schema, actor/player ownership,
+  opponent-hand redaction, encoded feature identity, target dimensionality and
+  legality, manifest counts, unique positions, and game/family split isolation.
+  Hash-consistent edits that inject an opponent hand or move a family across
+  splits are explicitly rejected.
+- Verification: focused dataset/orchestration/macro-fidelity tests pass (32);
+  full Python suite passes (394, with two existing deprecation warnings). No
+  real dataset was frozen and no collector, PPO, service, or promotion was
+  started.

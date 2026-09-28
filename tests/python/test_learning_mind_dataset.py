@@ -1,12 +1,16 @@
 from __future__ import annotations
 
 import json
+from collections import Counter
+import copy
 
 import pytest
 
 from ptcg_lab.learning_mind import dataset_v1
-from ptcg_lab.learning_mind.dataset_v1 import build_dataset, load_dataset
+from ptcg_lab.learning_mind.dataset_v1 import build_dataset, file_sha256, load_dataset
+from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
+from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store, digest as legacy_digest
 from test_learning_mind_representation import observation
 
@@ -88,3 +92,56 @@ def test_supervised_dataset_failed_conversion_leaves_no_partial_artifact(tmp_pat
             experimental_root=experimental, source_dataset_manifest=source, identity=identity)
     assert not output.exists()
     assert list(tmp_path.glob(".frozen-dataset.*")) == []
+
+
+def _resign_dataset(path, rows):
+    rows_path = path / "rows.jsonl"
+    rows_path.write_text("".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n"
+                                     for row in rows))
+    manifest_path = path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["rows"] = len(rows)
+    manifest["rowsSha256"] = file_sha256(rows_path)
+    counts = Counter((row["split"], row["policyLabelSource"]) for row in rows)
+    manifest["counts"] = [{"split": split, "source": source, "count": count}
+                          for (split, source), count in sorted(counts.items())]
+    manifest["families"] = sorted({row["familyId"] for row in rows})
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                                if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+
+def test_supervised_loader_rejects_opponent_private_hand_even_with_recomputed_hashes(tmp_path, monkeypatch):
+    monkeypatch.setattr(dataset_v1, "EXACT_REVIEWS", ())
+    identity, experimental, source = _source_fixture(tmp_path)
+    output = tmp_path / "frozen-dataset"
+    build_dataset(root=tmp_path, output=output, review_root=tmp_path / "reviews",
+        experimental_root=experimental, source_dataset_manifest=source, identity=identity)
+    row = json.loads((output / "rows.jsonl").read_text())
+    row["observation"]["players"][1]["hand"] = [{"id": "SECRET", "name": "PRIVATE"}]
+    row["positionHash"] = legacy_digest(row["observation"])
+    _resign_dataset(output, [row])
+
+    with pytest.raises(ValueError, match="opponent-private hand"):
+        load_dataset(output, identity=identity.record())
+
+
+def test_supervised_loader_rejects_family_crossing_splits_even_with_valid_hashes(tmp_path, monkeypatch):
+    monkeypatch.setattr(dataset_v1, "EXACT_REVIEWS", ())
+    identity, experimental, source = _source_fixture(tmp_path)
+    output = tmp_path / "frozen-dataset"
+    build_dataset(root=tmp_path, output=output, review_root=tmp_path / "reviews",
+        experimental_root=experimental, source_dataset_manifest=source, identity=identity)
+    first = json.loads((output / "rows.jsonl").read_text())
+    second = copy.deepcopy(first)
+    second["split"] = "heldout" if first["split"] != "heldout" else "train"
+    second["sourceDecisionIndex"] = 1
+    second["observation"]["turn"] += 1
+    tracker = ObservableHistoryTracker(0).update(second["observation"])
+    second["tracker"] = tracker
+    second["positionHash"] = legacy_digest(second["observation"])
+    second["featureIdentityHash"] = encode_decision(second["observation"], tracker).identity
+    _resign_dataset(output, [first, second])
+
+    with pytest.raises(ValueError, match="family crosses dataset splits"):
+        load_dataset(output, identity=identity.record())

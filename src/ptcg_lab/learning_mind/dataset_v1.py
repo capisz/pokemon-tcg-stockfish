@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import itertools
 import json
+import math
 import os
 from collections import Counter, defaultdict
 import shutil
@@ -532,7 +533,99 @@ def load_dataset(path: Path, *, identity: dict | None = None) -> tuple[dict, lis
     if identity is not None and manifest["identity"] != identity: raise ValueError("dataset identity mismatch")
     rows = [json.loads(line) for line in (path / "rows.jsonl").read_text().splitlines()]
     if len(rows) != manifest["rows"]: raise ValueError("dataset row count mismatch")
+    if manifest.get("id") == "learning-mind-supervised-v1":
+        _validate_supervised_rows(manifest, rows)
     return manifest, rows
+
+
+def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
+    allowed_sources = {"exact-search-distribution", "compatible-reviewed-acceptable-set",
+                       "high-confidence-macro-plan", "macro-ranker-distillation"}
+    family_splits: dict[str, str] = {}
+    game_splits: dict[str, str] = {}
+    positions = set()
+    for row in rows:
+        required = {"positionHash", "familyId", "sourceGameId", "sourceDecisionIndex", "actor",
+                    "deckHash", "opponentArchetype", "opponentPolicyFamily", "featureIdentityHash",
+                    "policyLabelSource", "acceptableActionIndices", "policyDistribution", "split",
+                    "observation", "tracker"}
+        if (not isinstance(row, dict) or not required <= set(row)
+                or set(row) - required - {"reviewHashes", "searchTarget"}):
+            raise ValueError("supervised row fields violate the frozen row schema")
+        source = row["policyLabelSource"]
+        split = row["split"]
+        family = row["familyId"]
+        game_id = row["sourceGameId"]
+        actor = row["actor"]
+        observation = row["observation"]
+        if (source not in allowed_sources or split not in {"train", "development", "heldout"}
+                or not isinstance(family, str) or not family
+                or type(actor) is not int or actor not in (0, 1)
+                or not isinstance(observation, dict) or observation.get("playerId") != actor
+                or observation.get("decisionPlayer", actor) != actor
+                or legacy_digest(observation) != row["positionHash"]):
+            raise ValueError("supervised row identity, split, or actor-view contract is invalid")
+        players = observation.get("players")
+        if not isinstance(players, list) or len(players) != 2:
+            raise ValueError("supervised row lacks two actor-visible player summaries")
+        opponent = next((player for player in players if player.get("id") == 1 - actor), None)
+        if opponent is None or ("hand" in opponent and opponent["hand"] not in (None, [])):
+            raise ValueError("supervised row contains opponent-private hand contents")
+        if row["positionHash"] in positions:
+            raise ValueError("supervised dataset contains duplicate actor-visible positions")
+        positions.add(row["positionHash"])
+        if family in family_splits and family_splits[family] != split:
+            raise ValueError("supervised family crosses dataset splits")
+        family_splits[family] = split
+        if game_id is not None:
+            if (not isinstance(game_id, str) or not game_id or type(row["sourceDecisionIndex"]) is not int
+                    or row["sourceDecisionIndex"] < 0):
+                raise ValueError("supervised replay decision identity is invalid")
+            if game_id in game_splits and game_splits[game_id] != split:
+                raise ValueError("supervised source game crosses dataset splits")
+            game_splits[game_id] = split
+        elif (row["sourceDecisionIndex"] is not None or source != "compatible-reviewed-acceptable-set"):
+            raise ValueError("only compatible review rows may omit source-game identity")
+
+        encoded = encode_decision(observation, row["tracker"])
+        if encoded.identity != row["featureIdentityHash"]:
+            raise ValueError("supervised row feature identity mismatch")
+        acceptable = row["acceptableActionIndices"]
+        distribution = row["policyDistribution"]
+        if (source == "compatible-reviewed-acceptable-set"
+                and (not isinstance(row.get("reviewHashes"), list) or not row["reviewHashes"]
+                     or acceptable is None or distribution is not None)):
+            raise ValueError("review row target provenance is invalid")
+        if source != "compatible-reviewed-acceptable-set" and row.get("reviewHashes") is not None:
+            raise ValueError("non-review row contains review provenance")
+        if distribution is not None:
+            if (acceptable is not None or not isinstance(distribution, list)
+                    or len(distribution) != len(encoded.action_classes) + 1
+                    or any(type(value) not in {int, float} or not math.isfinite(value) or value < 0
+                           for value in distribution)
+                    or not math.isclose(sum(distribution), 1.0, rel_tol=1e-6, abs_tol=1e-6)
+                    or (source == "exact-search-distribution" and distribution[-1] != 0.0)):
+                raise ValueError("supervised search distribution violates legal-option target contract")
+            if source not in {"exact-search-distribution", "macro-ranker-distillation"}:
+                raise ValueError("distribution target has an incompatible policy-label source")
+        else:
+            if (not isinstance(acceptable, list) or not acceptable
+                    or any(type(index) is not int or not 0 <= index < len(encoded.action_classes)
+                           for index in acceptable)
+                    or len(set(acceptable)) != len(acceptable)):
+                raise ValueError("supervised acceptable-action target is invalid")
+            if source in {"exact-search-distribution", "macro-ranker-distillation"}:
+                raise ValueError("search-derived policy labels must use a distribution target")
+
+    source_counts = Counter((row["split"], row["policyLabelSource"]) for row in rows)
+    expected_counts = [{"split": split, "source": source, "count": count}
+                       for (split, source), count in sorted(source_counts.items())]
+    if manifest.get("counts") != expected_counts:
+        raise ValueError("supervised dataset manifest source counts do not match rows")
+    if manifest.get("families") != sorted(family_splits):
+        raise ValueError("supervised dataset family manifest does not match rows")
+    if manifest.get("ordinarySelfPlayPolicyLabels") != 0:
+        raise ValueError("ordinary self-play actions cannot be supervised policy labels")
 
 
 def training_records(rows: list[dict], split: str = "train") -> list[dict]:
