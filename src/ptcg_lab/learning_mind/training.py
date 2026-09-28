@@ -123,11 +123,13 @@ def update_guard(*, approximate_kl: float, value_loss: float, finite: bool = Tru
 
 
 def ppo_enablement(stage_record: dict) -> dict:
-    passed = bool(stage_record.get("representationParity") and stage_record.get("heldOutLabelWin")
-                  and stage_record.get("targetProbeWin")
-                  and stage_record.get("severityThreeProbeCoverage") == "sufficient"
-                  and not stage_record.get("severityThreeRegression"))
-    return {"enabled": passed and bool(stage_record.get("humanEnablePPO")),
+    passed = (stage_record.get("representationParity") is True
+              and stage_record.get("heldOutLabelWin") is True
+              and stage_record.get("targetProbeWin") is True
+              and stage_record.get("ragingBoltMacroPlanFidelity") == "passed"
+              and stage_record.get("severityThreeProbeCoverage") == "sufficient"
+              and stage_record.get("severityThreeRegression") is False)
+    return {"enabled": passed and stage_record.get("humanEnablePPO") is True,
             "prerequisitesPassed": passed,
             "reason": None if passed else "supervised milestone evidence is incomplete or not improved",
             "humanEnableRequired": True}

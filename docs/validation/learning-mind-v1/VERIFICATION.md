@@ -982,8 +982,10 @@ strength or autonomous improvement.
   manifest self-hash as well as the rows hash, and trained checkpoints bind to
   the exact supervised dataset manifest that evaluation must use.
 - PPO's evidence prerequisite now requires adequate severity-three probe
-  coverage in addition to a held-out label win, targeted probe win, and no
-  severity-three regression. Human enablement remains independently required.
+  coverage, a passed Raging Bolt macro-plan-fidelity gate, a held-out label
+  win, a targeted probe win, and an explicit no-regression result. Gate values
+  must be exact booleans/statuses, not merely truthy/falsy substitutes. Human
+  enablement remains independently required.
 - Verification: full Python suite 348 passed; TypeScript typecheck and
   `git diff --check` passed. No model fit, games, or collector activity was
   started by this change.
