@@ -6,13 +6,34 @@ import shutil
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from types import MappingProxyType
 
 
 PHASES = ("collection", "training", "evaluation", "retention")
 
 
-def continuous_operation_enablement(stage_record: dict | None) -> dict:
+class VerifiedContinuousOperationRecord:
+    """Capability issued after rechecking promotion, specialist, and safety evidence."""
+    __slots__ = ("_values",)
+
+    def __init__(self, values: dict, *, _verification_token: object):
+        if _verification_token is not _VERIFIED_CONTINUOUS_TOKEN:
+            raise TypeError("continuous-operation records must come from the evidence verifier")
+        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+
+    def __setattr__(self, _name, _value):
+        raise AttributeError("verified continuous-operation evidence is immutable")
+
+
+_VERIFIED_CONTINUOUS_TOKEN = object()
+
+
+def continuous_operation_enablement(stage_record: VerifiedContinuousOperationRecord | None) -> dict:
     """Keep the always-on supervisor closed until PPO and specialization are accepted."""
+    if not isinstance(stage_record, VerifiedContinuousOperationRecord):
+        return {"enabled": False,
+                "reason": "continuous operation requires a verified evidence capability, not editable gate booleans"}
+    stage_record = stage_record._values
     prerequisites = (isinstance(stage_record, dict)
         and stage_record.get("ppoEnabled") is True
         and stage_record.get("specialistCurriculumPassed") is True

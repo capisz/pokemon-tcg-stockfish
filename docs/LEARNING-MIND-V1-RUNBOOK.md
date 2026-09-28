@@ -698,6 +698,34 @@ The receipt only supports a reviewed gate when every disagreement is marked
 the human-review prerequisite false; this workflow cannot enable PPO or
 promotion.
 
+After all supervised, macro-fidelity, safety, probe, and review artifacts exist,
+assemble the PPO-stage record by recomputing them from their source inputs. Do
+not copy booleans into `stage-gates.json`; the generated report is immutable and
+contains hashes for every source artifact. The verifier also reruns the complete
+192-replay baseline parity audit. Omit `--human-enable-ppo` for an evidence-only
+result; that flag is a separate explicit authorization and cannot make failed
+prerequisites pass.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
+  --root . --baseline-manifest BASELINE_MANIFEST.json \
+  --dataset SUPERVISED_DATASET --probe-dataset PROBE_DATASET \
+  --checkpoint FROZEN_CHECKPOINT.pt --evaluation HELDOUT_EVALUATION.json \
+  --supervised-audit SUPERVISED_AUDIT.json --safety-report CANDIDATE_SAFETY.json \
+  --macro-selection FROZEN_MACRO_SELECTION.json \
+  --python-dataset PYTHON_DATASET --typescript-dataset TYPESCRIPT_DATASET \
+  --python-labels PYTHON_LABELS --typescript-labels TYPESCRIPT_LABELS \
+  --macro-fidelity MACRO_FIDELITY.json \
+  --disagreement-packet REVIEW_PACKET.json --disagreement-review HUMAN_REVIEW.json \
+  --disagreement-receipt REVIEW_RECEIPT.json --output PPO_STAGE_EVIDENCE.json
+```
+
+The report only yields an in-process PPO capability after all source evidence
+has been freshly recomputed and matched. The current CLI only audits and writes
+the report; it does not launch PPO, update the trusted checkpoint, alter the
+collector, or enable continuous operation. A later training entry point must
+consume this verified capability rather than reload editable gate booleans.
+
 ## 10. Bounded PPO experiment
 
 PPO remains disabled unless the supervised acceptance gate passes and a human

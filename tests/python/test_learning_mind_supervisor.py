@@ -5,23 +5,18 @@ import json
 import pytest
 
 from ptcg_lab.learning_mind.supervisor import (MindSupervisor, continuous_operation_enablement,
-                                               cpu_worker_count)
-
-
-def approved_continuous_record():
-    return {"ppoEnabled": True, "specialistCurriculumPassed": True,
-            "continuousOperationEnabled": True, "humanEnableContinuousOperation": True}
+    cpu_worker_count, VerifiedContinuousOperationRecord)
 
 
 def test_supervisor_always_restarts_paused_and_three_strikes_pause(tmp_path):
     events = []; clock = [100.]
     supervisor = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000,
                                 notifier=events.append, clock=lambda: clock[0])
-    record = approved_continuous_record()
-    supervisor.start(human_enabled=True, stage_record=record); assert supervisor.state.status == "RUNNING"
+    supervisor.state.status = "RUNNING"
+    supervisor.persist()
     restarted = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000)
     assert restarted.state.status == "PAUSED" and restarted.state.pause_reason == "reboot-safe default"
-    restarted.start(human_enabled=True, stage_record=record)
+    restarted.state.status = "RUNNING"  # Exercise failure handling independently of the closed start gate.
     restarted.record_failure("worker-restart"); restarted.record_failure("rejected-update")
     assert restarted.state.status == "RUNNING"
     restarted.record_failure("worker-restart")
@@ -33,7 +28,9 @@ def test_immediate_failure_and_explicit_start(tmp_path):
     with pytest.raises(PermissionError): supervisor.start(human_enabled=False)
     with pytest.raises(PermissionError, match="not enabled by the accepted stage record"):
         supervisor.start(human_enabled=True, stage_record={"continuousOperationEnabled": True})
-    supervisor.start(human_enabled=True, stage_record=approved_continuous_record())
+    with pytest.raises(TypeError, match="must come from the evidence verifier"):
+        VerifiedContinuousOperationRecord({"continuousOperationEnabled": True}, _verification_token=object())
+    supervisor.state.status = "RUNNING"
     supervisor.record_failure("private-view-leakage")
     assert supervisor.state.status == "PAUSED"
 
@@ -44,14 +41,15 @@ def test_immediate_failure_and_explicit_start(tmp_path):
     ("humanEnableContinuousOperation", 1),
 ])
 def test_continuous_operation_requires_every_exact_gate(field, value):
-    record = {**approved_continuous_record(), field: value}
+    record = {"ppoEnabled": True, "specialistCurriculumPassed": True,
+              "continuousOperationEnabled": True, "humanEnableContinuousOperation": True}
+    record[field] = value
     assert continuous_operation_enablement(record)["enabled"] is False
 
 
 def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp_path):
-    record = approved_continuous_record()
     supervisor = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000)
-    supervisor.start(human_enabled=True, stage_record=record)
+    supervisor.state.status = "RUNNING"  # Start remains impossible without verified evidence.
     supervisor.record_progress({"positionIndex": 7, "optimizerBatch": 2})
     supervisor.pause("planned checkpoint", notify=False)
 
@@ -61,7 +59,7 @@ def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp
     assert restarted.state.cursor == {"positionIndex": 7, "optimizerBatch": 2}
     with pytest.raises(PermissionError, match="only while the supervisor is running"):
         restarted.record_progress({"positionIndex": 8})
-    restarted.start(human_enabled=True, stage_record=record)
+    restarted.state.status = "RUNNING"
     with pytest.raises(ValueError, match="must advance"):
         restarted.advance_phase("evaluation")
     restarted.advance_phase("training", next_cursor={"epoch": 0, "batch": 0})

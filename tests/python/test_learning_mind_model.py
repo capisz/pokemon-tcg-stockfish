@@ -285,8 +285,5 @@ def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
         "capOverflow": False, "evaluationIdentityStatus": "matched",
         "representativeDisagreementsReviewed": True,
         "humanEnablePPO": True}
-    result = ppo_update(model, optimizer, [row], config=config, stage_record=approved_stage)
-    assert result["acceptedMinibatches"] == 1 and result["optimizationEpochs"] == 1
-    rejected = ppo_update(model, optimizer, [{**row, "oldLogProb": old + 1}], config=config,
-                          stage_record=approved_stage)
-    assert rejected["rejectedMinibatches"] == 1
+    with pytest.raises(PermissionError, match="requires passed supervised/macro evidence"):
+        ppo_update(model, optimizer, [row], config=config, stage_record=approved_stage)

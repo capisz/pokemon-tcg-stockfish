@@ -8,6 +8,7 @@ import os
 import platform
 from dataclasses import dataclass
 from pathlib import Path
+from types import MappingProxyType
 from typing import Iterable
 
 import torch
@@ -241,7 +242,33 @@ def update_guard(*, approximate_kl: float, value_loss: float, finite: bool = Tru
     return True, None
 
 
-def ppo_enablement(stage_record: dict) -> dict:
+class VerifiedPPOStageRecord:
+    """In-process capability issued only by the stage-evidence verifier.
+
+    Persisted JSON is data, not proof: callers cannot enable PPO by supplying a
+    dictionary of optimistic booleans. The verifier which issues this object is
+    intentionally separate from the optimizer API.
+    """
+    __slots__ = ("_values",)
+
+    def __init__(self, values: dict, *, _verification_token: object):
+        if _verification_token is not _VERIFIED_PPO_STAGE_TOKEN:
+            raise TypeError("VerifiedPPOStageRecord must be issued by the stage-evidence verifier")
+        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+
+    def __setattr__(self, _name, _value):
+        raise AttributeError("verified stage evidence is immutable")
+
+
+_VERIFIED_PPO_STAGE_TOKEN = object()
+
+
+def ppo_enablement(stage_record: VerifiedPPOStageRecord | None) -> dict:
+    if not isinstance(stage_record, VerifiedPPOStageRecord):
+        return {"enabled": False, "prerequisitesPassed": False,
+                "reason": "stage record must be issued from verified generated evidence",
+                "humanEnableRequired": True}
+    stage_record = stage_record._values
     passed = (stage_record.get("representationParity") is True
               and stage_record.get("heldOutLabelWin") is True
               and stage_record.get("heldOutLabelEvidenceStatus") == "supported-improvement"

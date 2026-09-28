@@ -10,7 +10,8 @@ from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosi
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from ptcg_lab.learning_mind.experiment import _ranker_evidence_status, _ranker_holdout_rows
-from ptcg_lab.learning_mind.training import PPOConfig, generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard
+from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
+    generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
 from test_learning_mind_representation import observation
@@ -237,7 +238,9 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
              "capOverflow": False, "evaluationIdentityStatus": "matched",
              "representativeDisagreementsReviewed": True}
     assert not ppo_enablement(stage)["enabled"]
-    assert ppo_enablement({**stage, "humanEnablePPO": True})["enabled"]
+    assert not ppo_enablement({**stage, "humanEnablePPO": True})["enabled"]
+    with pytest.raises(TypeError, match="must be issued by the stage-evidence verifier"):
+        VerifiedPPOStageRecord({**stage, "humanEnablePPO": True}, _verification_token=object())
     assert not ppo_enablement({**stage, "severityThreeProbeCoverage": "insufficient",
                                "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "severityThreeRegression": True,

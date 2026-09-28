@@ -22,6 +22,7 @@ from .ranker_distillation import build_macro_ranker_distillation
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
+from .stage_evidence import verify_ppo_stage_evidence
 from .value_targets import (build_value_target_dataset, load_value_target_dataset,
                             training_records as value_training_records)
 from .training import train_supervised
@@ -209,6 +210,16 @@ def main(argv=None) -> int:
     review_audit.add_argument("--packet", type=Path, required=True)
     review_audit.add_argument("--review", type=Path, required=True)
     review_audit.add_argument("--output", type=Path, required=True)
+    stage = sub.add_parser("verify-ppo-stage",
+        help="recompute frozen PPO prerequisites and emit a hash-bound evidence report")
+    for option in ("root", "baseline-manifest", "dataset", "probe-dataset", "checkpoint",
+                   "evaluation", "supervised-audit", "safety-report", "macro-selection",
+                   "python-dataset", "typescript-dataset", "python-labels", "typescript-labels",
+                   "macro-fidelity", "disagreement-packet", "disagreement-review",
+                   "disagreement-receipt", "output"):
+        stage.add_argument(f"--{option}", type=Path, required=True)
+    stage.add_argument("--human-enable-ppo", action="store_true",
+                       help="explicit one-time authorization; prerequisites must still pass")
     args = parser.parse_args(argv)
     if args.command == "audit-baseline":
         result = audit_manifest(args.manifest, limit=args.limit)
@@ -339,9 +350,22 @@ def main(argv=None) -> int:
             audit_path=args.audit.resolve(), output=args.output.resolve())
     elif args.command == "make-disagreement-review-form":
         result = write_disagreement_review_template(packet_path=args.packet.resolve(), output=args.output.resolve())
-    else:
+    elif args.command == "audit-disagreement-review":
         result = audit_disagreement_review(packet_path=args.packet.resolve(),
             review_path=args.review.resolve(), output=args.output.resolve())
+    elif args.command == "verify-ppo-stage":
+        result, _capability = verify_ppo_stage_evidence(root=args.root,
+            baseline_manifest=args.baseline_manifest, dataset_dir=args.dataset,
+            probe_dataset_dir=args.probe_dataset, checkpoint=args.checkpoint,
+            evaluation_path=args.evaluation, supervised_audit_path=args.supervised_audit,
+            safety_report_path=args.safety_report, macro_selection_path=args.macro_selection,
+            python_dataset=args.python_dataset, typescript_dataset=args.typescript_dataset,
+            python_labels=args.python_labels, typescript_labels=args.typescript_labels,
+            macro_fidelity_path=args.macro_fidelity,
+            disagreement_packet_path=args.disagreement_packet,
+            disagreement_review_path=args.disagreement_review,
+            disagreement_receipt_path=args.disagreement_receipt, output=args.output,
+            human_enable_ppo=args.human_enable_ppo)
     print(json.dumps(result, indent=2))
     return 0
 
