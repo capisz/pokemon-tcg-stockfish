@@ -100,11 +100,12 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     torch = pytest.importorskip("torch")
     from ptcg_lab.learning_mind.encoding import collate
     from ptcg_lab.learning_mind.model import StrategyTransformerV1
-    from ptcg_lab.learning_mind.training import ppo_update
+    from ptcg_lab.learning_mind.training import ppo_policy_fingerprint, ppo_update
     from test_learning_mind_representation import encoded
 
     torch.manual_seed(4)
     model = StrategyTransformerV1()
+    behavior_weights = {key: value.clone() for key, value in model.state_dict().items()}
     decision = encoded()
     batch = {key: torch.as_tensor(value) for key, value in collate([decision]).items()}
     with torch.no_grad():
@@ -114,10 +115,19 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
             ("state_card_ids", "state_features", "state_type_ids", "state_mask")})[0].item()
     row = {"episodeId": "completed-0", "episodeStatus": "finished", "episodeEnd": True,
         "reward": 1, "encoded": decision, "selectedAction": 0, "oldLogProb": old_log_prob,
-        "return": value, "advantage": 1.}
+        "return": value, "advantage": 1., "behaviorPolicyHash": ppo_policy_fingerprint(model)}
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
     update = ppo_update(model, optimizer, [row], stage_record=capability)
     assert update["acceptedMinibatches"] == 1 and update["optimizationEpochs"] == 1
+
+    stale_model = StrategyTransformerV1()
+    stale_model.load_state_dict(behavior_weights)
+    stale_row = {**row, "oldLogProb": row["oldLogProb"] + 1e-3}
+    stale_optimizer = torch.optim.AdamW(stale_model.parameters(), lr=1e-4)
+    before_stale = {key: value.clone() for key, value in stale_model.state_dict().items()}
+    with pytest.raises(ValueError, match="oldLogProb does not match"):
+        ppo_update(stale_model, stale_optimizer, [stale_row], stage_record=capability)
+    assert all(torch.equal(before_stale[key], stale_model.state_dict()[key]) for key in before_stale)
 
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):

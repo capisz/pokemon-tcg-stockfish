@@ -764,6 +764,10 @@ uniform `episodeStatus`, and an explicit `episodeEnd` marker on exactly the
 last decision. GAE is computed only inside completed episodes. Every decision
 from a truncated or errored game is excluded (not merely the last row), and a
 completed episode may carry reward only on its final decision.
+Each row also carries a `behaviorPolicyHash`; before the first optimizer
+mutation, the trainer hashes its current model and recomputes every stored
+`oldLogProb`. Mixed-policy batches and stale/mismatched probabilities fail
+closed before changing parameters.
 
 Before mutating parameters, `ppo_update` calculates its KL and value loss. A
 minibatch is rejected if approximate KL exceeds `0.05` or value loss exceeds

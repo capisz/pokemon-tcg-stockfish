@@ -278,12 +278,12 @@ def test_truncation_ends_advantage_trace_and_guards_skip_updates():
     with pytest.raises(ValueError, match="never bootstraps"):
         generalized_advantages(records[:2], values[:2], bootstrap=.5)
     truncated_rows = [{**records[0], "encoded": None, "selectedAction": 0,
-        "oldLogProb": 0., "return": 0., "advantage": 0.},
+        "oldLogProb": 0., "return": 0., "advantage": 0., "behaviorPolicyHash": "h"},
         {**records[1], "encoded": None, "selectedAction": 0,
-         "oldLogProb": 0., "return": 0., "advantage": 0.}]
+         "oldLogProb": 0., "return": 0., "advantage": 0., "behaviorPolicyHash": "h"}]
     completed_rows = [{"episodeId": "complete", "episodeStatus": "finished",
         "episodeEnd": True, "reward": 1, "encoded": None, "selectedAction": 0,
-        "oldLogProb": 0., "return": 1., "advantage": 1.}]
+        "oldLogProb": 0., "return": 1., "advantage": 1., "behaviorPolicyHash": "h"}]
     assert eligible_ppo_records(truncated_rows + completed_rows) == completed_rows
     assert update_guard(approximate_kl=.051, value_loss=.1) == (False, "approximate-kl-exceeded")
     assert update_guard(approximate_kl=.01, value_loss=.51) == (False, "value-loss-exceeded")
