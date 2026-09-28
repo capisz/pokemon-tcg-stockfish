@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from ptcg_lab.learning_mind.evaluation import promotion_gate, sequential_decision
+from ptcg_lab.learning_mind.evaluation import PROMOTION_MATCHUPS, promotion_gate, sequential_decision
 from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
@@ -269,10 +269,26 @@ def test_truncation_ends_advantage_trace_and_guards_skip_updates():
 def test_sequential_evaluation_and_manual_promotion_gate():
     records = [{"status": "finished", "score": 1}] * 100
     assert sequential_decision(records)["status"] == "supported-improvement"
+    non_regression = sequential_decision([{"status": "finished", "score": 1}] * 55
+                                        + [{"status": "finished", "score": 0}] * 45)
+    assert non_regression["status"] == "supported-non-regression"
     gate = promotion_gate(aggregate=sequential_decision(records), matchups=[],
                           strategy={"severityThreeRegressions": []}, blind_family_passed=True,
                           identities_match=True, human_approved=False)
     assert not gate["promotable"] and gate["automaticPromotion"] is False
+    complete_matchups = [{"ownArchetype": own, "opponentArchetype": opponent,
+        "completed": 100, "status": "supported-non-regression", "regressionPoints": 0}
+        for own, opponent in sorted(PROMOTION_MATCHUPS)]
+    passed = promotion_gate(aggregate=sequential_decision(records), matchups=complete_matchups,
+        strategy={"severityThreeRegressions": []}, blind_family_passed=True,
+        identities_match=True, human_approved=True)
+    assert passed["promotable"] and passed["automaticPromotion"] is False
+    unresolved = [{**row, "status": "continue-to-250"} for row in complete_matchups]
+    rejected = promotion_gate(aggregate=sequential_decision(records), matchups=unresolved,
+        strategy={"severityThreeRegressions": []}, blind_family_passed=True,
+        identities_match=True, human_approved=True)
+    assert not rejected["promotable"]
+    assert any("all 25 ordered matchups" in reason for reason in rejected["reasons"])
 
 
 def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():

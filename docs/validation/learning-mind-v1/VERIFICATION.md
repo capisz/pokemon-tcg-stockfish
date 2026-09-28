@@ -1173,3 +1173,20 @@ strength or autonomous improvement.
   existing deprecation warnings); `git diff --check` passes.
 - No experiment data was consumed, no ranker fit or game simulation was run,
   and no collector, PPO, autonomous service, or promotion was started.
+
+### Promotion evidence gate hardening (2026-09-28)
+
+- Promotion readiness now fails closed unless the aggregate has at least 100
+  finished games and all 25 ordered archetype matchups each have at least 100
+  finished games plus a resolved confidence status. Unresolved cells cannot be
+  treated as non-regressions; malformed, duplicate, or missing matchup records
+  are rejected.
+- Sequential evaluation now identifies supported non-regression when the
+  decisive-game Wilson lower bound clears the frozen five-point margin. The
+  gate also requires an explicit empty severity-three regression list, passing
+  blind-family evidence, exact identities, and human approval. Automatic
+  promotion remains impossible.
+- Full Python suite: 400 passed; strategy-contract validator passed with v1.2
+  active; `git diff --check` passed. The frozen collector implementation is
+  unchanged. No collector was inspected or polled, and no games, training,
+  promotion, or service were started.

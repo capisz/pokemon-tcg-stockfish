@@ -4,6 +4,10 @@ import math
 from collections import Counter, defaultdict
 
 from .macro import rollout_seed
+from .curriculum import ARCHETYPES
+
+PROMOTION_MATCHUPS = frozenset((own, opponent)
+    for own in ARCHETYPES for opponent in ARCHETYPES)
 
 
 def wilson(k: int, n: int, z: float = 1.959963984540054) -> dict:
@@ -32,6 +36,8 @@ def sequential_decision(records: list[dict], *, non_regression_margin: float = .
         status = "supported-improvement"
     elif interval["high"] is not None and interval["high"] < .5 - non_regression_margin:
         status = "supported-regression"
+    elif interval["low"] is not None and interval["low"] >= .5 - non_regression_margin:
+        status = "supported-non-regression"
     elif n < 250:
         status = "continue-to-250"
     elif n < 500:
@@ -46,9 +52,34 @@ def promotion_gate(*, aggregate: dict, matchups: list[dict], strategy: dict,
                    blind_family_passed: bool, identities_match: bool, human_approved: bool) -> dict:
     reasons = []
     if aggregate.get("status") != "supported-improvement": reasons.append("aggregate improvement unsupported")
-    if any(row.get("regressionPoints", 0) > 5 for row in matchups): reasons.append("critical matchup regressed over five points")
-    if strategy.get("severityThreeRegressions"): reasons.append("severity-three probe regression")
-    if not blind_family_passed: reasons.append("blind opponent-policy family failed")
-    if not identities_match: reasons.append("evaluation identity drift")
-    if not human_approved: reasons.append("explicit human approval missing")
+    if type(aggregate.get("completed")) is not int or aggregate["completed"] < 100:
+        reasons.append("aggregate minimum of 100 completed games not met")
+    if not isinstance(matchups, list):
+        reasons.append("ordered matchup evidence is malformed")
+    else:
+        observed = {}
+        malformed = False
+        for row in matchups:
+            if not isinstance(row, dict):
+                malformed = True
+                continue
+            key = (row.get("ownArchetype"), row.get("opponentArchetype"))
+            if (key not in PROMOTION_MATCHUPS or key in observed
+                    or type(row.get("completed")) is not int
+                    or row["completed"] < 100
+                    or row.get("status") not in {"supported-improvement", "supported-non-regression"}
+                    or type(row.get("regressionPoints")) not in {int, float}
+                    or not math.isfinite(row["regressionPoints"])):
+                malformed = True
+                continue
+            observed[key] = row
+        if malformed or set(observed) != PROMOTION_MATCHUPS:
+            reasons.append("all 25 ordered matchups need unique evidence, at least 100 completed games, and a resolved confidence gate")
+        if any(row.get("regressionPoints", math.inf) > 5 for row in observed.values()):
+            reasons.append("critical matchup regressed over five points")
+    if not isinstance(strategy, dict) or strategy.get("severityThreeRegressions") != []:
+        reasons.append("severity-three probe regression status is missing or failed")
+    if blind_family_passed is not True: reasons.append("blind opponent-policy family failed")
+    if identities_match is not True: reasons.append("evaluation identity drift")
+    if human_approved is not True: reasons.append("explicit human approval missing")
     return {"promotable": not reasons, "reasons": reasons, "automaticPromotion": False}
