@@ -473,7 +473,9 @@ IDs are excluded. Every ranker manifest records the schema hash; evaluation
 must compare that hash before using a model, and the fit receipt pins the
 feature implementation source hash. This representation changes the model
 input contract, so do not compare its raw metrics to ranker v1 as if only the
-training data had changed.
+training data had changed. Both the report and portable model also pin the
+inference implementation source hash; changing the scorer invalidates the
+artifact until it is deliberately refit and reverified.
 
 Before fitting, v2 revalidates every candidate hash and uniqueness, rollout
 outcome reconciliation, legal actor-visible root action, finite expected result
@@ -496,7 +498,8 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind fit-macro-ranker-v2 \
 ```
 
 Before using a fitted artifact, verify its immutable report, model checksum,
-feature schema/source hashes, and declared input dimension:
+feature schema/source hashes, inference implementation hash, and declared
+input dimension:
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-macro-ranker-v2 \
@@ -506,8 +509,9 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-macro-ranker-v2
 
 The fitted XGBoost model is exported as a portable JSON tree ensemble. The
 Python inference path sums its tree leaves and has a parity test against native
-XGBoost candidate scores. The verifier checks the report, schema/source hashes,
-input dimension, and artifact checksum without invoking native model loading.
+XGBoost candidate scores. The verifier checks the report, schema/source and
+inference implementation hashes, input dimension, and artifact checksum
+without invoking native model loading.
 
 For each position, supply candidate features, relative labels, group sizes, and
 completed-rollout/uncertainty weights. Evaluate:

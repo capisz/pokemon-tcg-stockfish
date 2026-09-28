@@ -14,6 +14,7 @@ from .experiment import _load_ranker_input, _ranker_evidence_status, _ranker_hol
 from .ranker import FrozenIteration, XGBoostMacroRanker
 from .ranker_features import (MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH,
                               candidate_features_v2)
+from .ranker_portable import inference_implementation_sha256, predict_macro_ranker_v2
 from .schema import identity_hash
 from .macro_fidelity import _validate_rollout_label
 from .macro import rollout_seed
@@ -100,6 +101,8 @@ def validate_ranker_v2_report(report: dict) -> None:
     current_source_hash = file_sha256(Path(__file__).with_name("ranker_features.py"))
     if report.get("featureImplementationSha256") != current_source_hash:
         raise ValueError("macro ranker v2 feature implementation mismatch")
+    if report.get("inferenceImplementationSha256") != inference_implementation_sha256():
+        raise ValueError("macro ranker v2 inference implementation mismatch")
     if report.get("reportHash") != identity_hash({key: value for key, value in report.items()
                                                    if key != "reportHash"}):
         raise ValueError("macro ranker v2 report hash mismatch")
@@ -116,51 +119,12 @@ def verify_macro_ranker_v2_artifact(model_path: Path, report_path: Path) -> dict
     if (artifact.get("kind") != "xgboost-macro-ranker-v2-portable"
             or artifact.get("featureSchemaHash") != MACRO_FEATURE_SCHEMA_HASH
             or artifact.get("featureImplementationSha256") != report.get("featureImplementationSha256")
+            or artifact.get("inferenceImplementationSha256") != report.get("inferenceImplementationSha256")
             or artifact.get("featureCount") != MACRO_FEATURE_SCHEMA["dimension"]
             or report.get("modelFeatureCount") != MACRO_FEATURE_SCHEMA["dimension"]
             or not isinstance(artifact.get("trees"), list) or not artifact["trees"]):
         raise ValueError("macro ranker v2 model feature dimension mismatch")
     return {"report": report, "artifact": artifact}
-
-
-def _tree_score(node: dict, row: np.ndarray) -> float:
-    if "leaf" in node:
-        return float(node["leaf"])
-    split = node.get("split")
-    if not isinstance(split, str) or not split.startswith("f") or not split[1:].isdigit():
-        raise ValueError("portable ranker tree contains an invalid feature split")
-    feature = int(split[1:])
-    if not 0 <= feature < row.shape[0]:
-        raise ValueError("portable ranker tree split exceeds the feature dimension")
-    value = float(row[feature])
-    if not np.isfinite(value):
-        child_id = node.get("missing")
-    else:
-        child_id = node.get("yes") if value < float(node["split_condition"]) else node.get("no")
-    children = node.get("children")
-    if not isinstance(children, list):
-        raise ValueError("portable ranker tree split has no children")
-    child = next((item for item in children if item.get("nodeid") == child_id), None)
-    if child is None:
-        raise ValueError("portable ranker tree points to a missing child")
-    return _tree_score(child, row)
-
-
-def predict_macro_ranker_v2(artifact: dict, features) -> np.ndarray:
-    """Score candidate vectors using the portable tree dump (ranking margins)."""
-    if (not isinstance(artifact, dict) or artifact.get("kind") != "xgboost-macro-ranker-v2-portable"
-            or artifact.get("featureSchemaHash") != MACRO_FEATURE_SCHEMA_HASH
-            or artifact.get("featureCount") != MACRO_FEATURE_SCHEMA["dimension"]
-            or artifact.get("featureImplementationSha256") != file_sha256(
-                Path(__file__).with_name("ranker_features.py"))):
-        raise ValueError("portable macro ranker feature identity mismatch")
-    matrix = np.asarray(features, dtype=np.float32)
-    if matrix.ndim != 2 or matrix.shape[1] != MACRO_FEATURE_SCHEMA["dimension"]:
-        raise ValueError("portable macro ranker expects a [batch, 640] feature matrix")
-    if not isinstance(artifact.get("trees"), list) or not artifact["trees"]:
-        raise ValueError("portable macro ranker has no trees")
-    return np.asarray([sum(_tree_score(tree, row) for tree in artifact["trees"])
-                       for row in matrix], dtype=np.float32)
 
 
 def _validated_macro_labels(record: dict, *, expected_rollout_identity: str | None = None) -> list[dict]:
@@ -357,6 +321,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
 
     input_hash = labels_manifest["manifestHash"]
     source_hash = file_sha256(Path(__file__).with_name("ranker_features.py"))
+    inference_hash = inference_implementation_sha256()
     frozen = FrozenIteration(iteration, teacher_hash, opponent_policy_hash, input_hash, tuple(positions))
     ranker = XGBoostMacroRanker().fit(features, labels, groups, weights)
     training_metrics = metrics(ranker, train_records)
@@ -379,6 +344,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "featureCount": int(ranker.model.num_features()),
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": source_hash,
+        "inferenceImplementationSha256": inference_hash,
         "trees": [json.loads(tree) for tree in ranker.model.get_dump(dump_format="json")],
     }
     if model_artifact["featureCount"] != MACRO_FEATURE_SCHEMA["dimension"]:
@@ -404,6 +370,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": source_hash,
+        "inferenceImplementationSha256": inference_hash,
         "identity": labels_manifest["identity"],
         "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir.resolve() / "manifest.json"),

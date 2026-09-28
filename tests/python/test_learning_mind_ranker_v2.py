@@ -10,6 +10,7 @@ import pytest
 from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
     MACRO_FEATURE_SCHEMA, candidate_features_v2)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
+from ptcg_lab.learning_mind.ranker_portable import inference_implementation_sha256
 from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
@@ -61,7 +62,8 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
     from ptcg_lab.learning_mind import ranker_features
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
-        "featureImplementationSha256": file_sha256(Path(ranker_features.__file__))}
+        "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
+        "inferenceImplementationSha256": inference_implementation_sha256()}
     report["reportHash"] = identity_hash(report)
     validate_ranker_v2_report(report)
     changed = {**report, "featureSchemaHash": "wrong"}
@@ -72,6 +74,11 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
                                                    if key != "reportHash"})
     with pytest.raises(ValueError, match="implementation"):
         validate_ranker_v2_report(changed_source)
+    changed_inference = {**report, "inferenceImplementationSha256": "different"}
+    changed_inference["reportHash"] = identity_hash({key: value for key, value in changed_inference.items()
+                                                      if key != "reportHash"})
+    with pytest.raises(ValueError, match="inference implementation"):
+        validate_ranker_v2_report(changed_inference)
 
 
 def test_ranker_v2_position_bootstrap_is_reproducible_and_reports_empty_samples():
@@ -104,6 +111,7 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "objective": "rank:pairwise", "featureCount": 640,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
+        "inferenceImplementationSha256": inference_implementation_sha256(),
         "trees": [json.loads(tree) for tree in ranker.model.get_dump(dump_format="json")]}
     portable_scores = predict_macro_ranker_v2(artifact, features)
     np.testing.assert_allclose(portable_scores, scores, rtol=1e-6, atol=1e-6)
@@ -113,6 +121,7 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
+        "inferenceImplementationSha256": inference_implementation_sha256(),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640}
     report["reportHash"] = identity_hash(report)
     report_path = tmp_path / "ranker.manifest.json"
@@ -121,6 +130,9 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
     assert verified["report"]["modelFeatureCount"] == 640
     np.testing.assert_allclose(predict_macro_ranker_v2(verified["artifact"], features), scores,
                                rtol=1e-6, atol=1e-6)
+    changed_artifact = {**artifact, "inferenceImplementationSha256": "different"}
+    with pytest.raises(ValueError, match="inference identity"):
+        predict_macro_ranker_v2(changed_artifact, features)
 
     model_path.write_bytes(model_path.read_bytes() + b"tamper")
     with pytest.raises(ValueError, match="checksum"):

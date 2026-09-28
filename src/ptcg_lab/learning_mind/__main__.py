@@ -258,7 +258,8 @@ def main(argv=None) -> int:
         report = verified["report"]
         result = {"verified": True, "modelSha256": report["modelSha256"],
             "featureSchemaHash": report["featureSchemaHash"],
-            "featureImplementationSha256": report["featureImplementationSha256"]}
+            "featureImplementationSha256": report["featureImplementationSha256"],
+            "inferenceImplementationSha256": report["inferenceImplementationSha256"]}
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
     elif args.command == "evaluate-supervised":

@@ -1063,7 +1063,8 @@ strength or autonomous improvement.
   roles, and referenced target slots. Opponent private hand contents and
   simulation-generated action IDs do not enter the features.
 - The v2 report binds its model to the feature-schema hash and feature-source
-  hash. The existing `experiment.py` collector/ranker-v1 module is unchanged
+  hash and portable inference implementation hash. The existing
+  `experiment.py` collector/ranker-v1 module is unchanged
   to preserve the active label collector's frozen source identity. A synthetic
   fixture fits the complete v2 path and exercises all archetype and family
   holdouts; no finalized labels were consumed and no real-data model-quality
@@ -1072,7 +1073,8 @@ strength or autonomous improvement.
   fault in the configured runtime. To keep future inference out of that native
   load path, v2 exports a portable JSON tree ensemble with a Python scorer.
   Its synthetic prediction scores match native XGBoost to 1e-6, and artifact
-  verification checks report/schema/source/model hashes and feature dimension.
+  verification checks report/schema/feature-source/inference-source/model
+  hashes and feature dimension. Prediction rejects a scorer-source mismatch.
   No ranker was fit from the finalized game labels, so real-data quality and
   held-out performance remain unverified.
 - Ranker-v2 top-1 regret now includes reproducible 95% source-game
@@ -1083,6 +1085,18 @@ strength or autonomous improvement.
 - The fitter verifies every record's source game against the frozen selection,
   rejects duplicate source games within a family/split and train/development
   overlap, and clusters cross-family reuse for confidence intervals.
+
+### Portable ranker inference identity (2026-09-28)
+
+- Moved the portable ranker-v2 tree scorer into its own module and bound its
+  exact source hash into both the fitted model artifact and report. The
+  verifier and prediction API reject scorer-hash drift; the CLI returns the
+  verified inference hash for audit records. The active `experiment.py` source
+  remains unchanged.
+- Verification: focused ranker-v2 tests pass (11); full Python suite passes
+  (381, with two existing deprecation warnings); strategy contract validator
+  passes; `git diff --check` passes. No finalized experiment labels were fit,
+  and no collector, PPO run, continuous service, or promotion was started.
 - Before fitting, v2 also independently validates candidate identities,
   actor-visible legal root actions, rollout count/reason reconciliation,
   result and uncertainty bounds, evidence-derived weights, and the per-position
