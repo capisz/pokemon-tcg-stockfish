@@ -435,6 +435,29 @@ per-position support/failure reasons, and counts by matchup, policy family,
 stage, and split. Unsupported positions remain unsupported; never truncate the
 candidate list to force support.
 
+After both frozen policy-family runs have fully finalized, audit actual Raging
+Bolt plan execution without launching games or reading collector checkpoints:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind \
+  audit-raging-bolt-macro-fidelity \
+  --root . \
+  --selection artifacts/learning-mind-v1/FROZEN_SELECTION.json \
+  --python-dataset artifacts/learning-mind-v1/PYTHON_DATASET \
+  --typescript-dataset artifacts/learning-mind-v1/TYPESCRIPT_DATASET \
+  --python-labels artifacts/learning-mind-v1/PYTHON_FINAL_LABELS \
+  --typescript-labels artifacts/learning-mind-v1/TYPESCRIPT_FINAL_LABELS \
+  --output artifacts/learning-mind-v1/raging-bolt-macro-fidelity-v1.json
+```
+
+The auditor requires exact frozen train/development position coverage, current
+planner/collector identities, verified record hashes, and reconciled outcome
+counts. A position passes fidelity only when at least one candidate's declared
+plan actually executes; failed plans count only when every error is the typed
+fail-closed macro-execution error. Truncations remain separate from finished
+games. The report is an immutable artifact and is not a policy label or
+promotion approval.
+
 ## 7. Fit and evaluate the XGBoost macro ranker
 
 Use `XGBoostMacroRanker`. If XGBoost is unavailable, stop; do not silently use a

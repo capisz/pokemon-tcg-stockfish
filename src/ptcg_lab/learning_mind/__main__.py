@@ -16,6 +16,7 @@ from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
+from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
@@ -80,6 +81,15 @@ def main(argv=None) -> int:
     combine.add_argument("--selection", type=Path, required=True,
                          help="frozen train/development selection manifest that every run must cover exactly")
     combine.add_argument("--output", type=Path, required=True)
+    fidelity = sub.add_parser("audit-raging-bolt-macro-fidelity",
+        help="audit finalized Raging Bolt plan executions from frozen labels without running games")
+    fidelity.add_argument("--root", type=Path, required=True)
+    fidelity.add_argument("--selection", type=Path, required=True)
+    fidelity.add_argument("--python-dataset", type=Path, required=True)
+    fidelity.add_argument("--typescript-dataset", type=Path, required=True)
+    fidelity.add_argument("--python-labels", type=Path, required=True)
+    fidelity.add_argument("--typescript-labels", type=Path, required=True)
+    fidelity.add_argument("--output", type=Path, required=True)
     collect = sub.add_parser("collect-macro-labels")
     collect.add_argument("--root", type=Path, required=True)
     collect.add_argument("--dataset", type=Path, required=True)
@@ -217,6 +227,11 @@ def main(argv=None) -> int:
         root = Path.cwd().resolve(); identity = runtime_identity(root).record()
         result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity,
                                           selection_path=args.selection.resolve())
+    elif args.command == "audit-raging-bolt-macro-fidelity":
+        result = audit_raging_bolt_macro_fidelity(root=args.root.resolve(),
+            selection_path=args.selection.resolve(), python_dataset=args.python_dataset.resolve(),
+            typescript_dataset=args.typescript_dataset.resolve(), python_labels=args.python_labels.resolve(),
+            typescript_labels=args.typescript_labels.resolve(), output=args.output.resolve())
     elif args.command == "fit-macro-ranker":
         result = fit_ranker(args.labels.resolve(), args.output.resolve(), selection_path=args.selection.resolve(),
                             teacher_hash=args.teacher_hash,
