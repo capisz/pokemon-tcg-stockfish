@@ -71,6 +71,16 @@ def supervised_policy_rows(rows: Iterable[dict]) -> list[dict]:
         has_distribution = distribution is not None
         if has_acceptable == has_distribution:
             raise ValueError("policy-labelled row must have exactly one nonempty target form")
+        teacher_hashes = row.get("teacherHashes", [])
+        if source == "macro-ranker-distillation":
+            valid_teacher_list = (isinstance(teacher_hashes, list) and len(teacher_hashes) == 2
+                and all(isinstance(value, str) and len(value) == 64
+                        and all(character in "0123456789abcdef" for character in value)
+                        for value in teacher_hashes))
+            if not valid_teacher_list or len(set(teacher_hashes)) != 2:
+                raise ValueError("ranker-distilled policy rows require exact model and report teacher hashes")
+        elif teacher_hashes not in ([], None):
+            raise ValueError("non-distilled policy rows cannot claim ranker teacher hashes")
         accepted.append(row)
     return accepted
 
@@ -296,13 +306,17 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
         raise ValueError("supervised epochs and batch size must be positive integers")
     if type(seed) is not int:
         raise ValueError("supervised seed must be an integer")
+    row_teacher_hashes = sorted({value for row in records for value in (row.get("teacherHashes") or [])})
     if teacher_hashes is None:
-        teacher_hashes = [value for row in records for value in row.get("teacherHashes", [])]
-    teacher_hashes = sorted(set(teacher_hashes))
-    if any(not isinstance(value, str) or len(value) != 64
+        teacher_hashes = row_teacher_hashes
+    if (not isinstance(teacher_hashes, list)
+            or any(not isinstance(value, str) or len(value) != 64
            or any(character not in "0123456789abcdef" for character in value)
-           for value in teacher_hashes):
+           for value in teacher_hashes)):
         raise ValueError("supervised teacher hashes must be lowercase SHA-256 values")
+    teacher_hashes = sorted(set(teacher_hashes))
+    if teacher_hashes != row_teacher_hashes:
+        raise ValueError("explicit teacher hashes do not match supervised row provenance")
     output = output.resolve()
     resume = resume.resolve() if resume is not None else None
     if output.exists() and (resume is None or output != resume):

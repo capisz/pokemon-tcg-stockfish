@@ -157,6 +157,20 @@ def test_supervised_checkpoint_records_teacher_hashes_from_rows(tmp_path):
     assert checkpoint["trainingConfig"]["teacherHashes"] == checkpoint["teacherHashes"]
 
 
+def test_ranker_distillation_training_requires_matching_teacher_provenance(tmp_path):
+    from ptcg_lab.learning_mind.training import supervised_policy_rows
+    teacher_hashes = ["1" * 64, "2" * 64]
+    row = {"encoded": encoded(), "policyLabelSource": "macro-ranker-distillation",
+        "policyDistribution": [1.] + [0.] * len(encoded().action_classes)}
+    with pytest.raises(ValueError, match="model and report teacher hashes"):
+        supervised_policy_rows([row])
+    row["teacherHashes"] = teacher_hashes
+    with pytest.raises(ValueError, match="do not match supervised row provenance"):
+        train_supervised([row], tmp_path / "mismatched-teacher.pt", {"identityHash": "fixed"},
+                         batch_size=1, teacher_hashes=["3" * 64])
+    assert not (tmp_path / "mismatched-teacher.pt").exists()
+
+
 def test_search_distribution_loss_ignores_zero_mass_padded_options():
     mask = torch.tensor([[True, True, False, True]])
     logits = torch.tensor([[1., 0., -torch.inf, -1.]])

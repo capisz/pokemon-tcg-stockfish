@@ -1193,3 +1193,14 @@ strength or autonomous improvement.
   active; `git diff --check` passed. The frozen collector implementation is
   unchanged. No collector was inspected or polled, and no games, training,
   promotion, or service were started.
+
+### Ranker-teacher provenance enforcement at training boundary (2026-09-28)
+
+- The supervised trainer now independently requires exactly the ranker-model
+  and report SHA-256 hashes on every ranker-distilled row. Explicit checkpoint
+  teacher hashes must exactly match the union of row provenance; non-distilled
+  rows cannot claim ranker teachers. Invalid or mismatched provenance fails
+  before an output checkpoint is created.
+- Focused dataset, distillation, strategy, and model tests pass (51); the full
+  Python suite passes (401), and the v1.2 strategy validator passes. The frozen
+  collector implementation and active run remain untouched.
