@@ -15,6 +15,7 @@ from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
+from .supervised_evidence import audit_supervised_evaluation
 
 
 def main(argv=None) -> int:
@@ -121,6 +122,13 @@ def main(argv=None) -> int:
                           help="complete held-out actor-view corpus; sparse supervised rows are not accepted")
     evaluate.add_argument("--checkpoint", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
+    audit_supervised = sub.add_parser("audit-supervised-evaluation",
+        help="verify frozen held-out predictions and require independent paired evidence")
+    audit_supervised.add_argument("--dataset", type=Path, required=True)
+    audit_supervised.add_argument("--checkpoint", type=Path, required=True)
+    audit_supervised.add_argument("--evaluation", type=Path, required=True)
+    audit_supervised.add_argument("--output", type=Path, required=True)
+    audit_supervised.add_argument("--minimum-game-sides", type=int, default=20)
     args = parser.parse_args(argv)
     if args.command == "audit-baseline":
         result = audit_manifest(args.manifest, limit=args.limit)
@@ -189,11 +197,15 @@ def main(argv=None) -> int:
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
-    else:
+    elif args.command == "evaluate-supervised":
         result = evaluate_candidate(args.dataset.resolve(), args.checkpoint.resolve(),
                                     args.probe_dataset.resolve())
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n")
+    else:
+        result = audit_supervised_evaluation(dataset_dir=args.dataset.resolve(),
+            checkpoint=args.checkpoint.resolve(), evaluation_path=args.evaluation.resolve(),
+            output=args.output.resolve(), minimum_game_sides=args.minimum_game_sides)
     print(json.dumps(result, indent=2))
     return 0
 

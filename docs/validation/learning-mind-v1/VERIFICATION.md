@@ -173,6 +173,25 @@ Base: `7543298`
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
 
+## Independent supervised-evidence gate
+
+- Supervised held-out evaluation is accepted only after the audit command
+  recomputes policy actions from the frozen checkpoint and actor-visible rows,
+  verifies the dataset/checkpoint/evaluation identities, and exactly covers
+  every non-training position.
+- The comparison unit is an independent held-out game-side (or review-family
+  side when no source game exists), not a decision row. The gate requires at
+  least 20 such units and at least 20 decisive paired units; the two-sided
+  Wilson 95% lower bound of model wins among decisive units must exceed 0.5.
+  Ties remain reported and do not count as decisive wins or losses.
+- This gate only strengthens supervised evidence. It does not enable PPO,
+  automatic promotion, or continuous operation; those still require all
+  existing stage gates and explicit human authorization.
+- CLI: `python -m ptcg_lab.learning_mind audit-supervised-evaluation
+  --dataset DATASET --checkpoint CHECKPOINT --evaluation EVALUATION --output
+  NEW_AUDIT_JSON`. The output is immutable and includes the verified hashes
+  and per-game-side comparisons.
+
 ## Five-archetype generalist pools and label collection (2026-09-23)
 
 - A fresh matched epoch collected 60/60 games for each heuristic policy family

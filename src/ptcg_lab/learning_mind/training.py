@@ -125,6 +125,7 @@ def update_guard(*, approximate_kl: float, value_loss: float, finite: bool = Tru
 def ppo_enablement(stage_record: dict) -> dict:
     passed = (stage_record.get("representationParity") is True
               and stage_record.get("heldOutLabelWin") is True
+              and stage_record.get("heldOutLabelEvidenceStatus") == "supported-improvement"
               and stage_record.get("targetProbeWin") is True
               and stage_record.get("ragingBoltMacroPlanFidelity") == "passed"
               and stage_record.get("severityThreeProbeCoverage") == "sufficient"

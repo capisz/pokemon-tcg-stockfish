@@ -124,6 +124,7 @@ def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
     with pytest.raises(PermissionError, match="requires passed supervised/macro evidence"):
         ppo_update(model, optimizer, [row], config=config)
     approved_stage = {"representationParity": True, "heldOutLabelWin": True,
+        "heldOutLabelEvidenceStatus": "supported-improvement",
         "targetProbeWin": True, "ragingBoltMacroPlanFidelity": "passed",
         "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False,
         "humanEnablePPO": True}

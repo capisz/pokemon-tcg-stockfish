@@ -222,7 +222,8 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
             {"playedAction": 1}]
     assert supervised_policy_rows(rows) == rows[:1]
     with pytest.raises(ValueError): supervised_policy_rows([{"policyLabelSource": "ordinary-self-play", "acceptableActionIndices": [0]}])
-    stage = {"representationParity": True, "heldOutLabelWin": True, "targetProbeWin": True,
+    stage = {"representationParity": True, "heldOutLabelWin": True,
+             "heldOutLabelEvidenceStatus": "supported-improvement", "targetProbeWin": True,
              "ragingBoltMacroPlanFidelity": "passed",
              "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False}
     assert not ppo_enablement(stage)["enabled"]
@@ -232,6 +233,8 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
     assert not ppo_enablement({**stage, "severityThreeRegression": True,
                                "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "ragingBoltMacroPlanFidelity": "insufficient",
+                               "humanEnablePPO": True})["enabled"]
+    assert not ppo_enablement({**stage, "heldOutLabelEvidenceStatus": "insufficient",
                                "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "severityThreeRegression": 0,
                                "humanEnablePPO": True})["enabled"]

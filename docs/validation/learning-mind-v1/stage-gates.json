@@ -4,6 +4,7 @@
   "supervisedManifestFrozen": true,
   "supervisedCheckpointTrained": true,
   "heldOutLabelWin": false,
+  "heldOutLabelEvidenceStatus": "insufficient",
   "targetProbeWin": false,
   "severityThreeRegression": false,
   "humanEnablePPO": false,

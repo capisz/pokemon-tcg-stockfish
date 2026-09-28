@@ -12,6 +12,13 @@
     "high-confidence-macro-plan",
     "macro-ranker-distillation"
   ],
+  "supervisedAcceptance": {
+    "heldoutComparison": "paired-model-vs-frozen-heuristic-by-independent-game-side",
+    "minimumIndependentGameSides": 20,
+    "supportRule": "two-sided-Wilson-95-lower-bound-above-0.5",
+    "recomputePredictionsFromFrozenCheckpoint": true,
+    "verifyDatasetManifestAndEvaluationCoverage": true
+  },
   "ppo": {
     "enabled": false,
     "enablement": "supervised milestone plus explicit human enablement",
