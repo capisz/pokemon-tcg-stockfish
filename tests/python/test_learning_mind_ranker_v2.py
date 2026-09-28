@@ -239,6 +239,43 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
 
 
+def test_ranker_v2_does_not_report_partial_development_coverage_as_measured(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import ranker_v2
+    monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
+        lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
+    labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
+    manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    entry = None
+    for item in manifest["files"]:
+        candidate_path = labels_dir / item["path"]
+        candidate_record = json.loads(candidate_path.read_text())
+        if candidate_record["opponentPolicyFamily"] == "python-heuristic" and candidate_record["split"] == "development":
+            entry = item
+            record_path = candidate_path
+            record = candidate_record
+            break
+    assert entry is not None
+    missing = record["labels"][1]
+    missing.update(completedRollouts=0,
+        outcomes={"finished": 0, "truncated": 2, "error": 0},
+        expectedResult=None, relativeResult=None, uncertainty=None, weight=0)
+    record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
+    entry["sha256"] = file_sha256(record_path)
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+    report = fit_macro_ranker_v2(labels_dir, tmp_path / "ranker.json",
+        selection_path=selection_path, teacher_hash="frozen-teacher",
+        opponent_policy_hash="frozen-opponent-set")
+    assert report["development"]["status"] == "insufficient"
+    assert report["development"]["requestedPositions"] == 4
+    assert report["development"]["positions"] == 3
+    assert len(report["development"]["insufficientPositionHashes"]) == 1
+    assert report["acceptance"] == "insufficient"
+
+
 def test_ranker_v2_rejects_relative_targets_not_centered_on_best_completed_plan(tmp_path):
     labels_dir, _selection = _write_ranker_v2_fit_fixture(tmp_path)
     record_path = next((labels_dir / "python-heuristic").glob("*.json"))

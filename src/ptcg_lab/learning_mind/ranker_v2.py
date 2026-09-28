@@ -268,8 +268,12 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
 
     def metrics(model, selected):
         x, truth_values, _, sizes, _, metadata = flatten(selected)
+        scored_positions = {item["positionHash"] for item in metadata}
+        insufficient_positions = sorted(record["positionHash"] for record in selected
+            if record["positionHash"] not in scored_positions)
         if not sizes:
-            return {"status": "insufficient", "positions": 0}
+            return {"status": "insufficient", "requestedPositions": len(selected),
+                    "positions": 0, "insufficientPositionHashes": insufficient_positions}
         predicted = model.predict(x)
         offset = 0
         details = []
@@ -307,7 +311,9 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
                     "meanTop1RelativeRegretCI95": summary["interval95"],
                     "bootstrapSeed": summary["seed"],
                     "independentSourceGames": summary["independentUnits"]}
-        return {"status": "measured", "positions": len(details),
+        return {"status": "measured" if not insufficient_positions else "insufficient",
+            "requestedPositions": len(selected), "positions": len(details),
+            "insufficientPositionHashes": insufficient_positions,
             "meanTop1RelativeRegret": overall["mean"],
             "meanTop1RelativeRegretCI95": overall["interval95"],
             "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
@@ -335,7 +341,8 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
             holdouts.append({**split, "status": "insufficient"})
             continue
         held_model = XGBoostMacroRanker().fit(hx, hy, hg, hw)
-        holdouts.append({**split, "status": "measured", "metrics": metrics(held_model, held_test)})
+        held_metrics = metrics(held_model, held_test)
+        holdouts.append({**split, "status": held_metrics["status"], "metrics": held_metrics})
 
     model_artifact = {
         "schemaVersion": 1,
