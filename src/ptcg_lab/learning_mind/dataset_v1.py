@@ -5,9 +5,12 @@ import itertools
 import json
 import os
 from collections import Counter, defaultdict
+import shutil
+import tempfile
 from pathlib import Path
 
 from ptcg_lab.storage import Store, digest as legacy_digest
+from research.strategy_baseline.probes import registry_hash as strategy_probe_registry_hash
 
 from .encoding import encode_decision
 from .schema import IdentityManifest, identity_hash
@@ -327,6 +330,168 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
     manifest["manifestHash"] = identity_hash(manifest)
     _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")
     return manifest
+
+
+def build_strategy_probe_dataset(*, output: Path, experimental_root: Path,
+                                 source_dataset_manifest: Path,
+                                 identity: IdentityManifest) -> dict:
+    """Freeze every actor-visible decision from source games in the held-out family split."""
+    if output.exists():
+        raise ValueError("strategy-probe datasets are immutable; choose a new directory")
+    source_manifest = json.loads(source_dataset_manifest.read_text())
+    if source_manifest.get("manifestHash") != identity_hash({key: value for key, value in source_manifest.items()
+                                                              if key != "manifestHash"}):
+        raise ValueError("strategy-probe source replay manifest hash mismatch")
+    source_identity = source_manifest.get("identity")
+    source_settings = source_manifest.get("settings")
+    if source_identity is None and isinstance(source_settings, dict):
+        source_identity = source_settings.get("identity")
+    if source_identity != identity.record():
+        raise ValueError("strategy-probe source replay identity mismatch")
+    replay_items = source_manifest.get("replays")
+    if not isinstance(replay_items, list) or not replay_items:
+        raise ValueError("strategy-probe source manifest must list frozen replays")
+    if any(not isinstance(item, dict) or not isinstance(item.get("id"), str) or not item["id"]
+           for item in replay_items):
+        raise ValueError("strategy-probe source manifest has an invalid replay record")
+    replay_ids_in_manifest = [item["id"] for item in replay_items]
+    if len(set(replay_ids_in_manifest)) != len(replay_items):
+        raise ValueError("strategy-probe source manifest has missing or duplicate replay IDs")
+    store = Store(experimental_root)
+    selected_sources = []
+    rows = []
+    replay_ids = set()
+    for item in sorted(replay_items, key=lambda value: value["id"]):
+        replay_id = item["id"]
+        family = item.get("familyId", identity_hash({"replay": replay_id}))
+        if not isinstance(family, str) or not family:
+            raise ValueError(f"strategy-probe source replay has invalid family ID: {replay_id}")
+        split = stable_split(family)
+        if split != "heldout":
+            continue
+        if replay_id in replay_ids:
+            raise ValueError("strategy-probe source repeats a replay ID")
+        replay_ids.add(replay_id)
+        path = store.location("replays", replay_id)
+        replay = store.get("replays", replay_id)
+        if (replay.get("id") != replay_id or replay.get("dataTier") != "experimental"
+                or replay.get("status") != "finished"):
+            raise ValueError(f"strategy-probe source replay identity/tier mismatch: {replay_id}")
+        trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
+        game_rows = []
+        last_index = -1
+        for frame in replay.get("frames", []):
+            actor = frame.get("actor")
+            if type(actor) is not int or actor not in (0, 1):
+                continue
+            decision_index = frame.get("decisionIndex")
+            if type(decision_index) is not int or decision_index <= last_index:
+                raise ValueError(f"strategy-probe replay decisions are not strictly ordered: {replay_id}")
+            last_index = decision_index
+            observations = frame.get("observations")
+            if not isinstance(observations, list) or len(observations) != 2:
+                raise ValueError(f"strategy-probe frame lacks two private-view slots: {replay_id}")
+            observation = observations[actor]
+            if not isinstance(observation, dict) or observation.get("playerId") != actor:
+                raise ValueError(f"strategy-probe frame is not the actor's observation: {replay_id}")
+            if observation.get("decisionPlayer", actor) != actor:
+                raise ValueError(f"strategy-probe frame exposes another decision player: {replay_id}")
+            snapshot = trackers[actor].update(observation)
+            encoded = encode_decision(observation, snapshot)
+            position_hash = legacy_digest(observation)
+            game_rows.append({"positionHash": position_hash, "sourceGameId": replay_id,
+                "sourceDecisionIndex": decision_index, "actor": actor, "gameSideKey": f"{replay_id}:{actor}",
+                "familyId": family, "split": "heldout", "featureIdentityHash": encoded.identity,
+                "observation": observation, "tracker": snapshot})
+        if not game_rows:
+            raise ValueError(f"held-out source replay has no actor decision frames: {replay_id}")
+        rows.extend(game_rows)
+        selected_sources.append({"replayId": replay_id, "familyId": family, "split": split,
+            "status": replay.get("status", "unknown"), "actorDecisionRows": len(game_rows),
+            "sha256": file_sha256(path)})
+    if not selected_sources:
+        raise ValueError("frozen source manifest contains no held-out source games")
+
+    output = output.resolve()
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary_root = Path(tempfile.mkdtemp(prefix=f".{output.name}.", dir=output.parent))
+    try:
+        rows_path = temporary_root / "rows.jsonl"
+        _atomic_text(rows_path, "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n"
+                                          for row in rows))
+        manifest = {"schemaVersion": 1, "kind": "learning-mind-strategy-probes-v1",
+            "identity": identity.record(), "sourceDatasetManifestSha256": file_sha256(source_dataset_manifest),
+            "sourcePolicy": "stable_split(familyId)==heldout; every actor decision frame from each selected game",
+            "probeRegistryHash": strategy_probe_registry_hash(),
+            "actorViewOnly": True, "actualActionsExcluded": True,
+            "sourceGames": selected_sources, "sourceGameCount": len(selected_sources),
+            "actorDecisionRows": len(rows), "rowsSha256": file_sha256(rows_path),
+            "rows": len(rows), "split": "heldout"}
+        manifest["manifestHash"] = identity_hash(manifest)
+        _atomic_text(temporary_root / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+        temporary_root.replace(output)
+        return manifest
+    except Exception:
+        shutil.rmtree(temporary_root)
+        raise
+
+
+def load_strategy_probe_dataset(path: Path, *, identity: dict) -> tuple[dict, list[dict]]:
+    manifest_path = path / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    if manifest.get("kind") != "learning-mind-strategy-probes-v1":
+        raise ValueError("strategy-probe evaluation requires its dedicated full-decision corpus")
+    if manifest.get("identity") != identity:
+        raise ValueError("strategy-probe corpus identity mismatch")
+    if manifest.get("actorViewOnly") is not True or manifest.get("actualActionsExcluded") is not True:
+        raise ValueError("strategy-probe corpus violates its actor-visible, unlabeled contract")
+    if manifest.get("probeRegistryHash") != strategy_probe_registry_hash():
+        raise ValueError("strategy-probe evaluator registry hash mismatch")
+    if manifest.get("split") != "heldout":
+        raise ValueError("strategy-probe evaluation requires held-out source games")
+    if manifest.get("manifestHash") != identity_hash({key: value for key, value in manifest.items()
+                                                       if key != "manifestHash"}):
+        raise ValueError("strategy-probe corpus manifest hash mismatch")
+    rows_path = path / "rows.jsonl"
+    if file_sha256(rows_path) != manifest.get("rowsSha256"):
+        raise ValueError("strategy-probe corpus rows hash mismatch")
+    rows = [json.loads(line) for line in rows_path.read_text().splitlines()]
+    if len(rows) != manifest.get("rows") or len(rows) != manifest.get("actorDecisionRows"):
+        raise ValueError("strategy-probe corpus row count mismatch")
+    source_games = manifest.get("sourceGames")
+    if not isinstance(source_games, list) or len(source_games) != manifest.get("sourceGameCount"):
+        raise ValueError("strategy-probe source game list mismatch")
+    if any(not isinstance(item, dict) or not isinstance(item.get("replayId"), str)
+           or type(item.get("actorDecisionRows")) is not int or item["actorDecisionRows"] <= 0
+           or item.get("split") != "heldout" or item.get("status") != "finished"
+           for item in source_games):
+        raise ValueError("strategy-probe source game metadata is invalid")
+    expected_games = {item["replayId"]: item for item in source_games}
+    if len(expected_games) != len(source_games):
+        raise ValueError("strategy-probe source game list contains duplicate IDs")
+    counts = Counter(row.get("sourceGameId") for row in rows)
+    if set(counts) != set(expected_games) or any(counts[key] != expected_games[key]["actorDecisionRows"]
+                                                for key in expected_games):
+        raise ValueError("strategy-probe corpus does not contain every frozen actor decision")
+    allowed_row_fields = {"positionHash", "sourceGameId", "sourceDecisionIndex", "actor",
+                          "gameSideKey", "familyId", "split", "featureIdentityHash",
+                          "observation", "tracker"}
+    last_index_by_game: dict[str, int] = {}
+    for row in rows:
+        source_game = expected_games.get(row.get("sourceGameId"))
+        decision_index = row.get("sourceDecisionIndex")
+        actor = row.get("actor")
+        if (set(row) != allowed_row_fields or source_game is None or row.get("split") != "heldout"
+                or type(decision_index) is not int or decision_index <= last_index_by_game.get(row["sourceGameId"], -1)
+                or type(actor) is not int or actor not in (0, 1)
+                or row.get("gameSideKey") != f"{row['sourceGameId']}:{actor}"
+                or row.get("familyId") != source_game.get("familyId")
+                or not isinstance(row.get("observation"), dict)
+                or row["observation"].get("playerId") != actor
+                or legacy_digest(row["observation"]) != row.get("positionHash")):
+            raise ValueError("strategy-probe row violates heldout actor-only unlabeled contract")
+        last_index_by_game[row["sourceGameId"]] = decision_index
+    return manifest, rows
 
 
 def load_dataset(path: Path, *, identity: dict | None = None) -> tuple[dict, list[dict]]:

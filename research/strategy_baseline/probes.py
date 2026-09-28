@@ -11,6 +11,7 @@ import hashlib
 import json
 import math
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Callable
 
 
@@ -99,7 +100,7 @@ def _energy(item: dict) -> list[str]:
 
 
 def _opening_shell(obs: dict, action: dict) -> bool | None:
-    prompt = str(obs.get("prompt", {}).get("message", "")).lower()
+    prompt = str((obs.get("prompt") or {}).get("message", "")).lower()
     labels = " ".join(_text(item) for item in obs.get("legalActions", []))
     if "choose_starting" not in prompt and "starting" not in prompt:
         return None
@@ -410,6 +411,12 @@ PROBES = (
 
 
 PROBES_BY_ID = {probe.id: probe for probe in PROBES}
+
+
+def registry_hash() -> str:
+    """Bind probe definitions and evaluator implementation to one frozen identity."""
+    return canonical_hash({"probeModuleSha256": hashlib.sha256(Path(__file__).read_bytes()).hexdigest(),
+                           "probes": [probe.record() for probe in PROBES]})
 
 
 def assert_contract_coverage(principle_ids: set[str]) -> None:

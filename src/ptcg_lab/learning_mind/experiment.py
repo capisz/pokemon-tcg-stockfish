@@ -16,10 +16,14 @@ import numpy as np
 
 from ptcg_lab.engine import EngineClient, EnginePool
 from ptcg_lab.features import heuristic_action_score
+from research.strategy_baseline.probes import (PROBES,
+                                              registry_hash as strategy_probe_registry_hash)
 
 from .aggregation import load_frozen_selection
-from .dataset_v1 import file_sha256, load_dataset, training_records
+from .dataset_v1 import (file_sha256, load_dataset, load_strategy_probe_dataset,
+                         training_records)
 from .encoding import encode_decision
+from .evaluation import wilson
 from .macro import (CANDIDATE_GENERATOR_VERSION, candidates_from_transition_plans,
                     label_candidates, rollout_seed)
 from .model import StrategyTransformerV1
@@ -27,6 +31,12 @@ from .ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from .sampling import select_stratified_rows
 from .schema import IdentityManifest, UnsupportedPosition, identity_hash
 from .training import require_checkpoint_identity, train_supervised
+
+STRATEGY_PROBE_MINIMUM_N = 20
+TARGETED_STRATEGY_PROBES = frozenset({
+    "crustle-fan-active-kangaskhan",
+    "dragapult-large-hand-judge",
+})
 
 
 def transition_generator_identity(root: Path) -> dict:
@@ -551,7 +561,121 @@ def train_candidate(dataset_dir: Path, output: Path, *, epochs: int = 1) -> dict
     return {**result, "datasetManifestHash": manifest["manifestHash"]}
 
 
-def evaluate_candidate(dataset_dir: Path, checkpoint: Path) -> dict:
+def summarize_strategy_probe_decisions(decisions: list[dict], *, minimum_n: int = STRATEGY_PROBE_MINIMUM_N) -> dict:
+    """Summarize actor-visible held-out probe choices, paired against the frozen heuristic."""
+    if type(minimum_n) is not int or minimum_n < 1:
+        raise ValueError("strategy probe minimum_n must be a positive integer")
+    ordered = sorted(decisions, key=lambda row: (row["probeId"], row["gameSideKey"],
+                                                   row["decisionIndex"], row["positionHash"]))
+    results = []
+    for probe in PROBES:
+        qualifying = [row for row in ordered if row["probeId"] == probe.id]
+        headline_by_side = {}
+        for row in qualifying:
+            headline_by_side.setdefault(row["gameSideKey"], row)
+        headline = list(headline_by_side.values())
+
+        def counts(selected, field):
+            return sum(bool(row[field]) for row in selected), len(selected)
+
+        model_k, n = counts(headline, "modelAdherent")
+        heuristic_k, _ = counts(headline, "heuristicAdherent")
+        secondary_model_k, secondary_n = counts(qualifying, "modelAdherent")
+        secondary_heuristic_k, _ = counts(qualifying, "heuristicAdherent")
+        sufficient = n >= minimum_n
+        results.append({
+            "probeId": probe.id,
+            "principleId": probe.principle_id,
+            "deck": probe.deck,
+            "severity": probe.severity,
+            "coverage": probe.coverage,
+            "headline": {"modelAdherent": model_k, "heuristicAdherent": heuristic_k,
+                         "eligibleGameSides": n,
+                         "modelRate": model_k / n if n else None,
+                         "heuristicRate": heuristic_k / n if n else None,
+                         "modelWilson95": wilson(model_k, n),
+                         "heuristicWilson95": wilson(heuristic_k, n),
+                         "status": "measured" if sufficient else "insufficient"},
+            "allQualifying": {"modelAdherent": secondary_model_k,
+                              "heuristicAdherent": secondary_heuristic_k,
+                              "decisions": secondary_n,
+                              "modelRate": secondary_model_k / secondary_n if secondary_n else None,
+                              "heuristicRate": secondary_heuristic_k / secondary_n if secondary_n else None,
+                              "modelWilson95": wilson(secondary_model_k, secondary_n),
+                              "heuristicWilson95": wilson(secondary_heuristic_k, secondary_n)},
+            "examples": [{key: row[key] for key in ("gameSideKey", "positionHash", "decisionIndex",
+                                                       "modelAction", "heuristicAction", "modelAdherent",
+                                                       "heuristicAdherent")} for row in headline[:5]],
+        })
+    by_id = {row["probeId"]: row for row in results}
+    target_results = [by_id[probe_id] for probe_id in sorted(TARGETED_STRATEGY_PROBES)]
+    target_probe_win = any(
+        row["headline"]["status"] == "measured"
+        and row["headline"]["modelRate"] > row["headline"]["heuristicRate"]
+        for row in target_results
+    )
+    severity_three = [row for row in results if row["severity"] == 3]
+    severity_three_regression = any(
+        row["headline"]["status"] == "measured"
+        and row["headline"]["modelRate"] < row["headline"]["heuristicRate"]
+        for row in severity_three
+    )
+    severity_three_coverage = ("sufficient" if severity_three
+                               and all(row["headline"]["status"] == "measured" for row in severity_three)
+                               else "insufficient")
+    return {"schemaVersion": 1, "evaluationSplit": "heldout",
+            "minimumHeadlineGameSides": minimum_n,
+            "probeCount": len(results), "probes": results,
+            "targetProbeIds": sorted(TARGETED_STRATEGY_PROBES),
+            "targetProbeWin": target_probe_win,
+            "severityThreeRegression": severity_three_regression,
+            "severityThreeCoverage": severity_three_coverage}
+
+
+def evaluate_strategy_probes(probe_dataset_dir: Path, model, identity: dict,
+                             source_manifest_sha256: str) -> dict:
+    """Evaluate every registered probe over the complete held-out actor-view corpus."""
+    import torch
+    manifest, rows = load_strategy_probe_dataset(probe_dataset_dir, identity=identity)
+    if manifest.get("sourceDatasetManifestSha256") != source_manifest_sha256:
+        raise ValueError("strategy-probe corpus and supervised dataset use different frozen source games")
+    from .encoding import collate
+    decisions = []
+    for row in sorted(rows, key=lambda item: (item["sourceGameId"], item["actor"],
+                                               item["sourceDecisionIndex"], item["positionHash"])):
+        encoded = encode_decision(row["observation"], row["tracker"])
+        if encoded.identity != row.get("featureIdentityHash"):
+            raise ValueError("strategy-probe feature identity differs from frozen actor-view row")
+        batch = {key: torch.as_tensor(value) for key, value in collate([encoded]).items()}
+        with torch.no_grad():
+            logits = model.policy_forward(**batch)[0]
+        model_class = int(torch.argmax(logits).item())
+        model_action = (encoded.action_classes[model_class].actions[0]
+                        if model_class < len(encoded.action_classes) else {"type": "stop", "label": "STOP"})
+        observation = row["observation"]
+        legal_actions = observation["legalActions"]
+        heuristic_id = max(legal_actions,
+            key=lambda action: heuristic_action_score(action, observation))["id"]
+        heuristic_action = next(action for action in legal_actions if action["id"] == heuristic_id)
+        for probe in PROBES:
+            model_result = probe.evaluate(observation, model_action)
+            heuristic_result = probe.evaluate(observation, heuristic_action)
+            if (model_result is None) != (heuristic_result is None):
+                raise ValueError(f"probe eligibility changed with chosen action: {probe.id}")
+            if model_result is not None:
+                decisions.append({"probeId": probe.id, "gameSideKey": row["gameSideKey"],
+                    "positionHash": row["positionHash"], "decisionIndex": row["sourceDecisionIndex"],
+                    "modelAction": model_action, "heuristicAction": heuristic_action,
+                    "modelAdherent": bool(model_result), "heuristicAdherent": bool(heuristic_result)})
+    result = summarize_strategy_probe_decisions(decisions)
+    return {**result, "probeRegistryHash": strategy_probe_registry_hash(),
+            "probeDatasetManifestSha256": file_sha256(probe_dataset_dir / "manifest.json"),
+            "sourceGameCount": manifest["sourceGameCount"],
+            "actorDecisionRows": manifest["actorDecisionRows"],
+            "actorViewOnly": True}
+
+
+def evaluate_candidate(dataset_dir: Path, checkpoint: Path, probe_dataset_dir: Path) -> dict:
     import torch
     manifest, rows = load_dataset(dataset_dir)
     saved = torch.load(checkpoint, map_location="cpu", weights_only=False)
@@ -602,12 +726,24 @@ def evaluate_candidate(dataset_dir: Path, checkpoint: Path) -> dict:
                 "meanDistributionCrossEntropy": float(np.mean(distribution)) if distribution else None}
     heldout = [row for row in evaluated if row["split"] == "heldout"]
     development = [row for row in evaluated if row["split"] == "development"]
+    source_manifests = [source["sha256"] for source in manifest.get("sources", [])
+                        if source.get("kind") == "experimental-dataset-manifest"]
+    if len(source_manifests) != 1:
+        raise ValueError("supervised dataset must bind exactly one frozen replay manifest for probe evaluation")
+    probe_results = evaluate_strategy_probes(probe_dataset_dir, model, manifest["identity"],
+                                             source_manifests[0])
+    label_win = bool(heldout and sum(r["modelHit"] for r in heldout) > sum(r["heuristicHit"] for r in heldout))
     result = {"schemaVersion": 1, "checkpoint": str(checkpoint), "checkpointSha256": file_sha256(checkpoint),
               "datasetManifestHash": manifest["manifestHash"], "positions": evaluated,
               "development": summarize(development), "heldout": summarize(heldout),
-              "heldOutLabelWin": bool(heldout and sum(r["modelHit"] for r in heldout) > sum(r["heuristicHit"] for r in heldout)),
-              "targetProbeWin": False, "severityThreeRegression": False,
-              "acceptance": "passed" if heldout and sum(r["modelHit"] for r in heldout) > sum(r["heuristicHit"] for r in heldout)
+              "heldOutLabelWin": label_win,
+              "strategyProbes": probe_results,
+              "targetProbeWin": probe_results["targetProbeWin"],
+              "severityThreeRegression": probe_results["severityThreeRegression"],
+              "severityThreeProbeCoverage": probe_results["severityThreeCoverage"],
+              "acceptance": "passed" if label_win and probe_results["targetProbeWin"]
+                            and not probe_results["severityThreeRegression"]
+                            and probe_results["severityThreeCoverage"] == "sufficient"
                             else "insufficient-or-not-improved",
-              "note": "Probe gate remains closed until candidate actions are evaluated on the frozen v1.2 probe positions."}
+              "automaticPromotion": False}
     return result

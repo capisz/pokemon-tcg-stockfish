@@ -144,6 +144,13 @@ def test_every_probe_has_adherent_nonadherent_and_nonqualifying_fixed_positions(
     assert probe.evaluate(observation, good) is None
 
 
+def test_opening_probe_treats_a_null_prompt_as_nonqualifying():
+    probe = probes.PROBES_BY_ID["crustle-opening-kangaskhan"]
+    observation, good, _bad = probe_case(probe.id)
+    observation["prompt"] = None
+    assert probe.evaluate(observation, good) is None
+
+
 def test_registry_covers_every_effective_principle_once_to_three_times():
     effective = json.loads((ROOT / "docs/validation/strategy-baseline-v1-guarded-p3-pilot-2026-09-21/effective-contract.json").read_text())
     principle_ids = {item["id"] for playbook in effective["playbooks"].values() for item in playbook["principles"]}

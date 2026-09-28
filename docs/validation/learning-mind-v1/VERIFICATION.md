@@ -939,3 +939,30 @@ strength or autonomous improvement.
   holdout axes and can report only `insufficient` or `review-required`; it
   cannot claim a win or promotion. The existing heldout label pool is not read
   or modified, and no ranker was fit from experiment data.
+
+### Held-out strategy-probe evaluation (2026-09-28)
+
+- `evaluate-supervised` previously compared held-out label hits against the
+  frozen heuristic but hard-coded `targetProbeWin` to false. It now evaluates
+  all registered v1.2 probes using model and heuristic choices from the same
+  actor-visible held-out decisions. Headline counts use the first qualifying
+  decision per probe/game-side; secondary counts include every qualifying
+  decision; both report Wilson 95% intervals; fewer than 20 headline game-sides
+  is insufficient.
+- Probe evaluation requires its own immutable corpus built from every actor
+  decision in held-out source games. It does not misuse the sparse search/review
+  training rows. The corpus excludes accepted actions and the opposite private
+  observation, binds to the same frozen source manifest as the supervised
+  dataset, verifies source identity/hash, and hashes both probe definitions and
+  evaluator implementation.
+- Severity-three coverage is reported separately from regression; all
+  severity-three probes need adequate held-out coverage before the model can
+  pass this evidence gate. Only a target-probe win, held-out label win, full
+  severity-three coverage, and no severity-three regression produce
+  `acceptance: passed`; automatic promotion remains false.
+- Corrected the opening-selection evaluator to treat a null prompt as
+  nonqualifying. Tests cover actor-view extraction, sparse-corpus rejection,
+  chronological headline deduplication, minimum sample size, and full registry
+  output. The full Python suite passes (343); CLI help checks, TypeScript
+  typecheck, and `git diff --check` pass. No games were simulated and no label
+  collector/checkpoint was read or changed.

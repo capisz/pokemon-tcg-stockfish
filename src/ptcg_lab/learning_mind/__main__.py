@@ -7,7 +7,8 @@ from pathlib import Path
 from .audit import audit_manifest
 from .aggregation import combine_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
-from .dataset_v1 import build_dataset, build_macro_position_pool
+from .dataset_v1 import (build_dataset, build_macro_position_pool,
+                         build_strategy_probe_dataset)
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
 from .fresh_collection import collect_fresh_positions
@@ -42,6 +43,12 @@ def main(argv=None) -> int:
     pool.add_argument("--target-deck", default="raging-bolt",
                       help="one archetype deck name or 'all' for a generalist pool")
     pool.add_argument("--limit", type=int, default=18)
+    probes = sub.add_parser("build-strategy-probe-dataset",
+                            help="freeze every actor-visible decision from held-out source games")
+    probes.add_argument("--root", type=Path, required=True)
+    probes.add_argument("--experimental-root", type=Path, required=True)
+    probes.add_argument("--source-dataset-manifest", type=Path, required=True)
+    probes.add_argument("--output", type=Path, required=True)
     support = sub.add_parser("audit-macro-candidate-support",
                              help="audit actor-visible candidate support without rollouts or labels")
     support.add_argument("--root", type=Path, required=True)
@@ -110,6 +117,8 @@ def main(argv=None) -> int:
     train.add_argument("--epochs", type=int, default=1)
     evaluate = sub.add_parser("evaluate-supervised")
     evaluate.add_argument("--dataset", type=Path, required=True)
+    evaluate.add_argument("--probe-dataset", type=Path, required=True,
+                          help="complete held-out actor-view corpus; sparse supervised rows are not accepted")
     evaluate.add_argument("--checkpoint", type=Path, required=True)
     evaluate.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
@@ -148,6 +157,11 @@ def main(argv=None) -> int:
             experimental_root=args.experimental_root.resolve(),
             source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity,
             target_deck=args.target_deck, limit=args.limit)
+    elif args.command == "build-strategy-probe-dataset":
+        root = args.root.resolve(); identity = runtime_identity(root)
+        result = build_strategy_probe_dataset(output=args.output.resolve(),
+            experimental_root=args.experimental_root.resolve(),
+            source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity)
     elif args.command == "audit-macro-candidate-support":
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = audit_macro_candidate_support(root=root, dataset_dir=args.dataset.resolve(),
@@ -176,7 +190,8 @@ def main(argv=None) -> int:
     elif args.command == "train-supervised":
         result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
     else:
-        result = evaluate_candidate(args.dataset.resolve(), args.checkpoint.resolve())
+        result = evaluate_candidate(args.dataset.resolve(), args.checkpoint.resolve(),
+                                    args.probe_dataset.resolve())
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n")
     print(json.dumps(result, indent=2))
