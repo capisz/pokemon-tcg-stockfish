@@ -246,12 +246,27 @@ def _review_rows(review_root: Path) -> tuple[list[dict], list[dict]]:
     return rows, sources
 
 
-def _search_rows(experimental_root: Path, dataset_manifest: Path) -> tuple[list[dict], list[dict]]:
+def _search_rows(experimental_root: Path, dataset_manifest: Path,
+                 expected_identity: dict) -> tuple[list[dict], list[dict]]:
     store = Store(experimental_root)
     source_manifest = json.loads(dataset_manifest.read_text())
+    recorded_hash = source_manifest.get("manifestHash")
+    if (recorded_hash != identity_hash({key: value for key, value in source_manifest.items()
+                                        if key != "manifestHash"})):
+        raise ValueError("supervised source replay manifest hash mismatch")
+    settings = source_manifest.get("settings")
+    if not isinstance(settings, dict) or settings.get("identity") != expected_identity:
+        raise ValueError("supervised source replay identity mismatch")
+    replay_items = source_manifest.get("replays")
+    if not isinstance(replay_items, list):
+        raise ValueError("supervised source replay manifest has no replay list")
+    replay_ids = [item.get("id") if isinstance(item, dict) else None for item in replay_items]
+    if (any(not isinstance(replay_id, str) or not replay_id for replay_id in replay_ids)
+            or len(set(replay_ids)) != len(replay_ids)):
+        raise ValueError("supervised source replay manifest has invalid or duplicate IDs")
     rows, sources = [], [{"kind": "experimental-dataset-manifest", "path": str(dataset_manifest),
-                          "sha256": file_sha256(dataset_manifest)}]
-    for item in source_manifest.get("replays", []):
+                          "sha256": file_sha256(dataset_manifest), "manifestHash": recorded_hash}]
+    for item in replay_items:
         replay_path = experimental_root / "replays" / f"{item['id']}.json"
         replay = store.get("replays", item["id"])
         if not replay.get("searchTargets"):
@@ -294,42 +309,50 @@ def _atomic_text(path: Path, text: str) -> None:
 def build_dataset(*, root: Path, output: Path, review_root: Path,
                   experimental_root: Path, source_dataset_manifest: Path,
                   identity: IdentityManifest) -> dict:
+    output = output.resolve()
     if output.exists(): raise ValueError("dataset outputs are immutable; choose a new directory")
-    output.mkdir(parents=True)
-    reviews, review_sources = _review_rows(review_root)
-    searches, search_sources = _search_rows(experimental_root, source_dataset_manifest)
-    unique = {}
-    exclusions = []
-    for row in reviews + searches:
-        key = row["positionHash"]
-        if key in unique:
-            exclusions.append({"positionHash": row["positionHash"], "reason": "duplicate-actor-visible-position",
-                               "excludedSource": row["policyLabelSource"],
-                               "retainedSource": unique[key]["policyLabelSource"]})
-        else: unique[key] = row
-    rows = [unique[key] for key in sorted(unique)]
-    rows_path = output / "rows.jsonl"
-    _atomic_text(rows_path, "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in rows))
-    counts = Counter((row["split"], row["policyLabelSource"]) for row in rows)
-    dimensions = {}
-    for field in ("split", "policyLabelSource", "familyId", "opponentArchetype", "opponentPolicyFamily"):
-        dimensions[field] = dict(sorted(Counter(str(row.get(field)) for row in rows).items()))
-    search_configurations = sorted({identity_hash(row["searchTarget"]) for row in rows if row.get("searchTarget")})
-    manifest = {"schemaVersion": 1, "id": "learning-mind-supervised-v1", "identity": identity.record(),
-                "rows": len(rows), "rowsSha256": file_sha256(rows_path),
-                "counts": [{"split": split, "source": source, "count": count}
-                           for (split, source), count in sorted(counts.items())],
-                "countsByDimension": dimensions,
-                "families": sorted({row["familyId"] for row in rows}),
-                "searchConfigurationHashes": search_configurations,
-                "sources": review_sources + search_sources, "exclusions": exclusions,
-                "staleReviewsExcluded": list(STALE_REVIEWS),
-                "policyLabelSources": sorted({row["policyLabelSource"] for row in rows}),
-                "ordinarySelfPlayPolicyLabels": 0,
-                "splitPolicy": "review partition retained; search families use sha256 stable 80/10/10 split"}
-    manifest["manifestHash"] = identity_hash(manifest)
-    _atomic_text(output / "manifest.json", json.dumps(manifest, indent=2) + "\n")
-    return manifest
+    output.parent.mkdir(parents=True, exist_ok=True)
+    temporary_root = Path(tempfile.mkdtemp(prefix=f".{output.name}.", dir=output.parent))
+    try:
+        reviews, review_sources = _review_rows(review_root)
+        searches, search_sources = _search_rows(experimental_root, source_dataset_manifest,
+                                                identity.record())
+        unique = {}
+        exclusions = []
+        for row in reviews + searches:
+            key = row["positionHash"]
+            if key in unique:
+                exclusions.append({"positionHash": row["positionHash"], "reason": "duplicate-actor-visible-position",
+                                   "excludedSource": row["policyLabelSource"],
+                                   "retainedSource": unique[key]["policyLabelSource"]})
+            else: unique[key] = row
+        rows = [unique[key] for key in sorted(unique)]
+        rows_path = temporary_root / "rows.jsonl"
+        _atomic_text(rows_path, "".join(json.dumps(row, sort_keys=True, separators=(",", ":")) + "\n" for row in rows))
+        counts = Counter((row["split"], row["policyLabelSource"]) for row in rows)
+        dimensions = {}
+        for field in ("split", "policyLabelSource", "familyId", "opponentArchetype", "opponentPolicyFamily"):
+            dimensions[field] = dict(sorted(Counter(str(row.get(field)) for row in rows).items()))
+        search_configurations = sorted({identity_hash(row["searchTarget"]) for row in rows if row.get("searchTarget")})
+        manifest = {"schemaVersion": 1, "id": "learning-mind-supervised-v1", "identity": identity.record(),
+                    "rows": len(rows), "rowsSha256": file_sha256(rows_path),
+                    "counts": [{"split": split, "source": source, "count": count}
+                               for (split, source), count in sorted(counts.items())],
+                    "countsByDimension": dimensions,
+                    "families": sorted({row["familyId"] for row in rows}),
+                    "searchConfigurationHashes": search_configurations,
+                    "sources": review_sources + search_sources, "exclusions": exclusions,
+                    "staleReviewsExcluded": list(STALE_REVIEWS),
+                    "policyLabelSources": sorted({row["policyLabelSource"] for row in rows}),
+                    "ordinarySelfPlayPolicyLabels": 0,
+                    "splitPolicy": "review partition retained; search families use sha256 stable 80/10/10 split"}
+        manifest["manifestHash"] = identity_hash(manifest)
+        _atomic_text(temporary_root / "manifest.json", json.dumps(manifest, indent=2) + "\n")
+        temporary_root.replace(output)
+        return manifest
+    except Exception:
+        shutil.rmtree(temporary_root, ignore_errors=True)
+        raise
 
 
 def build_strategy_probe_dataset(*, output: Path, experimental_root: Path,

@@ -1121,3 +1121,17 @@ strength or autonomous improvement.
   (388, with two existing deprecation warnings); `git diff --check` passes.
   Collector-bound `experiment.py` is unchanged; no labels were fit and no PPO,
   autonomous service, or promotion was started.
+
+### Supervised dataset publication and source identity (2026-09-28)
+
+- The supervised dataset builder now verifies its source replay manifest hash
+  and exact experiment identity before reading search labels. Dataset rows and
+  manifest are staged in a temporary sibling directory and published by one
+  rename; any conversion failure cleans up the staging directory instead of
+  leaving an unusable output path behind.
+- New fixtures prove actor-view-only row construction, search-distribution
+  coverage including zero-mass legal actions, source hash and identity rejection,
+  and cleanup after conversion failure.
+- Verification: full Python suite passes (392, with two existing deprecation
+  warnings). No real dataset was frozen and no collector, PPO, service, or
+  promotion was started.
