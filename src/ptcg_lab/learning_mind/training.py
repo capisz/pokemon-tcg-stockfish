@@ -310,6 +310,21 @@ def ppo_policy_fingerprint(model: StrategyTransformerV1) -> str:
     return digest.hexdigest()
 
 
+def ppo_legal_action_logits(logits: torch.Tensor, records: list[dict]) -> torch.Tensor:
+    """Mask STOP and batch padding; a PPO decision is exactly one engine action."""
+    if logits.ndim != 2 or logits.shape[0] != len(records):
+        raise ValueError("PPO policy logits and experience batch dimensions differ")
+    mask = torch.zeros_like(logits, dtype=torch.bool)
+    for index, row in enumerate(records):
+        count = len(row["encoded"].action_classes)
+        if not 0 < count < logits.shape[1]:
+            raise ValueError("PPO policy output must contain legal actions and a separate STOP slot")
+        mask[index, :count] = True
+    if not mask.any(dim=1).all():
+        raise ValueError("PPO decision has no legal action logits")
+    return logits.masked_fill(~mask, -torch.inf)
+
+
 def _verify_ppo_behavior_policy(model: StrategyTransformerV1, records: list[dict], *,
                                 minibatch: int) -> None:
     expected_hash = ppo_policy_fingerprint(model)
@@ -330,10 +345,11 @@ def _verify_ppo_behavior_policy(model: StrategyTransformerV1, records: list[dict
                 for row in selected:
                     action = row["selectedAction"]
                     count = len(row["encoded"].action_classes)
-                    if not 0 <= action <= count:
+                    if not 0 <= action < count:
                         raise ValueError("PPO behavior action is not represented by the encoded legal options")
-                    local_actions.append(arrays["option_mask"].shape[1] - 1 if action == count else action)
+                    local_actions.append(action)
                 logits = model.policy_forward(**tensors)
+                logits = ppo_legal_action_logits(logits, selected)
                 actual = torch.distributions.Categorical(logits=logits).log_prob(
                     torch.tensor(local_actions, dtype=torch.long, device=logits.device))
                 recorded = torch.tensor([row["oldLogProb"] for row in selected],
@@ -535,13 +551,13 @@ def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
         for row in selected:
             action = int(row["selectedAction"])
             count = len(row["encoded"].action_classes)
-            if not 0 <= action <= count: raise ValueError("selected PPO action is not represented")
-            local_actions.append(arrays["option_mask"].shape[1] - 1 if action == count else action)
+            if not 0 <= action < count: raise ValueError("selected PPO action is not represented")
+            local_actions.append(action)
         chosen = torch.tensor(local_actions, dtype=torch.long)
         old = torch.tensor([row["oldLogProb"] for row in selected], dtype=torch.float32)
         returns = torch.tensor([row["return"] for row in selected], dtype=torch.float32)
         advantages = torch.tensor([row["advantage"] for row in selected], dtype=torch.float32)
-        logits = model.policy_forward(**tensors)
+        logits = ppo_legal_action_logits(model.policy_forward(**tensors), selected)
         distribution = torch.distributions.Categorical(logits=logits)
         new = distribution.log_prob(chosen)
         values = model.evaluation_forward(**{key: tensors[key] for key in

@@ -12,7 +12,7 @@ from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, h
 from ptcg_lab.learning_mind.experiment import _ranker_evidence_status, _ranker_holdout_rows
 from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
     eligible_ppo_records, generalized_advantages, ppo_enablement, supervised_policy_rows,
-    update_guard, validate_ppo_optimizer)
+    ppo_legal_action_logits, update_guard, validate_ppo_optimizer)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
 from test_learning_mind_representation import observation
@@ -297,6 +297,19 @@ def test_ppo_optimizer_must_match_frozen_adamw_profile():
         validate_ppo_optimizer(torch.optim.AdamW([parameter], lr=1e-4))
     with pytest.raises(ValueError, match="requires AdamW"):
         validate_ppo_optimizer(torch.optim.SGD([parameter], lr=1e-4))
+
+
+def test_ppo_action_distribution_masks_stop_and_per_row_padding():
+    torch = pytest.importorskip("torch")
+    from test_learning_mind_representation import encoded as encode_fixture, observation as fixture_observation
+    first = encode_fixture()
+    one_action_observation = fixture_observation()
+    one_action_observation["legalActions"] = one_action_observation["legalActions"][:1]
+    second = encode_fixture(one_action_observation)
+    logits = torch.tensor([[1., 2., 3., 100.], [4., 5., 6., 100.]])
+    masked = ppo_legal_action_logits(logits, [{"encoded": first}, {"encoded": second}])
+    assert torch.isneginf(masked[0, 3])  # STOP is never an engine action.
+    assert torch.isneginf(masked[1, 1:]).all()  # STOP and padding are excluded per row.
 
 
 def test_sequential_evaluation_and_manual_promotion_gate():

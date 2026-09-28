@@ -111,7 +111,8 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     batch = {key: torch.as_tensor(value) for key, value in collate([decision]).items()}
     with torch.no_grad():
         logits = model.policy_forward(**batch)
-        old_log_prob = torch.log_softmax(logits, -1)[0, 0].item()
+        legal_count = len(decision.action_classes)
+        old_log_prob = torch.log_softmax(logits[0, :legal_count], -1)[0].item()
         value = model.evaluation_forward(**{key: batch[key] for key in
             ("state_card_ids", "state_features", "state_type_ids", "state_mask")})[0].item()
     row = {"episodeId": "completed-0", "episodeStatus": "finished", "episodeEnd": True,
