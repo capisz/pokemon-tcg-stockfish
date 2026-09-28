@@ -1204,3 +1204,26 @@ strength or autonomous improvement.
 - Focused dataset, distillation, strategy, and model tests pass (51); the full
   Python suite passes (401), and the v1.2 strategy validator passes. The frozen
   collector implementation and active run remain untouched.
+
+### Actor-view terminal value targets and value-only supervised loss (2026-09-28)
+
+- Added a separate immutable value-target dataset builder. It verifies the
+  source manifest and exact runtime identity, accepts only explicitly
+  training-eligible finished experimental games with valid rules outcomes,
+  derives `+1/0/-1` from each acting player's seat, and stores only
+  `frame.observations[frame.actor]`. Ineligible games are recorded as excluded;
+  hidden opposite-seat observations and selected actions do not become labels.
+- The trainer now accepts value-only rows, computes terminal-outcome MSE on
+  the blind value head with the frozen `0.5` coefficient, and continues to
+  train policy loss only from approved policy-label sources. Checkpoints bind
+  both dataset manifest hashes and the dataset/training CLI source hashes, and
+  report policy loss and value MSE separately. Value manifests pin their exact
+  builder source hash.
+  The CLI exposes `build-value-target-dataset` and optional `--value-dataset`
+  on `train-supervised`.
+- Fixtures cover actor-view isolation, win/loss/draw targets, rejection of
+  ineligible outcomes and identity drift, joint policy/value losses, and
+  bit-equivalent value-only resume. All 408 Python tests, the approved v1.2
+  validator, CLI help checks, TypeScript typecheck, and `git diff --check` pass.
+  No real value dataset was built and no training run, collector, PPO update,
+  service, or promotion was started.

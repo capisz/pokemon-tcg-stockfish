@@ -14,7 +14,8 @@ import torch
 
 from .encoding import EncodedDecision, collate
 from .model import StrategyTransformerV1
-from . import encoding as encoding_module, model as model_module, tracker as tracker_module
+from . import dataset_v1 as dataset_module, encoding as encoding_module, model as model_module
+from . import tracker as tracker_module, value_targets as value_target_module
 
 POLICY_LABEL_SOURCES = frozenset({"exact-search-distribution", "compatible-reviewed-acceptable-set",
                                   "high-confidence-macro-plan", "macro-ranker-distillation"})
@@ -31,6 +32,9 @@ def supervised_implementation_identity() -> dict:
         "modelSha256": _source_sha256(Path(model_module.__file__)),
         "encodingSha256": _source_sha256(Path(encoding_module.__file__)),
         "trackerSha256": _source_sha256(Path(tracker_module.__file__)),
+        "policyDatasetBuilderSha256": _source_sha256(Path(dataset_module.__file__)),
+        "valueTargetBuilderSha256": _source_sha256(Path(value_target_module.__file__)),
+        "trainingCliSha256": _source_sha256(Path(__file__).with_name("__main__.py")),
     }, "runtime": {"device": "cpu", "pythonVersion": platform.python_version(),
         "torchVersion": str(torch.__version__), "torchThreads": torch.get_num_threads(),
         "deterministicAlgorithms": torch.are_deterministic_algorithms_enabled()}}
@@ -46,13 +50,29 @@ def require_checkpoint_implementation(checkpoint: dict) -> None:
     valid_teachers = (isinstance(teacher_hashes, list)
         and all(valid_hash(value) for value in teacher_hashes)
         and teacher_hashes == sorted(set(teacher_hashes)))
+    policy_sources = checkpoint.get("policyLabelSources")
+    value_sources = checkpoint.get("valueLabelSources")
+    valid_policy_sources = (isinstance(policy_sources, list)
+        and all(isinstance(value, str) and value in POLICY_LABEL_SOURCES for value in policy_sources)
+        and policy_sources == sorted(set(policy_sources)))
+    valid_value_sources = (isinstance(value_sources, list)
+        and all(isinstance(value, str) and value == "completed-self-play-outcome" for value in value_sources)
+        and value_sources == sorted(set(value_sources)))
+    value_manifest_hash = (training_config.get("valueDatasetManifestHash")
+        if isinstance(training_config, dict) else None)
     if (checkpoint.get("schemaVersion") != 2
             or not isinstance(training_config, dict)
             or checkpoint.get("implementationIdentity") != expected
             or training_config.get("implementationIdentity") != expected
             or (parent_hash is not None and not valid_hash(parent_hash))
             or not valid_teachers
-            or training_config.get("teacherHashes") != teacher_hashes):
+            or training_config.get("teacherHashes") != teacher_hashes
+            or not valid_policy_sources or not valid_value_sources
+            or training_config.get("policyLabelSources") != policy_sources
+            or training_config.get("valueLabelSources") != value_sources
+            or training_config.get("valueLossCoefficient") != .5
+            or training_config.get("lossContract") != "approved-policy-plus-terminal-outcome-mse-v1"
+            or (bool(value_sources) != valid_hash(value_manifest_hash))):
         raise ValueError("supervised checkpoint implementation identity mismatch")
 
 
@@ -81,6 +101,39 @@ def supervised_policy_rows(rows: Iterable[dict]) -> list[dict]:
                 raise ValueError("ranker-distilled policy rows require exact model and report teacher hashes")
         elif teacher_hashes not in ([], None):
             raise ValueError("non-distilled policy rows cannot claim ranker teacher hashes")
+        accepted.append(row)
+    return accepted
+
+
+def _validate_value_target(row: dict) -> None:
+    target = row.get("valueTarget")
+    if (row.get("valueLabelSource") != "completed-self-play-outcome"
+            or type(target) not in {int, float} or not math.isfinite(target)
+            or target not in {-1, 0, 1}):
+        raise ValueError("value-only targets must be terminal win/draw/loss outcomes in {-1, 0, 1}")
+
+
+def supervised_training_rows(rows: Iterable[dict]) -> list[dict]:
+    """Keep approved policy labels and terminal value labels; discard unlabeled moves."""
+    accepted = []
+    for row in rows:
+        if not isinstance(row, dict):
+            raise ValueError("supervised training rows must be objects")
+        source = row.get("policyLabelSource")
+        has_value = "valueTarget" in row
+        if source is None:
+            if not has_value:
+                if row.get("acceptableActionIndices") is not None or row.get("policyDistribution") is not None:
+                    raise ValueError("policy targets cannot be used without an approved policy-label source")
+                continue
+            if row.get("acceptableActionIndices") is not None or row.get("policyDistribution") is not None:
+                raise ValueError("value-only rows cannot contain policy targets")
+            _validate_value_target(row)
+            accepted.append(row)
+            continue
+        supervised_policy_rows([row])
+        if has_value:
+            _validate_value_target(row)
         accepted.append(row)
     return accepted
 
@@ -282,7 +335,8 @@ def _tensor_batch(records: list[dict], indices: list[int]):
     tensors = {key: torch.as_tensor(value) for key, value in arrays.items()}
     rows = []
     for row, decision in zip(selected, (row["encoded"] for row in selected)):
-        target = {key: row[key] for key in ("policyLabelSource", "acceptableActionIndices", "policyDistribution") if key in row}
+        target = {key: row[key] for key in ("policyLabelSource", "acceptableActionIndices", "policyDistribution",
+                                             "valueLabelSource", "valueTarget") if key in row}
         # Distributions are padded to the batch action width; STOP remains the final valid index per row.
         if target.get("policyDistribution") is not None:
             distribution = list(target["policyDistribution"])
@@ -298,14 +352,22 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                      batch_size: int = 32, seed: int = 7543298, resume: Path | None = None,
                      stop_after_batches: int | None = None,
                      dataset_manifest_hash: str | None = None,
-                     teacher_hashes: list[str] | None = None) -> dict:
+                     teacher_hashes: list[str] | None = None,
+                     value_dataset_manifest_hash: str | None = None) -> dict:
     """Deterministic same-device bootstrap with durable optimizer/RNG cursor."""
-    records = supervised_policy_rows(records)
-    if not records: raise ValueError("supervised bootstrap has no approved labels")
+    records = supervised_training_rows(records)
+    if not records: raise ValueError("supervised bootstrap has no approved policy or value labels")
     if type(epochs) is not int or epochs < 1 or type(batch_size) is not int or batch_size < 1:
         raise ValueError("supervised epochs and batch size must be positive integers")
     if type(seed) is not int:
         raise ValueError("supervised seed must be an integer")
+    has_value_rows = any("valueTarget" in row for row in records)
+    if has_value_rows != (value_dataset_manifest_hash is not None):
+        raise ValueError("terminal value rows and their dataset manifest hash must be supplied together")
+    if (value_dataset_manifest_hash is not None
+            and (not isinstance(value_dataset_manifest_hash, str) or len(value_dataset_manifest_hash) != 64
+                 or any(character not in "0123456789abcdef" for character in value_dataset_manifest_hash))):
+        raise ValueError("value-target dataset manifest hash must be lowercase SHA-256")
     row_teacher_hashes = sorted({value for row in records for value in (row.get("teacherHashes") or [])})
     if teacher_hashes is None:
         teacher_hashes = row_teacher_hashes
@@ -317,6 +379,10 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
     teacher_hashes = sorted(set(teacher_hashes))
     if teacher_hashes != row_teacher_hashes:
         raise ValueError("explicit teacher hashes do not match supervised row provenance")
+    policy_label_sources = sorted({row["policyLabelSource"] for row in records
+                                   if row.get("policyLabelSource") is not None})
+    value_label_sources = sorted({row["valueLabelSource"] for row in records
+                                  if row.get("valueTarget") is not None})
     output = output.resolve()
     resume = resume.resolve() if resume is not None else None
     if output.exists() and (resume is None or output != resume):
@@ -328,6 +394,11 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                        "optimizer": "AdamW", "learningRate": 1e-4, "weightDecay": 1e-4,
                        "model": "StrategyTransformerV1",
                        "datasetManifestHash": dataset_manifest_hash,
+                       "valueDatasetManifestHash": value_dataset_manifest_hash,
+                       "valueLossCoefficient": .5,
+                       "lossContract": "approved-policy-plus-terminal-outcome-mse-v1",
+                       "policyLabelSources": policy_label_sources,
+                       "valueLabelSources": value_label_sources,
                        "implementationIdentity": implementation,
                        "teacherHashes": teacher_hashes}
     torch.manual_seed(seed)
@@ -335,6 +406,8 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
     start_epoch = start_batch = 0; history = []
     current_epoch_loss_sum = 0.0
+    current_epoch_policy_loss_sum = current_epoch_value_loss_sum = 0.0
+    current_epoch_policy_batches = current_epoch_value_batches = 0
     current_epoch_batches = 0
     parent_checkpoint_sha256 = None
     if resume:
@@ -349,6 +422,10 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
         start_epoch, start_batch = checkpoint["epoch"], checkpoint["nextBatch"]
         history = checkpoint.get("history", [])
         current_epoch_loss_sum = checkpoint.get("currentEpochLossSum", 0.0)
+        current_epoch_policy_loss_sum = checkpoint.get("currentEpochPolicyLossSum", 0.0)
+        current_epoch_value_loss_sum = checkpoint.get("currentEpochValueLossSum", 0.0)
+        current_epoch_policy_batches = checkpoint.get("currentEpochPolicyBatches", 0)
+        current_epoch_value_batches = checkpoint.get("currentEpochValueBatches", 0)
         current_epoch_batches = checkpoint.get("currentEpochBatches", 0)
         if (type(start_epoch) is not int or not 0 <= start_epoch <= epochs
                 or type(start_batch) is not int or start_batch < 0 or start_batch > len(records)
@@ -356,7 +433,17 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                 or type(current_epoch_batches) is not int or current_epoch_batches < 0
                 or not isinstance(current_epoch_loss_sum, (int, float))
                 or not math.isfinite(current_epoch_loss_sum) or current_epoch_loss_sum < 0
+                or not isinstance(current_epoch_policy_loss_sum, (int, float))
+                or not math.isfinite(current_epoch_policy_loss_sum) or current_epoch_policy_loss_sum < 0
+                or not isinstance(current_epoch_value_loss_sum, (int, float))
+                or not math.isfinite(current_epoch_value_loss_sum) or current_epoch_value_loss_sum < 0
+                or type(current_epoch_policy_batches) is not int
+                or not 0 <= current_epoch_policy_batches <= current_epoch_batches
+                or type(current_epoch_value_batches) is not int
+                or not 0 <= current_epoch_value_batches <= current_epoch_batches
                 or (current_epoch_batches == 0 and current_epoch_loss_sum != 0.0)
+                or (current_epoch_policy_batches == 0 and current_epoch_policy_loss_sum != 0.0)
+                or (current_epoch_value_batches == 0 and current_epoch_value_loss_sum != 0.0)
                 or len(history) != start_epoch):
             raise ValueError("supervised checkpoint cursor or epoch metrics are invalid")
         if (start_epoch < epochs and start_batch == 0 and current_epoch_batches != 0
@@ -374,8 +461,13 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                    "model": model.state_dict(), "optimizer": optimizer.state_dict(),
                    "rngState": torch.get_rng_state(), "history": history,
                    "currentEpochLossSum": current_epoch_loss_sum,
+                   "currentEpochPolicyLossSum": current_epoch_policy_loss_sum,
+                   "currentEpochValueLossSum": current_epoch_value_loss_sum,
+                   "currentEpochPolicyBatches": current_epoch_policy_batches,
+                   "currentEpochValueBatches": current_epoch_value_batches,
                    "currentEpochBatches": current_epoch_batches,
-                   "policyLabelSources": sorted(POLICY_LABEL_SOURCES)}
+                   "policyLabelSources": policy_label_sources,
+                   "valueLabelSources": value_label_sources}
         checkpoint_hash = atomic_checkpoint(output, payload)
         parent_checkpoint_sha256 = checkpoint_hash
         return checkpoint_hash
@@ -388,11 +480,38 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
         offset = start_batch if epoch == start_epoch else 0
         for start in range(offset, len(order), batch_size):
             tensors, labels = _tensor_batch(records, order[start:start + batch_size])
-            logits = model.policy_forward(**tensors)
-            loss = acceptable_set_loss(logits, tensors["option_mask"], labels)
+            policy_indices = [index for index, row in enumerate(labels)
+                              if row.get("policyLabelSource") is not None]
+            value_indices = [index for index, row in enumerate(labels) if "valueTarget" in row]
+            policy_loss = value_loss = None
+            loss = None
+            if policy_indices:
+                indices = torch.tensor(policy_indices, dtype=torch.long)
+                policy_inputs = {key: value[indices] for key, value in tensors.items()}
+                logits = model.policy_forward(**policy_inputs)
+                policy_loss = acceptable_set_loss(logits, tensors["option_mask"][indices],
+                    [labels[index] for index in policy_indices])
+                loss = policy_loss
+            if value_indices:
+                indices = torch.tensor(value_indices, dtype=torch.long)
+                value_inputs = {key: tensors[key][indices] for key in
+                    ("state_card_ids", "state_features", "state_type_ids", "state_mask")}
+                values = model.evaluation_forward(**value_inputs)
+                targets = torch.tensor([labels[index]["valueTarget"] for index in value_indices],
+                                       dtype=values.dtype)
+                value_loss = torch.nn.functional.mse_loss(values, targets)
+                loss = .5 * value_loss if loss is None else loss + .5 * value_loss
+            if loss is None:
+                raise ValueError("training batch contains neither policy nor value targets")
             if not torch.isfinite(loss): raise RuntimeError("non-finite supervised loss")
             optimizer.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0); optimizer.step()
             current_epoch_loss_sum += float(loss.detach())
+            if policy_loss is not None:
+                current_epoch_policy_loss_sum += float(policy_loss.detach())
+                current_epoch_policy_batches += 1
+            if value_loss is not None:
+                current_epoch_value_loss_sum += float(value_loss.detach())
+                current_epoch_value_batches += 1
             current_epoch_batches += 1
             next_batch = min(start + batch_size, len(order))
             save(epoch, next_batch)
@@ -402,8 +521,17 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                         "nextBatch": next_batch, "examples": len(records)}
         if current_epoch_batches == 0:
             raise ValueError("supervised resume cursor skipped an epoch without saved batch metrics")
-        history.append({"epoch": epoch + 1, "policyLoss": current_epoch_loss_sum / current_epoch_batches})
+        history.append({"epoch": epoch + 1,
+            "compositeLoss": current_epoch_loss_sum / current_epoch_batches,
+            "policyLoss": (current_epoch_policy_loss_sum / current_epoch_policy_batches
+                           if current_epoch_policy_batches else None),
+            "policyBatches": current_epoch_policy_batches,
+            "terminalValueMSE": (current_epoch_value_loss_sum / current_epoch_value_batches
+                                 if current_epoch_value_batches else None),
+            "valueBatches": current_epoch_value_batches})
         current_epoch_loss_sum = 0.0
+        current_epoch_policy_loss_sum = current_epoch_value_loss_sum = 0.0
+        current_epoch_policy_batches = current_epoch_value_batches = 0
         current_epoch_batches = 0
         save(epoch + 1, 0); start_batch = 0
     digest = save(epochs, 0)

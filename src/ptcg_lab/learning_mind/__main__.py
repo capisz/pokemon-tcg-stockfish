@@ -9,7 +9,7 @@ from .audit import audit_manifest
 from .aggregation import combine_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import (build_dataset, build_macro_position_pool,
-                         build_strategy_probe_dataset)
+                         build_strategy_probe_dataset, load_dataset, training_records)
 from .disagreement_review import (audit_disagreement_review,
     build_disagreement_review_packet, write_disagreement_review_template)
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
@@ -22,6 +22,9 @@ from .ranker_distillation import build_macro_ranker_distillation
 from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
+from .value_targets import (build_value_target_dataset, load_value_target_dataset,
+                            training_records as value_training_records)
+from .training import train_supervised
 
 
 def main(argv=None) -> int:
@@ -44,6 +47,12 @@ def main(argv=None) -> int:
     freeze.add_argument("--source-dataset-manifest", type=Path, required=True)
     freeze.add_argument("--ranker-distillation-dir", type=Path,
                         help="optional verified train-only macro-ranker distribution dataset")
+    value_targets = sub.add_parser("build-value-target-dataset",
+        help="freeze actor-visible terminal outcomes as value-only labels from eligible completed games")
+    value_targets.add_argument("--root", type=Path, required=True)
+    value_targets.add_argument("--experimental-root", type=Path, required=True)
+    value_targets.add_argument("--source-dataset-manifest", type=Path, required=True)
+    value_targets.add_argument("--output", type=Path, required=True)
     distill = sub.add_parser("build-macro-ranker-distillation",
         help="freeze train-only legal-action distributions from a verified macro ranker")
     distill.add_argument("--root", type=Path, required=True)
@@ -153,6 +162,8 @@ def main(argv=None) -> int:
     verify_ranker_v2.add_argument("--report", type=Path, required=True)
     train = sub.add_parser("train-supervised")
     train.add_argument("--dataset", type=Path, required=True)
+    train.add_argument("--value-dataset", type=Path,
+                       help="optional immutable terminal-outcome dataset for value-only examples")
     train.add_argument("--output", type=Path, required=True)
     train.add_argument("--epochs", type=int, default=1)
     evaluate = sub.add_parser("evaluate-supervised")
@@ -211,6 +222,11 @@ def main(argv=None) -> int:
                                source_dataset_manifest=args.source_dataset_manifest.resolve(), identity=identity,
                                ranker_distillation_dir=(args.ranker_distillation_dir.resolve()
                                    if args.ranker_distillation_dir else None))
+    elif args.command == "build-value-target-dataset":
+        root = args.root.resolve(); identity = runtime_identity(root).record()
+        result = build_value_target_dataset(output=args.output.resolve(),
+            experimental_root=args.experimental_root.resolve(),
+            source_manifest_path=args.source_dataset_manifest.resolve(), identity=identity)
     elif args.command == "build-macro-ranker-distillation":
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = build_macro_ranker_distillation(output=args.output.resolve(),
@@ -282,7 +298,18 @@ def main(argv=None) -> int:
             "featureImplementationSha256": report["featureImplementationSha256"],
             "inferenceImplementationSha256": report["inferenceImplementationSha256"]}
     elif args.command == "train-supervised":
-        result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
+        if args.value_dataset is None:
+            result = train_candidate(args.dataset.resolve(), args.output.resolve(), epochs=args.epochs)
+        else:
+            policy_manifest, policy_rows = load_dataset(args.dataset.resolve())
+            value_manifest, value_rows = load_value_target_dataset(args.value_dataset.resolve(),
+                identity=policy_manifest["identity"])
+            records = training_records(policy_rows, "train") + value_training_records(value_rows, "train")
+            result = train_supervised(records, args.output.resolve(), policy_manifest["identity"],
+                epochs=args.epochs, dataset_manifest_hash=policy_manifest["manifestHash"],
+                value_dataset_manifest_hash=value_manifest["manifestHash"])
+            result = {**result, "datasetManifestHash": policy_manifest["manifestHash"],
+                      "valueDatasetManifestHash": value_manifest["manifestHash"]}
     elif args.command == "evaluate-supervised":
         result = evaluate_candidate(args.dataset.resolve(), args.checkpoint.resolve(),
                                     args.probe_dataset.resolve())

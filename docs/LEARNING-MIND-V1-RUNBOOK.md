@@ -358,6 +358,39 @@ Proceed only if a test proves that ordinary self-play actions cannot enter the
 policy-labelled subset and that changing the opposite hidden observation cannot
 change an encoded row.
 
+### 5.6 Terminal outcome targets are a separate value-only dataset
+
+Build value targets separately from the policy-labelled dataset. The builder
+accepts only source replays explicitly marked `experimentalLearning` and
+`trainingEligible`, with finished, rules-valid outcomes. It projects each
+outcome to the acting seat as `+1` win, `0` draw, or `-1` loss, and writes only
+that actor's redacted observation. Truncations, engine errors, ineligible
+coverage captures, and unknown terminal outcomes never become value targets.
+Teaching actions in these rows must never enter policy loss.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind build-value-target-dataset \
+  --root . --experimental-root EXPERIMENTAL_ROOT \
+  --source-dataset-manifest RUN_MANIFEST \
+  --output artifacts/learning-mind-v1/value-targets-EPOCH
+```
+
+When eligible value rows exist, train the shared model with both frozen
+manifests. The value head uses terminal-outcome MSE with coefficient `0.5`;
+checkpoints record policy loss and value MSE separately, bind the value dataset
+manifest hash, and keep its self-play source out of `policyLabelSources`.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind train-supervised \
+  --dataset POLICY_DATASET --value-dataset VALUE_DATASET \
+  --output artifacts/learning-mind-v1/checkpoints/value-bootstrap-EPOCH.pt
+```
+
+The command uses only each dataset's `train` split. Development and held-out
+value outcomes remain untouched. An empty eligible value dataset is evidence
+that the source games were not authorized for learning, not a reason to relax
+the training-eligibility check.
+
 ## 6. Generate strategic macro labels
 
 The rollout orchestration CLI consumes frozen dataset positions and calls the

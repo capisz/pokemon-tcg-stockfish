@@ -9,7 +9,7 @@ torch = pytest.importorskip("torch")
 from ptcg_lab.learning_mind.encoding import collate
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, autoregressive_select
 from ptcg_lab.learning_mind.training import (PPOConfig, acceptable_set_loss, ppo_update,
-    supervised_implementation_identity, train_supervised)
+    supervised_implementation_identity, supervised_training_rows, train_supervised)
 from test_learning_mind_representation import encoded, observation
 
 
@@ -169,6 +169,66 @@ def test_ranker_distillation_training_requires_matching_teacher_provenance(tmp_p
         train_supervised([row], tmp_path / "mismatched-teacher.pt", {"identityHash": "fixed"},
                          batch_size=1, teacher_hashes=["3" * 64])
     assert not (tmp_path / "mismatched-teacher.pt").exists()
+
+
+def test_terminal_value_only_training_never_treats_played_action_as_policy_label(tmp_path):
+    value_record = {"encoded": encoded(), "playedAction": 0,
+        "valueLabelSource": "completed-self-play-outcome", "valueTarget": 1.0}
+    ordinary = {"encoded": encoded(), "playedAction": 1}
+    validated = supervised_training_rows([ordinary, value_record])
+    assert validated == [value_record]
+    output = tmp_path / "value-only.pt"
+    result = train_supervised(validated, output, {"identityHash": "fixed"}, batch_size=1,
+        value_dataset_manifest_hash="a" * 64)
+    checkpoint = torch.load(output, weights_only=False)
+    assert result["history"][0]["policyLoss"] is None
+    assert result["history"][0]["terminalValueMSE"] is not None
+    assert checkpoint["trainingConfig"]["valueDatasetManifestHash"] == "a" * 64
+    assert checkpoint["policyLabelSources"] == []
+    assert checkpoint["valueLabelSources"] == ["completed-self-play-outcome"]
+
+
+def test_value_only_training_requires_a_frozen_dataset_hash(tmp_path):
+    record = {"encoded": encoded(), "valueLabelSource": "completed-self-play-outcome",
+        "valueTarget": -1.0}
+    output = tmp_path / "unbound-value.pt"
+    with pytest.raises(ValueError, match="dataset manifest hash"):
+        train_supervised([record], output, {"identityHash": "fixed"}, batch_size=1)
+    assert not output.exists()
+
+
+def test_joint_policy_and_value_training_reports_separate_losses(tmp_path):
+    records = [
+        {"encoded": encoded(), "policyLabelSource": "compatible-reviewed-acceptable-set",
+         "acceptableActionIndices": [0]},
+        {"encoded": encoded(observation()), "valueLabelSource": "completed-self-play-outcome",
+         "valueTarget": -1.0},
+    ]
+    result = train_supervised(records, tmp_path / "joint.pt", {"identityHash": "fixed"},
+        batch_size=2, value_dataset_manifest_hash="b" * 64)
+    metrics = result["history"][0]
+    assert metrics["policyLoss"] is not None and metrics["terminalValueMSE"] is not None
+    assert metrics["policyBatches"] == metrics["valueBatches"] == 1
+
+
+def test_value_only_training_resume_is_bit_equivalent(tmp_path):
+    records = [
+        {"encoded": encoded(), "valueLabelSource": "completed-self-play-outcome", "valueTarget": 1.0},
+        {"encoded": encoded(observation()), "valueLabelSource": "completed-self-play-outcome", "valueTarget": -1.0},
+    ]
+    interrupted = tmp_path / "value-resume.pt"
+    args = {"identityHash": "fixed"}
+    train_supervised(records, interrupted, args, batch_size=1,
+        stop_after_batches=1, value_dataset_manifest_hash="c" * 64)
+    resumed = train_supervised(records, interrupted, args, batch_size=1,
+        resume=interrupted, value_dataset_manifest_hash="c" * 64)
+    complete_path = tmp_path / "value-complete.pt"
+    complete = train_supervised(records, complete_path, args, batch_size=1,
+        value_dataset_manifest_hash="c" * 64)
+    left = torch.load(resumed["checkpoint"], weights_only=False)
+    right = torch.load(complete_path, weights_only=False)
+    assert resumed["history"] == complete["history"]
+    assert all(torch.equal(left["model"][key], right["model"][key]) for key in left["model"])
 
 
 def test_search_distribution_loss_ignores_zero_mass_padded_options():

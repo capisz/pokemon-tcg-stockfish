@@ -79,11 +79,15 @@ def _dataset_and_evaluation(tmp_path, *, game_sides=2, positions_per_side=2,
     (dataset / "manifest.json").write_text(json.dumps(manifest))
     checkpoint = tmp_path / "checkpoint.pt"
     implementation = supervised_implementation_identity()
+    config = {"implementationIdentity": implementation, "teacherHashes": [],
+        "policyLabelSources": [], "valueLabelSources": [], "valueDatasetManifestHash": None,
+        "valueLossCoefficient": .5, "lossContract": "approved-policy-plus-terminal-outcome-mse-v1"}
     torch.save({"schemaVersion": 2, "kind": "StrategyTransformerV1-supervised", "identity": identity,
         "datasetManifestHash": manifest["manifestHash"], "model": model.state_dict(),
         "implementationIdentity": implementation,
         "parentCheckpointSha256": None, "teacherHashes": [],
-        "trainingConfig": {"implementationIdentity": implementation, "teacherHashes": []}}, checkpoint)
+        "policyLabelSources": [], "valueLabelSources": [],
+        "trainingConfig": config}, checkpoint)
     evaluation_path = tmp_path / "evaluation.json"
     evaluation_path.write_text(json.dumps({"checkpointSha256": file_sha256(checkpoint),
         "datasetManifestHash": manifest["manifestHash"], "positions": evaluations,
