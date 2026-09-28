@@ -950,7 +950,9 @@ strength or autonomous improvement.
   decision; both report Wilson 95% intervals; fewer than 20 headline game-sides
   is insufficient.
 - Probe evaluation requires its own immutable corpus built from every actor
-  decision in held-out source games. It does not misuse the sparse search/review
+  decision in held-out source games; the engine's final `action: null` terminal
+  frame is explicitly excluded as an outcome boundary, not a policy decision.
+  It does not misuse the sparse search/review
   training rows. The corpus excludes accepted actions and the opposite private
   observation, binds to the same frozen source manifest as the supervised
   dataset, verifies source identity/hash, and hashes both probe definitions and
@@ -961,8 +963,9 @@ strength or autonomous improvement.
   severity-three coverage, and no severity-three regression produce
   `acceptance: passed`; automatic promotion remains false.
 - Corrected the opening-selection evaluator to treat a null prompt as
-  nonqualifying. Tests cover actor-view extraction, sparse-corpus rejection,
-  chronological headline deduplication, minimum sample size, and full registry
-  output. The full Python suite passes (343); CLI help checks, TypeScript
+  nonqualifying. Tests cover actor-view extraction, terminal-frame exclusion,
+  sparse-corpus rejection, chronological headline deduplication, minimum
+  sample size, and full registry output. The full Python suite passes (343);
+  CLI help checks, TypeScript
   typecheck, and `git diff --check` pass. No games were simulated and no label
   collector/checkpoint was read or changed.

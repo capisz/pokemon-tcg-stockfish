@@ -381,11 +381,17 @@ def build_strategy_probe_dataset(*, output: Path, experimental_root: Path,
         game_rows = []
         last_index = -1
         for frame in replay.get("frames", []):
+            if not isinstance(frame, dict):
+                raise ValueError(f"strategy-probe replay contains an invalid frame: {replay_id}")
+            # Engine replays end with a terminal observation frame whose action
+            # is null. It is an outcome boundary, not a policy decision.
+            if frame.get("action") is None:
+                continue
             actor = frame.get("actor")
             if type(actor) is not int or actor not in (0, 1):
-                continue
+                raise ValueError(f"strategy-probe decision frame has an invalid actor: {replay_id}")
             decision_index = frame.get("decisionIndex")
-            if type(decision_index) is not int or decision_index <= last_index:
+            if type(decision_index) is not int or decision_index != last_index + 1:
                 raise ValueError(f"strategy-probe replay decisions are not strictly ordered: {replay_id}")
             last_index = decision_index
             observations = frame.get("observations")

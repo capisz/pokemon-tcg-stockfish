@@ -26,8 +26,12 @@ def _source_fixture(tmp_path):
     opposite_secret["players"][1]["hand"] = [{"id": "SHH", "name": "HIDDEN FROM ACTOR", "kind": "pokemon"}]
     replay = {"id": replay_id, "dataTier": "experimental", "status": "finished",
         "frames": [
-            {"decisionIndex": 0, "actor": 0, "observations": [own_zero, opposite_secret]},
-            {"decisionIndex": 1, "actor": 1, "observations": [opposite_secret, own_one]},
+            {"decisionIndex": 0, "actor": 0, "action": {"id": "a0"},
+             "observations": [own_zero, opposite_secret]},
+            {"decisionIndex": 1, "actor": 1, "action": {"id": "a1"},
+             "observations": [opposite_secret, own_one]},
+            {"decisionIndex": 2, "actor": 0, "action": None,
+             "observations": [own_zero, opposite_secret]},
         ]}
     Store(experimental).put("replays", replay_id, replay)
     identity = IdentityManifest.create(engine_build_hash="engine", deck_manifests={}, card_metadata={})
