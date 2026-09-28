@@ -14,7 +14,7 @@ from ptcg_lab.storage import digest as legacy_digest
 from .dataset_v1 import file_sha256, load_dataset
 from .encoding import collate, encode_decision
 from .evaluation import wilson
-from .model import StrategyTransformerV1
+from .model import StrategyTransformerV1, greedy_single_action_class
 from .schema import identity_hash
 from .training import require_checkpoint_implementation
 
@@ -126,14 +126,21 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
         if encoded.identity != source.get("featureIdentityHash"):
             raise ValueError("frozen held-out feature identity mismatch")
         model_class, heuristic_class = item.get("modelClass"), item.get("heuristicClass")
-        if (type(model_class) is not int or not 0 <= model_class <= len(encoded.action_classes)
+        if (type(model_class) is not int or not 0 <= model_class < len(encoded.action_classes)
                 or type(heuristic_class) is not int or not 0 <= heuristic_class < len(encoded.action_classes)):
             raise ValueError("evaluation contains an out-of-range policy or heuristic action class")
         batch = {key: torch.as_tensor(value) for key, value in collate([encoded]).items()}
-        with torch.no_grad():
-            actual_model_class = int(torch.argmax(model.policy_forward(**batch)[0]).item())
+        def step_logits(chosen):
+            selected = torch.zeros_like(batch["option_mask"])
+            for index in chosen:
+                selected[0, index] = True
+            with torch.no_grad():
+                return model.policy_forward(**batch, selected_mask=selected)[0]
+        actual_model_class = greedy_single_action_class(step_logits,
+            action_count=len(encoded.action_classes),
+            legality=lambda _chosen, index: 0 <= index < len(encoded.action_classes))
         if model_class != actual_model_class:
-            raise ValueError("evaluation model action differs from the frozen checkpoint logits")
+            raise ValueError("evaluation model action differs from the frozen checkpoint logits/legal decoder")
         if source.get("acceptableActionIndices"):
             acceptable_values = source["acceptableActionIndices"]
             if (not isinstance(acceptable_values, list)

@@ -121,3 +121,14 @@ def autoregressive_select(logit_steps: Callable[[tuple[int, ...]], torch.Tensor]
             raise RuntimeError("no legal autoregressive choice")
         chosen = (*chosen, index)
     raise RuntimeError("autoregressive decoder did not terminate")
+
+
+def greedy_single_action_class(logit_steps: Callable[[tuple[int, ...]], torch.Tensor], *,
+                               action_count: int,
+                               legality: Callable[[tuple[int, ...], int], bool] | None = None) -> int:
+    """Return the executable legal action selected by the frozen one-action decoder."""
+    result = autoregressive_select(logit_steps, action_count=action_count,
+                                   minimum=1, maximum=1, legality=legality)
+    if not result.stopped or len(result.indices) != 1 or not 0 <= result.indices[0] < action_count:
+        raise RuntimeError("one-action policy decoder did not emit exactly one legal action")
+    return result.indices[0]

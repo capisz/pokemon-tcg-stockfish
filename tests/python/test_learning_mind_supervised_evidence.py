@@ -14,7 +14,7 @@ from ptcg_lab.learning_mind.disagreement_review import (audit_disagreement_revie
 from ptcg_lab.learning_mind.candidate_safety import (audit_candidate_safety,
     _verify_legal_action_coverage)
 from ptcg_lab.learning_mind.encoding import collate, encode_decision
-from ptcg_lab.learning_mind.model import StrategyTransformerV1
+from ptcg_lab.learning_mind.model import StrategyTransformerV1, greedy_single_action_class
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.supervised_evidence import (audit_supervised_evaluation,
     summarize_blind_policy_families, summarize_paired_game_sides)
@@ -40,8 +40,15 @@ def _dataset_and_evaluation(tmp_path, *, game_sides=2, positions_per_side=2,
             tracker = ObservableHistoryTracker(0).update(obs)
             encoded = encode_decision(obs, tracker)
             tensor_batch = {key: torch.as_tensor(value) for key, value in collate([encoded]).items()}
-            with torch.no_grad():
-                model_class = int(torch.argmax(model.policy_forward(**tensor_batch)[0]).item())
+            def step_logits(chosen):
+                selected = torch.zeros_like(tensor_batch["option_mask"])
+                for selected_index in chosen:
+                    selected[0, selected_index] = True
+                with torch.no_grad():
+                    return model.policy_forward(**tensor_batch, selected_mask=selected)[0]
+            model_class = greedy_single_action_class(step_logits,
+                action_count=len(encoded.action_classes),
+                legality=lambda _chosen, action_index: 0 <= action_index < len(encoded.action_classes))
             heuristic_id = max(obs["legalActions"],
                 key=lambda action: heuristic_action_score(action, obs))["id"]
             heuristic_class = next(i for i, group in enumerate(encoded.action_classes)
@@ -110,7 +117,7 @@ def test_audit_does_not_accept_small_correlated_heldout_samples(tmp_path):
 def test_audit_recomputes_model_logits_and_rejects_forged_hits(tmp_path):
     dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
     value = json.loads(evaluation.read_text())
-    value["positions"][0]["modelClass"] = (value["positions"][0]["modelClass"] + 1) % 4
+    value["positions"][0]["modelClass"] = 0 if value["positions"][0]["modelClass"] != 0 else 1
     value["positions"][0]["modelHit"] = True
     evaluation.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="frozen checkpoint logits"):

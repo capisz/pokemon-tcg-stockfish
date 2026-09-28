@@ -36,10 +36,8 @@ def _read_verified_audit(*, dataset_dir: Path, checkpoint: Path,
 
 def _action_class(observation: dict, tracker: dict, index: int) -> dict:
     encoded = encode_decision(observation, tracker)
-    if type(index) is not int or not 0 <= index <= len(encoded.action_classes):
+    if type(index) is not int or not 0 <= index < len(encoded.action_classes):
         raise ValueError("review action class is outside the frozen encoded options")
-    if index == len(encoded.action_classes):
-        return {"classIndex": index, "kind": "STOP", "actions": []}
     return {"classIndex": index, "kind": "legal-action-class",
             "actions": encoded.action_classes[index].actions}
 

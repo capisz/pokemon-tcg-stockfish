@@ -11,7 +11,7 @@ import torch
 from .dataset_v1 import file_sha256, load_dataset
 from .disagreement_review import _read_verified_audit
 from .encoding import collate, encode_decision
-from .model import StrategyTransformerV1, autoregressive_select
+from .model import StrategyTransformerV1, greedy_single_action_class
 from .schema import LIMITS, identity_hash
 from .training import require_checkpoint_implementation
 
@@ -84,12 +84,6 @@ def audit_candidate_safety(*, dataset_dir: Path, checkpoint: Path,
 
         arrays = collate([encoded])
         tensors = {key: torch.as_tensor(value) for key, value in arrays.items()}
-        with torch.no_grad():
-            logits = model.policy_forward(**tensors)[0]
-            model_class = int(torch.argmax(logits).item())
-        record = evaluated[source["positionHash"]]
-        if model_class != record.get("modelClass") or not 0 <= model_class <= count:
-            raise ValueError("candidate output differs from frozen checkpoint or leaves legal options")
 
         def step_logits(chosen: tuple[int, ...]) -> torch.Tensor:
             selected = torch.zeros_like(tensors["option_mask"])
@@ -98,11 +92,11 @@ def audit_candidate_safety(*, dataset_dir: Path, checkpoint: Path,
             with torch.no_grad():
                 return model.policy_forward(**tensors, selected_mask=selected)[0]
 
-        decoded = autoregressive_select(step_logits, action_count=count, minimum=1, maximum=1,
-                                        legality=lambda _chosen, index: 0 <= index < count)
-        if (not decoded.stopped or len(decoded.indices) != 1
-                or not 0 <= decoded.indices[0] < count):
-            raise ValueError("autoregressive decoder emitted an illegal or incomplete one-action choice")
+        model_class = greedy_single_action_class(step_logits, action_count=count,
+            legality=lambda _chosen, index: 0 <= index < count)
+        record = evaluated[source["positionHash"]]
+        if model_class != record.get("modelClass") or not 0 <= model_class < count:
+            raise ValueError("candidate output differs from the actual one-action decoder or leaves legal options")
         action_class_counts[str(count)] += 1
 
     report = {"schemaVersion": 1, "kind": "supervised-candidate-safety-v1",

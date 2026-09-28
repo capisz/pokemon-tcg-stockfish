@@ -312,6 +312,17 @@ def test_ppo_action_distribution_masks_stop_and_per_row_padding():
     assert torch.isneginf(masked[1, 1:]).all()  # STOP and padding are excluded per row.
 
 
+def test_single_action_policy_decoder_masks_stop_until_one_legal_move_is_chosen():
+    torch = pytest.importorskip("torch")
+    from ptcg_lab.learning_mind.model import greedy_single_action_class
+    choices = []
+    def logits(selected):
+        choices.append(selected)
+        return torch.tensor([1., 0., 100.])  # STOP is the raw argmax, but one engine action is required.
+    assert greedy_single_action_class(logits, action_count=2) == 0
+    assert choices == [(), (0,)]
+
+
 def test_sequential_evaluation_and_manual_promotion_gate():
     records = [{"status": "finished", "score": 1}] * 100
     assert sequential_decision(records)["status"] == "supported-improvement"
