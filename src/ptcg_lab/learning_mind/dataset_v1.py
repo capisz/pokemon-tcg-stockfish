@@ -344,6 +344,8 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
         for field in ("split", "policyLabelSource", "familyId", "opponentArchetype", "opponentPolicyFamily"):
             dimensions[field] = dict(sorted(Counter(str(row.get(field)) for row in rows).items()))
         search_configurations = sorted({identity_hash(row["searchTarget"]) for row in rows if row.get("searchTarget")})
+        teacher_hashes = sorted({value for row in rows if row.get("rankerDistillation")
+            for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"])})
         manifest = {"schemaVersion": 1, "id": "learning-mind-supervised-v1", "identity": identity.record(),
                     "rows": len(rows), "rowsSha256": file_sha256(rows_path),
                     "counts": [{"split": split, "source": source, "count": count}
@@ -352,6 +354,7 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
                     "families": sorted({row["familyId"] for row in rows}),
                     "searchConfigurationHashes": search_configurations,
                     "sources": review_sources + search_sources + distillation_sources, "exclusions": exclusions,
+                    "teacherHashes": teacher_hashes,
                     "staleReviewsExcluded": list(STALE_REVIEWS),
                     "policyLabelSources": sorted({row["policyLabelSource"] for row in rows}),
                     "ordinarySelfPlayPolicyLabels": 0,
@@ -651,6 +654,10 @@ def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
         raise ValueError("supervised dataset family manifest does not match rows")
     if manifest.get("ordinarySelfPlayPolicyLabels") != 0:
         raise ValueError("ordinary self-play actions cannot be supervised policy labels")
+    expected_teachers = sorted({value for row in rows if row.get("rankerDistillation")
+        for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"])})
+    if manifest.get("teacherHashes", []) != expected_teachers:
+        raise ValueError("supervised dataset teacher hashes do not match its distilled rows")
 
 
 def training_records(rows: list[dict], split: str = "train") -> list[dict]:
@@ -661,7 +668,10 @@ def training_records(rows: list[dict], split: str = "train") -> list[dict]:
         if encoded.identity != row["featureIdentityHash"]: raise ValueError("encoded row identity drift")
         result.append({"encoded": encoded, "policyLabelSource": row["policyLabelSource"],
                        "acceptableActionIndices": row.get("acceptableActionIndices"),
-                       "policyDistribution": row.get("policyDistribution")})
+                       "policyDistribution": row.get("policyDistribution"),
+                       "teacherHashes": ([row["rankerDistillation"]["modelSha256"],
+                                          row["rankerDistillation"]["reportHash"]]
+                                         if row.get("rankerDistillation") else [])})
     return result
 
 

@@ -13,6 +13,7 @@ from .disagreement_review import _read_verified_audit
 from .encoding import collate, encode_decision
 from .model import StrategyTransformerV1, autoregressive_select
 from .schema import LIMITS, identity_hash
+from .training import require_checkpoint_implementation
 
 
 def _atomic_new_json(output: Path, value: dict) -> None:
@@ -56,6 +57,7 @@ def audit_candidate_safety(*, dataset_dir: Path, checkpoint: Path,
             or checkpoint_record.get("datasetManifestHash") != manifest.get("manifestHash")
             or checkpoint_record.get("kind") != "StrategyTransformerV1-supervised"):
         raise ValueError("candidate checkpoint identity differs from the audited supervised artifact")
+    require_checkpoint_implementation(checkpoint_record)
     model = StrategyTransformerV1().eval()
     model.load_state_dict(checkpoint_record["model"])
     max_action_classes = 0

@@ -173,6 +173,21 @@ Base: `7543298`
 This evidence establishes implementation and representation parity, not playing
 strength or autonomous improvement.
 
+## Supervised checkpoint provenance hardening (2026-09-28)
+
+- Supervised checkpoint schema v2 binds each checkpoint to SHA-256 identities
+  for the trainer, Transformer, encoder, and observable-history tracker, plus
+  the Python/PyTorch CPU runtime settings. Auditing, safety receipts, and resume
+  reject implementation drift.
+- Checkpoints now include sorted ranker-teacher hashes and a parent checkpoint
+  hash. Resume is same-path only; fresh training refuses to overwrite an
+  existing checkpoint. Exact parent-chain and no-overwrite behavior are tested.
+- The complete Python suite passes: 400 tests. The strategy-contract validator
+  confirms approved v1.2 remains active; `git diff --check` passes.
+- This closes a provenance gap only. No training run, collector, PPO, promotion,
+  or autonomous service was started or enabled; the active collector was not
+  inspected or polled.
+
 ## Independent supervised-evidence gate
 
 - Supervised held-out evaluation is accepted only after the audit command

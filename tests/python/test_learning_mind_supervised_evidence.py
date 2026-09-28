@@ -18,6 +18,7 @@ from ptcg_lab.learning_mind.model import StrategyTransformerV1
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.supervised_evidence import (audit_supervised_evaluation,
     summarize_blind_policy_families, summarize_paired_game_sides)
+from ptcg_lab.learning_mind.training import supervised_implementation_identity
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import digest as legacy_digest
 from test_learning_mind_representation import observation
@@ -77,8 +78,12 @@ def _dataset_and_evaluation(tmp_path, *, game_sides=2, positions_per_side=2,
     manifest["manifestHash"] = identity_hash(manifest)
     (dataset / "manifest.json").write_text(json.dumps(manifest))
     checkpoint = tmp_path / "checkpoint.pt"
-    torch.save({"kind": "StrategyTransformerV1-supervised", "identity": identity,
-        "datasetManifestHash": manifest["manifestHash"], "model": model.state_dict()}, checkpoint)
+    implementation = supervised_implementation_identity()
+    torch.save({"schemaVersion": 2, "kind": "StrategyTransformerV1-supervised", "identity": identity,
+        "datasetManifestHash": manifest["manifestHash"], "model": model.state_dict(),
+        "implementationIdentity": implementation,
+        "parentCheckpointSha256": None, "teacherHashes": [],
+        "trainingConfig": {"implementationIdentity": implementation, "teacherHashes": []}}, checkpoint)
     evaluation_path = tmp_path / "evaluation.json"
     evaluation_path.write_text(json.dumps({"checkpointSha256": file_sha256(checkpoint),
         "datasetManifestHash": manifest["manifestHash"], "positions": evaluations,
@@ -105,6 +110,16 @@ def test_audit_recomputes_model_logits_and_rejects_forged_hits(tmp_path):
     value["positions"][0]["modelHit"] = True
     evaluation.write_text(json.dumps(value))
     with pytest.raises(ValueError, match="frozen checkpoint logits"):
+        audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+            evaluation_path=evaluation, output=tmp_path / "audit")
+
+
+def test_audit_rejects_checkpoint_implementation_drift(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
+    value = torch.load(checkpoint, map_location="cpu", weights_only=False)
+    value["implementationIdentity"]["sources"]["modelSha256"] = "0" * 64
+    torch.save(value, checkpoint)
+    with pytest.raises(ValueError, match="implementation identity mismatch"):
         audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
             evaluation_path=evaluation, output=tmp_path / "audit")
 

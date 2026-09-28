@@ -236,6 +236,9 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     validation_manifest = {"counts": [{"split": split, "source": source, "count": count}
         for (split, source), count in sorted(counts.items())],
         "families": sorted({row.get("familyId") for row in rows}),
+        "teacherHashes": sorted({value for row in rows
+            for value in (row["rankerDistillation"]["modelSha256"],
+                          row["rankerDistillation"]["reportHash"])}),
         "ordinarySelfPlayPolicyLabels": 0}
     _validate_supervised_rows(validation_manifest, rows)
     return manifest, rows

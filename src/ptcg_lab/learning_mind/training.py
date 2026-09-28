@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 import hashlib
+import io
 import json
 import math
 import os
+import platform
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterable
@@ -12,9 +14,46 @@ import torch
 
 from .encoding import EncodedDecision, collate
 from .model import StrategyTransformerV1
+from . import encoding as encoding_module, model as model_module, tracker as tracker_module
 
 POLICY_LABEL_SOURCES = frozenset({"exact-search-distribution", "compatible-reviewed-acceptable-set",
                                   "high-confidence-macro-plan", "macro-ranker-distillation"})
+
+
+def _source_sha256(path: Path) -> str:
+    return hashlib.sha256(path.read_bytes()).hexdigest()
+
+
+def supervised_implementation_identity() -> dict:
+    """Pin the executable policy/training stack and CPU runtime in checkpoints."""
+    return {"sources": {
+        "trainerSha256": _source_sha256(Path(__file__)),
+        "modelSha256": _source_sha256(Path(model_module.__file__)),
+        "encodingSha256": _source_sha256(Path(encoding_module.__file__)),
+        "trackerSha256": _source_sha256(Path(tracker_module.__file__)),
+    }, "runtime": {"device": "cpu", "pythonVersion": platform.python_version(),
+        "torchVersion": str(torch.__version__), "torchThreads": torch.get_num_threads(),
+        "deterministicAlgorithms": torch.are_deterministic_algorithms_enabled()}}
+
+
+def require_checkpoint_implementation(checkpoint: dict) -> None:
+    expected = supervised_implementation_identity()
+    parent_hash = checkpoint.get("parentCheckpointSha256")
+    teacher_hashes = checkpoint.get("teacherHashes")
+    training_config = checkpoint.get("trainingConfig")
+    valid_hash = lambda value: (isinstance(value, str) and len(value) == 64
+        and all(character in "0123456789abcdef" for character in value))
+    valid_teachers = (isinstance(teacher_hashes, list)
+        and all(valid_hash(value) for value in teacher_hashes)
+        and teacher_hashes == sorted(set(teacher_hashes)))
+    if (checkpoint.get("schemaVersion") != 2
+            or not isinstance(training_config, dict)
+            or checkpoint.get("implementationIdentity") != expected
+            or training_config.get("implementationIdentity") != expected
+            or (parent_hash is not None and not valid_hash(parent_hash))
+            or not valid_teachers
+            or training_config.get("teacherHashes") != teacher_hashes):
+        raise ValueError("supervised checkpoint implementation identity mismatch")
 
 
 def supervised_policy_rows(rows: Iterable[dict]) -> list[dict]:
@@ -84,6 +123,7 @@ def atomic_checkpoint(path: Path, payload: dict) -> str:
 def require_checkpoint_identity(checkpoint: dict, identity: dict) -> None:
     if checkpoint.get("identity") != identity:
         raise ValueError("checkpoint identity does not match the frozen experiment")
+    require_checkpoint_implementation(checkpoint)
 
 
 @dataclass(frozen=True)
@@ -247,7 +287,8 @@ def _tensor_batch(records: list[dict], indices: list[int]):
 def train_supervised(records: list[dict], output: Path, identity: dict, *, epochs: int = 1,
                      batch_size: int = 32, seed: int = 7543298, resume: Path | None = None,
                      stop_after_batches: int | None = None,
-                     dataset_manifest_hash: str | None = None) -> dict:
+                     dataset_manifest_hash: str | None = None,
+                     teacher_hashes: list[str] | None = None) -> dict:
     """Deterministic same-device bootstrap with durable optimizer/RNG cursor."""
     records = supervised_policy_rows(records)
     if not records: raise ValueError("supervised bootstrap has no approved labels")
@@ -255,18 +296,37 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
         raise ValueError("supervised epochs and batch size must be positive integers")
     if type(seed) is not int:
         raise ValueError("supervised seed must be an integer")
+    if teacher_hashes is None:
+        teacher_hashes = [value for row in records for value in row.get("teacherHashes", [])]
+    teacher_hashes = sorted(set(teacher_hashes))
+    if any(not isinstance(value, str) or len(value) != 64
+           or any(character not in "0123456789abcdef" for character in value)
+           for value in teacher_hashes):
+        raise ValueError("supervised teacher hashes must be lowercase SHA-256 values")
+    output = output.resolve()
+    resume = resume.resolve() if resume is not None else None
+    if output.exists() and (resume is None or output != resume):
+        raise ValueError("supervised checkpoints are immutable; resume at the same path or choose a new output")
+    if resume is not None and not resume.is_file():
+        raise ValueError("supervised resume checkpoint does not exist")
+    implementation = supervised_implementation_identity()
     training_config = {"seed": seed, "batchSize": batch_size, "epochs": epochs,
                        "optimizer": "AdamW", "learningRate": 1e-4, "weightDecay": 1e-4,
                        "model": "StrategyTransformerV1",
-                       "datasetManifestHash": dataset_manifest_hash}
+                       "datasetManifestHash": dataset_manifest_hash,
+                       "implementationIdentity": implementation,
+                       "teacherHashes": teacher_hashes}
     torch.manual_seed(seed)
     model = StrategyTransformerV1()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4, weight_decay=1e-4)
     start_epoch = start_batch = 0; history = []
     current_epoch_loss_sum = 0.0
     current_epoch_batches = 0
+    parent_checkpoint_sha256 = None
     if resume:
-        checkpoint = torch.load(resume, map_location="cpu", weights_only=False)
+        resume_bytes = resume.read_bytes()
+        parent_checkpoint_sha256 = hashlib.sha256(resume_bytes).hexdigest()
+        checkpoint = torch.load(io.BytesIO(resume_bytes), map_location="cpu", weights_only=False)
         require_checkpoint_identity(checkpoint, identity)
         if checkpoint.get("kind") != "StrategyTransformerV1-supervised" or checkpoint.get("trainingConfig") != training_config:
             raise ValueError("supervised resume training configuration mismatch")
@@ -290,8 +350,11 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
             raise ValueError("supervised checkpoint batch metrics do not match its cursor")
 
     def save(epoch, next_batch):
-        payload = {"schemaVersion": 1, "kind": "StrategyTransformerV1-supervised", "identity": identity,
+        nonlocal parent_checkpoint_sha256
+        payload = {"schemaVersion": 2, "kind": "StrategyTransformerV1-supervised", "identity": identity,
                    "trainingConfig": training_config, "datasetManifestHash": dataset_manifest_hash,
+                   "implementationIdentity": implementation, "teacherHashes": teacher_hashes,
+                   "parentCheckpointSha256": parent_checkpoint_sha256,
                    "epoch": epoch, "nextBatch": next_batch,
                    "seed": seed, "batchSize": batch_size,
                    "model": model.state_dict(), "optimizer": optimizer.state_dict(),
@@ -299,7 +362,9 @@ def train_supervised(records: list[dict], output: Path, identity: dict, *, epoch
                    "currentEpochLossSum": current_epoch_loss_sum,
                    "currentEpochBatches": current_epoch_batches,
                    "policyLabelSources": sorted(POLICY_LABEL_SOURCES)}
-        return atomic_checkpoint(output, payload)
+        checkpoint_hash = atomic_checkpoint(output, payload)
+        parent_checkpoint_sha256 = checkpoint_hash
+        return checkpoint_hash
 
     completed_batches = 0
     for epoch in range(start_epoch, epochs):

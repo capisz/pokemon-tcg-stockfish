@@ -16,6 +16,7 @@ from .encoding import collate, encode_decision
 from .evaluation import wilson
 from .model import StrategyTransformerV1
 from .schema import identity_hash
+from .training import require_checkpoint_implementation
 
 MINIMUM_INDEPENDENT_GAME_SIDES = 20
 NON_POLICY_SOURCE_FAMILIES = frozenset({"human-review", "frozen-search-source"})
@@ -80,6 +81,7 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
         raise ValueError("supervised checkpoint was not trained from this frozen dataset manifest")
     if checkpoint_record.get("kind") != "StrategyTransformerV1-supervised":
         raise ValueError("checkpoint is not a supervised StrategyTransformerV1 artifact")
+    require_checkpoint_implementation(checkpoint_record)
     model = StrategyTransformerV1()
     model.load_state_dict(checkpoint_record["model"])
     model.eval()

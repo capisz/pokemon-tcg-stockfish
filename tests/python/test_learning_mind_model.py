@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import numpy as np
+import hashlib
 import pytest
 
 torch = pytest.importorskip("torch")
 
 from ptcg_lab.learning_mind.encoding import collate
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, autoregressive_select
-from ptcg_lab.learning_mind.training import PPOConfig, acceptable_set_loss, ppo_update, train_supervised
+from ptcg_lab.learning_mind.training import (PPOConfig, acceptable_set_loss, ppo_update,
+    supervised_implementation_identity, train_supervised)
 from test_learning_mind_representation import encoded, observation
 
 
@@ -59,12 +61,18 @@ def test_supervised_resume_is_bit_equivalent_on_same_device(tmp_path):
     identity = {"identityHash": "fixed"}
     interrupted = tmp_path / "interrupted.pt"
     assert train_supervised(records, interrupted, identity, batch_size=1, stop_after_batches=1)["status"] == "paused"
+    resume_parent_hash = hashlib.sha256(interrupted.read_bytes()).hexdigest()
     resumed = train_supervised(records, interrupted, identity, batch_size=1, resume=interrupted)
     complete_path = tmp_path / "complete.pt"
     train_supervised(records, complete_path, identity, batch_size=1)
     left = torch.load(resumed["checkpoint"], weights_only=False)["model"]
     right = torch.load(complete_path, weights_only=False)["model"]
     assert all(torch.equal(left[key], right[key]) for key in left)
+    resumed_checkpoint = torch.load(resumed["checkpoint"], weights_only=False)
+    complete_checkpoint = torch.load(complete_path, weights_only=False)
+    assert complete_checkpoint["parentCheckpointSha256"] is not None
+    assert len(resume_parent_hash) == 64
+    assert resumed_checkpoint["implementationIdentity"] == supervised_implementation_identity()
 
 
 def test_supervised_resume_after_final_batch_completes_epoch_bit_equivalently(tmp_path):
@@ -75,12 +83,14 @@ def test_supervised_resume_after_final_batch_completes_epoch_bit_equivalently(tm
     interrupted = tmp_path / "final-batch.pt"
     paused = train_supervised(records, interrupted, identity, batch_size=1, stop_after_batches=2)
     assert paused["status"] == "paused" and paused["nextBatch"] == len(records)
+    resume_parent_hash = hashlib.sha256(interrupted.read_bytes()).hexdigest()
     resumed = train_supervised(records, interrupted, identity, batch_size=1, resume=interrupted)
     complete_path = tmp_path / "complete.pt"
     complete = train_supervised(records, complete_path, identity, batch_size=1)
     left = torch.load(resumed["checkpoint"], weights_only=False)
     right = torch.load(complete_path, weights_only=False)
     assert resumed["history"] == complete["history"]
+    assert len(resume_parent_hash) == 64
     assert all(torch.equal(left["model"][key], right["model"][key]) for key in left["model"])
 
 
@@ -98,6 +108,53 @@ def test_supervised_resume_rejects_training_configuration_drift(tmp_path, change
     options.update(changed)
     with pytest.raises(ValueError, match="training configuration mismatch"):
         train_supervised(records, checkpoint, identity, resume=checkpoint, **options)
+
+
+def test_supervised_training_refuses_to_overwrite_checkpoint_without_resume(tmp_path):
+    records = [{"encoded": encoded(), "policyLabelSource": "compatible-reviewed-acceptable-set",
+                "acceptableActionIndices": [0]}]
+    output = tmp_path / "frozen.pt"
+    train_supervised(records, output, {"identityHash": "fixed"}, batch_size=1,
+                     stop_after_batches=1)
+    original = output.read_bytes()
+    with pytest.raises(ValueError, match="checkpoints are immutable"):
+        train_supervised(records, output, {"identityHash": "fixed"}, batch_size=1)
+    assert output.read_bytes() == original
+
+
+def test_supervised_resume_links_each_checkpoint_to_exact_parent(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import training as training_module
+    records = [{"encoded": encoded(), "policyLabelSource": "compatible-reviewed-acceptable-set",
+                "acceptableActionIndices": [0]}]
+    output = tmp_path / "lineage.pt"
+    train_supervised(records, output, {"identityHash": "fixed"}, batch_size=1,
+                     stop_after_batches=1)
+    resume_hash = hashlib.sha256(output.read_bytes()).hexdigest()
+    real_save = training_module.atomic_checkpoint
+    links = []
+
+    def save_and_record(path, payload):
+        digest = real_save(path, payload)
+        links.append((payload["parentCheckpointSha256"], digest))
+        return digest
+
+    monkeypatch.setattr(training_module, "atomic_checkpoint", save_and_record)
+    train_supervised(records, output, {"identityHash": "fixed"}, batch_size=1, resume=output)
+    assert links and links[0][0] == resume_hash
+    assert all(links[index][0] == links[index - 1][1] for index in range(1, len(links)))
+
+
+def test_supervised_checkpoint_records_teacher_hashes_from_rows(tmp_path):
+    teacher_hashes = ["1" * 64, "2" * 64]
+    records = [{"encoded": encoded(), "policyLabelSource": "macro-ranker-distillation",
+        "policyDistribution": [1.] + [0.] * len(encoded().action_classes),
+        "teacherHashes": teacher_hashes}]
+    checkpoint_path = tmp_path / "distilled.pt"
+    train_supervised(records, checkpoint_path, {"identityHash": "fixed"}, batch_size=1,
+                     stop_after_batches=1, dataset_manifest_hash="a" * 64)
+    checkpoint = torch.load(checkpoint_path, weights_only=False)
+    assert checkpoint["teacherHashes"] == sorted(teacher_hashes)
+    assert checkpoint["trainingConfig"]["teacherHashes"] == checkpoint["teacherHashes"]
 
 
 def test_search_distribution_loss_ignores_zero_mass_padded_options():
