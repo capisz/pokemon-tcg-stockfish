@@ -759,6 +759,12 @@ For every rollout boundary:
 - never bootstrap across a reset;
 - never add prize, damage, or card-value shaping.
 
+PPO experience must identify every decision with a contiguous `episodeId`, a
+uniform `episodeStatus`, and an explicit `episodeEnd` marker on exactly the
+last decision. GAE is computed only inside completed episodes. Every decision
+from a truncated or errored game is excluded (not merely the last row), and a
+completed episode may carry reward only on its final decision.
+
 Before mutating parameters, `ppo_update` calculates its KL and value loss. A
 minibatch is rejected if approximate KL exceeds `0.05` or value loss exceeds
 `0.5`. Non-finite values are an immediate pause. Three rejected updates or

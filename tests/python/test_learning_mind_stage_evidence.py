@@ -97,6 +97,28 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     assert report["ppoEnabled"] is True
     assert ppo_enablement(capability)["enabled"] is True
 
+    torch = pytest.importorskip("torch")
+    from ptcg_lab.learning_mind.encoding import collate
+    from ptcg_lab.learning_mind.model import StrategyTransformerV1
+    from ptcg_lab.learning_mind.training import ppo_update
+    from test_learning_mind_representation import encoded
+
+    torch.manual_seed(4)
+    model = StrategyTransformerV1()
+    decision = encoded()
+    batch = {key: torch.as_tensor(value) for key, value in collate([decision]).items()}
+    with torch.no_grad():
+        logits = model.policy_forward(**batch)
+        old_log_prob = torch.log_softmax(logits, -1)[0, 0].item()
+        value = model.evaluation_forward(**{key: batch[key] for key in
+            ("state_card_ids", "state_features", "state_type_ids", "state_mask")})[0].item()
+    row = {"episodeId": "completed-0", "episodeStatus": "finished", "episodeEnd": True,
+        "reward": 1, "encoded": decision, "selectedAction": 0, "oldLogProb": old_log_prob,
+        "return": value, "advantage": 1.}
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
+    update = ppo_update(model, optimizer, [row], stage_record=capability)
+    assert update["acceptedMinibatches"] == 1 and update["optimizationEpochs"] == 1
+
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):
     paths = _inputs(tmp_path)

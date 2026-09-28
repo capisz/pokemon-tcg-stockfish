@@ -8,7 +8,7 @@ torch = pytest.importorskip("torch")
 
 from ptcg_lab.learning_mind.encoding import collate
 from ptcg_lab.learning_mind.model import StrategyTransformerV1, autoregressive_select
-from ptcg_lab.learning_mind.training import (PPOConfig, acceptable_set_loss, ppo_update,
+from ptcg_lab.learning_mind.training import (acceptable_set_loss, ppo_update,
     supervised_implementation_identity, supervised_training_rows, train_supervised)
 from test_learning_mind_representation import encoded, observation
 
@@ -262,28 +262,18 @@ def test_acceptable_set_loss_rejects_noninteger_acceptable_actions():
         acceptable_set_loss(logits, mask, [{"acceptableActionIndices": [0.5]}])
 
 
-def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
-    torch.manual_seed(4); model = StrategyTransformerV1(); decision = encoded()
-    batch = tensors(collate([decision]))
-    with torch.no_grad():
-        logits = model.policy_forward(**batch)
-        old = torch.log_softmax(logits, -1)[0, 0].item()
-        value = model.evaluation_forward(**{key: batch[key] for key in
-                                            ("state_card_ids", "state_features", "state_type_ids", "state_mask")})[0].item()
+def test_ppo_update_rejects_editable_gate_dictionary_before_mutation():
+    model = StrategyTransformerV1()
     optimizer = torch.optim.AdamW(model.parameters(), lr=1e-4)
-    config = PPOConfig()
-    row = {"status": "finished", "encoded": decision, "selectedAction": 0,
-           "oldLogProb": old, "return": value, "advantage": 1.0}
-    with pytest.raises(PermissionError, match="requires passed supervised/macro evidence"):
-        ppo_update(model, optimizer, [row], config=config)
-    approved_stage = {"representationParity": True, "heldOutLabelWin": True,
+    before = {key: value.clone() for key, value in model.state_dict().items()}
+    forged_stage = {"representationParity": True, "heldOutLabelWin": True,
         "heldOutLabelEvidenceStatus": "supported-improvement",
         "blindOpponentPolicyFamilyStatus": "supported-improvement",
         "targetProbeWin": True, "ragingBoltMacroPlanFidelity": "passed",
         "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False,
         "legalActionOmission": False, "illegalAutoregressiveSelection": False,
         "capOverflow": False, "evaluationIdentityStatus": "matched",
-        "representativeDisagreementsReviewed": True,
-        "humanEnablePPO": True}
+        "representativeDisagreementsReviewed": True, "humanEnablePPO": True}
     with pytest.raises(PermissionError, match="requires passed supervised/macro evidence"):
-        ppo_update(model, optimizer, [row], config=config, stage_record=approved_stage)
+        ppo_update(model, optimizer, [], stage_record=forged_stage)
+    assert all(torch.equal(before[key], model.state_dict()[key]) for key in before)

@@ -11,7 +11,8 @@ from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosi
 from ptcg_lab.learning_mind.ranker import FrozenIteration, XGBoostMacroRanker, holdout_splits
 from ptcg_lab.learning_mind.experiment import _ranker_evidence_status, _ranker_holdout_rows
 from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
-    generalized_advantages, ppo_enablement, supervised_policy_rows, update_guard)
+    eligible_ppo_records, generalized_advantages, ppo_enablement, supervised_policy_rows,
+    update_guard)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
 from test_learning_mind_representation import observation
@@ -259,12 +260,31 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
 
 
 def test_truncation_ends_advantage_trace_and_guards_skip_updates():
-    records = [{"status": "running", "reward": 0}, {"status": "truncated", "reward": 1, "episodeEnd": True},
-               {"status": "finished", "reward": 1, "episodeEnd": True}]
-    values = [0., .5, .25]
+    records = [
+        {"episodeId": "truncated-1", "episodeStatus": "truncated", "reward": 0, "episodeEnd": False},
+        {"episodeId": "truncated-1", "episodeStatus": "truncated", "reward": 0, "episodeEnd": True},
+        {"episodeId": "finished-1", "episodeStatus": "finished", "reward": 0, "episodeEnd": False},
+        {"episodeId": "finished-1", "episodeStatus": "finished", "reward": 1, "episodeEnd": True},
+        {"episodeId": "error-1", "episodeStatus": "error", "reward": 0, "episodeEnd": True},
+    ]
+    values = [0., .5, .1, .25, .2]
     advantages = generalized_advantages(records, values)
-    assert advantages[1] == -.5  # no terminal reward and no bootstrap
-    assert advantages[2] == .75
+    assert advantages[:2] == [0., 0.]  # exclude the whole truncated game
+    assert advantages[2] == pytest.approx(.15 + .95 * .75)
+    assert advantages[3] == .75
+    assert advantages[4] == 0.  # exclude engine-error games
+    with pytest.raises(ValueError, match="terminal-only"):
+        generalized_advantages([{**records[2], "reward": .2}, records[3]], [0., .25])
+    with pytest.raises(ValueError, match="never bootstraps"):
+        generalized_advantages(records[:2], values[:2], bootstrap=.5)
+    truncated_rows = [{**records[0], "encoded": None, "selectedAction": 0,
+        "oldLogProb": 0., "return": 0., "advantage": 0.},
+        {**records[1], "encoded": None, "selectedAction": 0,
+         "oldLogProb": 0., "return": 0., "advantage": 0.}]
+    completed_rows = [{"episodeId": "complete", "episodeStatus": "finished",
+        "episodeEnd": True, "reward": 1, "encoded": None, "selectedAction": 0,
+        "oldLogProb": 0., "return": 1., "advantage": 1.}]
+    assert eligible_ppo_records(truncated_rows + completed_rows) == completed_rows
     assert update_guard(approximate_kl=.051, value_loss=.1) == (False, "approximate-kl-exceeded")
     assert update_guard(approximate_kl=.01, value_loss=.51) == (False, "value-loss-exceeded")
 

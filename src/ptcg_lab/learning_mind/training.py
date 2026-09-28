@@ -211,24 +211,65 @@ class PPOConfig:
             raise ValueError("Autonomous Learning Mind v1 PPO hyperparameters are frozen")
 
 
+def _ppo_episode_groups(records: list[dict]) -> list[tuple[str, str, list[int]]]:
+    groups: list[tuple[str, str, list[int]]] = []
+    seen: set[str] = set()
+    for index, row in enumerate(records):
+        episode_id, status = row.get("episodeId"), row.get("episodeStatus")
+        if not isinstance(episode_id, str) or not episode_id:
+            raise ValueError("PPO experience requires a nonempty episodeId")
+        if status not in {"finished", "truncated", "error"}:
+            raise ValueError("PPO experience episodeStatus must be finished, truncated, or error")
+        if not groups or groups[-1][0] != episode_id:
+            if episode_id in seen:
+                raise ValueError("PPO episodes must be contiguous and appear only once")
+            seen.add(episode_id)
+            groups.append((episode_id, status, []))
+        elif groups[-1][1] != status:
+            raise ValueError("one PPO episode cannot mix terminal statuses")
+        groups[-1][2].append(index)
+
+    for episode_id, status, indices in groups:
+        rows = [records[index] for index in indices]
+        if any(type(row.get("episodeEnd")) is not bool for row in rows):
+            raise ValueError(f"PPO episode {episode_id} must explicitly mark every episodeEnd")
+        if any(row["episodeEnd"] for row in rows[:-1]) or rows[-1]["episodeEnd"] is not True:
+            raise ValueError(f"PPO episode {episode_id} must end exactly once on its final record")
+        rewards = [row.get("reward") for row in rows]
+        if any(type(reward) not in (int, float) or not math.isfinite(reward) for reward in rewards):
+            raise ValueError(f"PPO episode {episode_id} has a non-finite reward")
+        if any(reward != 0 for reward in rewards[:-1]):
+            raise ValueError("PPO v1 uses terminal-only rewards; shaping is forbidden")
+        if status == "finished" and rewards[-1] not in {-1, 0, 1}:
+            raise ValueError("completed PPO episodes require a terminal win/draw/loss reward")
+        if status != "finished" and any(reward != 0 for reward in rewards):
+            raise ValueError("truncated/error PPO episodes cannot carry a reward")
+    return groups
+
+
 def generalized_advantages(records: list[dict], values: list[float], bootstrap: float = 0.0,
                            config: PPOConfig = PPOConfig()) -> list[float]:
     if len(records) != len(values):
         raise ValueError("record/value count mismatch")
+    if not math.isfinite(bootstrap) or bootstrap != 0.0:
+        raise ValueError("PPO v1 never bootstraps across a game or rollout boundary")
+    if any(type(value) not in (int, float) or not math.isfinite(value) for value in values):
+        raise ValueError("PPO value estimates must be finite")
+    config.validate()
     result = [0.0] * len(records)
-    carry = 0.0
-    for index in reversed(range(len(records))):
-        row = records[index]
-        status = row.get("status")
-        boundary = bool(row.get("episodeEnd")) or status in {"truncated", "error"}
-        if status in {"truncated", "error"}:
-            reward, next_value = 0.0, 0.0
-        else:
-            reward = float(row.get("reward", 0.0))
-            next_value = 0.0 if boundary else (values[index + 1] if index + 1 < len(values) else bootstrap)
-        delta = reward + config.gamma * next_value - values[index]
-        carry = delta if boundary else delta + config.gamma * config.gae_lambda * carry
-        result[index] = carry
+    for _episode_id, status, indices in _ppo_episode_groups(records):
+        if status != "finished":
+            # Exclude every decision in a truncated/error episode, not just its last row.
+            continue
+        carry = 0.0
+        for offset in reversed(range(len(indices))):
+            index = indices[offset]
+            row = records[index]
+            reward = float(row["reward"])
+            next_value = 0.0 if offset == len(indices) - 1 else float(values[indices[offset + 1]])
+            delta = reward + config.gamma * next_value - float(values[index])
+            carry = delta if row["episodeEnd"] else delta + config.gamma * config.gae_lambda * carry
+            result[index] = carry
     return result
 
 
@@ -289,20 +330,28 @@ def ppo_enablement(stage_record: VerifiedPPOStageRecord | None) -> dict:
 
 
 def eligible_ppo_records(records: Iterable[dict]) -> list[dict]:
+    rows = list(records)
+    _ppo_episode_groups(rows)
+    required = {"encoded", "selectedAction", "oldLogProb", "return", "advantage"}
     result = []
-    for row in records:
-        if row.get("status") in {"truncated", "error"}:
+    for _episode_id, status, indices in _ppo_episode_groups(rows):
+        if status != "finished":
             continue
-        required = {"encoded", "selectedAction", "oldLogProb", "return", "advantage"}
-        if not required <= set(row):
-            raise ValueError(f"PPO record is missing: {sorted(required - set(row))}")
-        result.append(row)
+        for index in indices:
+            row = rows[index]
+            if not required <= set(row):
+                raise ValueError(f"PPO record is missing: {sorted(required - set(row))}")
+            if (type(row["selectedAction"]) is not int
+                    or any(type(row[key]) not in (int, float) or not math.isfinite(row[key])
+                           for key in ("oldLogProb", "return", "advantage"))):
+                raise ValueError("PPO record action and numeric targets must be finite values")
+            result.append(row)
     return result
 
 
 def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
                config: PPOConfig = PPOConfig(), seed: int = 7543298,
-               stage_record: dict | None = None) -> dict:
+               stage_record: VerifiedPPOStageRecord | None = None) -> dict:
     """One frozen PPO epoch; rejected minibatches do not mutate the model."""
     if stage_record is None or not ppo_enablement(stage_record)["enabled"]:
         raise PermissionError("PPO update requires passed supervised/macro evidence and explicit human enablement")
