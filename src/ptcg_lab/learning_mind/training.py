@@ -126,10 +126,16 @@ def ppo_enablement(stage_record: dict) -> dict:
     passed = (stage_record.get("representationParity") is True
               and stage_record.get("heldOutLabelWin") is True
               and stage_record.get("heldOutLabelEvidenceStatus") == "supported-improvement"
+              and stage_record.get("blindOpponentPolicyFamilyStatus") == "supported-improvement"
               and stage_record.get("targetProbeWin") is True
               and stage_record.get("ragingBoltMacroPlanFidelity") == "passed"
               and stage_record.get("severityThreeProbeCoverage") == "sufficient"
-              and stage_record.get("severityThreeRegression") is False)
+              and stage_record.get("severityThreeRegression") is False
+              and stage_record.get("legalActionOmission") is False
+              and stage_record.get("illegalAutoregressiveSelection") is False
+              and stage_record.get("capOverflow") is False
+              and stage_record.get("evaluationIdentityStatus") == "matched"
+              and stage_record.get("representativeDisagreementsReviewed") is True)
     return {"enabled": passed and stage_record.get("humanEnablePPO") is True,
             "prerequisitesPassed": passed,
             "reason": None if passed else "supervised milestone evidence is incomplete or not improved",

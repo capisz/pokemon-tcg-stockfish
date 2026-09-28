@@ -224,8 +224,12 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
     with pytest.raises(ValueError): supervised_policy_rows([{"policyLabelSource": "ordinary-self-play", "acceptableActionIndices": [0]}])
     stage = {"representationParity": True, "heldOutLabelWin": True,
              "heldOutLabelEvidenceStatus": "supported-improvement", "targetProbeWin": True,
+             "blindOpponentPolicyFamilyStatus": "supported-improvement",
              "ragingBoltMacroPlanFidelity": "passed",
-             "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False}
+             "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False,
+             "legalActionOmission": False, "illegalAutoregressiveSelection": False,
+             "capOverflow": False, "evaluationIdentityStatus": "matched",
+             "representativeDisagreementsReviewed": True}
     assert not ppo_enablement(stage)["enabled"]
     assert ppo_enablement({**stage, "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "severityThreeProbeCoverage": "insufficient",
@@ -236,6 +240,11 @@ def test_only_approved_policy_labels_and_ppo_remains_human_gated():
                                "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "heldOutLabelEvidenceStatus": "insufficient",
                                "humanEnablePPO": True})["enabled"]
+    for key, value in (("blindOpponentPolicyFamilyStatus", "insufficient"),
+                       ("legalActionOmission", True), ("illegalAutoregressiveSelection", True),
+                       ("capOverflow", True), ("evaluationIdentityStatus", "mismatch"),
+                       ("representativeDisagreementsReviewed", False)):
+        assert not ppo_enablement({**stage, key: value, "humanEnablePPO": True})["enabled"]
     assert not ppo_enablement({**stage, "severityThreeRegression": 0,
                                "humanEnablePPO": True})["enabled"]
 

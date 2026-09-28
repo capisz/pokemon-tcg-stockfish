@@ -184,6 +184,17 @@ strength or autonomous improvement.
   least 20 such units and at least 20 decisive paired units; the two-sided
   Wilson 95% lower bound of model wins among decisive units must exceed 0.5.
   Ties remain reported and do not count as decisive wins or losses.
+- Blind-family evidence is separately aggregated only for held-out game-sides
+  whose frozen opponent-policy family is absent from every supervised training
+  row; review-only and frozen-replay source labels do not count as opponent
+  policy families, and missing family metadata fails closed. At least one
+  individual unseen opponent family must pass the same independent-side
+  minimum and Wilson support rule; evidence is not pooled across undersized
+  families.
+- PPO enablement additionally requires explicit passes for legal-action
+  coverage, autoregressive legality, candidate-cap integrity, exact evaluation
+  identity, and human review of representative disagreements. These are
+  separate evidence receipts; none is inferred from the label audit.
 - This gate only strengthens supervised evidence. It does not enable PPO,
   automatic promotion, or continuous operation; those still require all
   existing stage gates and explicit human authorization.

@@ -18,6 +18,7 @@ from .model import StrategyTransformerV1
 from .schema import identity_hash
 
 MINIMUM_INDEPENDENT_GAME_SIDES = 20
+NON_POLICY_SOURCE_FAMILIES = frozenset({"human-review", "frozen-search-source"})
 
 
 def summarize_paired_game_sides(side_records: list[dict], *, minimum_game_sides: int =
@@ -39,6 +40,23 @@ def summarize_paired_game_sides(side_records: list[dict], *, minimum_game_sides:
             "pairedWinRate": wins / decisive if decisive else None,
             "pairedWilson95": interval, "status": status,
             "heldOutLabelWin": status == "supported-improvement"}
+
+
+def summarize_blind_policy_families(side_records: list[dict], training_families: set[str], *,
+                                    minimum_game_sides: int = MINIMUM_INDEPENDENT_GAME_SIDES) -> dict:
+    eligible = [side for side in side_records if side.get("blindFamilyEligible") is True]
+    unseen = sorted({side["opponentPolicyFamily"] for side in eligible
+                     if side["opponentPolicyFamily"] not in training_families})
+    results = {family: summarize_paired_game_sides(
+        [side for side in eligible if side["opponentPolicyFamily"] == family],
+        minimum_game_sides=minimum_game_sides) for family in unseen}
+    statuses = {result["status"] for result in results.values()}
+    status = ("missing" if not results else
+              "supported-improvement" if "supported-improvement" in statuses else
+              "supported-regression" if "supported-regression" in statuses else
+              "inconclusive" if "inconclusive" in statuses else "insufficient")
+    return {"status": status, "families": results,
+            "unseenOpponentPolicyFamilies": unseen}
 
 
 def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
@@ -68,6 +86,19 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
         raise ValueError("evaluation checkpoint hash differs from the supplied checkpoint")
     if evaluation.get("datasetManifestHash") != manifest.get("manifestHash"):
         raise ValueError("evaluation dataset manifest differs from the frozen dataset")
+    position_hashes = [row.get("positionHash") for row in rows]
+    if any(not isinstance(value, str) or not value for value in position_hashes) or len(set(position_hashes)) != len(position_hashes):
+        raise ValueError("supervised dataset position hashes must be present and globally unique")
+    game_splits: dict[str, str] = {}
+    for row in rows:
+        game_id = row.get("sourceGameId")
+        if game_id is None:
+            continue
+        if not isinstance(game_id, str) or not game_id:
+            raise ValueError("supervised source-game identity is invalid")
+        prior_split = game_splits.setdefault(game_id, row.get("split"))
+        if prior_split != row.get("split"):
+            raise ValueError("source game crosses supervised dataset splits")
     expected = {row["positionHash"]: row for row in rows if row.get("split") != "train"}
     evaluated = evaluation.get("positions")
     if not isinstance(evaluated, list):
@@ -135,7 +166,15 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
         missing = sorted(set(expected) - set(observed))
         raise ValueError(f"evaluation omitted frozen non-training positions: {missing[:5]}")
 
+    training_rows = [row for row in rows if row.get("split") == "train"]
+    if not training_rows or any(not isinstance(row.get("opponentPolicyFamily"), str)
+                                or not row["opponentPolicyFamily"] for row in training_rows):
+        raise ValueError("training rows lack frozen opponent-policy family metadata")
+    training_policy_families = {row["opponentPolicyFamily"] for row in training_rows
+                                if row.get("sourceGameId") is not None
+                                and row["opponentPolicyFamily"] not in NON_POLICY_SOURCE_FAMILIES}
     heldout_sides: dict[tuple[str, str, int], list[tuple[bool, bool]]] = {}
+    side_families: dict[tuple[str, str, int], str] = {}
     for source, item in observed.values():
         if source.get("split") != "heldout":
             continue
@@ -143,23 +182,40 @@ def audit_supervised_evaluation(*, dataset_dir: Path, checkpoint: Path,
         unit_kind = "game" if source_game else "family"
         unit = source_game or source.get("familyId")
         actor = source.get("actor")
+        policy_family = source.get("opponentPolicyFamily")
         if not isinstance(unit, str) or not unit or type(actor) is not int or actor not in (0, 1):
             raise ValueError("held-out decision lacks an independent source-game/review-family perspective")
-        heldout_sides.setdefault((unit_kind, unit, actor), []).append((item["modelHit"], item["heuristicHit"]))
+        if not isinstance(policy_family, str) or not policy_family:
+            raise ValueError("held-out decision lacks its frozen opponent-policy family")
+        key = (unit_kind, unit, actor)
+        if key in side_families and side_families[key] != policy_family:
+            raise ValueError("one held-out game-side mixes opponent-policy families")
+        side_families[key] = policy_family
+        heldout_sides.setdefault(key, []).append((item["modelHit"], item["heuristicHit"]))
     side_records = []
     for (unit_kind, unit, actor), decisions in sorted(heldout_sides.items()):
         model_rate = sum(model for model, _heuristic in decisions) / len(decisions)
         heuristic_rate = sum(heuristic for _model, heuristic in decisions) / len(decisions)
         side_records.append({"gameSide": f"{unit_kind}:{unit}:{actor}", "positions": len(decisions),
+                             "opponentPolicyFamily": side_families[(unit_kind, unit, actor)],
+                             "blindFamilyEligible": (unit_kind == "game" and
+                                 side_families[(unit_kind, unit, actor)] not in NON_POLICY_SOURCE_FAMILIES),
                              "modelAccuracy": model_rate, "heuristicAccuracy": heuristic_rate,
                              "pairedResult": "win" if model_rate > heuristic_rate else
                                  "loss" if model_rate < heuristic_rate else "tie"})
     paired = summarize_paired_game_sides(side_records, minimum_game_sides=minimum_game_sides)
+    blind = summarize_blind_policy_families(side_records, training_policy_families,
+                                            minimum_game_sides=minimum_game_sides)
     report = {"schemaVersion": 1, "kind": "supervised-heldout-evidence-v1",
         "datasetManifestHash": manifest["manifestHash"],
         "datasetManifestSha256": file_sha256(dataset_dir / "manifest.json"),
         "checkpointSha256": checkpoint_hash,
         "evaluationSha256": file_sha256(evaluation_path),
+        "evaluationIdentityStatus": "matched",
+        "trainingOpponentPolicyFamilies": sorted(training_policy_families),
+        "blindOpponentPolicyFamilyStatus": blind["status"],
+        "blindOpponentPolicyFamilies": blind["families"],
+        "unseenOpponentPolicyFamilies": blind["unseenOpponentPolicyFamilies"],
         "heldoutPositions": sum(source.get("split") == "heldout" for source, _item in observed.values()),
         **paired, "gameSides": side_records,
         "automaticPromotion": False}

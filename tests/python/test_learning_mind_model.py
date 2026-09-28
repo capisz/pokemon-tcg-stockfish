@@ -125,8 +125,12 @@ def test_ppo_one_epoch_updates_completed_trace_and_rejects_high_kl():
         ppo_update(model, optimizer, [row], config=config)
     approved_stage = {"representationParity": True, "heldOutLabelWin": True,
         "heldOutLabelEvidenceStatus": "supported-improvement",
+        "blindOpponentPolicyFamilyStatus": "supported-improvement",
         "targetProbeWin": True, "ragingBoltMacroPlanFidelity": "passed",
         "severityThreeProbeCoverage": "sufficient", "severityThreeRegression": False,
+        "legalActionOmission": False, "illegalAutoregressiveSelection": False,
+        "capOverflow": False, "evaluationIdentityStatus": "matched",
+        "representativeDisagreementsReviewed": True,
         "humanEnablePPO": True}
     result = ppo_update(model, optimizer, [row], config=config, stage_record=approved_stage)
     assert result["acceptedMinibatches"] == 1 and result["optimizationEpochs"] == 1
