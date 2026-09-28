@@ -11,6 +11,7 @@ from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
     MACRO_FEATURE_SCHEMA, candidate_features_v2)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.ranker_portable import inference_implementation_sha256
+from ptcg_lab.learning_mind import ranker_v2
 from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
@@ -63,7 +64,8 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
-        "inferenceImplementationSha256": inference_implementation_sha256()}
+        "inferenceImplementationSha256": inference_implementation_sha256(),
+        "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__))}
     report["reportHash"] = identity_hash(report)
     validate_ranker_v2_report(report)
     changed = {**report, "featureSchemaHash": "wrong"}
@@ -79,6 +81,11 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
                                                       if key != "reportHash"})
     with pytest.raises(ValueError, match="inference implementation"):
         validate_ranker_v2_report(changed_inference)
+    changed_evaluation = {**report, "evaluationImplementationSha256": "different"}
+    changed_evaluation["reportHash"] = identity_hash({key: value for key, value in changed_evaluation.items()
+                                                       if key != "reportHash"})
+    with pytest.raises(ValueError, match="evaluation implementation"):
+        validate_ranker_v2_report(changed_evaluation)
 
 
 def test_ranker_v2_position_bootstrap_is_reproducible_and_reports_empty_samples():
@@ -122,6 +129,7 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
         "inferenceImplementationSha256": inference_implementation_sha256(),
+        "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640}
     report["reportHash"] = identity_hash(report)
     report_path = tmp_path / "ranker.manifest.json"
@@ -283,6 +291,34 @@ def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
         assert report["training"]["requestedPositions"] == 4
         assert report["training"]["positions"] == 3
         assert len(report["training"]["insufficientPositionHashes"]) == 1
+    assert report["acceptance"] == "insufficient"
+
+
+def test_ranker_v2_tied_candidate_outcomes_are_not_measured_evidence(tmp_path, monkeypatch):
+    monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
+        lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
+    labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
+    manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    for item in manifest["files"]:
+        record_path = labels_dir / item["path"]
+        record = json.loads(record_path.read_text())
+        for label in record["labels"]:
+            label["expectedResult"] = 0.5
+            label["relativeResult"] = 0.0
+        record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
+        item["sha256"] = file_sha256(record_path)
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+    report = fit_macro_ranker_v2(labels_dir, tmp_path / "ranker.json",
+        selection_path=selection_path, teacher_hash="frozen-teacher",
+        opponent_policy_hash="frozen-opponent-set")
+    assert report["training"]["status"] == "insufficient"
+    assert report["training"]["insufficientReason"] == "no-nontied-candidate-comparisons"
+    assert report["development"]["status"] == "insufficient"
+    assert all(row["status"] == "insufficient" for row in report["holdouts"])
     assert report["acceptance"] == "insufficient"
 
 

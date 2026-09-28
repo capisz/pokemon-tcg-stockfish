@@ -103,6 +103,8 @@ def validate_ranker_v2_report(report: dict) -> None:
         raise ValueError("macro ranker v2 feature implementation mismatch")
     if report.get("inferenceImplementationSha256") != inference_implementation_sha256():
         raise ValueError("macro ranker v2 inference implementation mismatch")
+    if report.get("evaluationImplementationSha256") != file_sha256(Path(__file__)):
+        raise ValueError("macro ranker v2 evaluation implementation mismatch")
     if report.get("reportHash") != identity_hash({key: value for key, value in report.items()
                                                    if key != "reportHash"}):
         raise ValueError("macro ranker v2 report hash mismatch")
@@ -311,9 +313,12 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
                     "meanTop1RelativeRegretCI95": summary["interval95"],
                     "bootstrapSeed": summary["seed"],
                     "independentSourceGames": summary["independentUnits"]}
-        return {"status": "measured" if not insufficient_positions else "insufficient",
+        measurement_status = "measured" if not insufficient_positions and pair_count > 0 else "insufficient"
+        return {"status": measurement_status,
             "requestedPositions": len(selected), "positions": len(details),
             "insufficientPositionHashes": insufficient_positions,
+            "insufficientReason": ("no-nontied-candidate-comparisons" if not insufficient_positions
+                                   and pair_count == 0 else None),
             "meanTop1RelativeRegret": overall["mean"],
             "meanTop1RelativeRegretCI95": overall["interval95"],
             "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
@@ -328,6 +333,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     input_hash = labels_manifest["manifestHash"]
     source_hash = file_sha256(Path(__file__).with_name("ranker_features.py"))
     inference_hash = inference_implementation_sha256()
+    evaluation_hash = file_sha256(Path(__file__))
     frozen = FrozenIteration(iteration, teacher_hash, opponent_policy_hash, input_hash, tuple(positions))
     ranker = XGBoostMacroRanker().fit(features, labels, groups, weights)
     training_metrics = metrics(ranker, train_records)
@@ -387,6 +393,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": source_hash,
         "inferenceImplementationSha256": inference_hash,
+        "evaluationImplementationSha256": evaluation_hash,
         "identity": labels_manifest["identity"],
         "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir.resolve() / "manifest.json"),

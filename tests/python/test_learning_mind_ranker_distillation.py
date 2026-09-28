@@ -12,6 +12,7 @@ from ptcg_lab.learning_mind.dataset_v1 import file_sha256, load_dataset
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind import ranker_features
+from ptcg_lab.learning_mind import ranker_v2
 from ptcg_lab.learning_mind.ranker_features import MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH
 from ptcg_lab.learning_mind.ranker_portable import inference_implementation_sha256
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
@@ -104,6 +105,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": artifact["featureImplementationSha256"],
         "inferenceImplementationSha256": inference_implementation_sha256(),
+        "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
         "identity": identity, "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path),
