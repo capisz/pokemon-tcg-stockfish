@@ -9,6 +9,8 @@ from .aggregation import combine_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import (build_dataset, build_macro_position_pool,
                          build_strategy_probe_dataset)
+from .disagreement_review import (audit_disagreement_review,
+    build_disagreement_review_packet, write_disagreement_review_template)
 from .experiment import (collect_macro_labels, evaluate_candidate, fit_ranker,
                          runtime_identity, train_candidate)
 from .fresh_collection import collect_fresh_positions
@@ -129,6 +131,22 @@ def main(argv=None) -> int:
     audit_supervised.add_argument("--evaluation", type=Path, required=True)
     audit_supervised.add_argument("--output", type=Path, required=True)
     audit_supervised.add_argument("--minimum-game-sides", type=int, default=20)
+    review_packet = sub.add_parser("build-disagreement-review",
+        help="build a hash-bound actor-view-only human review packet")
+    review_packet.add_argument("--dataset", type=Path, required=True)
+    review_packet.add_argument("--checkpoint", type=Path, required=True)
+    review_packet.add_argument("--evaluation", type=Path, required=True)
+    review_packet.add_argument("--audit", type=Path, required=True)
+    review_packet.add_argument("--output", type=Path, required=True)
+    review_template = sub.add_parser("make-disagreement-review-form",
+        help="make a human-fillable review form bound to a frozen packet")
+    review_template.add_argument("--packet", type=Path, required=True)
+    review_template.add_argument("--output", type=Path, required=True)
+    review_audit = sub.add_parser("audit-disagreement-review",
+        help="verify reviewer identity and complete acceptable findings for every disagreement")
+    review_audit.add_argument("--packet", type=Path, required=True)
+    review_audit.add_argument("--review", type=Path, required=True)
+    review_audit.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     if args.command == "audit-baseline":
         result = audit_manifest(args.manifest, limit=args.limit)
@@ -202,10 +220,19 @@ def main(argv=None) -> int:
                                     args.probe_dataset.resolve())
         args.output.parent.mkdir(parents=True, exist_ok=True)
         args.output.write_text(json.dumps(result, indent=2) + "\n")
-    else:
+    elif args.command == "audit-supervised-evaluation":
         result = audit_supervised_evaluation(dataset_dir=args.dataset.resolve(),
             checkpoint=args.checkpoint.resolve(), evaluation_path=args.evaluation.resolve(),
             output=args.output.resolve(), minimum_game_sides=args.minimum_game_sides)
+    elif args.command == "build-disagreement-review":
+        result = build_disagreement_review_packet(dataset_dir=args.dataset.resolve(),
+            checkpoint=args.checkpoint.resolve(), evaluation_path=args.evaluation.resolve(),
+            audit_path=args.audit.resolve(), output=args.output.resolve())
+    elif args.command == "make-disagreement-review-form":
+        result = write_disagreement_review_template(packet_path=args.packet.resolve(), output=args.output.resolve())
+    else:
+        result = audit_disagreement_review(packet_path=args.packet.resolve(),
+            review_path=args.review.resolve(), output=args.output.resolve())
     print(json.dumps(result, indent=2))
     return 0
 

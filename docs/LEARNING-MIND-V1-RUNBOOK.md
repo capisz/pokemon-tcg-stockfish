@@ -513,6 +513,31 @@ hide a failed supervised foundation.
 Update `stage-gates.json` only from generated evaluation evidence. Never edit a
 gate to `true` based on expectation.
 
+After a frozen supervised evaluation passes its machine audit, prepare the
+human disagreement review from the same dataset, checkpoint, evaluation, and
+audit report:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind build-disagreement-review \
+  --dataset DATASET --checkpoint CHECKPOINT --evaluation EVALUATION \
+  --audit AUDIT_REPORT --output REVIEW_PACKET.json
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind make-disagreement-review-form \
+  --packet REVIEW_PACKET.json --output HUMAN_REVIEW.json
+```
+
+Fill the form with a reviewer name and exactly one finding plus rationale for
+every position, then audit it into a separate immutable receipt:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind audit-disagreement-review \
+  --packet REVIEW_PACKET.json --review HUMAN_REVIEW.json --output REVIEW_RECEIPT.json
+```
+
+The receipt only supports a reviewed gate when every disagreement is marked
+`acceptable`. A concern, follow-up, missing row, or mismatched packet hash keeps
+the human-review prerequisite false; this workflow cannot enable PPO or
+promotion.
+
 ## 10. Bounded PPO experiment
 
 PPO remains disabled unless the supervised acceptance gate passes and a human

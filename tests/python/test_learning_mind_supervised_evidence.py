@@ -8,6 +8,8 @@ import torch
 
 from ptcg_lab.features import heuristic_action_score
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
+from ptcg_lab.learning_mind.disagreement_review import (audit_disagreement_review,
+    build_disagreement_review_packet, write_disagreement_review_template)
 from ptcg_lab.learning_mind.encoding import collate, encode_decision
 from ptcg_lab.learning_mind.model import StrategyTransformerV1
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
@@ -117,6 +119,56 @@ def test_audit_refuses_a_threshold_below_the_frozen_minimum(tmp_path):
     with pytest.raises(ValueError, match="cannot be lower than the frozen 20"):
         audit_supervised_evaluation(dataset_dir=tmp_path / "missing", checkpoint=tmp_path / "missing.pt",
             evaluation_path=tmp_path / "missing.json", output=tmp_path / "audit", minimum_game_sides=1)
+
+
+def test_human_disagreement_review_is_actor_view_only_and_hash_bound(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=2)
+    audit_path = tmp_path / "audit.json"
+    audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, output=audit_path)
+    packet_path = tmp_path / "packet.json"
+    packet = build_disagreement_review_packet(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, audit_path=audit_path, output=packet_path)
+    expected = [item for item in json.loads(evaluation.read_text())["positions"]
+                if item["split"] == "heldout" and item["modelClass"] != item["heuristicClass"]]
+    assert packet["heldoutDisagreementCount"] == len(expected) > 0
+    assert all(item["actorObservation"]["playerId"] == item["actor"]
+               for item in packet["positions"])
+    assert all("oppositeObservation" not in item for item in packet["positions"])
+
+    review_path = tmp_path / "review.json"
+    review = write_disagreement_review_template(packet_path=packet_path, output=review_path)
+    review["reviewer"] = "human reviewer"
+    for item in review["reviews"]:
+        item["finding"] = "acceptable"
+        item["rationale"] = "Reviewed against the frozen actor-visible context."
+    review_path.write_text(json.dumps(review))
+    receipt = audit_disagreement_review(packet_path=packet_path, review_path=review_path,
+        output=tmp_path / "receipt.json")
+    assert receipt["representativeDisagreementsReviewed"] is True
+    assert receipt["reviewedPositions"] == len(expected)
+    assert receipt["automaticPromotion"] is False
+
+
+def test_human_disagreement_review_requires_every_action_to_be_acceptable(tmp_path):
+    dataset, checkpoint, evaluation = _dataset_and_evaluation(tmp_path, game_sides=1, positions_per_side=1)
+    audit_path = tmp_path / "audit.json"
+    audit_supervised_evaluation(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, output=audit_path)
+    packet_path = tmp_path / "packet.json"
+    packet = build_disagreement_review_packet(dataset_dir=dataset, checkpoint=checkpoint,
+        evaluation_path=evaluation, audit_path=audit_path, output=packet_path)
+    if not packet["positions"]:
+        pytest.skip("deterministic fixture produced no model/heuristic disagreement")
+    review_path = tmp_path / "review.json"
+    review = write_disagreement_review_template(packet_path=packet_path, output=review_path)
+    review["reviewer"] = "human reviewer"
+    review["reviews"][0].update(finding="concern", rationale="The move violates the reviewed plan.")
+    review_path.write_text(json.dumps(review))
+    receipt = audit_disagreement_review(packet_path=packet_path, review_path=review_path,
+        output=tmp_path / "receipt.json")
+    assert receipt["representativeDisagreementsReviewed"] is False
+    assert len(receipt["unresolvedPositions"]) == 1
 
 
 def test_paired_game_side_wilson_gate_requires_enough_supported_wins():

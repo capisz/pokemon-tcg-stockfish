@@ -195,6 +195,14 @@ strength or autonomous improvement.
   coverage, autoregressive legality, candidate-cap integrity, exact evaluation
   identity, and human review of representative disagreements. These are
   separate evidence receipts; none is inferred from the label audit.
+- `build-disagreement-review` creates an immutable packet containing every
+  held-out position where the model and heuristic selected different action
+  classes. It copies only `observation` for the acting player, includes the
+  two legal action classes and frozen labels, and binds itself to the exact
+  audited dataset, checkpoint, and evaluation hashes. The review form must
+  cover every packet position with a named reviewer, a finding, and rationale;
+  the receipt marks the PPO review prerequisite true only when all findings are
+  `acceptable`. Concerns and follow-ups remain unresolved and keep the gate shut.
 - This gate only strengthens supervised evidence. It does not enable PPO,
   automatic promotion, or continuous operation; those still require all
   existing stage gates and explicit human authorization.
