@@ -907,3 +907,18 @@ strength or autonomous improvement.
   installed XGBoost NumPy metadata path; the 22 orchestration tests pass when
   run independently. This environment failure is not treated as a passing
   ranker-training verification.
+
+### Weighted XGBoost ranking runtime fix (2026-09-28)
+
+- Isolated the crash to the installed XGBoost 3.2.0 sklearn ranker wrapper's
+  weighted `fit` path. The same inputs trained successfully without weights,
+  and the core `DMatrix` plus `xgboost.train` path accepted ranking groups and
+  per-group weights. The research ranker now uses that core API, retaining
+  completed-rollout weights as group weights.
+- The full strategy module now passes (18 tests), including weighted fitting
+  and prediction. No macro labels were combined and no ranker was fit from
+  experiment data; PPO, continuous operation, and trusted promotion remain
+  disabled.
+- Full Python validation passes (335 tests), the learning-mind modules pass
+  (76 tests), the TypeScript engine suite passes (80 tests), and `npm run
+  typecheck` and `git diff --check` pass.

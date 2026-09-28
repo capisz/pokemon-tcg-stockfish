@@ -42,8 +42,10 @@ class XGBoostMacroRanker:
         groups = [int(size) for size in groups]
         if not groups or any(size <= 0 for size in groups) or sum(groups) != len(features) or len(labels) != len(features):
             raise ValueError("ranker groups must be positive and cover every feature and label")
-        self.model = xgb.XGBRanker(**self.parameters)
-        group_weights = None
+        matrix = xgb.DMatrix(np.asarray(features, dtype=np.float32),
+                             label=np.asarray(labels, dtype=np.float32),
+                             nthread=int(self.parameters.get("n_jobs", 1)))
+        matrix.set_group(groups)
         if weights is not None:
             values = np.asarray(weights, dtype=float)
             if len(values) != len(features) or not np.isfinite(values).all() or (values < 0).any():
@@ -54,14 +56,19 @@ class XGBoostMacroRanker:
                 offset += size
             if any(weight <= 0 for weight in group_weights):
                 raise ValueError("every ranker query needs positive completed-rollout weight")
-        self.model.fit(np.asarray(features), np.asarray(labels), group=np.asarray(groups),
-                       sample_weight=group_weights)
+            matrix.set_weight(np.asarray(group_weights, dtype=np.float32))
+        parameters = dict(self.parameters)
+        rounds = int(parameters.pop("n_estimators", 200))
+        parameters["nthread"] = int(parameters.pop("n_jobs", 1))
+        self.model = xgb.train(parameters, matrix, num_boost_round=rounds, verbose_eval=False)
         return self
 
     def predict(self, features):
         if self.model is None:
             raise RuntimeError("ranker has not been fit")
-        return self.model.predict(np.asarray(features))
+        matrix = _xgboost().DMatrix(np.asarray(features, dtype=np.float32),
+                                   nthread=int(self.parameters.get("n_jobs", 1)))
+        return self.model.predict(matrix)
 
     def manifest(self, iteration: FrozenIteration) -> dict:
         return {"kind": "xgboost-macro-ranker-v1", "parameters": self.parameters,
