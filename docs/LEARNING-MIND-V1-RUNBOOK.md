@@ -508,6 +508,12 @@ completed-rollout/uncertainty weights. Evaluate:
 - every leave-one-opponent-archetype-out split;
 - the separately frozen policy-family holdout.
 
+Report top-1 regret as per-position means with deterministic 95% percentile
+bootstrap intervals, overall and within each opponent archetype and policy
+family. Positions are sampled as the independent units because selection
+freezes one position per source game. Intervals describe this selected dataset;
+they do not establish playing strength against new opponents.
+
 Freeze each teacher iteration with `FrozenIteration`. Permit at most six
 iterations. A new iteration must use a frozen prior teacher and a new manifest;
 it must not overwrite earlier labels, metrics, model files, or manifests. The

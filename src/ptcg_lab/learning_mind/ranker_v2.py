@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
@@ -13,6 +14,20 @@ from .ranker import FrozenIteration, XGBoostMacroRanker
 from .ranker_features import (MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH,
                               candidate_features_v2)
 from .schema import identity_hash
+
+
+def _bootstrap_mean(values: list[float], *, seed_material: str, replicates: int = 2000) -> dict:
+    if not values:
+        return {"mean": None, "interval95": {"low": None, "high": None},
+                "method": "position-bootstrap-percentile-v1", "replicates": replicates, "seed": None}
+    values_array = np.asarray(values, dtype=np.float64)
+    seed = int.from_bytes(hashlib.sha256(seed_material.encode("utf-8")).digest()[:8], "big")
+    rng = np.random.default_rng(seed)
+    samples = rng.choice(values_array, size=(replicates, len(values_array)), replace=True).mean(axis=1)
+    low, high = np.quantile(samples, [0.025, 0.975])
+    return {"mean": float(values_array.mean()),
+            "interval95": {"low": float(low), "high": float(high)},
+            "method": "position-bootstrap-percentile-v1", "replicates": replicates, "seed": seed}
 
 
 def validate_ranker_v2_report(report: dict) -> None:
@@ -125,7 +140,8 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
             groups.append(len(usable))
             positions.append(record["positionHash"])
             metadata.append({key: record[key] for key in
-                ("positionHash", "split", "opponentArchetype", "opponentPolicyFamily")})
+                ("positionHash", "sourceGameId", "split", "opponentArchetype", "opponentPolicyFamily")
+                if key in record})
             for item in usable:
                 features.append(candidate_features_v2(record["observation"], item["candidate"]))
                 labels.append(item["relativeResult"])
@@ -160,15 +176,25 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
                 "pairwiseCorrect": correct, "pairwiseComparisons": comparisons})
             offset += size
         pair_count = sum(row["pairwiseComparisons"] for row in details)
+        overall = _bootstrap_mean([row["top1RelativeRegret"] for row in details],
+            seed_material="macro-ranker-v2|all|" + "|".join(sorted(row["positionHash"] for row in details)))
         by_archetype, by_family = {}, {}
         for field, destination in (("opponentArchetype", by_archetype),
                                    ("opponentPolicyFamily", by_family)):
             for value in sorted({row[field] for row in details}):
                 subset = [row for row in details if row[field] == value]
+                summary = _bootstrap_mean([row["top1RelativeRegret"] for row in subset],
+                    seed_material=f"macro-ranker-v2|{field}|{value}|" +
+                        "|".join(sorted(row["positionHash"] for row in subset)))
                 destination[value] = {"positions": len(subset),
-                    "meanTop1RelativeRegret": float(np.mean([row["top1RelativeRegret"] for row in subset]))}
+                    "meanTop1RelativeRegret": summary["mean"],
+                    "meanTop1RelativeRegretCI95": summary["interval95"],
+                    "bootstrapSeed": summary["seed"]}
         return {"status": "measured", "positions": len(details),
-            "meanTop1RelativeRegret": float(np.mean([row["top1RelativeRegret"] for row in details])),
+            "meanTop1RelativeRegret": overall["mean"],
+            "meanTop1RelativeRegretCI95": overall["interval95"],
+            "bootstrap": {"method": overall["method"], "replicates": overall["replicates"],
+                          "seed": overall["seed"]},
             "top3Recall": sum(row["top3Recall"] for row in details) / len(details),
             "pairwiseOrderingAccuracy": (sum(row["pairwiseCorrect"] for row in details) / pair_count
                                          if pair_count else None),

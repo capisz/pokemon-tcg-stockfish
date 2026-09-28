@@ -11,7 +11,8 @@ from ptcg_lab.learning_mind.ranker_features import (MACRO_FEATURE_SCHEMA_HASH,
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
-    fit_macro_ranker_v2, predict_macro_ranker_v2, verify_macro_ranker_v2_artifact)
+    _bootstrap_mean, fit_macro_ranker_v2, predict_macro_ranker_v2,
+    verify_macro_ranker_v2_artifact)
 from ptcg_lab.learning_mind.schema import identity_hash
 from test_learning_mind_representation import observation
 
@@ -68,6 +69,16 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
                                                    if key != "reportHash"})
     with pytest.raises(ValueError, match="implementation"):
         validate_ranker_v2_report(changed_source)
+
+
+def test_ranker_v2_position_bootstrap_is_reproducible_and_reports_empty_samples():
+    values = [0.0, 0.25, 0.5, 0.75, 1.0]
+    first = _bootstrap_mean(values, seed_material="frozen-position-set")
+    second = _bootstrap_mean(values, seed_material="frozen-position-set")
+    assert first == second
+    assert first["interval95"]["low"] <= first["mean"] <= first["interval95"]["high"]
+    assert first["replicates"] == 2000 and first["method"] == "position-bootstrap-percentile-v1"
+    assert _bootstrap_mean([], seed_material="empty")["interval95"] == {"low": None, "high": None}
 
 
 def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_path):
@@ -175,6 +186,9 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     assert report["kind"] == "xgboost-macro-ranker-v2"
     assert report["acceptance"] == "review-required"
     assert report["development"]["positions"] == 4
+    assert report["development"]["meanTop1RelativeRegretCI95"]["low"] <= \
+        report["development"]["meanTop1RelativeRegret"] <= \
+        report["development"]["meanTop1RelativeRegretCI95"]["high"]
     assert len(report["holdouts"]) == 4
     verified = verify_macro_ranker_v2_artifact(model_path, model_path.with_suffix(".manifest.json"))
     assert verified["report"]["reportHash"] == report["reportHash"]

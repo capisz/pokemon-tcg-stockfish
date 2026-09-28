@@ -1075,7 +1075,11 @@ strength or autonomous improvement.
   verification checks report/schema/source/model hashes and feature dimension.
   No ranker was fit from the finalized game labels, so real-data quality and
   held-out performance remain unverified.
-- Verification: full Python suite 375 passed, strategy contract v1.2 validator,
+- Ranker-v2 top-1 regret now includes reproducible 95% percentile bootstrap
+  intervals by independent selected position, overall and by archetype and
+  policy family; the report records each interval's deterministic seed and
+  replicate count. This quantifies uncertainty within the frozen sample only.
+- Verification: full Python suite 376 passed, strategy contract v1.2 validator,
   new CLI help, and `git diff --check` passed. Feature tests prove deterministic
   encoding, visible-board and plan sensitivity, target-slot sensitivity, and
   invariance to changed hidden opponent-hand contents. No games, labels,
