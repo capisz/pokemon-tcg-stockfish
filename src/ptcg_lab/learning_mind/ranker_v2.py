@@ -336,9 +336,15 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     for split in _ranker_holdout_rows(records):
         held_train = [records[index] for index in split["train"]]
         held_test = [records[index] for index in split["test"]]
-        hx, hy, hw, hg, _, _ = flatten(held_train)
-        if not hg or not held_test:
-            holdouts.append({**split, "status": "insufficient"})
+        hx, hy, hw, hg, covered_train_positions, _ = flatten(held_train)
+        covered_train_set = set(covered_train_positions)
+        insufficient_train = sorted(record["positionHash"] for record in held_train
+            if record["positionHash"] not in covered_train_set)
+        if not hg or not held_test or insufficient_train:
+            holdouts.append({**split, "status": "insufficient",
+                "trainingRequestedPositions": len(held_train),
+                "trainingPositions": len(covered_train_positions),
+                "insufficientTrainingPositionHashes": insufficient_train})
             continue
         held_model = XGBoostMacroRanker().fit(hx, hy, hg, hw)
         held_metrics = metrics(held_model, held_test)
@@ -369,6 +375,9 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     finally:
         temporary_model.unlink(missing_ok=True)
 
+    acceptance = _ranker_evidence_status(development_metrics, holdouts)
+    if training_metrics["status"] != "measured":
+        acceptance = "insufficient"
     report = {
         "schemaVersion": 1,
         "kind": "xgboost-macro-ranker-v2",
@@ -391,7 +400,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "development": development_metrics,
         "heldout": {"status": "not-included", "reason": "frozen selection excludes heldout positions"},
         "holdouts": holdouts,
-        "acceptance": _ranker_evidence_status(development_metrics, holdouts),
+        "acceptance": acceptance,
         "automaticPromotion": False,
     }
     report["reportHash"] = identity_hash(report)

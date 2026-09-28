@@ -60,6 +60,25 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "labels": labels, "seedNamespace": "training", "rolloutIdentity": rollout_id,
         "rolloutSeeds": seeds}
 
+    dev_obs = json.loads(json.dumps(obs))
+    dev_obs["turn"] += 1
+    dev_tracker = ObservableHistoryTracker(0).update(dev_obs)
+    dev_encoded = encode_decision(dev_obs, dev_tracker)
+    dev_position_hash = legacy_digest(dev_obs)
+    dev_record = {**record, "positionHash": dev_position_hash, "split": "development",
+        "sourceGameId": "game-dev", "observation": dev_obs, "seedNamespace": "development",
+        "rolloutSeeds": [rollout_seed("development", dev_position_hash, 0, rollout_id)],
+        "labels": json.loads(json.dumps(labels))}
+    dev_pool_row = {**pool_row, "positionHash": dev_position_hash, "sourceGameId": "game-dev",
+        "split": "development", "featureIdentityHash": dev_encoded.identity,
+        "observation": dev_obs, "tracker": dev_tracker}
+    pool_rows.write_text(json.dumps(pool_row) + "\n" + json.dumps(dev_pool_row) + "\n")
+    pool_manifest["rows"] = 2
+    pool_manifest["rowsSha256"] = file_sha256(pool_rows)
+    pool_manifest["manifestHash"] = identity_hash({key: value for key, value in pool_manifest.items()
+                                                     if key != "manifestHash"})
+    (pool_dir / "manifest.json").write_text(json.dumps(pool_manifest))
+
     labels_dir = tmp_path / "labels"
     labels_dir.mkdir()
     labels_manifest = {"identity": identity, "selectionHash": "frozen-selection-hash",
@@ -68,7 +87,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
     (labels_dir / "manifest.json").write_text(json.dumps(labels_manifest))
     selection_path = tmp_path / "selection.json"
     selection_path.write_text(json.dumps({"selectionHash": "frozen-selection-hash"}))
-    monkeypatch.setattr(experiment, "_load_ranker_input", lambda *_args: (labels_manifest, [record]))
+    monkeypatch.setattr(experiment, "_load_ranker_input", lambda *_args: (labels_manifest, [record, dev_record]))
     monkeypatch.setattr(ranker_distillation, "_validate_source_game_units", lambda *_args: None)
 
     model_path = tmp_path / "ranker.json"
@@ -79,6 +98,8 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "trees": [{"nodeid": 0, "leaf": 0.0}]}
     model_path.write_text(json.dumps(artifact))
+    complete_coverage = {"status": "measured", "requestedPositions": 1, "positions": 1,
+        "insufficientPositionHashes": []}
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": artifact["featureImplementationSha256"],
@@ -87,7 +108,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "inputManifestSha256": file_sha256(labels_dir / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
-        "development": {"status": "measured"},
+        "training": complete_coverage, "development": complete_coverage,
         "holdouts": [{"kind": kind, "status": "measured"} for kind in
             ("leave-one-opponent-archetype-out", "frozen-policy-family")],
         "acceptance": "review-required", "automaticPromotion": False}
@@ -137,6 +158,20 @@ def test_ranker_distillation_rejects_teacher_report_with_unmeasured_holdout(tmp_
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
     with pytest.raises(ValueError, match="measured archetype and policy-family"):
+        ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
+            macro_position_pool=pool, labels_dir=labels, selection_path=selection,
+            model_path=model, report_path=report_path, identity=identity)
+
+
+def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkeypatch):
+    _identity_manifest, identity, pool, labels, selection, model, report_path = \
+        _ranker_distillation_fixture(tmp_path, monkeypatch)
+    report = json.loads(report_path.read_text())
+    report["training"]["positions"] = 0
+    report["reportHash"] = identity_hash({key: value for key, value in report.items()
+                                          if key != "reportHash"})
+    report_path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="complete, measured train label coverage"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)

@@ -107,6 +107,24 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
     if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
         raise ValueError("ranker distillation source families are incomplete")
 
+    incomplete = {split: [] for split in ("train", "development")}
+    for record in records:
+        split = record.get("split")
+        if split not in incomplete:
+            raise ValueError("ranker distillation input contains a non-train/development position")
+        usable = _validated_macro_labels(record,
+            expected_rollout_identity=rollout_ids[record["opponentPolicyFamily"]])
+        if len(usable) < 2:
+            incomplete[split].append(record["positionHash"])
+    for split in ("train", "development"):
+        metrics = report.get("training" if split == "train" else "development")
+        if (incomplete[split] or not isinstance(metrics, dict)
+                or metrics.get("status") != "measured"
+                or metrics.get("requestedPositions") != sum(row.get("split") == split for row in records)
+                or metrics.get("positions") != metrics.get("requestedPositions")
+                or metrics.get("insufficientPositionHashes") != []):
+            raise ValueError(f"ranker distillation requires complete, measured {split} label coverage")
+
     pool_by_hash = {}
     for row in pool_rows:
         if row.get("positionHash") in pool_by_hash:

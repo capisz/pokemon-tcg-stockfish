@@ -239,7 +239,9 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
 
 
-def test_ranker_v2_does_not_report_partial_development_coverage_as_measured(tmp_path, monkeypatch):
+@pytest.mark.parametrize("incomplete_split", ("train", "development"))
+def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
+        tmp_path, monkeypatch, incomplete_split):
     from ptcg_lab.learning_mind import ranker_v2
     monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
         lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
@@ -250,7 +252,8 @@ def test_ranker_v2_does_not_report_partial_development_coverage_as_measured(tmp_
     for item in manifest["files"]:
         candidate_path = labels_dir / item["path"]
         candidate_record = json.loads(candidate_path.read_text())
-        if candidate_record["opponentPolicyFamily"] == "python-heuristic" and candidate_record["split"] == "development":
+        if (candidate_record["opponentPolicyFamily"] == "python-heuristic"
+                and candidate_record["split"] == incomplete_split):
             entry = item
             record_path = candidate_path
             record = candidate_record
@@ -269,10 +272,17 @@ def test_ranker_v2_does_not_report_partial_development_coverage_as_measured(tmp_
     report = fit_macro_ranker_v2(labels_dir, tmp_path / "ranker.json",
         selection_path=selection_path, teacher_hash="frozen-teacher",
         opponent_policy_hash="frozen-opponent-set")
-    assert report["development"]["status"] == "insufficient"
-    assert report["development"]["requestedPositions"] == 4
-    assert report["development"]["positions"] == 3
-    assert len(report["development"]["insufficientPositionHashes"]) == 1
+    if incomplete_split == "development":
+        assert report["development"]["status"] == "insufficient"
+        assert report["development"]["requestedPositions"] == 4
+        assert report["development"]["positions"] == 3
+        assert len(report["development"]["insufficientPositionHashes"]) == 1
+    else:
+        assert report["development"]["status"] == "measured"
+        assert report["training"]["status"] == "insufficient"
+        assert report["training"]["requestedPositions"] == 4
+        assert report["training"]["positions"] == 3
+        assert len(report["training"]["insufficientPositionHashes"]) == 1
     assert report["acceptance"] == "insufficient"
 
 
