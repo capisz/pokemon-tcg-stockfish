@@ -7,6 +7,7 @@ import hashlib
 import pytest
 import torch
 
+import ptcg_lab.learning_mind.promotion_evidence as promotion_evidence
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.encoding import encode_decision
 from ptcg_lab.learning_mind.evaluation import PROMOTION_MATCHUPS, promotion_seed
@@ -19,6 +20,50 @@ from ptcg_lab.learning_mind.promotion_evidence import (_reproduce_replay_actions
 from ptcg_lab.learning_mind.schema import identity_hash
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 
+ENGINE_BUILD_HASH = None
+ENGINE_FIXTURES_BY_SEED = {}
+
+
+class _ReplayEngine:
+    """Test double: serves saved source traces without starting the engine or simulating games."""
+    def __init__(self, _root, timeout=300):
+        self.cursors = {}
+        self.expected = None
+        self.frame_index = 0
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *_):
+        pass
+
+    def request(self, method, params=None):
+        params = params or {}
+        if method == "health":
+            return {"engineBuildHash": ENGINE_BUILD_HASH}
+        if method == "reset":
+            seed = params["seed"]
+            index = self.cursors.get(seed, 0)
+            self.expected = ENGINE_FIXTURES_BY_SEED[seed][index]
+            self.cursors[seed] = index + 1
+            self.frame_index = 0
+            return {}
+        if method == "observe":
+            return self.expected["frames"][self.frame_index]["observations"][params["playerId"]]
+        if method == "step":
+            frame = self.expected["frames"][self.frame_index]
+            assert frame["action"]["id"] == params["actionId"]
+            self.frame_index += 1
+            return {}
+        if method == "replay":
+            return self.expected
+        raise AssertionError(f"unexpected engine method {method}")
+
+
+@pytest.fixture(autouse=True)
+def use_saved_replay_engine(monkeypatch):
+    monkeypatch.setattr(promotion_evidence, "EngineClient", _ReplayEngine)
+
 
 def _write_json(path, value):
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -27,6 +72,8 @@ def _write_json(path, value):
 
 
 def _promotion_sources(root, observation, *, complete=True):
+    global ENGINE_BUILD_HASH
+    ENGINE_FIXTURES_BY_SEED.clear()
     root.mkdir(parents=True, exist_ok=True)
     candidate = root / "candidate.pt"
     control = root / "control.pt"
@@ -45,8 +92,10 @@ def _promotion_sources(root, observation, *, complete=True):
     identity = {key: identity_hash(key) for key in (
         "deckManifestHash", "featureSchemaHash", "trackerRulesHash",
         "cardMetadataHash", "actionEquivalenceHash", "schedulerIdentity",
-        "opponentPolicySetHash", "evaluationRunnerSha256")}
+        "opponentPolicySetHash")}
+    identity["evaluationRunnerSha256"] = promotion_evidence.promotion_runner_sha256()
     identity["engineBuildHash"] = identity_hash("test-engine-build")
+    ENGINE_BUILD_HASH = identity["engineBuildHash"]
     identity["policyIdentityHash"] = identity_hash(policy_identity)
     identity_path = _write_json(root / "promotion-identity.json", {
         "schemaVersion": 1, "kind": "learning-mind-promotion-identity-v1",
@@ -74,6 +123,8 @@ def _promotion_sources(root, observation, *, complete=True):
             position = f"promotion-matrix-v1|{own}|{opponent}|seat-{seat}|first-{first}"
             seed = promotion_seed(position, index)
             actor_view = dict(observation, playerId=seat, decisionPlayer=seat)
+            decks = [None, None]
+            decks[seat], decks[1 - seat] = own, opponent
             tracker = ObservableHistoryTracker(seat)
             encoded = encode_decision(actor_view, tracker.update(actor_view))
             chosen_class, _ = _single_action(model, encoded)
@@ -83,6 +134,7 @@ def _promotion_sources(root, observation, *, complete=True):
                 game_id = f"{checkpoint_hash[:8]}-{pair_id}"
                 replay = {"id": game_id, "status": "finished", "seed": seed,
                     "firstPlayer": first, "engineBuildHash": identity["engineBuildHash"],
+                    "decks": decks,
                     "outcome": {"winner": seat if score == 1 else 1 - seat, "reason": "rules-terminal"},
                     "frames": [{"actor": seat, "action": chosen_action,
                         "observations": [actor_view if view_seat == seat else None for view_seat in (0, 1)]}]}
@@ -97,6 +149,7 @@ def _promotion_sources(root, observation, *, complete=True):
                     "seedNamespace": "promotion", "scheduleIndex": index,
                     "ownArchetype": own, "opponentArchetype": opponent,
                     "learnerSeat": seat, "firstPlayer": first,
+                    "decks": decks,
                     "opponentPolicyFamily": "blind-family",
                     "schedulerIdentity": identity["schedulerIdentity"],
                     "checkpointSha256": checkpoint_hash,
@@ -104,6 +157,7 @@ def _promotion_sources(root, observation, *, complete=True):
                     "replay": {"path": str(replay_path.resolve()),
                         "sha256": file_sha256(replay_path),
                         "decodedSha256": hashlib.sha256(replay_bytes).hexdigest()}})
+                ENGINE_FIXTURES_BY_SEED.setdefault(seed, []).append(replay)
     results_body = {"schemaVersion": 1,
         "kind": "learning-mind-matched-promotion-results-v1",
         "candidateCheckpointSha256": candidate_hash,
@@ -132,10 +186,16 @@ def test_promotion_receipt_recomputes_replays_and_requires_explicit_registry_app
     assert report["matrixCriteriaPassed"] is True
     assert report["promotionCriteriaPassed"] is False
     assert report["actionReproductionVerified"] is True
-    assert report["engineReproductionVerified"] is False
+    assert report["engineReproductionVerified"] is True
     assert report["actionReproduction"]["candidate"] == 2500
     assert report["actionReproduction"]["control"] == 2500
-    assert report["notReadyReasons"] == ["frozen-engine replay reproduction is not implemented"]
+    assert report["engineReproductionVerified"] is True
+    assert report["engineReproduction"]["candidate"] == 2500
+    assert report["engineReproduction"]["control"] == 2500
+    assert report["promotionStrategyProbes"]["targetProbeWin"] is False
+    assert report["notReadyReasons"] == [
+        "promotion-seed strategy probes did not pass their evidence gate",
+        "opponent family runtime provenance is not verified"]
     assert evidence is None
     assert verify_promotion_evidence_report(report_path) == report
     reissued_report, reissued_evidence = reissue_promotion_evidence_report(report_path)
@@ -204,8 +264,8 @@ def test_policy_action_reproduction_uses_actor_view_and_rejects_wrong_checkpoint
                 archive.write(json.dumps(replay).encode())
 
     save()
-    assert _reproduce_replay_actions(path, model, "candidate", {}) == 1
+    assert _reproduce_replay_actions(path, model, "candidate", 0, {})[0] == 1
     replay["frames"][0]["action"] = other_action
     save()
     with pytest.raises(ValueError, match="does not reproduce"):
-        _reproduce_replay_actions(path, model, "candidate", {})
+        _reproduce_replay_actions(path, model, "candidate", 0, {})

@@ -918,16 +918,18 @@ Keep the previous trusted checkpoint available through
 `AtomicRollbackRegistry`. Its preview gate summary and caller-supplied booleans
 are not sufficient authority: trusted-checkpoint changes require a
 source-artifact verifier-issued immutable promotion receipt plus explicit human
-approval. The research verifier now checks matched rows against checksummed raw
-replays and their public terminal outcomes, and derives the claimed training
-opponent families from hash-bound JSON artifacts, and reproduces each recorded
-action from the exact candidate or control checkpoint using actor-visible
-observations. This is still not sufficient for a real promotion: the frozen
-engine and scheduler must independently reproduce each complete game and
-terminal result, and the policy-family assignment must be verified from the
-frozen runner configuration. The verifier deliberately does not issue a
-promotion capability until engine-level replay reproduction is implemented and
-audited. PPO, continuous operation, and trusted promotion remain disabled.
+approval. The research verifier checks matched rows against checksummed raw
+replays and their public terminal outcomes, derives claimed training opponent
+families from hash-bound artifacts, and reproduces each learner action from the
+exact checkpoint using only that learner's actor-visible observations. It also
+resets the frozen engine for every saved game, replays both players' actions,
+compares each acting player's visible observation, and checks the terminal
+result. Candidate promotion-seed strategy probes are recomputed against the
+frozen heuristic. The evaluator still lacks a source-bound opponent roster
+proving which exact opponent implementation generated each opponent action,
+so it withholds its promotion capability until runtime family provenance is
+implemented and audited. PPO, continuous operation, and trusted promotion
+remain disabled.
 A candidate is not trusted merely because it was queued or won one local
 matrix.
 

@@ -43,6 +43,7 @@ def audit_replay(path: Path, expected: dict | None = None) -> dict:
         raise ValueError("replay has an unknown terminal status")
     trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
     decisions = unsupported = 0
+    action_decisions_by_actor = {0: 0, 1: 0}
     identities = []
     for frame in replay.get("frames", []):
         actor = frame.get("actor")
@@ -63,11 +64,13 @@ def audit_replay(path: Path, expected: dict | None = None) -> dict:
             matches = [group for group in encoded.action_classes if any(item.get("id") == action.get("id") for item in group.actions)]
             if len(matches) != 1:
                 raise ValueError("selected legal action is omitted or represented more than once")
+            action_decisions_by_actor[actor] += 1
         identities.append(encoded.identity); decisions += 1
     return {"replayId": replay.get("id"), "status": status, "outcome": outcome,
             "seed": replay.get("seed"), "firstPlayer": replay.get("firstPlayer"),
             "decks": replay.get("decks"), "engineBuildHash": replay.get("engineBuildHash"),
             "policies": replay.get("policies"), "decisions": decisions,
+            "actionDecisionsByActor": action_decisions_by_actor,
             "unsupportedPositions": unsupported,
             "decisionIdentityHash": hashlib.sha256("".join(identities).encode()).hexdigest()}
 

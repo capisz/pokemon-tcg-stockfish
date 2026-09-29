@@ -9,6 +9,7 @@ from __future__ import annotations
 import json
 import os
 import gzip
+import inspect
 from pathlib import Path
 import tempfile
 
@@ -16,12 +17,23 @@ import torch
 
 from .dataset_v1 import file_sha256
 from .audit import audit_replay
+from ptcg_lab.engine import EngineClient, EngineError
 from .evaluation import matched_promotion_matrix_decision
 from .encoding import collate, encode_decision
 from .model import StrategyTransformerV1, greedy_single_action_class
 from .notifications import VerifiedPromotionEvidence, _VERIFIED_PROMOTION_TOKEN
-from .schema import identity_hash
+from .schema import canonical_json, identity_hash
 from .tracker import ObservableHistoryTracker
+
+
+def promotion_runner_sha256() -> str:
+    """Hash every local implementation that determines promotion evidence."""
+    from . import audit, evaluation
+    paths = {"promotionVerifier": Path(__file__),
+        "replayAuditor": Path(audit.__file__),
+        "matrixEvaluator": Path(evaluation.__file__),
+        "engineClient": Path(inspect.getsourcefile(EngineClient))}
+    return identity_hash({name: file_sha256(path) for name, path in sorted(paths.items())})
 
 IDENTITY_FIELDS = frozenset({"engineBuildHash", "deckManifestHash", "featureSchemaHash",
     "trackerRulesHash", "cardMetadataHash", "actionEquivalenceHash", "schedulerIdentity",
@@ -80,8 +92,9 @@ def _load_policy_checkpoint(path: Path, label: str) -> tuple[dict, StrategyTrans
 
 
 def _reproduce_replay_actions(path: Path, model: StrategyTransformerV1,
-                              label: str, prediction_cache: dict) -> int:
-    """Require every actor-visible recorded action to match this checkpoint's decoder."""
+                              label: str, learner_seat: int,
+                              prediction_cache: dict) -> tuple[int, list[dict]]:
+    """Reproduce learner turns from that seat's observation history only."""
     try:
         with gzip.open(path, "rt", encoding="utf-8") as source:
             replay = json.load(source)
@@ -89,11 +102,14 @@ def _reproduce_replay_actions(path: Path, model: StrategyTransformerV1,
         raise ValueError(f"{label} replay cannot be loaded for policy reproduction") from error
     trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
     reproduced = 0
+    probe_decisions = []
     for frame in replay.get("frames", []):
         action = frame.get("action")
         if action is None:
             continue
         actor = frame.get("actor")
+        if actor != learner_seat:
+            continue
         observations = frame.get("observations")
         if type(actor) is not int or actor not in (0, 1) or not isinstance(observations, list):
             raise ValueError(f"{label} replay decision lacks an actor-visible observation")
@@ -126,9 +142,87 @@ def _reproduce_replay_actions(path: Path, model: StrategyTransformerV1,
         if observed_classes[0].semantic_key != predicted_key:
             raise ValueError(f"{label} checkpoint does not reproduce a recorded legal action")
         reproduced += 1
+        from ptcg_lab.features import heuristic_action_score
+        from research.strategy_baseline.probes import PROBES
+        legal_actions = observation.get("legalActions") or []
+        heuristic_action = max(legal_actions,
+            key=lambda option: heuristic_action_score(option, observation))
+        game_side = f"{replay.get('id')}:{actor}"
+        decision_index = frame.get("decisionIndex", reproduced - 1)
+        for probe in PROBES:
+            model_adherent = probe.evaluate(observation, action)
+            heuristic_adherent = probe.evaluate(observation, heuristic_action)
+            if model_adherent is not None:
+                if heuristic_adherent is None:
+                    raise ValueError("probe eligibility differs between model and heuristic actions")
+                probe_decisions.append({"probeId": probe.id, "gameSideKey": game_side,
+                    "positionHash": identity_hash(observation), "decisionIndex": decision_index,
+                    "modelAction": action, "heuristicAction": heuristic_action,
+                    "modelAdherent": bool(model_adherent),
+                    "heuristicAdherent": bool(heuristic_adherent)})
     if reproduced == 0:
         raise ValueError(f"{label} replay has no actions to reproduce")
-    return reproduced
+    return reproduced, probe_decisions
+
+
+def _reproduce_engine_game(engine: EngineClient, replay_path: Path, row: dict,
+                           expected_engine_hash: str) -> int:
+    """Replay the source action trace through the frozen engine and compare actor views."""
+    try:
+        with gzip.open(replay_path, "rt", encoding="utf-8") as source:
+            expected = json.load(source)
+    except (OSError, json.JSONDecodeError) as error:
+        raise ValueError("promotion replay cannot be loaded for engine reproduction") from error
+    if (expected.get("seed") != row["seed"]
+            or expected.get("firstPlayer") != row["firstPlayer"]
+            or expected.get("decks") != row.get("decks")
+            or expected.get("engineBuildHash") != expected_engine_hash):
+        raise ValueError("promotion replay schedule does not match its frozen row")
+    frames = expected.get("frames")
+    if not isinstance(frames, list) or not frames:
+        raise ValueError("promotion replay has no engine action trace")
+    try:
+        engine.request("reset", {"seed": row["seed"], "decks": row["decks"],
+                                  "firstPlayer": row["firstPlayer"]})
+        for frame in frames:
+            if not isinstance(frame, dict):
+                raise ValueError("promotion replay contains a malformed frame")
+            action = frame.get("action")
+            if action is None:
+                continue
+            actor = frame.get("actor")
+            observations = frame.get("observations")
+            if type(actor) is not int or actor not in (0, 1) or not isinstance(observations, list):
+                raise ValueError("promotion replay action lacks its actor observation")
+            expected_view = observations[actor]
+            actual_view = engine.request("observe", {"playerId": actor})
+            if (not isinstance(expected_view, dict)
+                    or canonical_json(actual_view) != canonical_json(expected_view)):
+                raise ValueError("frozen engine actor observation differs from the recorded replay")
+            engine.request("step", {"actionId": action.get("id")})
+        actual = engine.request("replay")
+    except EngineError as error:
+        raise ValueError("frozen engine could not reproduce a recorded promotion game") from error
+    if (actual.get("seed") != row["seed"] or actual.get("firstPlayer") != row["firstPlayer"]
+            or actual.get("decks") != row.get("decks")
+            or actual.get("engineBuildHash") != expected_engine_hash):
+        raise ValueError("reproduced engine game has a different frozen identity")
+    expected_actions = [frame["action"].get("id") for frame in frames
+                        if isinstance(frame, dict) and frame.get("action") is not None]
+    actual_frames = actual.get("frames")
+    actual_actions = [frame.get("action", {}).get("id") for frame in actual_frames or []
+                      if isinstance(frame, dict) and frame.get("action") is not None]
+    if actual_actions != expected_actions:
+        raise ValueError("frozen engine action trace differs from the source replay")
+    if row["status"] == "finished":
+        if actual.get("status") != "finished" or actual.get("outcome") != expected.get("outcome"):
+            raise ValueError("frozen engine terminal outcome differs from the source replay")
+    elif row["status"] == "truncated":
+        if actual.get("status") != "truncated" or actual.get("outcome") is not None:
+            raise ValueError("truncated promotion replay does not reproduce as an unfinished engine result")
+    else:
+        raise ValueError("engine reproduction is unavailable for errored promotion rows")
+    return len(expected_actions)
 
 
 def _verify_identity(path: Path, *, candidate_hash: str, control_hash: str,
@@ -141,6 +235,7 @@ def _verify_identity(path: Path, *, candidate_hash: str, control_hash: str,
             or not isinstance(identity, dict) or set(identity) != IDENTITY_FIELDS
             or any(not _sha256(identity.get(key)) for key in IDENTITY_FIELDS)
             or identity["policyIdentityHash"] != identity_hash(candidate_policy_identity)
+            or identity["evaluationRunnerSha256"] != promotion_runner_sha256()
             or candidate_policy_identity != control_policy_identity
             or artifact.get("candidateCheckpointSha256") != candidate_hash
             or artifact.get("controlCheckpointSha256") != control_hash
@@ -218,7 +313,8 @@ def _verify_strategy_report(path: Path, *, candidate_hash: str,
 def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     identity_hash_value: str, identity: dict,
                     candidate_model: StrategyTransformerV1,
-                    control_model: StrategyTransformerV1) -> tuple[dict, dict, list[dict], dict]:
+                    control_model: StrategyTransformerV1, engine: EngineClient
+                    ) -> tuple[dict, dict, list[dict], dict, dict]:
     source = _source(path, "matched promotion results")
     bundle = _read_object(path, "matched promotion results")
     body = {key: value for key, value in bundle.items() if key != "reportHash"}
@@ -236,6 +332,8 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
     replay_sources = []
     prediction_caches = {"candidate": {}, "control": {}}
     reproduced_decisions = {"candidate": 0, "control": 0}
+    reproduced_games = {"candidate": 0, "control": 0}
+    promotion_probe_decisions = []
     for field, expected_checkpoint, rows in (
             ("candidate", candidate_hash, bundle["candidateRecords"]),
             ("control", control_hash, bundle["controlRecords"])):
@@ -247,8 +345,14 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     or row.get("checkpointSha256") != expected_checkpoint
                     or row.get("evaluationIdentityHash") != identity_hash_value
                     or row.get("schedulerIdentity") != identity["schedulerIdentity"]
-                    or row.get("seedNamespace") != "promotion"):
+                    or row.get("seedNamespace") != "promotion"
+                    or not isinstance(row.get("decks"), list) or len(row["decks"]) != 2):
                 raise ValueError(f"matched promotion {field} row identity does not match frozen sources")
+            seat = row.get("learnerSeat")
+            if (type(seat) is not int or seat not in (0, 1)
+                    or row["decks"][seat] != row.get("ownArchetype")
+                    or row["decks"][1 - seat] != row.get("opponentArchetype")):
+                raise ValueError("matched promotion row deck assignment does not match its learner seat")
             replay = row.get("replay")
             if (not isinstance(replay, dict)
                     or not isinstance(replay.get("path"), str)
@@ -262,7 +366,10 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
             replay_paths.add(replay_source["path"])
             replay_sources.append(replay_source)
             audited = audit_replay(replay_path, replay)
-            count = _reproduce_replay_actions(replay_path, model, field, prediction_caches[field])
+            count, probe_decisions = _reproduce_replay_actions(replay_path, model, field,
+                row["learnerSeat"], prediction_caches[field])
+            engine_count = _reproduce_engine_game(engine, replay_path, row,
+                                                  identity["engineBuildHash"])
             winner = audited["outcome"].get("winner") if isinstance(audited["outcome"], dict) else None
             score = (.5 if winner is None else 1. if winner == row["learnerSeat"] else 0.)
             if (audited["replayId"] != row["gameId"]
@@ -271,12 +378,19 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     or audited["firstPlayer"] != row["firstPlayer"]
                     or audited["engineBuildHash"] != identity["engineBuildHash"]
                     or audited["unsupportedPositions"] != 0
-                    or audited["decisions"] != count
+                    or audited["actionDecisionsByActor"][row["learnerSeat"]] != count
+                    or engine_count != sum(audited["actionDecisionsByActor"].values())
                     or (row["status"] == "finished" and row.get("score") != score)
                     or (row["status"] != "finished" and row.get("score") is not None)):
                 raise ValueError("promotion result row differs from its actor-view audited replay")
             reproduced_decisions[field] += count
-    return bundle, source, replay_sources, {"passed": True, **reproduced_decisions}
+            reproduced_games[field] += 1
+            if field == "candidate":
+                promotion_probe_decisions.extend(probe_decisions)
+    from .experiment import summarize_strategy_probe_decisions
+    promotion_probe_summary = summarize_strategy_probe_decisions(promotion_probe_decisions)
+    return (bundle, source, replay_sources, {"passed": True, **reproduced_decisions},
+            {"passed": True, **reproduced_games}, promotion_probe_summary)
 
 
 def _write_immutable(path: Path, value: dict) -> None:
@@ -317,14 +431,23 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
     families, family_dependencies, families_source = _verify_training_families(training_families_path)
     strategy, strategy_source = _verify_strategy_report(strategy_report_path,
         candidate_hash=candidate_source["sha256"], identity_hash_value=identity_hash(identity))
-    results, results_source, replay_sources, action_reproduction = _verify_results(
-        results_path, candidate_hash=candidate_source["sha256"],
-        control_hash=control_source["sha256"], identity_hash_value=identity_hash(identity),
-        identity=identity, candidate_model=candidate_model, control_model=control_model)
+    engine_root = Path(__file__).resolve().parents[3]
+    with EngineClient(engine_root) as engine:
+        health = engine.request("health")
+        if health.get("engineBuildHash") != identity["engineBuildHash"]:
+            raise ValueError("promotion engine binary differs from the frozen identity")
+        (results, results_source, replay_sources, action_reproduction,
+         engine_reproduction, promotion_probe_summary) = _verify_results(
+            results_path, candidate_hash=candidate_source["sha256"],
+            control_hash=control_source["sha256"], identity_hash_value=identity_hash(identity),
+            identity=identity, candidate_model=candidate_model, control_model=control_model,
+            engine=engine)
 
-    strategy_summary = {"severityThreeRegressions": []}
-    if strategy.get("severityThreeRegression") is not False:
-        strategy_summary["severityThreeRegressions"] = ["severity-three-regression"]
+    severity_three_regressions = [item["probeId"]
+        for item in promotion_probe_summary["probes"]
+        if item["severity"] == 3 and item["headline"]["status"] == "measured"
+        and item["headline"]["modelRate"] < item["headline"]["heuristicRate"]]
+    strategy_summary = {"severityThreeRegressions": severity_three_regressions}
     decision = matched_promotion_matrix_decision(results["candidateRecords"], results["controlRecords"],
         training_policy_families=families, strategy=strategy_summary,
         identities_match=True, human_approved=human_approved)
@@ -335,15 +458,22 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
         "trainingFamilyDependencies": family_dependencies}
     matrix_passed = decision["promotionGate"]["promotable"] is True
     action_reproduction_verified = action_reproduction["passed"] is True
-    # The replay must also be re-executed through the frozen engine and
-    # scheduler. Hashes and internally consistent replay JSON do not prove that
-    # the reported terminal result was actually produced by that engine.
-    engine_reproduction_verified = False
+    engine_reproduction_verified = engine_reproduction["passed"] is True
+    promotion_probe_passed = (promotion_probe_summary["targetProbeWin"] is True
+        and promotion_probe_summary["severityThreeRegression"] is False
+        and promotion_probe_summary["severityThreeCoverage"] == "sufficient")
+    # Rows currently bind family names, but the frozen evaluator has no source
+    # roster that proves which opponent implementation produced each response.
+    opponent_family_provenance_verified = False
     not_ready = []
     if not action_reproduction_verified:
         not_ready.append("checkpoint-to-action replay reproduction failed")
     if not engine_reproduction_verified:
-        not_ready.append("frozen-engine replay reproduction is not implemented")
+        not_ready.append("frozen-engine replay reproduction failed")
+    if not promotion_probe_passed:
+        not_ready.append("promotion-seed strategy probes did not pass their evidence gate")
+    if not opponent_family_provenance_verified:
+        not_ready.append("opponent family runtime provenance is not verified")
     report = {"schemaVersion": 1, "kind": "verified-learning-mind-promotion-evidence-v1",
         "sources": sources, "identityHash": identity_hash(identity),
         "candidateCheckpoint": candidate_source["path"],
@@ -352,12 +482,16 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
         "controlCheckpointSha256": control_source["sha256"],
         "decision": decision, "humanApproved": human_approved,
         "actionReproduction": action_reproduction,
+        "engineReproduction": engine_reproduction,
+        "promotionStrategyProbes": promotion_probe_summary,
+        "opponentFamilyProvenanceVerified": opponent_family_provenance_verified,
         "matrixCriteriaPassed": matrix_passed,
         "actionReproductionVerified": action_reproduction_verified,
         "engineReproductionVerified": engine_reproduction_verified,
         "notReadyReasons": not_ready,
         "promotionCriteriaPassed": (matrix_passed and action_reproduction_verified
-                                    and engine_reproduction_verified),
+                                    and engine_reproduction_verified and promotion_probe_passed
+                                    and opponent_family_provenance_verified),
         "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
     _write_immutable(output, report)
