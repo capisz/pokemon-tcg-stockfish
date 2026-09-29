@@ -314,7 +314,7 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     identity_hash_value: str, identity: dict,
                     candidate_model: StrategyTransformerV1,
                     control_model: StrategyTransformerV1, engine: EngineClient
-                    ) -> tuple[dict, dict, list[dict], dict, dict]:
+                    ) -> tuple[dict, dict, list[dict], list[dict], dict, dict, dict, dict]:
     source = _source(path, "matched promotion results")
     bundle = _read_object(path, "matched promotion results")
     body = {key: value for key, value in bundle.items() if key != "reportHash"}
@@ -328,8 +328,44 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
             or not isinstance(bundle.get("candidateRecords"), list)
             or not isinstance(bundle.get("controlRecords"), list)):
         raise ValueError("matched promotion results are malformed or bound to different artifacts")
+    policy_set = bundle.get("opponentPolicySet")
+    if (not isinstance(policy_set, dict)
+            or policy_set.get("schemaVersion") != 1
+            or policy_set.get("kind") != "learning-mind-opponent-policy-set-v1"):
+        raise ValueError("promotion results lack a frozen opponent-policy source roster")
+    policy_body = {key: value for key, value in policy_set.items() if key != "setHash"}
+    if (policy_set.get("setHash") != identity_hash(policy_body)
+            or policy_set.get("setHash") != identity["opponentPolicySetHash"]
+            or not isinstance(policy_set.get("policies"), list) or not policy_set["policies"]):
+        raise ValueError("opponent-policy roster hash does not match the frozen identity")
+    opponent_policies = {}
+    policy_sources = []
+    seen_policy_paths = set()
+    seen_policy_hashes = set()
+    for item in policy_set["policies"]:
+        if (not isinstance(item, dict)
+                or set(item) != {"policyId", "family", "checkpointPath", "checkpointSha256"}
+                or not isinstance(item.get("policyId"), str) or not item["policyId"]
+                or not isinstance(item.get("family"), str) or not item["family"]
+                or not isinstance(item.get("checkpointPath"), str)
+                or not _sha256(item.get("checkpointSha256"))
+                or item["policyId"] in opponent_policies):
+            raise ValueError("opponent-policy roster contains a malformed or duplicate identity")
+        policy_path = Path(item["checkpointPath"]).resolve()
+        policy_source = _source(policy_path, "opponent policy checkpoint")
+        if (policy_source["sha256"] != item["checkpointSha256"]
+                or policy_source["path"] in seen_policy_paths
+                or policy_source["sha256"] in seen_policy_hashes
+                or policy_source["sha256"] in {candidate_hash, control_hash}):
+            raise ValueError("opponent-policy checkpoint checksum differs from its roster")
+        seen_policy_paths.add(policy_source["path"])
+        seen_policy_hashes.add(policy_source["sha256"])
+        _policy_identity, policy_model = _load_policy_checkpoint(policy_path, item["policyId"])
+        opponent_policies[item["policyId"]] = {**item, "model": policy_model}
+        policy_sources.append(policy_source)
     replay_paths = set()
     replay_sources = []
+    opponent_caches = {policy_id: {} for policy_id in opponent_policies}
     prediction_caches = {"candidate": {}, "control": {}}
     reproduced_decisions = {"candidate": 0, "control": 0}
     reproduced_games = {"candidate": 0, "control": 0}
@@ -353,6 +389,10 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     or row["decks"][seat] != row.get("ownArchetype")
                     or row["decks"][1 - seat] != row.get("opponentArchetype")):
                 raise ValueError("matched promotion row deck assignment does not match its learner seat")
+            opponent_id = row.get("opponentPolicyId")
+            policy_record = opponent_policies.get(opponent_id)
+            if policy_record is None or policy_record["family"] != row.get("opponentPolicyFamily"):
+                raise ValueError("opponent-policy runtime assignment differs from its frozen roster")
             replay = row.get("replay")
             if (not isinstance(replay, dict)
                     or not isinstance(replay.get("path"), str)
@@ -366,8 +406,22 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
             replay_paths.add(replay_source["path"])
             replay_sources.append(replay_source)
             audited = audit_replay(replay_path, replay)
+            try:
+                with gzip.open(replay_path, "rt", encoding="utf-8") as replay_stream:
+                    replay_payload = json.load(replay_stream)
+            except (OSError, json.JSONDecodeError) as error:
+                raise ValueError("promotion replay metadata is unreadable") from error
+            candidate_id = f"{field}:{expected_checkpoint}"
+            expected_ids, expected_hashes = [None, None], [None, None]
+            expected_ids[seat], expected_ids[1 - seat] = candidate_id, opponent_id
+            expected_hashes[seat], expected_hashes[1 - seat] = expected_checkpoint, policy_record["checkpointSha256"]
+            if (replay_payload.get("policyIdsBySeat") != expected_ids
+                    or replay_payload.get("policyHashesBySeat") != expected_hashes):
+                raise ValueError("promotion replay does not bind both seats to the frozen policy roster")
             count, probe_decisions = _reproduce_replay_actions(replay_path, model, field,
                 row["learnerSeat"], prediction_caches[field])
+            opponent_count, _ = _reproduce_replay_actions(replay_path, policy_record["model"],
+                f"opponent {opponent_id}", 1 - seat, opponent_caches[opponent_id])
             engine_count = _reproduce_engine_game(engine, replay_path, row,
                                                   identity["engineBuildHash"])
             winner = audited["outcome"].get("winner") if isinstance(audited["outcome"], dict) else None
@@ -379,6 +433,8 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                     or audited["engineBuildHash"] != identity["engineBuildHash"]
                     or audited["unsupportedPositions"] != 0
                     or audited["actionDecisionsByActor"][row["learnerSeat"]] != count
+                    or audited["actionDecisionsByActor"][1 - seat] != opponent_count
+                    or opponent_count == 0
                     or engine_count != sum(audited["actionDecisionsByActor"].values())
                     or (row["status"] == "finished" and row.get("score") != score)
                     or (row["status"] != "finished" and row.get("score") is not None)):
@@ -389,8 +445,9 @@ def _verify_results(path: Path, *, candidate_hash: str, control_hash: str,
                 promotion_probe_decisions.extend(probe_decisions)
     from .experiment import summarize_strategy_probe_decisions
     promotion_probe_summary = summarize_strategy_probe_decisions(promotion_probe_decisions)
-    return (bundle, source, replay_sources, {"passed": True, **reproduced_decisions},
-            {"passed": True, **reproduced_games}, promotion_probe_summary)
+    return (bundle, source, replay_sources, policy_sources,
+            {"passed": True, **reproduced_decisions}, {"passed": True, **reproduced_games},
+            promotion_probe_summary, {"passed": True, "policies": len(opponent_policies)})
 
 
 def _write_immutable(path: Path, value: dict) -> None:
@@ -436,8 +493,8 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
         health = engine.request("health")
         if health.get("engineBuildHash") != identity["engineBuildHash"]:
             raise ValueError("promotion engine binary differs from the frozen identity")
-        (results, results_source, replay_sources, action_reproduction,
-         engine_reproduction, promotion_probe_summary) = _verify_results(
+        (results, results_source, replay_sources, policy_sources, action_reproduction,
+         engine_reproduction, promotion_probe_summary, policy_reproduction) = _verify_results(
             results_path, candidate_hash=candidate_source["sha256"],
             control_hash=control_source["sha256"], identity_hash_value=identity_hash(identity),
             identity=identity, candidate_model=candidate_model, control_model=control_model,
@@ -454,6 +511,7 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
     sources = {"candidateCheckpoint": candidate_source, "controlCheckpoint": control_source,
         "promotionIdentity": identity_source, "matchedResults": results_source,
         "matchedReplays": replay_sources,
+        "opponentPolicyCheckpoints": policy_sources,
         "trainingFamilies": families_source, "strategyEvaluation": strategy_source,
         "trainingFamilyDependencies": family_dependencies}
     matrix_passed = decision["promotionGate"]["promotable"] is True
@@ -462,9 +520,7 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
     promotion_probe_passed = (promotion_probe_summary["targetProbeWin"] is True
         and promotion_probe_summary["severityThreeRegression"] is False
         and promotion_probe_summary["severityThreeCoverage"] == "sufficient")
-    # Rows currently bind family names, but the frozen evaluator has no source
-    # roster that proves which opponent implementation produced each response.
-    opponent_family_provenance_verified = False
+    opponent_family_provenance_verified = policy_reproduction["passed"] is True
     not_ready = []
     if not action_reproduction_verified:
         not_ready.append("checkpoint-to-action replay reproduction failed")
@@ -484,6 +540,7 @@ def issue_promotion_evidence(*, candidate_checkpoint: Path, control_checkpoint: 
         "actionReproduction": action_reproduction,
         "engineReproduction": engine_reproduction,
         "promotionStrategyProbes": promotion_probe_summary,
+        "opponentPolicyReproduction": policy_reproduction,
         "opponentFamilyProvenanceVerified": opponent_family_provenance_verified,
         "matrixCriteriaPassed": matrix_passed,
         "actionReproductionVerified": action_reproduction_verified,
@@ -520,7 +577,8 @@ def verify_promotion_evidence_report(path: Path) -> dict:
         raise ValueError("promotion receipt source list is missing")
     flattened = []
     for key, value in sources.items():
-        values = value if key in {"trainingFamilyDependencies", "matchedReplays"} else [value]
+        values = value if key in {"trainingFamilyDependencies", "matchedReplays",
+                                  "opponentPolicyCheckpoints"} else [value]
         if not isinstance(values, list):
             raise ValueError("promotion receipt source entry is malformed")
         flattened.extend(values)

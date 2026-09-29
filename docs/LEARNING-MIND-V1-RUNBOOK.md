@@ -925,11 +925,15 @@ exact checkpoint using only that learner's actor-visible observations. It also
 resets the frozen engine for every saved game, replays both players' actions,
 compares each acting player's visible observation, and checks the terminal
 result. Candidate promotion-seed strategy probes are recomputed against the
-frozen heuristic. The evaluator still lacks a source-bound opponent roster
-proving which exact opponent implementation generated each opponent action,
-so it withholds its promotion capability until runtime family provenance is
-implemented and audited. PPO, continuous operation, and trusted promotion
-remain disabled.
+frozen heuristic. Opponent-family rows must resolve through a source-bound
+roster to an exact frozen model checkpoint; the verifier checks per-seat policy
+hashes in each replay and reproduces the opponent's actions from its own
+actor-visible observations. Unsupported opponent policy types fail closed.
+These verifier checks are necessary, not sufficient: candidate-specific probe
+coverage, the complete sequential matrix, the blind-family gate, and explicit
+human approval must all pass before a receipt can authorize a change. PPO,
+continuous operation, and trusted promotion remain disabled until their full
+acceptance gates pass.
 A candidate is not trusted merely because it was queued or won one local
 matrix.
 

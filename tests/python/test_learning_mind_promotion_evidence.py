@@ -88,11 +88,21 @@ def _promotion_sources(root, observation, *, complete=True):
     torch.save({"kind": "StrategyTransformerV1-supervised",
                 "identity": policy_identity, "model": model.state_dict(),
                 "fixtureTag": "control"}, control)
+    opponent = root / "blind-opponent.pt"
+    torch.save({"kind": "StrategyTransformerV1-supervised",
+                "identity": policy_identity, "model": model.state_dict(),
+                "fixtureTag": "blind-opponent"}, opponent)
     candidate_hash, control_hash = file_sha256(candidate), file_sha256(control)
+    opponent_hash = file_sha256(opponent)
+    opponent_policy_id = "blind-policy-v1"
+    policy_set_body = {"schemaVersion": 1, "kind": "learning-mind-opponent-policy-set-v1",
+        "policies": [{"policyId": opponent_policy_id, "family": "blind-family",
+            "checkpointPath": str(opponent.resolve()), "checkpointSha256": opponent_hash}]}
+    policy_set = {**policy_set_body, "setHash": identity_hash(policy_set_body)}
     identity = {key: identity_hash(key) for key in (
         "deckManifestHash", "featureSchemaHash", "trackerRulesHash",
-        "cardMetadataHash", "actionEquivalenceHash", "schedulerIdentity",
-        "opponentPolicySetHash")}
+        "cardMetadataHash", "actionEquivalenceHash", "schedulerIdentity")}
+    identity["opponentPolicySetHash"] = policy_set["setHash"]
     identity["evaluationRunnerSha256"] = promotion_evidence.promotion_runner_sha256()
     identity["engineBuildHash"] = identity_hash("test-engine-build")
     ENGINE_BUILD_HASH = identity["engineBuildHash"]
@@ -129,15 +139,31 @@ def _promotion_sources(root, observation, *, complete=True):
             encoded = encode_decision(actor_view, tracker.update(actor_view))
             chosen_class, _ = _single_action(model, encoded)
             chosen_action = encoded.action_classes[chosen_class].actions[0]
+            opponent_seat = 1 - seat
+            opponent_view = dict(observation, playerId=opponent_seat, decisionPlayer=opponent_seat)
+            opponent_tracker = ObservableHistoryTracker(opponent_seat)
+            opponent_encoded = encode_decision(opponent_view, opponent_tracker.update(opponent_view))
+            opponent_class, _ = _single_action(model, opponent_encoded)
+            opponent_action = opponent_encoded.action_classes[opponent_class].actions[0]
             for checkpoint_hash, score, target in (
                     (candidate_hash, 1, candidate_rows), (control_hash, 0, control_rows)):
                 game_id = f"{checkpoint_hash[:8]}-{pair_id}"
+                learner_policy_id = f"{target is candidate_rows and 'candidate' or 'control'}:{checkpoint_hash}"
+                policy_ids = [None, None]
+                policy_hashes = [None, None]
+                policy_ids[seat], policy_ids[opponent_seat] = learner_policy_id, opponent_policy_id
+                policy_hashes[seat], policy_hashes[opponent_seat] = checkpoint_hash, opponent_hash
                 replay = {"id": game_id, "status": "finished", "seed": seed,
                     "firstPlayer": first, "engineBuildHash": identity["engineBuildHash"],
                     "decks": decks,
+                    "policyIdsBySeat": policy_ids, "policyHashesBySeat": policy_hashes,
                     "outcome": {"winner": seat if score == 1 else 1 - seat, "reason": "rules-terminal"},
                     "frames": [{"actor": seat, "action": chosen_action,
-                        "observations": [actor_view if view_seat == seat else None for view_seat in (0, 1)]}]}
+                        "decisionIndex": 0,
+                        "observations": [actor_view if view_seat == seat else None for view_seat in (0, 1)]},
+                        {"actor": opponent_seat, "action": opponent_action, "decisionIndex": 1,
+                        "observations": [opponent_view if view_seat == opponent_seat else None
+                                         for view_seat in (0, 1)]}]}
                 replay_path = root / "replays" / f"{game_id}.json.gz"
                 replay_path.parent.mkdir(parents=True, exist_ok=True)
                 replay_bytes = (json.dumps(replay, separators=(",", ":")) + "\n").encode()
@@ -151,6 +177,7 @@ def _promotion_sources(root, observation, *, complete=True):
                     "learnerSeat": seat, "firstPlayer": first,
                     "decks": decks,
                     "opponentPolicyFamily": "blind-family",
+                    "opponentPolicyId": opponent_policy_id,
                     "schedulerIdentity": identity["schedulerIdentity"],
                     "checkpointSha256": checkpoint_hash,
                     "evaluationIdentityHash": identity_hash_value,
@@ -164,6 +191,7 @@ def _promotion_sources(root, observation, *, complete=True):
         "controlCheckpointSha256": control_hash,
         "evaluationIdentityHash": identity_hash_value,
         "runnerImplementationSha256": identity["evaluationRunnerSha256"],
+        "opponentPolicySet": policy_set,
         "candidateRecords": candidate_rows, "controlRecords": control_rows}
     results_path = _write_json(root / "matched-results.json",
         {**results_body, "reportHash": identity_hash(results_body)})
@@ -192,10 +220,10 @@ def test_promotion_receipt_recomputes_replays_and_requires_explicit_registry_app
     assert report["engineReproductionVerified"] is True
     assert report["engineReproduction"]["candidate"] == 2500
     assert report["engineReproduction"]["control"] == 2500
+    assert report["opponentFamilyProvenanceVerified"] is True
+    assert report["opponentPolicyReproduction"] == {"passed": True, "policies": 1}
     assert report["promotionStrategyProbes"]["targetProbeWin"] is False
-    assert report["notReadyReasons"] == [
-        "promotion-seed strategy probes did not pass their evidence gate",
-        "opponent family runtime provenance is not verified"]
+    assert report["notReadyReasons"] == ["promotion-seed strategy probes did not pass their evidence gate"]
     assert evidence is None
     assert verify_promotion_evidence_report(report_path) == report
     reissued_report, reissued_evidence = reissue_promotion_evidence_report(report_path)
