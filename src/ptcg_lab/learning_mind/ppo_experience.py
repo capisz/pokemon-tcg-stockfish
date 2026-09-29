@@ -15,9 +15,12 @@ from .curriculum import assignment, promotion_seed_namespace_disjoint
 from .schema import identity_hash
 
 
-EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v2"
+EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v3"
 PPO_SCHEDULER_VERSION = "ppo-training-scheduler-v1"
 GAME_STATUSES = frozenset({"finished", "truncated", "error"})
+LEARNING_IDENTITY_FIELDS = frozenset({"engine_build_hash", "deck_manifest_hash",
+    "feature_schema_hash", "tracker_rules_hash", "card_metadata_hash",
+    "action_equivalence_hash"})
 FORBIDDEN_VIEW_KEYS = frozenset({"observations", "oppositeObservation", "otherObservation",
     "opponentPrivateObservation", "chance", "hiddenState", "engineStore", "rawReplay",
     "replay", "frames", "opponentHand", "opponentDeck", "opponentCards"})
@@ -244,6 +247,20 @@ class PPOExperienceStore:
     def __init__(self, root: Path, *, settings: dict):
         if not isinstance(settings, dict) or not settings:
             raise ValueError("PPO experience store requires frozen settings")
+        expected_setting_keys = {"learningMindIdentity", "featureSchemaHash", "behaviorPolicyHash",
+            "schedulerVersion", "historicalPolicyHashes", "trainingSeedBase"}
+        if set(settings) != expected_setting_keys:
+            raise ValueError("PPO experience settings must bind the complete frozen run schema")
+        learning_identity = settings.get("learningMindIdentity")
+        if (not isinstance(learning_identity, dict)
+                or set(learning_identity) != LEARNING_IDENTITY_FIELDS | {"schemaVersion", "identityHash"}
+                or type(learning_identity.get("schemaVersion")) is not int
+                or learning_identity["schemaVersion"] != 1
+                or any(not _is_sha256(learning_identity.get(key)) for key in LEARNING_IDENTITY_FIELDS)
+                or learning_identity.get("identityHash") != identity_hash({key: learning_identity[key]
+                    for key in LEARNING_IDENTITY_FIELDS})
+                or settings.get("featureSchemaHash") != learning_identity.get("feature_schema_hash")):
+            raise ValueError("PPO experience settings require a complete, internally consistent learning-mind identity")
         behavior_hash = settings.get("behaviorPolicyHash")
         if not _is_sha256(behavior_hash):
             raise ValueError("PPO experience settings require a behaviorPolicyHash")

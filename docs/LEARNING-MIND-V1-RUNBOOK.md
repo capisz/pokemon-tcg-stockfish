@@ -851,12 +851,16 @@ closed before changing parameters.
 The resumable experience store binds each game ID to the exact scheduler row,
 including its schedule index, seed, decks, learner seats, mirror assignment,
 policy family, and opponent-policy hash. Store identity also freezes the
-scheduler version, historical-policy hash list, and training seed base. A row
+complete `IdentityManifest` (engine build, approved deck manifests, feature
+schema, tracker rules, card metadata, and action-equivalence hashes), policy
+fingerprint, scheduler version, historical-policy hash list, and training seed
+base. The identity record's own hash and duplicated feature-schema field are
+recomputed and cross-checked before opening the store. A row
 whose assignment differs from the regenerated scheduler entry is rejected;
 only decisions from a scheduled learner seat may enter the PPO trace, and the
 same schedule index cannot be saved twice. The store schema is
-`ppo-actor-experience-v2`; older experience manifests must not be resumed as
-if they had this assignment-integrity check. Direct conversion of a game into
+`ppo-actor-experience-v3`; older experience manifests must not be resumed as
+if they had the complete identity check. Direct conversion of a game into
 PPO traces requires the same frozen scheduler settings and repeats the exact
 assignment check rather than trusting a self-consistent game ID.
 

@@ -6,6 +6,7 @@ import pytest
 
 from ptcg_lab.learning_mind.ppo_experience import (PPOExperienceStore,
     ppo_records_from_game, ppo_training_schedule)
+from ptcg_lab.learning_mind.schema import identity_hash
 
 
 BEHAVIOR_HASH = "a" * 64
@@ -15,8 +16,14 @@ HISTORY = ["e" * 64, "f" * 64]
 
 
 def settings():
-    return {"behaviorPolicyHash": BEHAVIOR_HASH, "featureSchemaHash": SCHEMA_HASH,
-        "engineBuildHash": "c" * 64, "schedulerVersion": "ppo-training-scheduler-v1",
+    identity_fields = {"engine_build_hash": "c" * 64, "deck_manifest_hash": "1" * 64,
+        "feature_schema_hash": SCHEMA_HASH, "tracker_rules_hash": "2" * 64,
+        "card_metadata_hash": "3" * 64, "action_equivalence_hash": "4" * 64}
+    learning_identity = {"schemaVersion": 1, **identity_fields,
+        "identityHash": identity_hash(identity_fields)}
+    return {"learningMindIdentity": learning_identity,
+        "behaviorPolicyHash": BEHAVIOR_HASH, "featureSchemaHash": SCHEMA_HASH,
+        "schedulerVersion": "ppo-training-scheduler-v1",
         "historicalPolicyHashes": HISTORY, "trainingSeedBase": 7543298}
 
 
@@ -57,12 +64,29 @@ def test_experience_store_resumes_with_checksums_and_separate_outcomes(tmp_path)
     assert resumed.manifest == store.manifest
 
 
+@pytest.mark.parametrize("mutate", [
+    lambda value: value.pop("learningMindIdentity"),
+    lambda value: value["learningMindIdentity"].update(deck_manifest_hash="0" * 64),
+    lambda value: value.update(featureSchemaHash="0" * 64),
+])
+def test_experience_store_rejects_incomplete_or_inconsistent_learning_identity(tmp_path, mutate):
+    run_settings = settings()
+    mutate(run_settings)
+    with pytest.raises(ValueError, match="complete|internally consistent"):
+        PPOExperienceStore(tmp_path / "run", settings=run_settings)
+
+
 def test_experience_store_rejects_identity_drift_and_artifact_corruption(tmp_path):
     root = tmp_path / "run"
     store = PPOExperienceStore(root, settings=settings())
     item = store.save_game(game("4"))
+    drifted = settings()
+    drifted["learningMindIdentity"]["engine_build_hash"] = "d" * 64
+    drifted_fields = {key: value for key, value in drifted["learningMindIdentity"].items()
+                      if key not in {"schemaVersion", "identityHash"}}
+    drifted["learningMindIdentity"]["identityHash"] = identity_hash(drifted_fields)
     with pytest.raises(ValueError, match="identity/checksum mismatch"):
-        PPOExperienceStore(root, settings={**settings(), "engineBuildHash": "d" * 64})
+        PPOExperienceStore(root, settings=drifted)
     path = store.games_dir / f"{item['gameId']}.json.gz"
     path.write_bytes(path.read_bytes() + b"corrupt")
     with pytest.raises(ValueError, match="artifact checksum mismatch"):
