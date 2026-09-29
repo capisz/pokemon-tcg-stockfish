@@ -353,6 +353,26 @@ def test_sequential_evaluation_and_manual_promotion_gate():
     assert any("all 25 ordered matchups" in reason for reason in rejected["reasons"])
 
 
+@pytest.mark.parametrize("records,match", [
+    ([{"status": "finished", "score": True}], "exact win/draw/loss score"),
+    ([{"status": "finished", "score": 2}], "exact win/draw/loss score"),
+    ([{"status": "finished"}], "exact win/draw/loss score"),
+    ([{"status": "truncated", "score": 0}], "may not contain scores"),
+    ([{"status": "unknown"}], "unknown or malformed"),
+    ([{"status": "finished", "score": 1, "gameId": "same"},
+      {"status": "finished", "score": 0, "gameId": "same"}], "unique"),
+])
+def test_sequential_evaluation_rejects_malformed_or_duplicate_outcomes(records, match):
+    with pytest.raises(ValueError, match=match):
+        sequential_decision(records)
+
+
+def test_sequential_evaluation_validates_non_regression_margin():
+    for value in (True, -0.1, 1.1, float("nan")):
+        with pytest.raises(ValueError, match="margin"):
+            sequential_decision([], non_regression_margin=value)
+
+
 def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():
     rows = [assignment(index, ["h1", "h2"]) for index in range(100)]
     assert sum(row["mirror"] for row in rows) == 5

@@ -23,8 +23,33 @@ def promotion_seed(position: str, index: int) -> int:
 
 
 def sequential_decision(records: list[dict], *, non_regression_margin: float = .05) -> dict:
-    complete = [row for row in records if row.get("status") == "finished" and row.get("score") in {0, .5, 1}]
-    counts = Counter(row.get("status", "unknown") for row in records)
+    if not isinstance(records, list):
+        raise ValueError("promotion records must be a list")
+    if (isinstance(non_regression_margin, bool)
+            or not isinstance(non_regression_margin, (int, float))
+            or not math.isfinite(non_regression_margin)
+            or not 0 <= non_regression_margin <= 1):
+        raise ValueError("non-regression margin must be finite and between zero and one")
+    counts = Counter({"finished": 0, "truncated": 0, "error": 0})
+    complete = []
+    seen_game_ids = set()
+    for row in records:
+        if not isinstance(row, dict) or row.get("status") not in counts:
+            raise ValueError("promotion record has an unknown or malformed outcome status")
+        game_id = row.get("gameId")
+        if game_id is not None:
+            if not isinstance(game_id, str) or not game_id or game_id in seen_game_ids:
+                raise ValueError("promotion game IDs must be nonempty and unique")
+            seen_game_ids.add(game_id)
+        counts[row["status"]] += 1
+        score = row.get("score")
+        if row["status"] == "finished":
+            if (type(score) not in {int, float} or not math.isfinite(score)
+                    or score not in {0, .5, 1}):
+                raise ValueError("finished promotion records require an exact win/draw/loss score")
+            complete.append(row)
+        elif score is not None:
+            raise ValueError("truncated and errored promotion records may not contain scores")
     n = len(complete)
     wins = sum(row["score"] == 1 for row in complete)
     losses = sum(row["score"] == 0 for row in complete)
