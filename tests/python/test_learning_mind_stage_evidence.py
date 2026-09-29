@@ -164,6 +164,20 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     with pytest.raises(ValueError, match="learning rate and weight decay"):
         ppo_update(stale_model, wrong_optimizer, [row], stage_record=capability)
 
+    nonfinite_model = StrategyTransformerV1()
+    nonfinite_model.load_state_dict(behavior_weights)
+    nonfinite_optimizer = torch.optim.AdamW(nonfinite_model.parameters(), lr=1e-4, weight_decay=1e-4)
+    before_nonfinite = {key: value.clone() for key, value in nonfinite_model.state_dict().items()}
+    gradient_hook = nonfinite_model.policy_query[-1].weight.register_hook(
+        lambda gradient: torch.full_like(gradient, float("nan")))
+    rejected = ppo_update(nonfinite_model, nonfinite_optimizer, [row], stage_record=capability)
+    gradient_hook.remove()
+    assert rejected["pauseRequired"] is True
+    assert rejected["rejectionReasons"] == {"non-finite-gradient": 1}
+    assert rejected["acceptedMinibatches"] == 0
+    assert all(torch.equal(before_nonfinite[key], nonfinite_model.state_dict()[key])
+               for key in before_nonfinite)
+
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):
     paths = _inputs(tmp_path)

@@ -789,8 +789,11 @@ with the same identities and an externally recorded file checksum.
 
 Before mutating parameters, `ppo_update` calculates its KL and value loss. A
 minibatch is rejected if approximate KL exceeds `0.05` or value loss exceeds
-`0.5`. Non-finite values are an immediate pause. Three rejected updates or
-worker restarts in one hour pause the supervisor.
+`0.5`. Non-finite losses, gradients, gradient norms, parameters, or optimizer
+state are an immediate pause; they must not be checkpointed or carried into a
+later minibatch. A non-finite optimizer step is rolled back before signaling
+the pause. Three rejected updates or worker restarts in one hour pause the
+supervisor.
 
 Begin with one manually launched update. Inspect its replay and metrics before
 authorizing a longer batch.

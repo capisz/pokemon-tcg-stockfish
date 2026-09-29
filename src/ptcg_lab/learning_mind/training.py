@@ -230,6 +230,9 @@ def validate_ppo_optimizer(optimizer, config: PPOConfig = PPOConfig()) -> None:
         if (group.get("lr") != config.learning_rate
                 or group.get("weight_decay") != config.weight_decay):
             raise ValueError("PPO AdamW learning rate and weight decay must match the frozen profile")
+    if any(isinstance(value, torch.Tensor) and not torch.isfinite(value).all()
+           for state in optimizer.state.values() for value in state.values()):
+        raise FloatingPointError("PPO optimizer state contains a non-finite tensor")
 
 
 def _ppo_episode_groups(records: list[dict]) -> list[tuple[str, str, list[int]]]:
@@ -548,7 +551,7 @@ def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
     if not records: raise ValueError("no completed PPO traces")
     _verify_ppo_behavior_policy(model, records, minibatch=config.minibatch)
     order = torch.randperm(len(records), generator=torch.Generator().manual_seed(seed)).tolist()
-    accepted = rejected = 0; reasons: dict[str, int] = {}; metrics = []
+    accepted = rejected = 0; reasons: dict[str, int] = {}; metrics = []; immediate_pause = False
     for start in range(0, len(order), config.minibatch):
         selected = [records[index] for index in order[start:start + config.minibatch]]
         arrays = collate([row["encoded"] for row in selected])
@@ -582,13 +585,48 @@ def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
         metrics.append(metric)
         if not allowed:
             rejected += 1; reasons[reason] = reasons.get(reason, 0) + 1
+            if reason == "non-finite-tensor":
+                immediate_pause = True
+                break
             continue
         loss = policy_loss + config.value_coefficient * value_loss - config.entropy * entropy
-        optimizer.zero_grad(); loss.backward(); torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0); optimizer.step()
+        optimizer.zero_grad(set_to_none=True)
+        loss.backward()
+        gradients = [parameter.grad for parameter in model.parameters() if parameter.grad is not None]
+        if any(not torch.isfinite(gradient).all() for gradient in gradients):
+            optimizer.zero_grad(set_to_none=True)
+            rejected += 1
+            reasons["non-finite-gradient"] = reasons.get("non-finite-gradient", 0) + 1
+            immediate_pause = True
+            break
+        gradient_norm = torch.nn.utils.clip_grad_norm_(model.parameters(), 2.0)
+        if (not torch.isfinite(gradient_norm).all()
+                or any(not torch.isfinite(gradient).all() for gradient in gradients)):
+            optimizer.zero_grad(set_to_none=True)
+            rejected += 1
+            reasons["non-finite-gradient-norm"] = reasons.get("non-finite-gradient-norm", 0) + 1
+            immediate_pause = True
+            break
+        previous_parameters = [parameter.detach().clone() for parameter in model.parameters()]
+        previous_optimizer = copy.deepcopy(optimizer.state_dict())
+        optimizer.step()
+        state_is_finite = (all(torch.isfinite(parameter).all() for parameter in model.parameters())
+            and all(not isinstance(value, torch.Tensor) or torch.isfinite(value).all()
+                    for state in optimizer.state.values() for value in state.values()))
+        if not state_is_finite:
+            with torch.no_grad():
+                for parameter, previous in zip(model.parameters(), previous_parameters):
+                    parameter.copy_(previous)
+            optimizer.load_state_dict(previous_optimizer)
+            optimizer.zero_grad(set_to_none=True)
+            rejected += 1
+            reasons["non-finite-post-update-state"] = reasons.get("non-finite-post-update-state", 0) + 1
+            immediate_pause = True
+            break
         accepted += 1
     return {"optimizationEpochs": 1, "acceptedMinibatches": accepted, "rejectedMinibatches": rejected,
             "rejectionReasons": reasons, "metrics": metrics,
-            "pauseRequired": rejected >= 3}
+            "pauseRequired": immediate_pause or rejected >= 3}
 
 
 def manifest_digest(value: dict) -> str:
