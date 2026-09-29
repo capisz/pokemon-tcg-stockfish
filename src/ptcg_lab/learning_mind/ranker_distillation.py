@@ -219,6 +219,8 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
             or manifest.get("manifestHash") != identity_hash({key: value for key, value in manifest.items()
                                                                 if key != "manifestHash"})):
         raise ValueError("ranker distillation manifest identity or checksum mismatch")
+    if manifest.get("teacherAcceptance") != "review-required":
+        raise ValueError("ranker distillation teacher is not marked review-required")
     required_source_kinds = {"macro-position-pool-manifest", "combined-label-manifest",
         "frozen-selection", "ranker-model", "ranker-report"}
     sources = manifest.get("sources")

@@ -181,6 +181,15 @@ def test_ranker_distillation_is_verified_train_only_and_integrates_into_dataset(
     assert rows[0]["rankerDistillation"]["reportHash"] == distill_manifest["rankerReportHash"]
 
     distill_manifest_path = distillation_dir / "manifest.json"
+    unreviewed_manifest = json.loads(distill_manifest_path.read_text())
+    unreviewed_manifest["teacherAcceptance"] = "insufficient"
+    unreviewed_manifest["manifestHash"] = identity_hash({key: value for key, value in unreviewed_manifest.items()
+                                                            if key != "manifestHash"})
+    distill_manifest_path.write_text(json.dumps(unreviewed_manifest))
+    with pytest.raises(ValueError, match="teacher is not marked review-required"):
+        ranker_distillation.load_macro_ranker_distillation(distillation_dir, identity=identity)
+    distill_manifest_path.write_text(json.dumps(distill_manifest))
+
     ambiguous_manifest = json.loads(distill_manifest_path.read_text())
     ambiguous_manifest["sources"].append(ambiguous_manifest["sources"][0])
     ambiguous_manifest["manifestHash"] = identity_hash({key: value for key, value in ambiguous_manifest.items()
