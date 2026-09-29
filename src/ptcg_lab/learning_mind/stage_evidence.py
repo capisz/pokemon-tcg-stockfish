@@ -11,6 +11,7 @@ from .dataset_v1 import file_sha256, load_dataset
 from .disagreement_review import audit_disagreement_review
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .policy_evaluation import evaluate_candidate
+from .ranker_v2 import verify_macro_ranker_v2_artifact
 from .schema import identity_hash
 from .supervised_evidence import verify_supervised_audit_report
 from .training import VerifiedPPOStageRecord, _VERIFIED_PPO_STAGE_TOKEN
@@ -71,6 +72,7 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         evaluation_path: Path, supervised_audit_path: Path, safety_report_path: Path,
         macro_selection_path: Path, python_dataset: Path, typescript_dataset: Path,
         python_labels: Path, typescript_labels: Path, macro_fidelity_path: Path,
+        ranker_model_path: Path, ranker_report_path: Path,
         disagreement_packet_path: Path, disagreement_review_path: Path,
         disagreement_receipt_path: Path, output: Path,
         human_enable_ppo: bool = False) -> tuple[dict, VerifiedPPOStageRecord]:
@@ -84,12 +86,14 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         root, baseline_manifest, dataset_dir, probe_dataset_dir, checkpoint,
         evaluation_path, supervised_audit_path, safety_report_path,
         macro_selection_path, python_dataset, typescript_dataset, python_labels,
-        typescript_labels, macro_fidelity_path, disagreement_packet_path,
+        typescript_labels, macro_fidelity_path, ranker_model_path, ranker_report_path,
+        disagreement_packet_path,
         disagreement_review_path, disagreement_receipt_path)]
     (root, baseline_manifest, dataset_dir, probe_dataset_dir, checkpoint,
      evaluation_path, supervised_audit_path, safety_report_path,
      macro_selection_path, python_dataset, typescript_dataset, python_labels,
-     typescript_labels, macro_fidelity_path, disagreement_packet_path,
+     typescript_labels, macro_fidelity_path, ranker_model_path, ranker_report_path,
+     disagreement_packet_path,
      disagreement_review_path, disagreement_receipt_path) = paths
     if type(human_enable_ppo) is not bool:
         raise ValueError("human PPO authorization must be an explicit boolean")
@@ -124,6 +128,17 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
     if fidelity.get("identity") != manifest.get("identity"):
         raise ValueError("macro-fidelity and supervised evidence have different frozen identities")
 
+    ranker = verify_macro_ranker_v2_artifact(ranker_model_path, ranker_report_path)["report"]
+    if ranker.get("identity") != manifest.get("identity"):
+        raise ValueError("macro-ranker and supervised evidence have different frozen identities")
+    holdouts = ranker.get("holdouts")
+    required_holdouts = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
+    measured_holdouts = {row.get("kind") for row in holdouts if row.get("status") == "measured"}
+    if (ranker.get("acceptance") != "review-required"
+            or ranker.get("development", {}).get("status") != "measured"
+            or not required_holdouts.issubset(measured_holdouts)):
+        raise ValueError("macro-ranker development and both frozen holdout axes must be measured")
+
     with tempfile.TemporaryDirectory(prefix="learning-mind-review-verify-") as temporary:
         generated_review = audit_disagreement_review(packet_path=disagreement_packet_path,
             review_path=disagreement_review_path, output=Path(temporary) / "review.json")
@@ -148,6 +163,7 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         "pythonLabelsManifest": python_labels / "manifest.json",
         "typescriptLabelsManifest": typescript_labels / "manifest.json",
         "macroFidelity": macro_fidelity_path, "disagreementPacket": disagreement_packet_path,
+        "macroRankerModel": ranker_model_path, "macroRankerReport": ranker_report_path,
         "disagreementReview": disagreement_review_path, "disagreementReceipt": disagreement_receipt_path,
     }
     source_hashes = {name: {"path": str(path), "sha256": file_sha256(path)}
@@ -170,6 +186,9 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         "severityThreeRegression": severity_regression,
         "severityThreeProbeCoverage": severity_coverage,
         "ragingBoltMacroPlanFidelity": fidelity.get("ragingBoltMacroPlanFidelity"),
+        "macroRankerAcceptance": ranker.get("acceptance"),
+        "macroRankerDevelopmentStatus": ranker["development"].get("status"),
+        "macroRankerMeasuredHoldoutKinds": sorted(measured_holdouts),
         "humanEnablePPO": human_enable_ppo,
         "automaticPromotion": False,
     }
@@ -179,6 +198,9 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         and values["blindOpponentPolicyFamilyStatus"] == "supported-improvement"
         and values["targetProbeWin"] is True
         and values["ragingBoltMacroPlanFidelity"] == "passed"
+        and values["macroRankerAcceptance"] == "review-required"
+        and values["macroRankerDevelopmentStatus"] == "measured"
+        and required_holdouts.issubset(values["macroRankerMeasuredHoldoutKinds"])
         and values["severityThreeProbeCoverage"] == "sufficient"
         and values["severityThreeRegression"] is False
         and values["legalActionOmission"] is False

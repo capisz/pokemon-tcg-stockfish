@@ -221,7 +221,8 @@ def main(argv=None) -> int:
     for option in ("root", "baseline-manifest", "dataset", "probe-dataset", "checkpoint",
                    "evaluation", "supervised-audit", "safety-report", "macro-selection",
                    "python-dataset", "typescript-dataset", "python-labels", "typescript-labels",
-                   "macro-fidelity", "disagreement-packet", "disagreement-review",
+                   "macro-fidelity", "ranker-model", "ranker-report",
+                   "disagreement-packet", "disagreement-review",
                    "disagreement-receipt", "output"):
         stage.add_argument(f"--{option}", type=Path, required=True)
     stage.add_argument("--human-enable-ppo", action="store_true",
@@ -371,6 +372,7 @@ def main(argv=None) -> int:
             python_dataset=args.python_dataset, typescript_dataset=args.typescript_dataset,
             python_labels=args.python_labels, typescript_labels=args.typescript_labels,
             macro_fidelity_path=args.macro_fidelity,
+            ranker_model_path=args.ranker_model, ranker_report_path=args.ranker_report,
             disagreement_packet_path=args.disagreement_packet,
             disagreement_review_path=args.disagreement_review,
             disagreement_receipt_path=args.disagreement_receipt, output=args.output,

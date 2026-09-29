@@ -1242,3 +1242,22 @@ strength or autonomous improvement.
 - Full Python suite: 409 passed; strategy-contract v1.2 validator, value CLI
   help checks, TypeScript typecheck, `git diff --check`, and the frozen
   `experiment.py` source-identity check passed.
+
+### Require measured macro-ranker evidence before PPO stage authorization (2026-09-28)
+
+- The runbook requires frozen ranker evidence before Transformer training, but
+  the PPO-stage verifier did not consume or bind a ranker artifact. A fully
+  satisfied supervised gate plus the explicit human flag could therefore
+  authorize PPO while strategic-plan ranker evidence was absent.
+- PPO-stage verification now checks the portable ranker model and report
+  checksum, requires the ranker and supervised checkpoint to share the exact
+  frozen identity, and requires measured development, leave-one-archetype-out,
+  and frozen-policy-family holdout results. `review-required` remains a
+  research status, not ranker acceptance; this check only closes the documented
+  stage-order prerequisite. PPO still requires every existing stage condition
+  and the separate explicit human authorization.
+- The immutable stage receipt hashes the ranker model/report and records the
+  measured holdout axes. Regression tests reject missing/insufficient ranker
+  evidence and mismatched identities. Focused stage, ranker-v2, and promotion
+  evidence tests pass (24); CLI help and `git diff --check` pass. No collector,
+  training, PPO, promotion, or service operation was started.

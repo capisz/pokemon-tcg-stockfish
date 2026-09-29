@@ -26,6 +26,8 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
         "python_labels": tmp_path / "python-labels",
         "typescript_labels": tmp_path / "typescript-labels",
         "macro_fidelity_path": tmp_path / "fidelity.json",
+        "ranker_model_path": tmp_path / "ranker-model.json",
+        "ranker_report_path": tmp_path / "ranker-report.json",
         "disagreement_packet_path": tmp_path / "packet.json",
         "disagreement_review_path": tmp_path / "review.json",
         "disagreement_receipt_path": tmp_path / "review-receipt.json",
@@ -61,6 +63,10 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
     fidelity = {"ragingBoltMacroPlanFidelity": "passed", "reportHash": "fidelity-hash",
                 "identity": {"frozen": "same"}}
     review = {"representativeDisagreementsReviewed": True, "receiptHash": "review-hash"}
+    ranker_report = {"identity": {"frozen": "same"}, "acceptance": "review-required",
+        "development": {"status": "measured"}, "holdouts": [
+            {"kind": "leave-one-opponent-archetype-out", "status": "measured"},
+            {"kind": "frozen-policy-family", "status": "measured"}]}
     monkeypatch.setattr(stage_evidence, "audit_manifest", lambda _path: {
         "scheduled": 192, "audited": 192, "unsupportedPositions": 0,
         "representationParity": True})
@@ -71,6 +77,8 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
     monkeypatch.setattr(stage_evidence, "evaluate_candidate", lambda *_args: evaluation)
     monkeypatch.setattr(stage_evidence, "audit_raging_bolt_macro_fidelity", lambda **_kwargs: fidelity)
     monkeypatch.setattr(stage_evidence, "audit_disagreement_review", lambda **_kwargs: review)
+    monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
+        "report": ranker_report, "artifact": {}})
     (paths["evaluation_path"]).write_text(json.dumps(evaluation))
     (paths["safety_report_path"]).write_text(json.dumps(safety))
     (paths["macro_fidelity_path"]).write_text(json.dumps(fidelity))
@@ -90,6 +98,9 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
         capability._values = {**capability._values, "humanEnablePPO": True}
     assert report["reportHash"] == identity_hash({key: value for key, value in report.items()
                                                    if key != "reportHash"})
+    assert report["macroRankerAcceptance"] == "review-required"
+    assert set(report["macroRankerMeasuredHoldoutKinds"]) == {
+        "leave-one-opponent-archetype-out", "frozen-policy-family"}
 
     authorized_paths = {**paths, "output": tmp_path / "authorized-stage.json"}
     report, capability = stage_evidence.verify_ppo_stage_evidence(
@@ -201,6 +212,23 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     assert rejected_supervisor.state.status == "PAUSED"
     assert rejected_supervisor.state.pause_reason == \
         "three rejected updates or worker restarts within one hour"
+
+
+@pytest.mark.parametrize("ranker_report", [
+    {"identity": {"frozen": "same"}, "acceptance": "insufficient",
+     "development": {"status": "insufficient"}, "holdouts": []},
+    {"identity": {"frozen": "different"}, "acceptance": "review-required",
+     "development": {"status": "measured"}, "holdouts": [
+        {"kind": "leave-one-opponent-archetype-out", "status": "measured"},
+        {"kind": "frozen-policy-family", "status": "measured"}]},
+])
+def test_stage_evidence_rejects_missing_or_identity_mismatched_ranker(tmp_path, monkeypatch, ranker_report):
+    paths = _inputs(tmp_path)
+    _patch_verifiers(monkeypatch, paths)
+    monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
+        "report": ranker_report, "artifact": {}})
+    with pytest.raises(ValueError, match="macro-ranker"):
+        stage_evidence.verify_ppo_stage_evidence(**paths)
 
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):

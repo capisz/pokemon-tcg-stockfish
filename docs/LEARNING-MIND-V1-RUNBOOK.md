@@ -762,13 +762,17 @@ The receipt only supports a reviewed gate when every disagreement is marked
 the human-review prerequisite false; this workflow cannot enable PPO or
 promotion.
 
-After all supervised, macro-fidelity, safety, probe, and review artifacts exist,
-assemble the PPO-stage record by recomputing them from their source inputs. Do
-not copy booleans into `stage-gates.json`; the generated report is immutable and
-contains hashes for every source artifact. The verifier also reruns the complete
-192-replay baseline parity audit. Omit `--human-enable-ppo` for an evidence-only
-result; that flag is a separate explicit authorization and cannot make failed
-prerequisites pass.
+After all supervised, macro-fidelity, safety, probe, review, and macro-ranker
+artifacts exist, assemble the PPO-stage record by recomputing them from their
+source inputs. The ranker must be checksum-verified, share the supervised
+model's frozen identity, have measured development results, and have measured
+leave-one-archetype-out plus frozen-policy-family holdouts. Its status remains
+`review-required`; this is an evidence prerequisite, not an automatic ranker or
+policy acceptance. Do not copy booleans into `stage-gates.json`; the generated
+report is immutable and contains hashes for every source artifact. The verifier
+also reruns the complete 192-replay baseline parity audit. Omit
+`--human-enable-ppo` for an evidence-only result; that flag is a separate
+explicit authorization and cannot make failed prerequisites pass.
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
@@ -780,6 +784,7 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
   --python-dataset PYTHON_DATASET --typescript-dataset TYPESCRIPT_DATASET \
   --python-labels PYTHON_LABELS --typescript-labels TYPESCRIPT_LABELS \
   --macro-fidelity MACRO_FIDELITY.json \
+  --ranker-model RANKER_V2.json --ranker-report RANKER_V2.manifest.json \
   --disagreement-packet REVIEW_PACKET.json --disagreement-review HUMAN_REVIEW.json \
   --disagreement-receipt REVIEW_RECEIPT.json --output PPO_STAGE_EVIDENCE.json
 ```
