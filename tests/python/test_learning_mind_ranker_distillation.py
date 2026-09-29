@@ -141,8 +141,8 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "trainingPositions": 1, "trainingCandidates": 2,
         "training": complete_coverage, "development": complete_coverage,
-        "holdouts": [{"kind": kind, "status": "measured", "metrics": complete_coverage} for kind in
-            ("leave-one-opponent-archetype-out", "frozen-policy-family")],
+        "holdouts": [{**holdout, "status": "measured", "metrics": complete_coverage}
+            for holdout in experiment._ranker_holdout_rows([record, dev_record])],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
     report_path = tmp_path / "ranker.manifest.json"
@@ -254,3 +254,27 @@ def test_ranker_distillation_rejects_teacher_fit_to_another_label_manifest(tmp_p
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)
+
+
+def test_ranker_holdout_audit_requires_every_frozen_archetype_and_family_partition():
+    records = []
+    for family in ("python-heuristic", "typescript-heuristic"):
+        for split in ("train", "development"):
+            for archetype in ("crustle", "dragapult"):
+                records.append({"positionHash": f"{family}-{split}-{archetype}",
+                    "sourceGameId": f"game-{family}-{split}-{archetype}",
+                    "opponentPolicyFamily": family, "split": split,
+                    "opponentArchetype": archetype})
+    expected = experiment._ranker_holdout_rows(records)
+    report = {"holdouts": [{**row, "status": "measured", "metrics": {"status": "measured"}}
+                            for row in expected]}
+    ranker_distillation._validate_ranker_holdout_coverage(report, records)
+
+    omitted = {"holdouts": report["holdouts"][:-1]}
+    with pytest.raises(ValueError, match="does not exactly cover the frozen holdout set"):
+        ranker_distillation._validate_ranker_holdout_coverage(omitted, records)
+
+    changed_partition = json.loads(json.dumps(report))
+    changed_partition["holdouts"][0]["test"].append(7)
+    with pytest.raises(ValueError, match="coverage or partition differs"):
+        ranker_distillation._validate_ranker_holdout_coverage(changed_partition, records)

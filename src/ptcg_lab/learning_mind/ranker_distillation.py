@@ -21,6 +21,30 @@ from .ranker_v2 import (_validate_source_game_units, _validated_macro_labels,
 from .schema import identity_hash
 
 
+def _validate_ranker_holdout_coverage(report: dict, records: list[dict]) -> None:
+    from .experiment import _ranker_holdout_rows
+
+    expected = _ranker_holdout_rows(records)
+    supplied = report.get("holdouts")
+    if not isinstance(supplied, list) or len(supplied) != len(expected):
+        raise ValueError("ranker report does not exactly cover the frozen holdout set")
+    expected_by_key = {(row["kind"], row["heldOut"]): row for row in expected}
+    seen = set()
+    for row in supplied:
+        if not isinstance(row, dict):
+            raise ValueError("ranker report contains a malformed holdout row")
+        key = (row.get("kind"), row.get("heldOut"))
+        baseline = expected_by_key.get(key)
+        if (baseline is None or key in seen or row.get("train") != baseline["train"]
+                or row.get("test") != baseline["test"] or row.get("status") != "measured"
+                or not isinstance(row.get("metrics"), dict)
+                or row["metrics"].get("status") != "measured"):
+            raise ValueError("ranker report holdout coverage or partition differs from frozen records")
+        seen.add(key)
+    if seen != set(expected_by_key):
+        raise ValueError("ranker report does not exactly cover the frozen holdout set")
+
+
 def _distribution(scores: np.ndarray, candidates: list[dict], observation: dict,
                    encoded, *, temperature: float) -> list[float]:
     scores = np.asarray(scores, dtype=np.float64)
@@ -89,6 +113,7 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
     labels_dir = labels_dir.resolve()
     selection_path = selection_path.resolve()
     labels_manifest, records = _load_ranker_input(labels_dir, selection_path)
+    _validate_ranker_holdout_coverage(report, records)
     if (report.get("inputManifestSha256") != file_sha256(labels_dir / "manifest.json")
             or report.get("selectionManifestSha256") != file_sha256(selection_path)
             or report.get("selectionHash") != labels_manifest.get("selectionHash")
@@ -257,6 +282,7 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     labels_manifest, records = _load_ranker_input(
         sources_by_kind["combined-label-manifest"].parent,
         sources_by_kind["frozen-selection"])
+    _validate_ranker_holdout_coverage(verified["report"], records)
     _validate_source_game_units(sources_by_kind["frozen-selection"], records)
     if (verified["report"].get("reportHash") != manifest.get("rankerReportHash")
             or verified["report"].get("modelSha256") != manifest.get("rankerModelSha256")
