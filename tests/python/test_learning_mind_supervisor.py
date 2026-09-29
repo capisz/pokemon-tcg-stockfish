@@ -83,6 +83,27 @@ def test_supervisor_rejects_malformed_persisted_state_and_unknown_failure_kind(t
         supervisor.record_failure("continue-forever")
 
 
+def test_supervisor_pauses_at_checkpoint_when_disk_limit_is_reached(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from ptcg_lab.learning_mind import supervisor as supervisor_module
+
+    root = tmp_path / "run"
+    root.mkdir()
+    (root / "artifact.bin").write_bytes(b"x" * 16)
+    supervisor = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=16)
+    supervisor.state.status = "RUNNING"
+    events = []
+    supervisor.notifier = events.append
+    monkeypatch.setattr(supervisor_module.shutil, "disk_usage",
+                        lambda _path: SimpleNamespace(free=100_000))
+    with pytest.raises(RuntimeError, match="learning data cap reached"):
+        supervisor.record_progress({"positionIndex": 1})
+    assert supervisor.state.status == "PAUSED"
+    assert supervisor.state.pause_reason == "learning data cap reached"
+    assert supervisor.state.cursor == {}
+    assert events == [{"kind": "pause", "reason": "learning data cap reached"}]
+
+
 def test_cpu_worker_profile():
     assert cpu_worker_count(16) == 12
     assert cpu_worker_count(8) == 6

@@ -59,6 +59,9 @@ class MindState:
 class MindSupervisor:
     def __init__(self, root: Path, *, reserve_bytes: int, data_cap_bytes: int,
                  notifier=None, clock=time.time):
+        if (type(reserve_bytes) is not int or reserve_bytes < 0
+                or type(data_cap_bytes) is not int or data_cap_bytes < 1):
+            raise ValueError("supervisor disk reserve and data cap must be nonnegative/positive byte counts")
         self.root = Path(root); self.reserve_bytes = reserve_bytes; self.data_cap_bytes = data_cap_bytes
         self.notifier = notifier or (lambda event: None); self.clock = clock
         self.state_path = self.root / "state.json"
@@ -128,6 +131,7 @@ class MindSupervisor:
             frozen = json.loads(json.dumps(cursor, allow_nan=False))
         except (TypeError, ValueError) as error:
             raise ValueError("phase cursor must contain finite JSON values only") from error
+        self._check_capacity_or_pause()
         self.state.cursor = frozen
         self.persist()
 
@@ -145,6 +149,7 @@ class MindSupervisor:
             frozen = json.loads(json.dumps(next_cursor or {}, allow_nan=False))
         except (TypeError, ValueError) as error:
             raise ValueError("next phase cursor must contain finite JSON values only") from error
+        self._check_capacity_or_pause()
         self.state.phase = next_phase
         self.state.cursor = frozen
         self.persist()
@@ -174,6 +179,13 @@ class MindSupervisor:
         artifact_bytes = sum(path.stat().st_size for path in self.root.rglob("*") if path.is_file()) if self.root.exists() else 0
         if usage.free < self.reserve_bytes: raise RuntimeError("free-space reserve reached")
         if artifact_bytes >= self.data_cap_bytes: raise RuntimeError("learning data cap reached")
+
+    def _check_capacity_or_pause(self) -> None:
+        try:
+            self.check_disk()
+        except RuntimeError as error:
+            self.pause(str(error))
+            raise
 
 
 def cpu_worker_count(physical_cores: int | None) -> int:

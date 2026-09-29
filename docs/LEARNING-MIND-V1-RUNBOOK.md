@@ -903,8 +903,10 @@ explicitly enable a new run.
 Persisted supervisor state is schema-checked on startup; malformed phases,
 cursors, or failure history prevent resume instead of being silently trusted.
 State writes use a unique same-directory temporary file, fsync, and atomic
-replacement. This improves local crash safety but is not itself evidence that
-the 24-hour soak or reboot-service gate has passed.
+replacement. Free-space reserve and data-cap checks run at start and each
+durable progress/phase boundary; crossing either pauses before the next cursor
+is committed. This improves local crash safety but is not itself evidence
+that the 24-hour soak or reboot-service gate has passed.
 
 Before installation, complete a manually supervised 24-hour soak. Verify pause,
 disk exhaustion, corrupted replay, worker restart, rejected update,
