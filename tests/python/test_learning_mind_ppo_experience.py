@@ -201,7 +201,9 @@ def test_ppo_schedule_freezes_uniform_archetypes_policy_mix_mirrors_and_seeds():
 
 @pytest.mark.parametrize("mutate,match", [
     (lambda row: row.update(actor=1), "observation/tracker must belong"),
+    (lambda row: row.update(oracleCards=["hidden"]), "missing or unknown fields"),
     (lambda row: row["observation"].update(oppositeObservation={"playerId": 1}), "hidden/private view"),
+    (lambda row: row["observation"].update(schemaVersion=True), "must belong to its decision actor"),
     (lambda row: row.update(behaviorPolicyHash="f" * 64), "mixes behavior-policy"),
     (lambda row: row.update(selectedAction=2), "within the frozen 128-class cap"),
     (lambda row: row["observation"].update(legalActions=[]), "preserve all actor-visible legal actions"),

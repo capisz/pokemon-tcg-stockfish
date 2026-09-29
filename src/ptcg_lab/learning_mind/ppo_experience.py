@@ -15,7 +15,7 @@ from .curriculum import assignment, promotion_seed_namespace_disjoint
 from .schema import identity_hash
 
 
-EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v4"
+EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v5"
 PPO_SCHEDULER_VERSION = "ppo-training-scheduler-v1"
 GAME_STATUSES = frozenset({"finished", "truncated", "error"})
 LEARNING_IDENTITY_FIELDS = frozenset({"engine_build_hash", "deck_manifest_hash",
@@ -98,6 +98,11 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
                        feature_schema_hash: str) -> None:
     if not isinstance(decision, dict):
         raise ValueError("PPO experience decisions must be JSON objects")
+    expected_keys = {"actor", "observation", "tracker", "decisionIndex", "selectedAction",
+        "actionClassCount", "oldLogProb", "oldValue", "behaviorPolicyHash",
+        "featureIdentityHash", "featureSchemaHash"}
+    if set(decision) != expected_keys:
+        raise ValueError("PPO experience decision contains missing or unknown fields")
     if _has_forbidden_view_key(decision):
         raise ValueError("PPO experience must contain actor-visible decisions, not private replay views")
     actor = decision.get("actor")
@@ -107,7 +112,9 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
             or type(observation.get("playerId")) is not int or observation["playerId"] != actor
             or type(observation.get("decisionPlayer")) is not int
             or observation["decisionPlayer"] != actor
-            or not isinstance(tracker, dict)):
+            or not isinstance(tracker, dict)
+            or type(observation.get("schemaVersion")) is not int
+            or observation["schemaVersion"] != 1):
         raise ValueError("PPO experience observation/tracker must belong to its decision actor")
     players = observation.get("players")
     if not isinstance(players, list) or len(players) != 2:

@@ -859,9 +859,10 @@ recomputed and cross-checked before opening the store. A row
 whose assignment differs from the regenerated scheduler entry is rejected;
 only decisions from a scheduled learner seat may enter the PPO trace, and the
 same schedule index cannot be saved twice. The store schema is
-`ppo-actor-experience-v4`; both learner and opponent player summaries are
-validated, the learner hand must match its visible count, and the opponent
-hand list must remain empty while its public hand count is retained. Older
+`ppo-actor-experience-v5`; actor decision records use an exact field allowlist,
+schema/seat/count values require exact JSON integers, both learner and opponent
+player summaries are validated, the learner hand must match its visible count,
+and the opponent hand list must remain empty while its public hand count is retained. Older
 experience manifests must not be resumed as if they had the complete identity
 and redaction checks. Direct conversion of a game into
 PPO traces requires the same frozen scheduler settings and repeats the exact
