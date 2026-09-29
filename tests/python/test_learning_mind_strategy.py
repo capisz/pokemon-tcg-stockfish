@@ -14,8 +14,8 @@ from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
     eligible_ppo_records, generalized_advantages, ppo_enablement, supervised_policy_rows,
     ppo_legal_action_logits, update_guard, validate_ppo_optimizer)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
-from ptcg_lab.learning_mind.notifications import (AtomicRollbackRegistry, NotificationRouter,
-    VerifiedPromotionEvidence)
+from ptcg_lab.learning_mind.notifications import (AtomicRollbackRegistry, LocalJsonlNotificationSink,
+    NotificationRouter, VerifiedPromotionEvidence)
 from test_learning_mind_representation import observation
 
 
@@ -381,3 +381,34 @@ def test_notification_scope_and_atomic_rollback():
         registry.rollback("candidate")
     assert registry.trusted_checkpoint == "trusted"
     assert registry.candidate_checkpoint == "candidate"
+
+
+def test_local_notification_sink_is_private_append_only_and_filters_payload(tmp_path):
+    import stat
+
+    path = tmp_path / "operator" / "events.jsonl"
+    sink = LocalJsonlNotificationSink(path, clock=lambda: 1790640000.0)
+    router = NotificationRouter(local=sink)
+    router({"kind": "progress", "reason": "must not be recorded"})
+    router({"kind": "pause", "reason": "worker restart", "candidateHash": "a" * 64,
+            "replay": {"privateHand": ["secret"]}, "token": "do-not-log"})
+    router({"kind": "review-ready", "milestone": "supervised-candidate"})
+
+    records = [json.loads(line) for line in path.read_text().splitlines()]
+    assert len(records) == 2
+    assert records[0] == {"timestamp": "2026-09-29T00:00:00Z", "kind": "pause",
+                          "reason": "worker restart", "candidateHash": "a" * 64}
+    assert records[1]["kind"] == "review-ready"
+    assert "privateHand" not in path.read_text() and "do-not-log" not in path.read_text()
+    assert stat.S_IMODE(path.stat().st_mode) == 0o600
+    router({"kind": "failure", "reason": "bounded"})
+    assert len(path.read_text().splitlines()) == 3
+
+
+def test_local_notification_sink_rejects_invalid_fields_and_clock(tmp_path):
+    path = tmp_path / "events.jsonl"
+    with pytest.raises(ValueError, match="fields must be strings"):
+        LocalJsonlNotificationSink(path)({"kind": "failure", "reason": {"secret": "data"}})
+    with pytest.raises(ValueError, match="finite timestamp"):
+        LocalJsonlNotificationSink(path, clock=lambda: float("nan"))({"kind": "pause"})
+    assert not path.exists()

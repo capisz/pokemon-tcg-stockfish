@@ -956,6 +956,12 @@ Do not put email credentials in the repository or chat. Configure a credential
 reference in the local service environment after the notification adapter is
 implemented and tested.
 
+The research package provides an opt-in `LocalJsonlNotificationSink` for a
+private append-only operator log. It records only allowlisted event metadata,
+uses mode `0600`, and fsyncs each event. Wire it into `NotificationRouter`
+only in a manually supervised run; it does not install a service, send email,
+or satisfy the notification/reboot-service soak gate.
+
 ### Reboot behavior
 
 The example launchd file is:

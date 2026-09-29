@@ -1,9 +1,55 @@
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import fcntl
+import json
+import math
+import os
+from pathlib import Path
+import time
 from types import MappingProxyType
 
 ALLOWED_KINDS = frozenset({"pause", "failure", "review-ready", "milestone-complete"})
+_LOCAL_EVENT_FIELDS = frozenset({"reason", "milestone", "candidateHash", "reportHash"})
 _VERIFIED_PROMOTION_TOKEN = object()
+
+
+class LocalJsonlNotificationSink:
+    """Append minimal, private local operator events; never stores arbitrary payloads."""
+
+    def __init__(self, path: Path, *, clock=time.time):
+        self.path = Path(path)
+        self.clock = clock
+
+    def __call__(self, event: dict) -> None:
+        if not isinstance(event, dict) or event.get("kind") not in ALLOWED_KINDS:
+            return
+        now = self.clock()
+        if isinstance(now, bool) or not isinstance(now, (int, float)) or not math.isfinite(now):
+            raise ValueError("notification clock must return a finite timestamp")
+        record = {"timestamp": datetime.fromtimestamp(now, timezone.utc).isoformat().replace("+00:00", "Z"),
+                  "kind": event["kind"]}
+        for key in _LOCAL_EVENT_FIELDS:
+            value = event.get(key)
+            if value is None:
+                continue
+            if not isinstance(value, str):
+                raise ValueError("local notification fields must be strings")
+            record[key] = value[:512]
+        encoded = (json.dumps(record, sort_keys=True, separators=(",", ":"), allow_nan=False) + "\n").encode()
+        if len(encoded) > 2048:
+            raise ValueError("local notification record exceeds its size limit")
+        self.path.parent.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(self.path, os.O_APPEND | os.O_CREAT | os.O_WRONLY, 0o600)
+        try:
+            os.fchmod(descriptor, 0o600)
+            fcntl.flock(descriptor, fcntl.LOCK_EX)
+            written = os.write(descriptor, encoded)
+            if written != len(encoded):
+                raise OSError("short write while recording local notification")
+            os.fsync(descriptor)
+        finally:
+            os.close(descriptor)
 
 
 class VerifiedPromotionEvidence:
