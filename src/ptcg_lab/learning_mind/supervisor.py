@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import shutil
+import tempfile
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -10,6 +12,8 @@ from types import MappingProxyType
 
 
 PHASES = ("collection", "training", "evaluation", "retention")
+FAILURE_KINDS = frozenset({"non-finite", "identity-drift", "replay-corruption",
+    "legal-action-omission", "private-view-leakage", "rejected-update", "worker-restart"})
 
 
 class VerifiedContinuousOperationRecord:
@@ -63,17 +67,51 @@ class MindSupervisor:
     def _load(self) -> MindState:
         if not self.state_path.exists(): return MindState()
         value = json.loads(self.state_path.read_text())
+        expected_keys = {"schemaVersion", "status", "phase", "cursor", "failures", "pause_reason"}
+        if (not isinstance(value, dict) or set(value) != expected_keys
+                or value.get("schemaVersion") != 1
+                or not isinstance(value.get("status"), str)
+                or value.get("status") not in {"PAUSED", "RUNNING"}
+                or value.get("phase") not in PHASES
+                or not isinstance(value.get("cursor"), dict)
+                or not isinstance(value.get("failures"), list)
+                or (value.get("pause_reason") is not None
+                    and not isinstance(value.get("pause_reason"), str))):
+            raise ValueError("supervisor state is malformed; refusing to resume")
+        try:
+            json.dumps(value["cursor"], allow_nan=False)
+        except (TypeError, ValueError) as error:
+            raise ValueError("supervisor cursor is not finite JSON; refusing to resume") from error
+        for failure in value["failures"]:
+            if (not isinstance(failure, dict) or set(failure) != {"time", "kind"}
+                    or type(failure.get("time")) not in (int, float)
+                    or not isinstance(failure.get("time"), (int, float))
+                    or not math.isfinite(failure["time"])
+                    or not isinstance(failure.get("kind"), str)
+                    or failure.get("kind") not in FAILURE_KINDS):
+                raise ValueError("supervisor failure history is malformed; refusing to resume")
         # A process start is always paused, even if the previous process died while running.
         return MindState(status="PAUSED", phase=value.get("phase", "collection"), cursor=value.get("cursor", {}),
                          failures=value.get("failures", []), pause_reason="reboot-safe default")
 
     def persist(self) -> None:
         self.root.mkdir(parents=True, exist_ok=True)
-        temporary = self.state_path.with_suffix(".tmp")
         value = {"schemaVersion": 1, **self.state.__dict__}
-        temporary.write_text(json.dumps(value, sort_keys=True, indent=2) + "\n")
-        with temporary.open("rb") as source: os.fsync(source.fileno())
-        temporary.replace(self.state_path)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.root,
+                prefix=".state.", suffix=".tmp", delete=False) as temporary:
+            temporary.write(json.dumps(value, sort_keys=True, indent=2, allow_nan=False) + "\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+            temporary_path = Path(temporary.name)
+        try:
+            temporary_path.replace(self.state_path)
+            directory_fd = os.open(self.root, os.O_RDONLY)
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
+        finally:
+            temporary_path.unlink(missing_ok=True)
 
     def start(self, *, human_enabled: bool, stage_record: dict | None = None) -> None:
         if not human_enabled: raise PermissionError("a human must explicitly enable each run")
@@ -116,7 +154,11 @@ class MindSupervisor:
         if notify: self.notifier({"kind": "pause", "reason": reason})
 
     def record_failure(self, kind: str) -> None:
+        if not isinstance(kind, str) or kind not in FAILURE_KINDS:
+            raise ValueError("unknown supervisor failure kind")
         now = self.clock()
+        if isinstance(now, bool) or not isinstance(now, (int, float)) or not math.isfinite(now):
+            raise ValueError("supervisor clock must return a finite timestamp")
         self.state.failures = [item for item in self.state.failures if now - item["time"] <= 3600]
         self.state.failures.append({"time": now, "kind": kind})
         strikes = sum(item["kind"] in {"rejected-update", "worker-restart"} for item in self.state.failures)

@@ -70,6 +70,19 @@ def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp
     assert restarted.state.cursor == {"epoch": 0, "batch": 0}
 
 
+def test_supervisor_rejects_malformed_persisted_state_and_unknown_failure_kind(tmp_path):
+    root = tmp_path / "corrupt"
+    root.mkdir()
+    (root / "state.json").write_text(json.dumps({"schemaVersion": 1, "status": "RUNNING",
+        "phase": "untrusted-phase", "cursor": {}, "failures": [], "pause_reason": None}))
+    with pytest.raises(ValueError, match="state is malformed; refusing to resume"):
+        MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
+
+    supervisor = MindSupervisor(tmp_path / "fresh", reserve_bytes=0, data_cap_bytes=1000)
+    with pytest.raises(ValueError, match="unknown supervisor failure kind"):
+        supervisor.record_failure("continue-forever")
+
+
 def test_cpu_worker_profile():
     assert cpu_worker_count(16) == 12
     assert cpu_worker_count(8) == 6
