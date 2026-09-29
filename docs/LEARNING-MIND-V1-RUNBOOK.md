@@ -902,6 +902,8 @@ explicitly enable a new run.
 
 Persisted supervisor state is schema-checked on startup; malformed phases,
 cursors, or failure history prevent resume instead of being silently trusted.
+An exclusive process lock allows only one supervisor instance to own a state
+root; release it only when that process is permanently exiting.
 State writes use a unique same-directory temporary file, fsync, and atomic
 replacement. Free-space reserve and data-cap checks run at start and each
 durable progress/phase boundary; crossing either pauses before the next cursor

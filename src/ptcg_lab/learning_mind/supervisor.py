@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import fcntl
 import math
 import os
 import shutil
@@ -65,6 +66,8 @@ class MindSupervisor:
         self.root = Path(root); self.reserve_bytes = reserve_bytes; self.data_cap_bytes = data_cap_bytes
         self.notifier = notifier or (lambda event: None); self.clock = clock
         self.state_path = self.root / "state.json"
+        self.lock_path = self.root / ".supervisor.lock"
+        self._lock_fd: int | None = None
         self.state = self._load()
 
     def _load(self) -> MindState:
@@ -117,11 +120,40 @@ class MindSupervisor:
             temporary_path.unlink(missing_ok=True)
 
     def start(self, *, human_enabled: bool, stage_record: dict | None = None) -> None:
+        if self.state.status != "PAUSED":
+            raise PermissionError("supervisor is already running")
         if not human_enabled: raise PermissionError("a human must explicitly enable each run")
         if not continuous_operation_enablement(stage_record)["enabled"]:
             raise PermissionError("continuous operation is not enabled by the accepted stage record")
-        self._check_capacity_or_pause(status="RUNNING", clear_pause_reason=True)
-        self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
+        self._acquire_process_lock()
+        try:
+            self._check_capacity_or_pause(status="RUNNING", clear_pause_reason=True)
+            self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
+        except Exception:
+            self.close()
+            raise
+
+    def _acquire_process_lock(self) -> None:
+        if self._lock_fd is not None:
+            return
+        self.root.mkdir(parents=True, exist_ok=True)
+        descriptor = os.open(self.lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+        try:
+            fcntl.flock(descriptor, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            os.close(descriptor)
+            raise PermissionError("another supervisor process owns this state root") from error
+        except Exception:
+            os.close(descriptor)
+            raise
+        self._lock_fd = descriptor
+
+    def close(self) -> None:
+        """Release the process lock when this supervisor is permanently exiting."""
+        if self._lock_fd is not None:
+            fcntl.flock(self._lock_fd, fcntl.LOCK_UN)
+            os.close(self._lock_fd)
+            self._lock_fd = None
 
     def record_progress(self, cursor: dict) -> None:
         if self.state.status != "RUNNING":

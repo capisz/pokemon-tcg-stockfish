@@ -104,6 +104,18 @@ def test_supervisor_pauses_at_checkpoint_when_disk_limit_is_reached(tmp_path, mo
     assert events == [{"kind": "pause", "reason": "learning data cap reached"}]
 
 
+def test_only_one_supervisor_process_can_own_a_state_root(tmp_path):
+    root = tmp_path / "shared"
+    first = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=10_000)
+    second = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=10_000)
+    first._acquire_process_lock()
+    with pytest.raises(PermissionError, match="another supervisor process owns"):
+        second._acquire_process_lock()
+    first.close()
+    second._acquire_process_lock()
+    second.close()
+
+
 def test_supervisor_reserves_space_for_the_projected_cursor_before_commit(tmp_path, monkeypatch):
     from types import SimpleNamespace
     from ptcg_lab.learning_mind import supervisor as supervisor_module
