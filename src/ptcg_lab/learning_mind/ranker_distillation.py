@@ -241,6 +241,74 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
             or verified["report"].get("selectionHash") != labels_manifest.get("selectionHash")
             or labels_manifest.get("identity") != identity):
         raise ValueError("ranker distillation teacher no longer matches its frozen manifest")
+    pool_manifest_path = sources_by_kind["macro-position-pool-manifest"]
+    pool_manifest, pool_rows = load_dataset(pool_manifest_path.parent, identity=identity)
+    if pool_manifest.get("id") != "learning-mind-macro-position-pool-v1":
+        raise ValueError("ranker distillation source is not the frozen macro position pool")
+    pool_by_hash = {row.get("positionHash"): row for row in pool_rows}
+    if len(pool_by_hash) != len(pool_rows):
+        raise ValueError("frozen macro position pool repeats a position")
+
+    rollout_ids = {}
+    for source_run in labels_manifest.get("sourceRuns", []):
+        families = source_run.get("policyFamilies") if isinstance(source_run, dict) else None
+        rollout_id = source_run.get("rolloutIdentity") if isinstance(source_run, dict) else None
+        if (not isinstance(families, list) or len(families) != 1
+                or families[0] not in {"python-heuristic", "typescript-heuristic"}
+                or families[0] in rollout_ids or not isinstance(rollout_id, str) or not rollout_id):
+            raise ValueError("ranker distillation source-run identity is ambiguous")
+        rollout_ids[families[0]] = rollout_id
+    if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
+        raise ValueError("ranker distillation source-run families are incomplete")
+
+    rows_by_hash = {row.get("positionHash"): row for row in rows}
+    if len(rows_by_hash) != len(rows):
+        raise ValueError("ranker distillation repeats a position")
+    train_records = [record for record in records if record.get("split") == "train"]
+    if set(rows_by_hash) != {record.get("positionHash") for record in train_records}:
+        raise ValueError("ranker distillation rows do not exactly cover frozen training positions")
+    source_fields = ("positionHash", "familyId", "sourceGameId", "sourceDecisionIndex", "actor",
+        "deckHash", "opponentArchetype", "opponentPolicyFamily", "featureIdentityHash",
+        "split", "observation", "tracker")
+    temperature = manifest.get("temperature")
+    for record in train_records:
+        position_hash = record["positionHash"]
+        row = rows_by_hash[position_hash]
+        source = pool_by_hash.get(position_hash)
+        if (source is None or source.get("split") != "train"
+                or source.get("observation") != record.get("observation")
+                or source.get("familyId") != record.get("familyId")
+                or source.get("sourceGameId") != record.get("sourceGameId")
+                or any(row.get(field) != source.get(field) for field in source_fields)):
+            raise ValueError("ranker distillation row differs from its frozen actor-visible pool position")
+        labels = _validated_macro_labels(record,
+            expected_rollout_identity=rollout_ids.get(record.get("opponentPolicyFamily")))
+        if len(labels) < 2:
+            raise ValueError("ranker distillation training position lacks two completed candidates")
+        encoded = encode_decision(source["observation"], source["tracker"])
+        if encoded.identity != source.get("featureIdentityHash"):
+            raise ValueError("ranker distillation source feature identity mismatch")
+        candidates = [label["candidate"] for label in labels]
+        features = np.stack([candidate_features_v2(source["observation"], candidate)
+                             for candidate in candidates])
+        scores = predict_macro_ranker_v2(verified["artifact"], features)
+        expected_distribution = _distribution(scores, candidates, source["observation"], encoded,
+                                              temperature=temperature)
+        actual_distribution = row.get("policyDistribution")
+        if (not isinstance(actual_distribution, list)
+                or len(actual_distribution) != len(expected_distribution)
+                or not np.allclose(actual_distribution, expected_distribution, rtol=1e-6, atol=1e-8)):
+            raise ValueError("ranker distillation action distribution does not reproduce from its frozen teacher")
+        expected_provenance = {"modelSha256": verified["report"]["modelSha256"],
+            "reportHash": verified["report"]["reportHash"],
+            "inputManifestSha256": verified["report"]["inputManifestSha256"],
+            "selectionManifestSha256": verified["report"]["selectionManifestSha256"],
+            "candidateSetHash": identity_hash(sorted(label["candidateHash"] for label in labels)),
+            "candidateCount": len(labels), "temperature": temperature}
+        if (row.get("policyLabelSource") != "macro-ranker-distillation"
+                or row.get("acceptableActionIndices") is not None
+                or row.get("rankerDistillation") != expected_provenance):
+            raise ValueError("ranker distillation row provenance does not reproduce from its teacher inputs")
     if any(row.get("rankerDistillation", {}).get("modelSha256") != verified["report"].get("modelSha256")
            or row.get("rankerDistillation", {}).get("reportHash") != verified["report"].get("reportHash")
            or row.get("rankerDistillation", {}).get("inputManifestSha256") !=
