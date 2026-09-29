@@ -142,9 +142,71 @@ def matched_sequential_decision(candidate_records: list[dict], control_records: 
                       else "truncated")
             paired_records.append({"gameId": pair_id, "status": status})
     result = sequential_decision(paired_records, non_regression_margin=non_regression_margin)
-    return {**result, "matchedPairs": len(paired_records),
+    return {**result, "pairedWinRate": result["wins"] / result["decisive"] if result["decisive"] else None,
+            "matchedPairs": len(paired_records),
             "candidateOutcomes": {key: candidate_statuses[key] for key in ("finished", "truncated", "error")},
             "controlOutcomes": {key: control_statuses[key] for key in ("finished", "truncated", "error")}}
+
+
+def matched_promotion_matrix_decision(candidate_records: list[dict], control_records: list[dict], *,
+                                      training_policy_families: list[str], strategy: dict,
+                                      identities_match: bool, human_approved: bool,
+                                      non_regression_margin: float = .05) -> dict:
+    """Summarize matched promotion evidence across all ordered archetype cells."""
+    if (not isinstance(training_policy_families, list) or not training_policy_families
+            or any(not isinstance(value, str) or not value for value in training_policy_families)
+            or len(set(training_policy_families)) != len(training_policy_families)):
+        raise ValueError("training opponent-policy families must be unique nonempty strings")
+    if type(identities_match) is not bool or type(human_approved) is not bool:
+        raise ValueError("promotion identity and human-approval results must be explicit booleans")
+    if not isinstance(candidate_records, list) or not isinstance(control_records, list):
+        raise ValueError("candidate and control promotion records must be lists")
+
+    aggregate = matched_sequential_decision(candidate_records, control_records,
+        non_regression_margin=non_regression_margin)
+    matchups = []
+    for own, opponent in sorted(PROMOTION_MATCHUPS):
+        candidate_cell = [row for row in candidate_records
+                          if row.get("ownArchetype") == own and row.get("opponentArchetype") == opponent]
+        control_cell = [row for row in control_records
+                        if row.get("ownArchetype") == own and row.get("opponentArchetype") == opponent]
+        if not candidate_cell and not control_cell:
+            matchups.append({"ownArchetype": own, "opponentArchetype": opponent,
+                "completed": 0, "decisive": 0, "status": "insufficient",
+                "regressionPoints": math.inf})
+            continue
+        result = matched_sequential_decision(candidate_cell, control_cell,
+            non_regression_margin=non_regression_margin)
+        rate = result["pairedWinRate"]
+        matchups.append({"ownArchetype": own, "opponentArchetype": opponent,
+            "completed": result["completed"], "decisive": result["decisive"],
+            "status": result["status"],
+            "regressionPoints": max(0.0, (.5 - rate) * 100) if rate is not None else math.inf,
+            "pairedResult": result})
+
+    training = set(training_policy_families)
+    blind_families = sorted({row.get("opponentPolicyFamily") for row in candidate_records
+                             if isinstance(row, dict)
+                             and row.get("opponentPolicyFamily") not in training})
+    blind_results = {}
+    for family in blind_families:
+        candidate_family = [row for row in candidate_records if row.get("opponentPolicyFamily") == family]
+        control_family = [row for row in control_records if row.get("opponentPolicyFamily") == family]
+        blind_results[family] = matched_sequential_decision(candidate_family, control_family,
+            non_regression_margin=non_regression_margin)
+    blind_passed = any(result["completed"] >= 100 and result["decisive"] >= 100
+        and result["status"] in {"supported-improvement", "supported-non-regression"}
+        for result in blind_results.values())
+    gate = promotion_gate(aggregate=aggregate, matchups=matchups, strategy=strategy,
+        blind_family_passed=blind_passed, identities_match=identities_match,
+        human_approved=human_approved)
+    return {"schemaVersion": 1, "kind": "matched-promotion-matrix-decision-v1",
+            "aggregate": aggregate, "matchups": matchups,
+            "trainingOpponentPolicyFamilies": sorted(training),
+            "unseenOpponentPolicyFamilies": blind_families,
+            "blindFamilyResults": blind_results, "blindFamilyPassed": blind_passed,
+            "identitiesMatch": identities_match, "humanApproved": human_approved,
+            "promotionGate": gate, "automaticPromotion": False}
 
 
 def promotion_gate(*, aggregate: dict, matchups: list[dict], strategy: dict,

@@ -4,8 +4,9 @@ import json
 
 import pytest
 
-from ptcg_lab.learning_mind.evaluation import (PROMOTION_MATCHUPS, matched_sequential_decision,
-    promotion_gate, promotion_seed, sequential_decision)
+from ptcg_lab.learning_mind.evaluation import (PROMOTION_MATCHUPS,
+    matched_promotion_matrix_decision, matched_sequential_decision, promotion_gate,
+    promotion_seed, sequential_decision)
 from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
@@ -414,6 +415,50 @@ def test_matched_sequential_evaluation_checks_schedule_and_keeps_unfinished_sepa
     collided[2]["seed"] = collided[0]["seed"]
     with pytest.raises(ValueError, match="duplicate seed"):
         matched_sequential_decision(collided, control)
+
+
+def test_matched_promotion_matrix_requires_all_ordered_cells_and_blind_family():
+    candidate, control = [], []
+    for own, opponent in sorted(PROMOTION_MATCHUPS):
+        for index in range(100):
+            pair = f"{own}|{opponent}|{index}"
+            seat, first = index % 2, (index + 1) % 2
+            position = f"promotion-matrix-v1|{own}|{opponent}|seat-{seat}|first-{first}"
+            seed = promotion_seed(position, index)
+            for policy, score, target in (("candidate", 1, candidate), ("control", 0, control)):
+                target.append({"pairId": pair, "gameId": f"{policy}-{pair}",
+                    "status": "finished", "score": score, "seed": seed,
+                    "seedNamespace": "promotion", "scheduleIndex": index,
+                    "ownArchetype": own, "opponentArchetype": opponent,
+                    "learnerSeat": seat, "firstPlayer": first,
+                    "opponentPolicyFamily": "blind-family", "schedulerIdentity": "matrix-v1"})
+
+    passed = matched_promotion_matrix_decision(candidate, control,
+        training_policy_families=["training-family"],
+        strategy={"severityThreeRegressions": []}, identities_match=True, human_approved=True)
+    assert passed["promotionGate"]["promotable"] is True
+    assert passed["promotionGate"]["automaticPromotion"] is False
+    assert len(passed["matchups"]) == 25
+    assert all(row["completed"] == 100 and row["status"] == "supported-improvement"
+               for row in passed["matchups"])
+    assert passed["unseenOpponentPolicyFamilies"] == ["blind-family"]
+    assert passed["blindFamilyPassed"] is True
+    unapproved = matched_promotion_matrix_decision(candidate, control,
+        training_policy_families=["training-family"],
+        strategy={"severityThreeRegressions": []}, identities_match=True, human_approved=False)
+    assert unapproved["promotionGate"]["promotable"] is False
+    assert unapproved["promotionGate"]["automaticPromotion"] is False
+
+    missing_candidate = [row for row in candidate
+        if (row["ownArchetype"], row["opponentArchetype"]) != ("crustle", "crustle")]
+    missing_control = [row for row in control
+        if (row["ownArchetype"], row["opponentArchetype"]) != ("crustle", "crustle")]
+    incomplete = matched_promotion_matrix_decision(missing_candidate, missing_control,
+        training_policy_families=["training-family"],
+        strategy={"severityThreeRegressions": []}, identities_match=True, human_approved=True)
+    assert incomplete["promotionGate"]["promotable"] is False
+    assert any("all 25 ordered matchups" in reason
+               for reason in incomplete["promotionGate"]["reasons"])
 
 
 def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():

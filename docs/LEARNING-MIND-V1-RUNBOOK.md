@@ -904,6 +904,12 @@ finish; if either side truncates or errors, the pair remains unfinished and is
 reported separately. This analysis does not issue a promotion receipt or
 authorize a checkpoint change.
 
+`matched_promotion_matrix_decision` aggregates the full 25-cell matrix,
+requires at least one adequately sampled unseen opponent-policy family, and
+returns the fail-closed promotion gate result. It remains an analysis report:
+the current registry still requires verifier-issued evidence and separate
+human approval before any trusted-checkpoint change.
+
 Promotion requires aggregate improvement, no critical matchup regression over
 five percentage points, no severity-three probe regression, the blind policy
 family, exact identities, and explicit human approval.
