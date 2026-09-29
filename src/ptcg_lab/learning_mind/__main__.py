@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .candidate_safety import audit_candidate_safety
 from .audit import audit_manifest
-from .aggregation import combine_macro_label_runs
+from .aggregation import combine_macro_label_runs, finalize_macro_label_runs
 from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import (build_dataset, build_macro_position_pool,
                          build_strategy_probe_dataset, load_dataset, training_records)
@@ -111,6 +111,13 @@ def main(argv=None) -> int:
     combine.add_argument("--selection", type=Path, required=True,
                          help="frozen train/development selection manifest that every run must cover exactly")
     combine.add_argument("--output", type=Path, required=True)
+    finalize_labels = sub.add_parser("finalize-macro-label-runs",
+        help="combine finalized family runs and independently verify their 95%% confidence audit")
+    finalize_labels.add_argument("--input-dir", type=Path, action="append", required=True,
+        help="completed frozen run directory; repeat once per policy-family run")
+    finalize_labels.add_argument("--selection", type=Path, required=True)
+    finalize_labels.add_argument("--combined-output", type=Path, required=True)
+    finalize_labels.add_argument("--confidence-output", type=Path, required=True)
     fidelity = sub.add_parser("audit-raging-bolt-macro-fidelity",
         help="audit finalized Raging Bolt plan executions from frozen labels without running games")
     fidelity.add_argument("--root", type=Path, required=True)
@@ -314,6 +321,11 @@ def main(argv=None) -> int:
         root = Path.cwd().resolve(); identity = runtime_identity(root).record()
         result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity,
                                           selection_path=args.selection.resolve())
+    elif args.command == "finalize-macro-label-runs":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        result = finalize_macro_label_runs(inputs=args.input_dir, combined_output=args.combined_output,
+            confidence_output=args.confidence_output, identity=identity,
+            selection_path=args.selection.resolve())
     elif args.command == "audit-raging-bolt-macro-fidelity":
         result = audit_raging_bolt_macro_fidelity(root=args.root.resolve(),
             selection_path=args.selection.resolve(), python_dataset=args.python_dataset.resolve(),

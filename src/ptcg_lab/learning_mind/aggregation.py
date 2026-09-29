@@ -225,3 +225,37 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
     except Exception:
         shutil.rmtree(temporary_root)
         raise
+
+
+def finalize_macro_label_runs(*, inputs: list[Path], combined_output: Path,
+                              confidence_output: Path, identity: dict,
+                              selection_path: Path) -> dict:
+    """Combine finalized family runs and independently verify their confidence report.
+
+    This is an offline evidence operation: it never launches rollouts, mutates
+    source runs, changes gates, or fits a model. If confidence generation fails,
+    the already-verified combined labels remain available for diagnosis/retry.
+    """
+    combined_output = combined_output.resolve()
+    confidence_output = confidence_output.resolve()
+    if combined_output == confidence_output or confidence_output.is_relative_to(combined_output):
+        raise ValueError("confidence report must be outside the combined-label directory")
+    if combined_output.exists() or combined_output.is_symlink():
+        raise ValueError("combined macro-label outputs are immutable; choose a new directory")
+    if confidence_output.exists() or confidence_output.is_symlink():
+        raise ValueError("confidence audit reports are immutable; choose a new output path")
+
+    combined = combine_macro_label_runs(inputs=inputs, output=combined_output,
+        identity=identity, selection_path=selection_path)
+    from .confidence_audit import (audit_macro_label_confidence,
+        verify_macro_label_confidence_audit)
+    confidence = audit_macro_label_confidence(labels_dir=combined_output,
+        selection_path=selection_path, output=confidence_output)
+    verified = verify_macro_label_confidence_audit(labels_dir=combined_output,
+        selection_path=selection_path, report_path=confidence_output)
+    if verified != confidence:
+        raise ValueError("confidence audit changed during final verification")
+    return {"status": "verified-analysis-only", "combinedManifestHash": combined["manifestHash"],
+        "combinedPositions": combined["positions"], "confidenceReportHash": verified["reportHash"],
+        "confidenceReportPath": str(confidence_output), "policyLabelEligibilityChanged": False,
+        "ppoEnablement": False, "promotionAuthority": "none"}

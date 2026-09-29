@@ -116,3 +116,46 @@ def test_combiner_rejects_wrong_frozen_identity(tmp_path):
     with pytest.raises(ValueError, match="experiment identity mismatch"):
         combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=tmp_path / "combined",
             identity=identity, selection_path=_write_selection(tmp_path / "selection.json", identity))
+
+
+def test_finalizer_combines_and_recomputes_confidence_without_training(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import aggregation, confidence_audit
+
+    calls = []
+    combined_output = tmp_path / "combined"
+    confidence_output = tmp_path / "confidence.json"
+    monkeypatch.setattr(aggregation, "combine_macro_label_runs", lambda **kwargs: (
+        calls.append(("combine", kwargs)) or {"manifestHash": "combined-hash", "positions": 4}))
+    report = {"reportHash": "report-hash", "status": "analysis-only"}
+    monkeypatch.setattr(confidence_audit, "audit_macro_label_confidence", lambda **kwargs: (
+        calls.append(("audit", kwargs)) or report))
+    monkeypatch.setattr(confidence_audit, "verify_macro_label_confidence_audit", lambda **kwargs: (
+        calls.append(("verify", kwargs)) or report))
+
+    result = aggregation.finalize_macro_label_runs(inputs=[tmp_path / "py", tmp_path / "ts"],
+        combined_output=combined_output, confidence_output=confidence_output,
+        identity={"identityHash": "identity"}, selection_path=tmp_path / "selection.json")
+    assert [call[0] for call in calls] == ["combine", "audit", "verify"]
+    assert calls[1][1]["labels_dir"] == combined_output.resolve()
+    assert calls[2][1]["report_path"] == confidence_output.resolve()
+    assert result == {"status": "verified-analysis-only", "combinedManifestHash": "combined-hash",
+        "combinedPositions": 4, "confidenceReportHash": "report-hash",
+        "confidenceReportPath": str(confidence_output.resolve()),
+        "policyLabelEligibilityChanged": False, "ppoEnablement": False,
+        "promotionAuthority": "none"}
+
+
+def test_finalizer_rejects_confidence_report_inside_combined_labels(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import aggregation
+
+    called = False
+    def unexpected(**_kwargs):
+        nonlocal called
+        called = True
+        raise AssertionError("must reject output collision before combining")
+    monkeypatch.setattr(aggregation, "combine_macro_label_runs", unexpected)
+    with pytest.raises(ValueError, match="outside the combined-label directory"):
+        aggregation.finalize_macro_label_runs(inputs=[tmp_path / "py", tmp_path / "ts"],
+            combined_output=tmp_path / "combined", confidence_output=tmp_path / "combined" / "confidence.json",
+            identity={}, selection_path=tmp_path / "selection.json")
+    assert called is False
