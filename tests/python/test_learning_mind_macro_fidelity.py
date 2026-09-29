@@ -10,7 +10,10 @@ import pytest
 
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1, rollout_seed
-from ptcg_lab.learning_mind.macro_fidelity import audit_raging_bolt_macro_fidelity
+from ptcg_lab.learning_mind.macro_fidelity import (
+    _validate_rollout_label,
+    audit_raging_bolt_macro_fidelity,
+)
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import digest as legacy_digest
@@ -125,6 +128,25 @@ def _fixture(tmp_path, *, successful=True, wrong_root=False):
     selection_path = tmp_path / "selection.json"
     selection_path.write_text(json.dumps(selection))
     return identity, selection_path, family_inputs
+
+
+def test_rollout_label_reconciles_reasons_for_truncations_and_errors():
+    action = {"id": "pass", "type": "pass", "label": "End turn"}
+    candidate = MacroCandidateV1(turn_intent="no-attack", action_ids=("pass",),
+        action_sequence=(action,))
+    candidate_record = json.loads(json.dumps(asdict(candidate)))
+    label = {"candidate": candidate_record, "candidateHash": candidate.key(),
+        "attemptedRollouts": 2, "completedRollouts": 0,
+        "outcomes": {"finished": 0, "truncated": 1, "error": 1},
+        "outcomeReasons": {"search-rollout-horizon-cutoff": 1,
+            "MACRO_PLAN_UNEXECUTABLE:0:fixture": 1},
+        "decisionCountDistribution": {"12": 2}}
+
+    evidence = _validate_rollout_label(label)
+
+    assert evidence["successfulPlanSamples"] == 1
+    assert evidence["typedPlanFailures"] == 1
+    assert evidence["untypedErrors"] == 0
 
 
 def test_macro_fidelity_audit_requires_successful_plan_execution_per_raging_bolt_position(tmp_path):

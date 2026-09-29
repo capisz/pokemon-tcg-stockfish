@@ -385,6 +385,7 @@ def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
     missing = record["labels"][1]
     missing.update(completedRollouts=0,
         outcomes={"finished": 0, "truncated": 2, "error": 0},
+        outcomeReasons={"search-rollout-horizon-cutoff": 2},
         expectedResult=None, relativeResult=None, uncertainty=None, weight=0)
     record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
     entry["sha256"] = file_sha256(record_path)

@@ -24,7 +24,10 @@ def _label(candidate, *, finished, truncated=0, errors=0, mean=None, center=0.0)
         "completedRollouts": finished,
         "attemptedRollouts": attempted,
         "outcomes": {"finished": finished, "truncated": truncated, "error": errors},
-        "outcomeReasons": {"engine-error": errors} if errors else {},
+        "outcomeReasons": {
+            **({"search-rollout-horizon-cutoff": truncated} if truncated else {}),
+            **({"engine-error": errors} if errors else {}),
+        },
         "decisionCountDistribution": {"12": attempted} if attempted else {},
         "expectedResult": mean,
         "relativeResult": mean - center if mean is not None else None,

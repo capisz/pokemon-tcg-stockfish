@@ -95,8 +95,9 @@ def _validate_rollout_label(label: dict) -> dict:
     reasons = label.get("outcomeReasons")
     if not isinstance(reasons, dict) or any(type(value) is not int or value < 0 for value in reasons.values()):
         raise ValueError("macro label outcome reasons are malformed")
-    if sum(reasons.values()) != counts["error"]:
-        raise ValueError("macro label errors are not fully explained by typed reasons")
+    unfinished_samples = counts["truncated"] + counts["error"]
+    if sum(reasons.values()) != unfinished_samples:
+        raise ValueError("macro label truncations and errors are not fully explained by typed reasons")
     decision_counts = label.get("decisionCountDistribution")
     if (not isinstance(decision_counts, dict)
             or any(not isinstance(key, str) or not key.isdecimal() or str(int(key)) != key
