@@ -85,6 +85,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
     labels_manifest = {"identity": identity, "selectionHash": "frozen-selection-hash",
         "sourceRuns": [{"policyFamilies": [family], "rolloutIdentity": f"rollout-{family}"}
                        for family in ("python-heuristic", "typescript-heuristic")]}
+    labels_manifest["manifestHash"] = identity_hash(labels_manifest)
     (labels_dir / "manifest.json").write_text(json.dumps(labels_manifest))
     selection_path = tmp_path / "selection.json"
     selection_path.write_text(json.dumps({"selectionHash": "frozen-selection-hash"}))
@@ -99,17 +100,17 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "trees": [{"nodeid": 0, "leaf": 0.0}]}
     model_path.write_text(json.dumps(artifact))
-    detail = {"positionHash": "fixture-position", "sourceGameId": "fixture-game",
+    detail = {"positionHash": position_hash, "sourceGameId": "fixture-game",
         "opponentArchetype": "crustle", "opponentPolicyFamily": "python-heuristic",
         "candidates": 2, "top1RelativeRegret": 0.0, "top3Recall": True,
         "pairwiseCorrect": 1, "pairwiseComparisons": 1}
-    overall = ranker_v2._bootstrap_mean([0.0], seed_material="macro-ranker-v2|all|fixture-position",
+    overall = ranker_v2._bootstrap_mean([0.0], seed_material=f"macro-ranker-v2|all|{position_hash}",
                                         group_ids=["fixture-game"])
     group_summaries = {}
     for field in ("opponentArchetype", "opponentPolicyFamily"):
         value = detail[field]
         summary = ranker_v2._bootstrap_mean([0.0],
-            seed_material=f"macro-ranker-v2|{field}|{value}|fixture-position",
+            seed_material=f"macro-ranker-v2|{field}|{value}|{position_hash}",
             group_ids=["fixture-game"])
         group_summaries[field] = {value: {"positions": 1, "meanTop1RelativeRegret": 0.0,
             "meanTop1RelativeRegretCI95": summary["interval95"], "bootstrapSeed": summary["seed"],
@@ -129,10 +130,15 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
         "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
         "trainingLibrary": ranker_v2._training_library_identity(),
+        "iteration": {"iteration": 1, "teacher_hash": "frozen-teacher",
+            "opponent_policy_hash": "frozen-opponent-set", "input_hash": labels_manifest["manifestHash"],
+            "position_hashes": [position_hash]},
+        "inputManifestHash": labels_manifest["manifestHash"],
         "identity": identity, "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
+        "trainingPositions": 1, "trainingCandidates": 2,
         "training": complete_coverage, "development": complete_coverage,
         "holdouts": [{"kind": kind, "status": "measured", "metrics": complete_coverage} for kind in
             ("leave-one-opponent-archetype-out", "frozen-policy-family")],
@@ -220,6 +226,21 @@ def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkey
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
     with pytest.raises(ValueError, match="empty coverage does not reconcile"):
+        ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
+            macro_position_pool=pool, labels_dir=labels, selection_path=selection,
+            model_path=model, report_path=report_path, identity=identity)
+
+
+def test_ranker_distillation_rejects_teacher_fit_to_another_label_manifest(tmp_path, monkeypatch):
+    _identity_manifest, identity, pool, labels, selection, model, report_path = \
+        _ranker_distillation_fixture(tmp_path, monkeypatch)
+    report = json.loads(report_path.read_text())
+    report["inputManifestHash"] = "other-label-manifest"
+    report["iteration"]["input_hash"] = "other-label-manifest"
+    report["reportHash"] = identity_hash({key: value for key, value in report.items()
+                                          if key != "reportHash"})
+    report_path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="iteration does not match the frozen label manifest"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)

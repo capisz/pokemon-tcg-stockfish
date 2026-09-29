@@ -93,6 +93,9 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
         "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
         "trainingLibrary": ranker_v2._training_library_identity(),
+        "iteration": {"iteration": 1, "teacher_hash": "teacher", "opponent_policy_hash": "opponents",
+            "input_hash": "fixture-input", "position_hashes": ["fixture-position"]},
+        "inputManifestHash": "fixture-input", "trainingPositions": 1, "trainingCandidates": 2,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
             for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
@@ -173,6 +176,9 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
         "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
         "trainingLibrary": ranker_v2._training_library_identity(),
+        "iteration": {"iteration": 1, "teacher_hash": "teacher", "opponent_policy_hash": "opponents",
+            "input_hash": "fixture-input", "position_hashes": ["fixture-position"]},
+        "inputManifestHash": "fixture-input", "trainingPositions": 1, "trainingCandidates": 2,
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}

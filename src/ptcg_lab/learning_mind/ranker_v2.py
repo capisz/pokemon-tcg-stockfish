@@ -205,6 +205,16 @@ def validate_ranker_v2_report(report: dict) -> None:
     if (not isinstance(training_library, dict) or training_library.get("name") != "xgboost"
             or not isinstance(training_library.get("version"), str) or not training_library["version"]):
         raise ValueError("macro ranker v2 training library identity is missing")
+    iteration = report.get("iteration")
+    if (not isinstance(iteration, dict) or type(iteration.get("iteration")) is not int
+            or not 1 <= iteration["iteration"] <= 6
+            or any(not isinstance(iteration.get(key), str) or not iteration[key]
+                   for key in ("teacher_hash", "opponent_policy_hash", "input_hash"))
+            or not isinstance(iteration.get("position_hashes"), list)
+            or not iteration["position_hashes"]
+            or any(not isinstance(value, str) or not value for value in iteration["position_hashes"])
+            or len(set(iteration["position_hashes"])) != len(iteration["position_hashes"])):
+        raise ValueError("macro ranker v2 frozen iteration identity is malformed")
     training = report.get("training")
     development = report.get("development")
     for name, metrics in (("training", training), ("development", development)):
@@ -255,6 +265,15 @@ def validate_ranker_v2_report(report: dict) -> None:
     if (report.get("acceptance") != expected_acceptance
             or report.get("automaticPromotion") is not False):
         raise ValueError("macro ranker v2 acceptance contradicts measured evidence")
+    training_positions = report.get("trainingPositions")
+    training_candidates = report.get("trainingCandidates")
+    position_hashes = {row["positionHash"] for row in training.get("details", [])}
+    candidate_count = sum(row.get("candidates", 0) for row in training.get("details", []))
+    if (type(training_positions) is not int or training_positions != len(position_hashes)
+            or set(iteration["position_hashes"]) != position_hashes
+            or type(training_candidates) is not int or training_candidates != candidate_count
+            or iteration["input_hash"] != report.get("inputManifestHash")):
+        raise ValueError("macro ranker v2 frozen iteration does not match training coverage")
     if report.get("reportHash") != identity_hash({key: value for key, value in report.items()
                                                    if key != "reportHash"}):
         raise ValueError("macro ranker v2 report hash mismatch")
@@ -550,6 +569,7 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "trainingImplementationSha256": training_hash,
         "trainingLibrary": training_library,
         "identity": labels_manifest["identity"],
+        "inputManifestHash": labels_manifest["manifestHash"],
         "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir.resolve() / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path.resolve()),

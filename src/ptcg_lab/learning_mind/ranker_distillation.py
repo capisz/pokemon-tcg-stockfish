@@ -107,6 +107,16 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
     if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
         raise ValueError("ranker distillation source families are incomplete")
 
+    expected_training_positions = {record["positionHash"] for record in records
+        if record.get("split") == "train" and len(_validated_macro_labels(record,
+            expected_rollout_identity=rollout_ids[record["opponentPolicyFamily"]])) >= 2}
+    iteration = report.get("iteration")
+    if (report.get("inputManifestHash") != labels_manifest.get("manifestHash")
+            or not isinstance(iteration, dict)
+            or iteration.get("input_hash") != labels_manifest.get("manifestHash")
+            or set(iteration.get("position_hashes", [])) != expected_training_positions):
+        raise ValueError("ranker teacher iteration does not match the frozen label manifest and train positions")
+
     incomplete = {split: [] for split in ("train", "development")}
     for record in records:
         split = record.get("split")
@@ -277,6 +287,16 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
         rollout_ids[families[0]] = rollout_id
     if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
         raise ValueError("ranker distillation source-run families are incomplete")
+
+    expected_training_positions = {record["positionHash"] for record in records
+        if record.get("split") == "train" and len(_validated_macro_labels(record,
+            expected_rollout_identity=rollout_ids[record["opponentPolicyFamily"]])) >= 2}
+    iteration = verified["report"].get("iteration")
+    if (verified["report"].get("inputManifestHash") != labels_manifest.get("manifestHash")
+            or not isinstance(iteration, dict)
+            or iteration.get("input_hash") != labels_manifest.get("manifestHash")
+            or set(iteration.get("position_hashes", [])) != expected_training_positions):
+        raise ValueError("ranker teacher iteration does not match the frozen label manifest and train positions")
 
     rows_by_hash = {row.get("positionHash"): row for row in rows}
     if len(rows_by_hash) != len(rows):
