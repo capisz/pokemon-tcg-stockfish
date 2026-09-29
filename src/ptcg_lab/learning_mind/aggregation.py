@@ -78,6 +78,8 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
     for input_dir in inputs:
         input_dir = input_dir.resolve()
         manifest_path = input_dir / "manifest.json"
+        if manifest_path.is_symlink() or not manifest_path.is_file():
+            raise ValueError(f"macro-label run manifest is missing or is a symlink: {input_dir}")
         manifest = json.loads(manifest_path.read_text())
         recorded_hash = manifest.get("manifestHash")
         if recorded_hash != identity_hash({key: value for key, value in manifest.items()
@@ -87,6 +89,16 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
             raise ValueError(f"input experiment identity mismatch: {input_dir}")
         if not isinstance(manifest.get("files"), list) or len(manifest["files"]) != manifest.get("positions"):
             raise ValueError(f"input manifest file list mismatch: {input_dir}")
+        listed_names = [item.get("path") if isinstance(item, dict) else None
+                        for item in manifest["files"]]
+        if (any(not isinstance(name, str) or Path(name).name != name or not name.endswith(".json")
+                or name == "manifest.json" for name in listed_names)
+                or len(listed_names) != len(set(listed_names))):
+            raise ValueError(f"input manifest contains missing, unsafe, or duplicate paths: {input_dir}")
+        actual_names = {path.name for path in input_dir.glob("*.json")
+                        if path.name != "manifest.json"}
+        if actual_names != set(listed_names):
+            raise ValueError(f"input run has missing or unlisted JSON records: {input_dir}")
         if generator_identity is None:
             generator_identity = manifest.get("candidateGeneratorIdentity")
             collector_version = manifest.get("labelCollectorVersion")
@@ -103,6 +115,8 @@ def combine_macro_label_runs(*, inputs: list[Path], output: Path, identity: dict
             if not isinstance(name, str) or Path(name).name != name or not name.endswith(".json") or name == "manifest.json":
                 raise ValueError(f"unsafe macro-label record path in {input_dir}")
             source = input_dir / name
+            if source.is_symlink():
+                raise ValueError(f"macro-label record must not be a symlink: {source}")
             if file_sha256(source) != item.get("sha256"):
                 raise ValueError(f"macro-label record hash mismatch: {source}")
             record = json.loads(source.read_text())

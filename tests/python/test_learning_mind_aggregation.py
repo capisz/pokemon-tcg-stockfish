@@ -78,6 +78,37 @@ def test_combiner_rejects_corrupt_input_without_partial_output(tmp_path):
     assert not (tmp_path / "combined").exists()
 
 
+def test_combiner_rejects_unlisted_json_record_without_partial_output(tmp_path):
+    identity = {"identityHash": "frozen-identity"}
+    python_dir = _write_run(tmp_path / "python", FAMILIES[0], identity)
+    typescript_dir = _write_run(tmp_path / "typescript", FAMILIES[1], identity)
+    (python_dir / "unlisted.json").write_text("{}")
+    selection = _write_selection(tmp_path / "selection.json", identity)
+    output = tmp_path / "combined"
+    with pytest.raises(ValueError, match="unlisted JSON records"):
+        combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=output,
+            identity=identity, selection_path=selection)
+    assert not output.exists()
+
+
+def test_combiner_rejects_symlinked_manifest_record_without_partial_output(tmp_path):
+    identity = {"identityHash": "frozen-identity"}
+    python_dir = _write_run(tmp_path / "python", FAMILIES[0], identity)
+    typescript_dir = _write_run(tmp_path / "typescript", FAMILIES[1], identity)
+    item = json.loads((python_dir / "manifest.json").read_text())["files"][0]
+    target = python_dir / item["path"]
+    real = tmp_path / "external-record.json"
+    real.write_bytes(target.read_bytes())
+    target.unlink()
+    target.symlink_to(real)
+    selection = _write_selection(tmp_path / "selection.json", identity)
+    output = tmp_path / "combined"
+    with pytest.raises(ValueError, match="must not be a symlink"):
+        combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=output,
+            identity=identity, selection_path=selection)
+    assert not output.exists()
+
+
 def test_combiner_rejects_wrong_frozen_identity(tmp_path):
     identity = {"identityHash": "frozen-identity"}
     python_dir = _write_run(tmp_path / "python", FAMILIES[0], identity)
