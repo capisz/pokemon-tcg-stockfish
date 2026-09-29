@@ -1260,9 +1260,13 @@ strength or autonomous improvement.
   and its independent confidence report, then compares their manifest, frozen
   selection, report, implementation, and file hashes against the ranker. A
   stale report from another valid run can no longer satisfy the gate.
+- The supervised dataset must carry the exact ranker model, ranker report, and
+  confidence-report hashes in `teacherHashes`; otherwise an older Transformer
+  checkpoint trained without the strategic-plan teacher cannot pass the PPO
+  gate, even when a valid ranker report is supplied afterward.
 - The immutable stage receipt hashes the ranker model/report and records the
   label and confidence inputs plus measured holdout axes. Regression tests
   reject missing/insufficient evidence, mismatched identities, and stale
-  confidence provenance. Stage and ranker-v2 tests pass (21); CLI help and
+  confidence/teacher provenance. Stage and ranker-v2 tests pass (22); CLI help and
   `git diff --check` pass. No collector, training, PPO, promotion, or service
   operation was started.

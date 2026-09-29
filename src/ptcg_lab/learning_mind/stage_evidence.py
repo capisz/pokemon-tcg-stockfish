@@ -148,6 +148,10 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
             or ranker.get("confidenceAuditImplementationSha256") !=
                 confidence.get("confidenceAuditImplementationSha256")):
         raise ValueError("macro-ranker is not bound to the exact labels, selection, and confidence audit")
+    expected_teacher_hashes = sorted({ranker["modelSha256"], ranker["reportHash"],
+                                      confidence["reportHash"]})
+    if manifest.get("teacherHashes") != expected_teacher_hashes:
+        raise ValueError("supervised checkpoint was not trained from this exact macro-ranker distribution")
     holdouts = ranker.get("holdouts")
     required_holdouts = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
     measured_holdouts = {row.get("kind") for row in holdouts if row.get("status") == "measured"}
@@ -208,6 +212,7 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         "macroRankerAcceptance": ranker.get("acceptance"),
         "macroRankerDevelopmentStatus": ranker["development"].get("status"),
         "macroRankerMeasuredHoldoutKinds": sorted(measured_holdouts),
+        "macroRankerDistillationBound": manifest.get("teacherHashes") == expected_teacher_hashes,
         "humanEnablePPO": human_enable_ppo,
         "automaticPromotion": False,
     }
@@ -219,6 +224,7 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         and values["ragingBoltMacroPlanFidelity"] == "passed"
         and values["macroRankerAcceptance"] == "review-required"
         and values["macroRankerDevelopmentStatus"] == "measured"
+        and values["macroRankerDistillationBound"] is True
         and required_holdouts.issubset(values["macroRankerMeasuredHoldoutKinds"])
         and values["severityThreeProbeCoverage"] == "sufficient"
         and values["severityThreeRegression"] is False

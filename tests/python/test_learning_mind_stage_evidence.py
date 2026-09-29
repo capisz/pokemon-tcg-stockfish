@@ -72,11 +72,12 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
     confidence_report = {"reportHash": "confidence-report-hash",
         "confidenceAuditImplementationSha256": "c" * 64}
     ranker_report = {"identity": {"frozen": "same"}, "acceptance": "review-required",
+        "modelSha256": "a" * 64, "reportHash": "b" * 64,
+        "confidenceAuditReportHash": confidence_report["reportHash"],
         "inputManifestHash": label_manifest["manifestHash"],
         "inputManifestSha256": file_sha256(paths["ranker_labels_dir"] / "manifest.json"),
         "selectionHash": label_manifest["selectionHash"],
         "selectionManifestSha256": file_sha256(paths["macro_selection_path"]),
-        "confidenceAuditReportHash": confidence_report["reportHash"],
         "confidenceAuditSha256": file_sha256(paths["confidence_audit_path"]),
         "confidenceAuditImplementationSha256": confidence_report["confidenceAuditImplementationSha256"],
         "development": {"status": "measured"}, "holdouts": [
@@ -86,7 +87,9 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
         "scheduled": 192, "audited": 192, "unsupportedPositions": 0,
         "representationParity": True})
     monkeypatch.setattr(stage_evidence, "load_dataset", lambda _path: (
-        {"manifestHash": "dataset", "identity": {"frozen": "same"}}, []))
+        {"manifestHash": "dataset", "identity": {"frozen": "same"},
+         "teacherHashes": sorted({ranker_report["modelSha256"], ranker_report["reportHash"],
+                                  confidence_report["reportHash"]})}, []))
     monkeypatch.setattr(stage_evidence, "verify_supervised_audit_report", lambda **_kwargs: audit)
     monkeypatch.setattr(stage_evidence, "audit_candidate_safety", lambda **_kwargs: safety)
     monkeypatch.setattr(stage_evidence, "evaluate_candidate", lambda *_args: evaluation)
@@ -120,6 +123,7 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     assert report["macroRankerAcceptance"] == "review-required"
     assert set(report["macroRankerMeasuredHoldoutKinds"]) == {
         "leave-one-opponent-archetype-out", "frozen-policy-family"}
+    assert report["macroRankerDistillationBound"] is True
 
     authorized_paths = {**paths, "output": tmp_path / "authorized-stage.json"}
     report, capability = stage_evidence.verify_ppo_stage_evidence(
@@ -245,6 +249,8 @@ def test_stage_evidence_rejects_missing_or_identity_mismatched_ranker(tmp_path, 
     paths = _inputs(tmp_path)
     _patch_verifiers(monkeypatch, paths)
     base = {"identity": {"frozen": "same"}, "acceptance": "review-required",
+        "modelSha256": "a" * 64, "reportHash": "b" * 64,
+        "confidenceAuditReportHash": "confidence-report-hash",
         "development": {"status": "measured"}, "holdouts": [
             {"kind": "leave-one-opponent-archetype-out", "status": "measured"},
             {"kind": "frozen-policy-family", "status": "measured"}]}
@@ -272,6 +278,15 @@ def test_stage_evidence_rejects_ranker_from_stale_confidence_audit(tmp_path, mon
     monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
         "report": stale_report, "artifact": {}})
     with pytest.raises(ValueError, match="exact labels, selection, and confidence audit"):
+        stage_evidence.verify_ppo_stage_evidence(**paths)
+
+
+def test_stage_evidence_rejects_checkpoint_without_exact_ranker_distillation(tmp_path, monkeypatch):
+    paths = _inputs(tmp_path)
+    _patch_verifiers(monkeypatch, paths)
+    monkeypatch.setattr(stage_evidence, "load_dataset", lambda _path: (
+        {"manifestHash": "dataset", "identity": {"frozen": "same"}, "teacherHashes": []}, []))
+    with pytest.raises(ValueError, match="not trained from this exact macro-ranker distribution"):
         stage_evidence.verify_ppo_stage_evidence(**paths)
 
 

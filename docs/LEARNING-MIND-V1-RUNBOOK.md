@@ -768,13 +768,16 @@ source inputs. The ranker must be checksum-verified, share the supervised
 model's frozen identity, and bind to the exact combined label bundle, selection,
 and independently verified confidence audit supplied to this command. It must
 have measured development results and measured leave-one-archetype-out plus
-frozen-policy-family holdouts. Its status remains `review-required`; this is an
-evidence prerequisite, not an automatic ranker or policy acceptance. Do not
-copy booleans into `stage-gates.json`; the generated report is immutable and
-contains hashes for every source artifact. The verifier also reruns the
-complete 192-replay baseline parity audit. Omit `--human-enable-ppo` for an
-evidence-only result; that flag is a separate explicit authorization and cannot
-make failed prerequisites pass.
+frozen-policy-family holdouts. The supervised dataset must also contain the
+exact ranker model, report, and confidence-report hashes in `teacherHashes`,
+proving the evaluated Transformer was trained from this ranker's distilled
+distribution. Its status remains `review-required`; this is an evidence
+prerequisite, not an automatic ranker or policy acceptance. Do not copy booleans
+into `stage-gates.json`; the generated report is immutable and contains hashes
+for every source artifact. The verifier also reruns the complete 192-replay
+baseline parity audit. Omit `--human-enable-ppo` for an evidence-only result;
+that flag is a separate explicit authorization and cannot make failed
+prerequisites pass.
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
