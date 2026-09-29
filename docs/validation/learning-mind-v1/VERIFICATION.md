@@ -100,6 +100,7 @@ Base: `7543298`
   execution. Fix that coverage, expand the frozen pool, then rerun before
   considering strategy-probe evaluation. PPO and continuous operation remain
   disabled.
+
 - Compact results and all frozen identities are recorded in
   `executable-raging-bolt-full-2026-09-22.json`; raw rollout artifacts and the
   model remain ignored under `artifacts/learning-mind-v1/`.
@@ -1289,3 +1290,477 @@ strength or autonomous improvement.
   has a fail-closed regression case. All 26 supervisor tests and
   `git diff --check` pass. No continuous-operation capability issuer exists
   yet; no supervisor was started.
+
+### v17 label finalization, Raging Bolt plan fidelity, and ranker-v2 evidence (2026-09-29)
+
+- Finalized the existing immutable v17 Python and TypeScript label runs after
+  source audit confirmed the two exact collector modules share the registered
+  byte-identical collection surface. The combined bundle contains 97 selected
+  positions and preserves each family’s separate source-module hash, source
+  commit, manifest hash, and rollout identity. The confidence reevaluation is
+  analysis-only at familywise 95%; it creates no policy-eligible labels.
+- Raging Bolt fidelity audit passed for all 17 selected positions and 300
+  candidates: 300 declared plans executed, with zero typed plan failures and
+  zero untyped errors. This verifies plan executability, not strategic quality.
+- Ranker-v2 now fills source-game bootstrap metadata from the exact frozen
+  selection when label records omit that field; it rejects any conflicting
+  record metadata and does not edit immutable inputs. This resolved the
+  initial fail-closed fit attempt. New regression coverage tests this join.
+- Fit and portable verification completed for exploratory ranker v2 iteration
+  3 (the same deterministic model content, refit after audited holdout-coverage
+  reporting changes). Model SHA-256 is
+  `3c659dd6f993127d99acd354d285f2f60d2253a5e64a068cde4a1de0fa1285b9`; report
+  hash is `018dc274ddd518e73661a8ba7afe90633fae057941e33a9cc5e8f84dd50fd6fa`.
+  Training covered 76/79 positions; development covered 18/18 with mean top-1
+  relative regret 0.0817 (source-game bootstrap 95% interval 0.0365–0.1418).
+  All seven archetype/family holdouts are measured using available comparable
+  training positions; per-fold training coverage is 95.0%–97.4% and is
+  explicitly reported. Archetype test cells contain only 3–6 positions and
+  family cells nine, so these are small-sample descriptive results. Ranker
+  acceptance remains `insufficient` because the full training set is incomplete,
+  not an improvement claim or PPO evidence.
+- Three training positions contain exactly one candidate each, despite 64
+  completed rollouts per candidate: `115cda2e…f54ae9` (Python-family Crustle
+  vs Raging Bolt, midgame), `92d06e83…6e9580` (Python-family Raging Bolt vs
+  Grimmsnarl, late), and `1eece6ac…a7439b85` (TypeScript-family Grimmsnarl
+  mirror, opening). More rollouts on these same candidates cannot create
+  comparisons. A new selection must replace unsupported roots with independently
+  sourced positions that have at least two distinct executable plans, selected
+  before outcomes are observed.
+- The fit joins `sourceGameId` only from the frozen selection for in-memory
+  source-game clustering; raw combined label records remain unchanged. The
+  post-validation confidence audit hash is
+  `990fc3f2e2cfca3481645382b45a0ff72f124a95ffae27af846bd3a62ddb060d`.
+- Focused ranker-v2 tests pass (17); the full Python suite previously passed
+  (538, with two dependency deprecation warnings), TypeScript typecheck,
+  strategy-contract v1.2 validation, and `git diff --check` pass. No collector,
+  supervised training, PPO, continuous service, or promotion was started. The
+  next evidence gate is a new frozen selection that prequalifies at least two
+  distinct executable plans per root and balances independent source games
+  across archetypes and both policy families. Preserve v17 artifacts; do not
+  recollect the same single-candidate positions or infer acceptance from the
+  small holdout cells.
+
+### Candidate-qualified pool audit and independent-data gate (2026-09-29)
+
+- The ranker report was refit and reverified after adding exact per-fold
+  training-position hashes to its coverage receipt. Iteration 4 report hash is
+  `9b979a0e50125498997587e6613b45c66b41bc18f855def7b2d79e8f0ccc4f09`;
+  acceptance remains `insufficient`, with 76/79 train and 18/18 development
+  positions, but all seven holdout tests now report measured metrics and
+  auditable 95.0%–97.4% train coverage. This does not enable distillation or
+  PPO because the complete-train gate remains unmet.
+- A no-rollout candidate-support audit covered all 250 frozen v13 positions
+  per policy family. Python: 231 supported, 19 unsupported, zero supported
+  roots without a complete plan, and 221 roots with at least two plans. Its
+  support-report file SHA-256 is
+  `1d112cee351276567f9f60daa70bb1b2bca54a023c7b60fa1509f5e87d205583` and
+  report hash is `5f2f7501ef12c596675d82ece21696541a8761a701d8368dd71bbcea816993eb`.
+  TypeScript: 235 supported, 15 unsupported, zero supported roots without a
+  complete plan, and 231 roots with at least two plans. Its report file SHA-256
+  is `72f27d1663bc7532a0d42effbe3082118cbb59f222ba3f46ce23f32882900936` and
+  report hash is `a8fd45c41e3f7d0e329a50000ab0215ac18f1dff3c7f396a1a0df6bbbc068e60`.
+- Future frozen selections now require at least two distinct complete
+  executable plans per root. A draft selection from the existing v13 pools
+  has 40/9 Python train/development and 39/9 TypeScript train/development
+  source games (selection hash
+  `08a1221e0cb8c468805078111252273d1eed81630d0fa748c4f9773845ea0761`). It
+  retains 1,200 / 344 Python train/development candidates and 865 / 216
+  TypeScript candidates.
+- The draft is **not independent expansion**: it reuses all 97 v17 source-game
+  IDs and 74/97 exact position hashes. It contains only one or two development
+  positions against Raging Bolt per family. Therefore it cannot be used to
+  claim new game-level training expansion or sufficient per-opponent
+  development evaluation. A fresh source-game pool with a new seed namespace
+  remains the route for broader training coverage; v17 and v13 remain
+  immutable. No games, rollouts, labels, training, PPO, or service work were
+  started by these support audits.
+- Verification after the coverage-receipt and selection-eligibility changes:
+  focused ranker/distillation tests pass (23), orchestration tests pass (23),
+  and the full Python suite passes (541, two existing dependency warnings).
+  TypeScript typecheck, strategy-contract v1.2 validator, and `git diff --check`
+  pass. The next step requires separate authorization for a fresh 60-game
+  coverage-only pool (30 games per policy family: two games per each of the 15
+  archetype matchup cells, using a new namespace); this creates positions only,
+  not macro rollouts or labels. Runtime is unknown until measured. The prior
+  no-new-collector boundary remains in force until the user approves this
+  exact scope.
+
+### Reserved heldout positions frozen for future evaluation (2026-09-29)
+
+- The v13 Python and TypeScript source pools already include heldout partitions
+  that v17 deliberately left unused. A separate evaluator-only selection now
+  freezes every supported heldout position with at least two complete plans,
+  rather than selecting one position per game. It contains 34 Python positions
+  from nine games and 36 TypeScript positions from nine games, spanning all
+  five target decks and all five opponent archetypes. The selection hash is
+  `b265bb6d2d24b9577bc48dedc68a1fc779b99fb72648e8c279edd1b1a3b01a49`; file
+  SHA-256 is
+  `2c1acd71e7aefd7b2a078c33e0d52f88aa5a278e5f76734d06544823728947cf`.
+- Both heldout pools share the exact v13/v17 identity; their dataset row hashes
+  match the candidate-support reports. Their nine source games per family have
+  zero overlap with the corresponding v17 train/development game IDs. The
+  evaluator selection is explicitly `trainingEligible: false`; rows remain
+  unlabeled and no rollouts or model evaluation were performed.
+- This removes fresh-game collection as a prerequisite merely to create a
+  game-disjoint heldout position set. An external heldout evaluator and a
+  separately authorized label-collection run are still needed; repeated
+  positions from each game must be clustered by source game. This does not
+  repair the ranker's 76/79 train coverage, establish a policy-family blind
+  test, or satisfy promotion's fresh seed namespace. Reassess the previously
+  proposed 60-game coverage-only pool as a training-coverage expansion, not as
+  the only way to obtain heldout positions.
+- The full Python suite passes 541 tests, including the new heldout-selection
+  isolation test. TypeScript typecheck, strategy-contract v1.2 validation,
+  stage-gate and selection JSON parsing, and `git diff --check` pass. No games,
+  macro rollouts, labels, ranker fit, training, PPO, or service were run.
+
+### Heldout macro-ranker evaluator implementation (2026-09-29)
+
+- Added an offline evaluator for a verified frozen macro-ranker artifact. It
+  binds heldout labels to the separately frozen all-supported selection and
+  exact v13 datasets/support audits; checks run-manifest and record hashes,
+  actor-visible position hashes, heldout-only rollout seeds, legal candidate
+  roots, candidate/outcome consistency, collector compatibility, and disjoint
+  train/development source-game and position identities.
+- Reports source-game-clustered top-1 relative regret, top-three recall, and
+  pairwise ordering with per-family/deck/opponent summaries. The immutable
+  report is descriptive only (`trainingEligible: false`,
+  `automaticPromotion: false`). It is not a policy-strength or promotion gate.
+- Added tests for heldout selection rejection, source-game/split leakage
+  rejection, immutable report behavior, heldout seed namespace isolation, and
+  actor-visible legal-root enforcement. Focused validation passed; the full
+  Python suite passes (549 tests, two existing dependency deprecation warnings).
+  TypeScript typecheck, strategy-contract v1.2 validation, selection/stage-gate
+  JSON parsing, and `git diff --check` pass. A first full-suite run correctly
+  caught an accidental change to the historically hashed train/development
+  collector; that edit was removed, and the exact audited collector-surface
+  hash again matches `a3f0225f...e0811f9`. The original macro adapter hash also
+  matches both frozen v13 support reports.
+- No heldout label collection, model fitting, games, training, PPO, autonomous
+  operation, or promotion was started. The evaluator cannot produce a result
+  until separately authorized heldout-only labels and compatible frozen
+  ranker artifacts are supplied.
+
+### Heldout-only macro-label collection harness (2026-09-29)
+
+- Added a separate resumable runner and CLI for the frozen 34-position Python
+  and 36-position TypeScript heldout selections. It validates exact runtime,
+  dataset, support, candidate-generator, and selection identities before work;
+  uses an independently hashed heldout seed implementation; checkpoints after
+  each common-random-number seed; preserves terminal/truncated/error outcomes;
+  and publishes immutable result files and a checksummed run manifest.
+- The historical train/development collector source surface and `macro.py`
+  adapter remain byte-identical to their audited hashes; heldout behavior lives
+  in separate modules. Unsupported positions are retained as explicit records
+  and cannot silently count as scored evaluation positions.
+- Adaptive sampling, common seeds, interrupted-seed resume, identity mismatch,
+  and unfinished-outcome accounting pass using deterministic fake rollouts.
+  The complete focused heldout collector/evaluator suite passes (10 tests),
+  and the full Python suite passes (551 tests). TypeScript typecheck,
+  CLI help, strategy-contract v1.2 validation, JSON parsing, and diff checks
+  pass. No real engine rollout, heldout label, ranker fit, or training run was
+  started.
+- Separate user authorization is still required before invoking the collector.
+
+### Goal continuation check (2026-09-29)
+
+- The user authorized resuming the existing frozen v17 label checkpoint. A
+  read-only artifact check found that it is already finalized: Python has 49/49
+  positions and TypeScript has 48/48, with immutable manifests and no remaining
+  per-position progress checkpoints. There was nothing to resume, and no
+  completed result was replaced.
+- Implemented a distinct heldout-only collector and verified it offline through
+  the real evaluator loader using a fake engine. The full Python suite passes
+  (551 tests); TypeScript typecheck, strategy-contract v1.2 validation, CLI
+  help, and `git diff --check` pass.
+- The 70-position heldout selection remains unlabeled. This confirmation only
+  applied to resuming v17, which is complete; it did not authorize a new
+  heldout rollout collection. Gate values remain unchanged: heldout evidence
+  insufficient, blind opponent-family evidence insufficient, PPO disabled,
+  continuous operation disabled, and trusted promotion disabled.
+
+### Heldout per-seed evidence reconciliation (2026-09-29)
+
+- Each candidate label now persists its exact attempted seed-index prefix and
+  per-index finished/truncated/error outcome (including score or typed reason
+  and observed decision count). The heldout evaluator verifies the full sample
+  set, status totals, unfinished reasons, decision-count distribution, and
+  mean score against the aggregate label before ranking it. This makes the
+  resulting evidence auditable at seed granularity and gives future progress
+  reports actual completed extension indices instead of inferring them from
+  sample totals.
+- Added a tampering test that removes a per-seed receipt and recomputes record
+  and manifest hashes; the evaluator still rejects the incomplete evidence.
+  Focused heldout collector/evaluator tests pass (10). No engine rollouts or
+  labels were started; previously completed v17 evidence is unchanged.
+
+### Heldout evaluator input readiness audit (2026-09-29)
+
+- Independently verified the frozen ranker-v2 iteration 4 portable model/report
+  pair. Its selection hash and selection-file checksum match the v17 frozen
+  train/development selection; all 97 training positions/source-game clusters
+  are disjoint from the 70 reserved heldout positions. Both heldout datasets
+  and support-report hashes reconcile with the frozen selection.
+- This audit found the runbook supplied `macro-support-v13-generalist` report
+  paths, while the frozen heldout selection is bound to the audited
+  `macro-support-v13-python-all` and `macro-support-v13-typescript-all` report
+  files. Updated the evaluator and collector examples to the exact matching
+  support reports. This is a documentation/input-readiness repair; no
+  collection command or engine rollout was run.
+- Stage status is unchanged: ranker acceptance remains insufficient (76/79
+  training positions), heldout labels are absent, and PPO, continuous
+  operation, and trusted promotion remain disabled.
+
+### Read-only heldout collection progress interface (2026-09-29)
+
+- Added `progress-heldout-macro-labels`, bound to the frozen family selection.
+  It validates immutable result records and manifest hashes, validates active
+  checkpoint identity/hash and per-seed outcome receipts, and reports selected
+  versus finalized positions, in-progress/not-started positions, completed
+  initial/extension indices, highest extension index, active candidate count,
+  active sample-count range, and outcome totals. It never edits checkpoints,
+  starts a collector, or claims process liveness from file state.
+- Two focused tests pass for real adaptive-checkpoint reporting and tampered
+  per-seed state rejection. The selection-aware progress command remains
+  separate from the previously completed v17 run and does not enable any
+  training or promotion gate.
+- Final verification after the read-only progress CLI change: all 555 Python
+  tests pass (two dependency deprecation warnings); TypeScript typecheck,
+  strategy-contract v1.2 validation, CLI help, and `git diff --check` pass.
+- A completed-manifest integration fixture verifies finalized/unsupported
+  position counts and rejects a self-consistently rehashed but false count.
+  Heldout progress tests now pass (3).
+
+### Game-balanced heldout ranking summary (2026-09-29)
+
+- Heldout positions are not evenly distributed across source games. The prior
+  headline interval resampled source-game clusters but then averaged all
+  position rows, allowing games with more selected positions to carry more
+  weight. The headline top-1 regret and interval now average per-game means
+  equally; a separately named position-weighted clustered estimate remains for
+  comparison. The report also declares the weighting method.
+- An uneven-cluster fixture (three positions from one game and one from
+  another) verifies the game-balanced mean is 0.5 while the supplementary
+  position-weighted mean is 0.25. No heldout labels or rollouts were used.
+
+### Fresh-state heldout progress check (2026-09-29)
+
+- The read-only progress command now accepts a not-yet-created output directory
+  and reports a valid zero-progress snapshot without creating files. Focused
+  progress tests pass, including the no-directory-creation assertion.
+- Checked the frozen selection for both families: Python has 0/34 finalized
+  positions and TypeScript has 0/36; both have zero checkpoints and report all
+  selected positions not started. The shared selection hash is
+  `b265bb6d2d24b9577bc48dedc68a1fc779b99fb72648e8c279edd1b1a3b01a49`.
+  The CLI's process status is `unknown`; this filesystem snapshot does not
+  establish whether a collector process is running.
+- No labels were collected and no PPO, continuous operation, or trusted
+  promotion gate was enabled. The heldout label authorization question remains
+  unanswered, so collection was not started.
+
+### Frozen heldout collection preflight (2026-09-29)
+
+- Ran the no-write preflight against both approved policy-family datasets and
+  support reports. Both matched the frozen selection hash
+  `b265bb6d2d24b9577bc48dedc68a1fc779b99fb72648e8c279edd1b1a3b01a49`, the
+  active runtime identity, candidate-generator identity, and frozen 16-to-64
+  rollout settings. Each reports a fresh output path, zero existing results,
+  zero checkpoints, `writesArtifacts=false`, and `startsEngine=false`.
+- Python: 34/34 positions supported, 854 candidate plans, 13,664 minimum and
+  54,656 maximum candidate-seed rollout work units; rollout identity
+  `e613ec76b3e8ff620c17502a9dffe5cf3a89c55c43fd9a93e6888d63a4fb96bb`.
+  TypeScript: 36/36 supported, 1,167 plans, 18,672 minimum and 74,688 maximum
+  work units; rollout identity
+  `d04de2c85d826053ba2640a3e4dd1240e7e13e195dfa7c35447c22236a61bffe`.
+  These are candidate-seed work-unit bounds, not elapsed-time estimates.
+- No simulation, labeling, or artifact write occurred. Collection remains a
+  separate authorized action; ranker training coverage remains 76/79 and the
+  existing PPO, continuous-operation, and trusted-promotion gates stay closed.
+
+### v19 training-root repair reproducibility audit (2026-09-29)
+
+- Rebuilt the v19 proposal from the frozen v17 parent selection, both source
+  datasets, and both support reports into a temporary audit location. Its full
+  selection hash exactly matches the committed draft:
+  `6d13ae378f8078d09636d0636a950c913d312c3afd5ee40cf1c6df628ce61e05`.
+- The proposal replaces exactly three unsupported single-candidate training
+  roots: two Python and one TypeScript. Each replacement is from the same
+  source game and has at least two complete supported candidates (40, 70, and
+  7 respectively). It retains 38 pinned training labels per family, preserves
+  all 18 development positions, and selects no heldout position.
+- This proves the draft is reproducible and source-game coverage is repaired;
+  it does not create the three replacement labels or change ranker acceptance.
+  The repair proposal remains unlabeled, and training/promotion gates remain
+  closed.
+
+### No-write v19 repair-label preflight (2026-09-29)
+
+- Added `preflight-macro-label-training-repair`. It validates the draft hash,
+  immutable parent-selection hash/file receipt, unchanged development split,
+  exact same-source-game train replacements, runtime identity, dataset/support
+  hashes, candidate-generator receipt, minimum candidate support, frozen
+  collector settings, and an empty/fresh output path without initializing an
+  engine or writing a directory. A re-hashed draft with a false source-game
+  receipt and symlinked source evidence are rejected. All four focused tests
+  pass.
+- Both real family preflights passed with selection hash
+  `6d13ae378f8078d09636d0636a950c913d312c3afd5ee40cf1c6df628ce61e05`.
+  Python verifies 2 replacements / 110 plans (1,760 initial and 7,040 maximum
+  candidate-seed work units); TypeScript verifies 1 / 7 (112 and 448). Both
+  use initial 16, maximum 64, extension batch 8, horizon 500, 60,000 ms per
+  rollout, eight workers, and the parent run's `position-hash-list` method with
+  no split filter. Both output states are fresh and report no ETA.
+- The runbook now lists the exact hashes/settings for the separately
+  authorized collector commands. No labels or engine rollouts were started;
+  this preflight does not grant collection authority or change any gate.
+- Final verification after parent-lineage and filesystem-input hardening:
+  565 Python tests pass
+  (two existing dependency deprecation warnings); TypeScript typecheck,
+  strategy-contract v1.2 validation, JSON parsing, and `git diff --check` pass.
+- After the metric update, the complete Python suite passes (555 tests, two
+  existing dependency deprecation warnings); TypeScript typecheck,
+  strategy-contract v1.2 validation, and `git diff --check` pass.
+- A read-only join of the frozen heldout selection and matching support audits
+  confirms 34/34 Python and 36/36 TypeScript positions have at least two
+  complete plans: 854 and 1,167 plans respectively. At the frozen 16-to-64
+  allocation, that is 32,336 initial and 129,344 maximum candidate-seed
+  rollout work units before adaptive pruning. This yields no elapsed-time
+  estimate, and no simulations were launched.
+
+### Heldout collection preflight (2026-09-29)
+
+- Added `preflight-heldout-macro-labels`, sharing the exact frozen-input and
+  settings construction used by the collector. Its offline fixture verifies
+  that preflight and collection resolve to the same rollout identity while
+  preflight creates no output directory and never constructs an engine pool.
+- Ran preflight against the actual frozen artifacts. Python identity
+  `a487942f…52f7063` verifies 34/34 selected positions and 854 candidate plans
+  (13,664 initial, 54,656 maximum rollouts). TypeScript identity
+  `2d38f817…07a35ee` verifies 36/36 positions and 1,167 plans (18,672 initial,
+  74,688 maximum). Both report elapsed-time estimate `unknown`, `startsEngine`
+  false, fresh output state, and zero result/checkpoint files. Both target
+  output directories remain absent.
+- Final verification after the preflight/collector refactor: the full Python
+  suite passes (555 tests, two existing dependency deprecation warnings),
+  TypeScript typecheck passes, strategy-contract v1.2 validation passes, and
+  `git diff --check` passes. No engine simulations were started.
+
+### Heldout collector concurrency guard (2026-09-29)
+
+- Added an advisory operating-system lock around each heldout output directory.
+  A second process targeting the same output fails before input verification,
+  engine construction, or sampling; a process exit releases the lock while
+  preserving resumable per-position checkpoints.
+- A subprocess test confirms a separate process cannot acquire the lock held
+  by the test process. The focused heldout collection/progress suite passes
+  (8 tests). No heldout runs, labels, or engine simulations were started.
+- Refreshed read-only preflights after the source change verify the same frozen
+  selection (`b265bb6d…b01a49`) and work bounds: Python 34 positions/854 plans
+  (rollout identity `e613ec76…a4fb96bb`), TypeScript 36/1,167
+  (`d04de2c8…6a1bffe`). Both output states are fresh; no runtime estimate is
+  available, and neither preflight created output or started the engine.
+- Full Python suite passes (556 tests, two existing dependency warnings),
+  TypeScript typecheck and strategy-contract validation pass, and
+  `git diff --check` passes. Existing frozen v17 artifacts and identities are
+  unaffected; no label collection was started.
+
+### v17 training-coverage repair feasibility (2026-09-29)
+
+- The v17 ranker has 76/79 comparable training positions because three
+  selected roots have only one executable candidate. A read-only join of the
+  immutable v17 selection, v13 candidate-support audits, and the existing
+  candidate-qualified selector found same-source-game replacements for all
+  three: Python Crustle vs Raging Bolt (`115cda2e…f54ae9` →
+  `b6b4e613…c43cd11`, 40 complete plans); Python Raging Bolt vs Grimmsnarl
+  (`92d06e83…06e9580` → `e3e93f9f…b88056a`, 70); TypeScript Grimmsnarl mirror
+  (`1eece6ac…a7439b85` → `84b70000…2503bd`, 7).
+- Added and generated the draft-only CLI `freeze-macro-label-training-repair`
+  and selection artifact
+  `macro-label-selection-v19-train-coverage-repair-draft-2026-09-29.json`
+  (selection hash
+  `6d13ae378f8078d09636d0636a950c913d312c3afd5ee40cf1c6df628ce61e05`). It
+  pins all 76 currently comparable v17 training roots, replaces only the
+  three unsupported roots, preserves 40/39 train source games, and leaves all
+  18 v17 development roots exactly unchanged. The replacements contain 117
+  candidate plans total (1,872 initial and 7,488 maximum 16-to-64
+  candidate-seed work units before pruning). No candidate rollouts or labels
+  were produced.
+- This is a repair feasibility result, not an accepted selection or ranker
+  result. The current ranker-input merger binds every record to one exact
+  selection hash and expects full family runs, so a separately reviewed
+  lineage-aware supplement/merge path is still needed before collecting or
+  combining these three replacement positions. Do not rewrite v17 artifacts.
+
+### Training-repair merge and real v17 provenance recheck (2026-09-29)
+
+- The prior bullet describes the state before the lineage-aware merge was
+  implemented. The v19 draft has three replacements **total** (two Python,
+  one TypeScript), not three per family. The merge retains 76 usable parent
+  training records, replaces the three single-candidate records, and keeps all
+  18 original development records. Its integration test verifies this lineage,
+  preserves the original run directories, and models the actual collector
+  record schema, where `sourceGameId` is established by the hashed selected
+  dataset row rather than duplicated in each label record.
+- The previous v17 combined bundle predates the current explicit source-run
+  compatibility receipt and is rejected by the current strict ranker-input
+  loader. The immutable Python and TypeScript v17 family runs were re-combined,
+  without relabeling or editing either source run, into the ignored local view
+  `artifacts/learning-mind-v1/combined-macro-labels-v17-provenance-recheck-2026-09-29`.
+- The current combiner verified source-record checksums and exact selection
+  coverage, preserving 49 Python and 48 TypeScript positions and 79 train / 18
+  development positions. The strict ranker-input loader accepted all 97
+  records and both distinct rollout identities. The receipt classifies the
+  collectors as `audited-same-collection-surface`, with surface hash
+  `a3f0225ffb11a69b87b6ee786dcaaab4e5ebe484b333424fc88bdee61e0811f9` and
+  source commits `cc3802e38c9e8b41e49196309bf03976eac7251b` and
+  `45620268a1f085184b58d834c0a547164c507649`.
+- Derived manifest hash:
+  `6f3c836e949e014dfb2db631b8e94599b9cc168418288201e6a9e0c155f1beb6`;
+  manifest-file SHA-256:
+  `18ef38032027c16506cdf7f9a07e7702f4098f5eaed08e2061a5165ceec50904`.
+  This is format/provenance validation only. Ranker acceptance remains
+  `insufficient` (76/79 comparable training positions); heldout labels remain
+  uncollected, and PPO, continuous operation, and trusted promotion remain
+  disabled.
+- The old iteration-4 model report no longer verifies against the current
+  evaluation implementation hash, so it was not treated as current evidence.
+  A new iteration-5 research ranker was fitted from the re-derived v17 bundle
+  and fresh analysis-only confidence report, then passed the current portable
+  artifact verifier. Model SHA-256 is
+  `3c659dd6f993127d99acd354d285f2f60d2253a5e64a068cde4a1de0fa1285b9`;
+  report hash is `c8625885114f2afed49ccb789c482b20fa55c9a61e79437f77e1641f98d8abb4`.
+  It deterministically matches the prior model bytes, but now binds the current
+  input, confidence-audit, and evaluation implementation receipts. Development
+  mean top-1 relative regret remains 0.0817 (18 independent games; 95% source-
+  game cluster interval 0.0365–0.1418); training remains 76/79 and overall
+  acceptance is `insufficient`. This is a provenance/verifiability refresh,
+  not a model-strength gain or permission to distill.
+
+### Heldout evaluator protocol binding (2026-09-29)
+
+- The current heldout evaluator now requires each label-run manifest's candidate
+  generator version to match the frozen candidate-generator identity, and
+  enforces the settings used by the reviewed v2 preflights: 16 initial / 64
+  maximum rollouts, extension batch 8, horizon 500, 60,000 ms per rollout,
+  eight workers, the heldout seed namespace, staged allocation v3, frozen
+  heldout selection, and heldout split. Equal-but-altered settings no longer
+  pass as the same evaluation.
+- Heldout evaluation reports now pin their evaluator source SHA-256:
+  `ae72f5000aa4a247d54ae95eb39679eff20f2f5cef9347bc6e3153a1841b9c6c`.
+  Tests cover altered generator version, altered settings, and current
+  collector-to-evaluator fixture integration with a fake pool. The actual
+  preflight starts no engine, and no heldout labels were collected.
+- Verification: 560 Python tests pass (two existing dependency deprecation
+  warnings); TypeScript typecheck, strategy-contract v1.2 validator, and
+  `git diff --check` pass. This improves evidence reproducibility only; the
+  heldout result is still absent, ranker acceptance is still insufficient,
+  and PPO/continuous operation/trusted promotion remain disabled.
+- Added `verify-macro-ranker-heldout-evaluation`. Given the report, frozen
+  selections, ranker files, and original family runs, it replays the descriptive
+  evaluation from those saved inputs in a temporary directory and requires an
+  exact report match. It independently recomputes aggregate metrics from
+  per-position rows and rejects a re-hashed, altered summary. A tampering test
+  recomputes the outer report hash after changing regret and is still rejected.
+  The command has no engine or training path; its temporary output is removed
+  when verification ends.

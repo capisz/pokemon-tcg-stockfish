@@ -63,28 +63,182 @@ The following is not complete:
 The authoritative gate record is
 `docs/validation/learning-mind-v1/stage-gates.json`.
 
-### Current frozen gate and label-selection record
+### Current frozen gate and label-selection record (2026-09-29)
 
-The committed gate record currently says representation parity, the supervised
-manifest, and the supervised checkpoint are complete. Held-out-label evidence
-and blind opponent-family evidence are still `insufficient`; targeted-probe
-improvement is false; PPO, continuous operation, and trusted promotion remain
-disabled. These are the authoritative readiness values—do not infer readiness
-from a successful smoke, a populated directory, or a collector still running.
+The authoritative readiness values are in
+`docs/validation/learning-mind-v1/stage-gates.json`: representation parity,
+the supervised manifest, and the supervised checkpoint are complete. The
+v17 macro-label run and confidence reevaluation are also complete, but ranker
+acceptance remains `insufficient` because training coverage is 76/79. Blind
+opponent-family evidence is `insufficient`, targeted-probe improvement is
+false, and PPO, continuous operation, and trusted promotion remain disabled.
+Never infer readiness from a smoke, a populated directory, or a completed
+collector alone.
 
-The frozen selection record is
-`docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json`
-with selection hash
-`c1fcb21d10ad38a799490fce3714fe18f72f0dc7e08dadf4431ca6ad1551ae4d`. It
-selects 40 Python-family and 39 TypeScript-family training positions, plus
-nine development positions per family. The 79 training positions contain
-2,022 candidates and the 18 development positions contain 560. All five decks,
-three stages, and five opponents are represented; ten train pilot positions
-are pinned and held-out positions are not selected. This is a frozen plan, not
-proof that the final label artifacts or confidence reevaluation have passed.
-After the selected collections finalize, verify their exact identities,
-manifests, record hashes, outcome reconciliation, and independent holdouts
-before fitting or accepting a ranker. Do not use promotion data for this gate.
+The frozen v17 selection
+(`macro-label-selection-v17-generalist-balanced-2026-09-23.json`, selection
+hash `c1fcb21d10ad38a799490fce3714fe18f72f0dc7e08dadf4431ca6ad1551ae4d`)
+is historical input provenance, not the next usable selection. Its 40/39
+training positions and nine development positions per family have already
+been collected and evaluated. See the dated v17/v18 evidence section near the
+end of this runbook and
+`docs/validation/learning-mind-v1/VERIFICATION.md` for current outcomes and
+limitations.
+
+The candidate-qualified v18 selection is only a local draft from the existing
+v13 pools. It reuses all 97 v17 source-game IDs and is not independent evidence.
+Do not freeze it for new labels or use it to claim generalization. The next
+proposed 60-game coverage-only pool under a new seed namespace would expand
+training coverage, but requires explicit user approval before collection; it
+creates positions and candidate-support evidence only, not macro rollouts or
+labels. Runtime is unknown until measured.
+
+The old v13 pools also contain previously reserved, source-game-disjoint
+heldout rows. Their all-supported selection is frozen separately in
+`docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json`
+(selection hash `b265bb6d2d24b9577bc48dedc68a1fc779b99fb72648e8c279edd1b1a3b01a49`):
+34 Python positions and 36 TypeScript positions across nine heldout games per
+family, with all five target decks and opponent archetypes represented. This
+selection is evaluation-only and unlabeled. Any evaluation must cluster
+uncertainty by source game; these old heldout games do not satisfy a fresh
+promotion namespace or a blind policy-family requirement, and they do not fix
+the 76/79 training coverage. A new game pool is therefore not required merely
+to define an initial heldout position set, but may still be justified for
+independent training expansion. Macro-label collection on heldout positions
+requires separate authorization and a heldout-aware evaluator.
+
+The frozen support audits contain 854 complete plans across the 34 Python
+positions and 1,167 across the 36 TypeScript positions: 2,021 candidate plans
+total. The current 16-to-64 allocation therefore represents 32,336 initial
+candidate-seed rollouts and a 129,344 maximum before adaptive pruning. These
+are work-unit bounds, not elapsed-time estimates; no comparable runtime
+benchmark is available, and no heldout rollouts have been run.
+
+The heldout runner also has a read-only progress view. For example, inspect a
+Python-family run without touching its process or checkpoint:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind progress-heldout-macro-labels \
+  --family python-heuristic \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --run artifacts/learning-mind-v1/macro-labels-heldout-v1/python
+```
+
+It verifies checkpoint hashes and reports completed seed indices, highest
+extension index, active candidate count, per-candidate sample range, and
+finished/truncated/error totals. The output directory may not exist yet; in
+that fresh state it reports zero finalized positions and all selected
+positions as not started, without creating the directory. `processStatus` intentionally remains
+`unknown`: saved checkpoints do not prove a collector is currently running.
+The command writes no artifacts and does not poll or resume collection.
+The collector also holds an operating-system process lock for its output so a
+second invocation cannot duplicate sampling into the same run directory. A
+crash releases the OS lock automatically; the durable seed checkpoint remains
+the resume authority.
+
+After a separately authorized heldout-only label run exists for both policy
+families, evaluate the already-frozen ranker without fitting or changing it:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind evaluate-macro-ranker-heldout \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --ranker-selection FROZEN_TRAIN_DEVELOPMENT_SELECTION.json \
+  --model VERIFIED_RANKER_V2.json --ranker-report VERIFIED_RANKER_V2.manifest.json \
+  --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --python-labels HELDOUT_PYTHON_LABEL_RUN --typescript-labels HELDOUT_TYPESCRIPT_LABEL_RUN \
+  --output artifacts/learning-mind-v1/macro-ranker-v2-heldout-evaluation.json
+```
+
+The evaluator verifies the frozen heldout selection, source/support hashes,
+actor-visible observation hashes, legal candidate roots, heldout-only seed
+namespace, complete run manifests, collector compatibility, ranker binding,
+and game/position disjointness from train/development. It reports source-game-
+clustered descriptive ranking metrics only. The headline top-1 regret and
+bootstrap interval weight independent source games equally; a separately
+named position-weighted result is retained as a supplementary view. Its result is explicitly
+`trainingEligible: false` and `automaticPromotion: false`; it is not a policy
+win-rate, a promotion result, or an authorization to collect heldout labels.
+Use a new output path for every immutable report. No heldout labels are
+currently supplied by the v17 train/development run.
+
+To independently audit an immutable heldout report later, supply its exact
+frozen selections, model, and source artifacts. This read-only command reruns
+the descriptive evaluator from those saved inputs, verifies the evaluator
+source hash and report checksum, and requires an exact report match; it starts
+no engine and trains no model:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-macro-ranker-heldout-evaluation \
+  --report artifacts/learning-mind-v1/macro-ranker-v2-heldout-evaluation.json \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --ranker-selection FROZEN_TRAIN_DEVELOPMENT_SELECTION.json \
+  --model VERIFIED_RANKER_V2.json --ranker-report VERIFIED_RANKER_V2.manifest.json \
+  --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --python-labels HELDOUT_PYTHON_LABEL_RUN --typescript-labels HELDOUT_TYPESCRIPT_LABEL_RUN
+```
+
+After separately authorizing the 70-position heldout collection, run one
+family at a time into a fresh ignored artifact directory. The preflight command
+checks the selected family, runtime identity, dataset, support report, and
+candidate-generator hashes, then reports exact rollout work-unit bounds. It
+does not start the engine or write files:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind preflight-heldout-macro-labels \
+  --root . --family python-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --output artifacts/learning-mind-v1/macro-labels-heldout-v1/python
+
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind preflight-heldout-macro-labels \
+  --root . --family typescript-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --output artifacts/learning-mind-v1/macro-labels-heldout-v1/typescript
+```
+
+After review of the preflight result and separate authorization, the collector
+uses a dedicated SHA-256 seed namespace, adaptive 16-to-64 allocation, per-seed
+resumable checkpoints, and immutable completed position records. Each candidate
+record includes the sampled seed-index prefix and a per-index
+finished/truncated/error receipt; the evaluator reconciles those receipts with
+aggregate outcomes, typed reasons, decision counts, and candidate mean scores.
+Invoking collection performs engine rollouts:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-heldout-macro-labels \
+  --root . --family python-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --output artifacts/learning-mind-v1/macro-labels-heldout-v1/python
+
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-heldout-macro-labels \
+  --root . --family typescript-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
+  --output artifacts/learning-mind-v1/macro-labels-heldout-v1/typescript
+```
+
+Do not change a run's settings on resume. Preserve truncation/error outcomes;
+they remain unfinished and never become draws. Completed runs are immutable.
+This runner has only been exercised with deterministic fake rollouts; no
+heldout engine rollout has been started.
+
+Cross-family historical label bundles must continue to preserve source
+identities and may be combined only under the audited exact collection-surface rules in
+`src/ptcg_lab/learning_mind/collector_compatibility.py` and
+`docs/validation/learning-mind-v1/macro-label-collector-equivalence-v1.md`.
+Do not use promotion data for any training or development gate.
 
 To inspect saved collection coverage without launching games or writing an
 artifact, use the read-only progress command. Its position percentage means
@@ -499,8 +653,9 @@ bounded [0, 1] outcomes, not just raw means, so a candidate with few completed
 rollouts is not prematurely excluded after many truncations.
 
 After both family runs have finalized, use the single offline finalizer to
-verify and combine the exact frozen position universe, create the independent
-95% confidence reevaluation, and immediately recompute it for verification.
+verify and combine the exact frozen position universe, preserve each family's
+rollout identity and source hashes, create the independent 95% confidence
+reevaluation, and immediately recompute it for verification.
 Run from the repository root; substitute only the two exact finalized family
 run directories. The combined directory and confidence report are immutable,
 and the confidence report must remain outside the combined directory:
@@ -524,7 +679,10 @@ This read-only report uses Bonferroni-adjusted Hoeffding intervals to form a
 conditional on completed outcomes; truncations and errors stay separately
 reported and are never imputed. This descriptive report cannot upgrade policy
 label eligibility, ranker acceptance, PPO, or promotion. It requires the full
-verified position universe and rejects partial or mixed-identity label bundles.
+verified position universe and rejects partial bundles, unknown collector-source
+differences, or inconsistent shared settings. Where an audited collection
+surface is shared across module revisions, source-specific rollout identities
+remain distinct and are validated per family.
 
 Start with a small smoke set covering:
 
@@ -1317,3 +1475,138 @@ frames increased from 225 to 252. A new, identity-matched 18-row pool was built;
 candidate support has **not** yet been re-audited under this engine identity.
 This is a narrow +27-frame coverage change, not general history reconstruction.
 See `docs/validation/learning-mind-v1/fresh-position-coverage-v4-2026-09-22.json`.
+
+### v17 ranker evidence and v18 collection boundary (2026-09-29)
+
+The completed v17 run has 97 positions; macro-plan execution fidelity passed
+for all 300 Raging Bolt candidates. Ranker-v2 iteration 4 has measured
+development and all seven archetype/family holdouts, but full training coverage
+is 76/79, so acceptance remains `insufficient`. Its holdout report records
+per-fold training position hashes and coverage. Do not distill this model or
+advance PPO from an insufficient ranker receipt.
+
+Future position selection now requires at least two complete executable plans
+per root. Full candidate-support-only audits of the frozen v13 pools found 221
+such Python roots and 231 TypeScript roots, with no rollouts or labels. The
+candidate-qualified v18 draft has the same 40/9 Python and 39/9 TypeScript
+train/development source games as v17, reuses all 97 source-game IDs, and
+retains 74 of the same 97 exact positions. Its development selection contains
+only one or two Raging Bolt-opponent positions per family. Therefore it does
+not provide independent evaluation and must not be presented as a new evidence
+epoch.
+
+A separate **unlabeled draft** addresses only the three v17 training roots
+that lack pairwise candidate comparisons:
+`docs/validation/learning-mind-v1/macro-label-selection-v19-train-coverage-repair-draft-2026-09-29.json`
+(selection hash `6d13ae378f8078d09636d0636a950c913d312c3afd5ee40cf1c6df628ce61e05`).
+It pins the other 76 usable v17 training roots, replaces each unsupported root
+with a candidate-supported position from the same source game, and leaves all
+18 development roots unchanged. This is selection provenance only—not labels,
+a ranker result, or an independent evidence epoch. A lineage-aware merge is now
+implemented: after separately authorized collection of the three replacement
+training positions total (two Python and one TypeScript), it verifies each source run and retains only
+the 76 supported parent training records, all 18 parent development records,
+and the three replacements. It does not rewrite either immutable source run.
+This does not authorize collection; no repair labels have been collected.
+
+The no-write repair preflight validates the frozen source/support receipts,
+runtime and candidate-generator identities, exact replacement hashes, shared
+v17 rollout settings, and a fresh output path. The current real-artifact
+preflights pass: Python has 2 positions/110 plans (1,760 initial; 7,040
+maximum candidate-seed work units), and TypeScript has 1 position/7 plans
+(112 initial; 448 maximum). These are not elapsed-time estimates. To repeat
+them without starting the engine:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind preflight-macro-label-training-repair \
+  --root . --family python-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v19-train-coverage-repair-draft-2026-09-29.json \
+  --parent-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --output artifacts/learning-mind-v1/macro-labels-v19-repair-2026-09-29/python
+
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind preflight-macro-label-training-repair \
+  --root . --family typescript-heuristic \
+  --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v19-train-coverage-repair-draft-2026-09-29.json \
+  --parent-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --output artifacts/learning-mind-v1/macro-labels-v19-repair-2026-09-29/typescript
+```
+
+Only after separate authorization, collect exactly the listed replacements
+using these settings, which match the parent run's shared 16/64, 8-step,
+500-decision, 60-second, eight-worker configuration. Do not pass `--split`:
+the frozen repair hashes and per-record train split are checked by selection
+and merger; the parent evidence used `splitFilter=null`.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-macro-labels \
+  --root . --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --output artifacts/learning-mind-v1/macro-labels-v19-repair-2026-09-29/python \
+  --position-hash b6b4e613567c4176af9804e19ae783eb9ede1d22701fff901fbd7b514c43cd11 \
+  --position-hash e3e93f9fd87e099f55edbebec27e1a92937e635752bc0928b58c898f4b88056a \
+  --initial 16 --maximum 64 --extension-batch-size 8 --horizon 500 \
+  --rollout-budget-ms 60000 --rollout-workers 8
+
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-macro-labels \
+  --root . --dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --output artifacts/learning-mind-v1/macro-labels-v19-repair-2026-09-29/typescript \
+  --position-hash 84b70000dbb9522247428474c33d57e1b0b5dd51e6d36430b8fb85cd822503bd \
+  --initial 16 --maximum 64 --extension-batch-size 8 --horizon 500 \
+  --rollout-budget-ms 60000 --rollout-workers 8
+```
+
+The selection-only draft can be regenerated without starting the engine:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind freeze-macro-label-training-repair \
+  --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --parent-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --output NEW_IMMUTABLE_REPAIR_SELECTION.json
+```
+
+After (and only after) separate authorization to collect these frozen repairs,
+combine the immutable v17 source runs and exact repair shards with:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind combine-macro-label-training-repair-runs \
+  --python-base-run PATH_TO_V17_PYTHON_RUN \
+  --typescript-base-run PATH_TO_V17_TYPESCRIPT_RUN \
+  --python-repair-run PATH_TO_PYTHON_REPAIR_RUN \
+  --typescript-repair-run PATH_TO_TYPESCRIPT_REPAIR_RUN \
+  --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
+  --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
+  --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
+  --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v19-train-coverage-repair-draft-2026-09-29.json \
+  --parent-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --output NEW_IMMUTABLE_COMBINED_LABEL_VIEW
+```
+
+The merge rejects changes to the parent selection, development roots, shared
+rollout settings, collector compatibility, candidate-generator identity,
+dataset/support hashes, source-record checksums, and replacement lineage. Its
+output is a derived read-only view; preserve both original run directories.
+Collector compatibility receipts distinguish committed source revisions from
+exact uncommitted worktree hashes and identify the base revision for each
+worktree source.
+
+For broader training expansion, a future experiment can collect a fresh
+source-game pool with a new seed namespace and a frozen coverage matrix. Include
+new game-level development and held-out positions for every opponent archetype,
+with extra Raging Bolt coverage; keep v17/v13 artifacts immutable. This is not
+required just to use the already-frozen v13 heldout position set. Any new game
+collection still requires separate approval for exact scope, sample size, and
+runtime profile.
+
+The proposed bounded first step is coverage-only: 30 games for each frozen
+policy family, two games in each of the 15 five-archetype matchup cells (60
+games total), with a unique collection namespace. Then build actor-visible
+positions, run candidate-support only, and report observed runtime and
+train/development/held-out coverage. Do not collect macro labels until a later
+separate approval; this pilot has no PPO, training, or promotion effects.

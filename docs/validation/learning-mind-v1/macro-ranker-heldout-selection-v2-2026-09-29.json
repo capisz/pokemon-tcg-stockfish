@@ -1,0 +1,679 @@
+{
+  "schemaVersion": 1,
+  "kind": "macro-ranker-heldout-selection-v1",
+  "selection": "all-supported-multi-candidate-heldout-positions-source-game-clustered-v1",
+  "minimumCompleteCandidatesPerPosition": 2,
+  "identity": {
+    "schemaVersion": 1,
+    "engine_build_hash": "350553476eda7e637ea4b1c6dcf9c2ae3865c952583acdeb0283278fbedee1bd",
+    "deck_manifest_hash": "a575bc9bc3da927ee893940609083ea26f8c85382fc5734b2ad1e0a715cc6550",
+    "feature_schema_hash": "aed35ce695f6471e0cd6985b839dc3083435868014c88fc13058ce51bc56125a",
+    "tracker_rules_hash": "f9ec65255a2fd06cc0c547ee592124c94f9e12235ae569fb2600f67f5a8874c1",
+    "card_metadata_hash": "0b6d9e0b00649aabc2f4f9d910104afb17ffb7317eea446124de5ac3f02d8ea2",
+    "action_equivalence_hash": "ef2b7483148402dfbaaca84a7a221fa3dc2fb09a3995f28061c29ec159197828",
+    "identityHash": "e32fd5094ae1db4c053dde7b1e7a04b080535426eb0df4dc77ff05c1cadcafa8"
+  },
+  "sourcePools": [
+    {
+      "policyFamily": "python-heuristic",
+      "datasetManifestHash": "dcb0d441df750d1a0556ff16d66b995ae1de836e2d39f61a4b652d856d017a15",
+      "datasetManifestSha256": "4ffb94da1e5adb3d20232e727f407d293e4158a5224da6a11d035cf5db3b0314",
+      "datasetRowsSha256": "702b63e275d432ce4508b9b79dbd1eb8248aedff5732f93736d149ff347cd87e",
+      "supportReportHash": "c29807d790f7b76bcd40a772d61f9d9d086c4036a7671657fb5c977f4ebdacb0",
+      "supportReportSha256": "a4b66cd614fc38e880a404262f2a74c115474d2914744b8db9802b013c5aa8b4"
+    },
+    {
+      "policyFamily": "typescript-heuristic",
+      "datasetManifestHash": "cc289ac58539b5c48827f96d88dfdaf6cbc70842a8fc02b282fb08d9490d7e04",
+      "datasetManifestSha256": "7fc683aa7eebd126f6ce0bbb02d2999c5568e4c5fd4e2f7d9b034d20c41af354",
+      "datasetRowsSha256": "e056cb747daa07be562ea17e26b4bfcfc7ab46cea10e19ea61ca1a3b9f712d07",
+      "supportReportHash": "7f0055f8ae67f47f860cf31bbbdea89d0c26ae7a1f41afc031b0411de04feab1",
+      "supportReportSha256": "dcd54dc450290f7dea0efdd8c598478d3ac7e2baf6464e68ea10fe9c78abf9e3"
+    }
+  ],
+  "splits": [
+    {
+      "policyFamily": "python-heuristic",
+      "split": "heldout",
+      "sourceGames": 9,
+      "sourceGameIds": [
+        "fresh-v2-python-crustle-vs-crustle-coverage-2026-09d-2",
+        "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+        "fresh-v2-python-crustle-vs-raging-bolt-coverage-2026-09d-2",
+        "fresh-v2-python-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+        "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-1",
+        "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-2",
+        "fresh-v2-python-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-2",
+        "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+        "fresh-v2-python-mega-lucario-vs-mega-lucario-coverage-2026-09d-2"
+      ],
+      "positionHashes": [
+        "053d0862f39ef5fce64aea620b31385b174c3683afd04f0b984dcb9e37c1d64c",
+        "07504a421aa595403df13a6468d3ffe93ec7bad18f139b0c4ffbd8079fa27934",
+        "12fbef783a31f928e53c868f3fa736b5885c956120dccd87fa4e6c1986c23413",
+        "2448ffa3c2d017b8f247fef7e771c6dd0ede7bfe5a8f027377ff54aadf145ae5",
+        "311362d8a7fef5c0ee0952cf5ea9daa46a784bdf48d8ccb98f5e1525b6348dde",
+        "34f831e3d821e20178054a7b0a22b576db61c5bbe7a2766de1c1d908865561db",
+        "3feff68091ce389fd503682d2edea119536dc5215c33af9319c60270fb656fc4",
+        "40b22052b722cd133de63228f5479a77233296c330cb19b5e3c669dcf33a2eea",
+        "441c175cc49d5ce07b5515ce702e5aa14fc30d28cc2cfb9d5fcd46ec99cacd9f",
+        "457ca34b1c021207a1a630762962c7407074006b4b71c4f80e41277550b7b4e2",
+        "53c40a0990f457376bd5571fd49ece3057805df074aa8686203f8074e1b55485",
+        "5bf03fbf1c05825591a914099a146828513f1921d1dd80018446a45b0af30de9",
+        "5c7b094043a823d91ccf99ef3afbc97f4bb105b3a079b80d65fd01c7e62a3e3d",
+        "756f56efe530d6ee93683fda0f1855b4aca1a05192042bdd365c040032e44c9f",
+        "7b225454083e956afe30fc84ccb3383f716ac3dbbcee08150a5b57687edb8da2",
+        "7e1b084636c4f531916005d6fa94069f00061ce081d1b55e385be8b7dde1e2a8",
+        "87cc16ca4dbce02152ce2c10859167c9de0db43de9ea8770e1d9bcddbbdeabdd",
+        "927d4e869bbb009155d09f0423f83396ac1fbb7b1a8593aa7a52b051852ce8a2",
+        "af65e318f7050f50c29334faa2ec2223d27fafb4e1f6036887268d7c3b98cb5a",
+        "b3c31ceb08d32ee07c56c7bf0adfaba9660c1a0cc967d1e3e889f34fdd45ae6b",
+        "b3ed3f9d728c481c72aabb437f08acf3b3b6597606a462c40a6fb03b6afac30d",
+        "bbd0ee50b827e3109c47baf166318a120933211c4aa7ac825f997a6b82b503e7",
+        "bc195f871241c9a97e6be452d1d69a02be98e9d7f101a67e1aaf00d62153aa01",
+        "c1a3d4d8019b7671dda106409995d636d9d6a0e8e864de1005b1008915b8ee7a",
+        "c3a52a97f704f8b3835567d478530694a2da6126118d237611f855058d76eed3",
+        "cfc658d19b99ee1c0f3bea490f69dd63374d70d76ec0073884a2e3748bccd1c5",
+        "d93f8f88dddd55c8cbfc396eb1d43784bc9de4713c04621ee4bdcc7fdf632e39",
+        "d9e822336a235e340768cfb04658b7c50d99e08da3589733a6ca0f451b0942df",
+        "dafa5ac82aac5e0870f4981a542c5d5060ea9cbcb32e9d107fcbb240475c1096",
+        "e6f85f7ada9443cabaf2c45ffea48bd15291c1c7443c4373c9a30f309048ac44",
+        "e85df600d4da7452d5a34f9860447f8592c8a74113a4827a79fa2dcfbdb118ac",
+        "e8aa4592b997a141b67fcea0eebb7ba187e6a581e3cf9d1eef74a83f78b5a9eb",
+        "ede90512d55217a17c7c009188d977d5999d12b8157f5903f12741e2e1ca4063",
+        "f309d5c32c302c6558cad5a0ce936b5d28d36cebfd873f44635cf6338a9d3927"
+      ],
+      "positions": [
+        {
+          "positionHash": "053d0862f39ef5fce64aea620b31385b174c3683afd04f0b984dcb9e37c1d64c",
+          "sourceGameId": "fresh-v2-python-mega-lucario-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "07504a421aa595403df13a6468d3ffe93ec7bad18f139b0c4ffbd8079fa27934",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "dragapult",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "12fbef783a31f928e53c868f3fa736b5885c956120dccd87fa4e6c1986c23413",
+          "sourceGameId": "fresh-v2-python-crustle-vs-raging-bolt-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "raging-bolt",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "2448ffa3c2d017b8f247fef7e771c6dd0ede7bfe5a8f027377ff54aadf145ae5",
+          "sourceGameId": "fresh-v2-python-crustle-vs-raging-bolt-coverage-2026-09d-2",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "311362d8a7fef5c0ee0952cf5ea9daa46a784bdf48d8ccb98f5e1525b6348dde",
+          "sourceGameId": "fresh-v2-python-crustle-vs-crustle-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "crustle",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "34f831e3d821e20178054a7b0a22b576db61c5bbe7a2766de1c1d908865561db",
+          "sourceGameId": "fresh-v2-python-mega-lucario-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "3feff68091ce389fd503682d2edea119536dc5215c33af9319c60270fb656fc4",
+          "sourceGameId": "fresh-v2-python-crustle-vs-crustle-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "40b22052b722cd133de63228f5479a77233296c330cb19b5e3c669dcf33a2eea",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "441c175cc49d5ce07b5515ce702e5aa14fc30d28cc2cfb9d5fcd46ec99cacd9f",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "457ca34b1c021207a1a630762962c7407074006b4b71c4f80e41277550b7b4e2",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "53c40a0990f457376bd5571fd49ece3057805df074aa8686203f8074e1b55485",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "dragapult",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "5bf03fbf1c05825591a914099a146828513f1921d1dd80018446a45b0af30de9",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "5c7b094043a823d91ccf99ef3afbc97f4bb105b3a079b80d65fd01c7e62a3e3d",
+          "sourceGameId": "fresh-v2-python-crustle-vs-raging-bolt-coverage-2026-09d-2",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "756f56efe530d6ee93683fda0f1855b4aca1a05192042bdd365c040032e44c9f",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "7b225454083e956afe30fc84ccb3383f716ac3dbbcee08150a5b57687edb8da2",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-2",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "dragapult",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "7e1b084636c4f531916005d6fa94069f00061ce081d1b55e385be8b7dde1e2a8",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "dragapult",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "87cc16ca4dbce02152ce2c10859167c9de0db43de9ea8770e1d9bcddbbdeabdd",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "927d4e869bbb009155d09f0423f83396ac1fbb7b1a8593aa7a52b051852ce8a2",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "af65e318f7050f50c29334faa2ec2223d27fafb4e1f6036887268d7c3b98cb5a",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "b3c31ceb08d32ee07c56c7bf0adfaba9660c1a0cc967d1e3e889f34fdd45ae6b",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "b3ed3f9d728c481c72aabb437f08acf3b3b6597606a462c40a6fb03b6afac30d",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "bbd0ee50b827e3109c47baf166318a120933211c4aa7ac825f997a6b82b503e7",
+          "sourceGameId": "fresh-v2-python-crustle-vs-crustle-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "bc195f871241c9a97e6be452d1d69a02be98e9d7f101a67e1aaf00d62153aa01",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-2",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "c1a3d4d8019b7671dda106409995d636d9d6a0e8e864de1005b1008915b8ee7a",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "raging-bolt",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "c3a52a97f704f8b3835567d478530694a2da6126118d237611f855058d76eed3",
+          "sourceGameId": "fresh-v2-python-dragapult-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "dragapult",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "cfc658d19b99ee1c0f3bea490f69dd63374d70d76ec0073884a2e3748bccd1c5",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "crustle",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "d93f8f88dddd55c8cbfc396eb1d43784bc9de4713c04621ee4bdcc7fdf632e39",
+          "sourceGameId": "fresh-v2-python-mega-lucario-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "d9e822336a235e340768cfb04658b7c50d99e08da3589733a6ca0f451b0942df",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "dafa5ac82aac5e0870f4981a542c5d5060ea9cbcb32e9d107fcbb240475c1096",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "e6f85f7ada9443cabaf2c45ffea48bd15291c1c7443c4373c9a30f309048ac44",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "e85df600d4da7452d5a34f9860447f8592c8a74113a4827a79fa2dcfbdb118ac",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "e8aa4592b997a141b67fcea0eebb7ba187e6a581e3cf9d1eef74a83f78b5a9eb",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "ede90512d55217a17c7c009188d977d5999d12b8157f5903f12741e2e1ca4063",
+          "sourceGameId": "fresh-v2-python-crustle-vs-grimmsnarl-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "f309d5c32c302c6558cad5a0ce936b5d28d36cebfd873f44635cf6338a9d3927",
+          "sourceGameId": "fresh-v2-python-grimmsnarl-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "midgame"
+        }
+      ],
+      "countsByTargetDeck": {
+        "crustle": 7,
+        "dragapult": 2,
+        "grimmsnarl": 9,
+        "mega-lucario": 9,
+        "raging-bolt": 7
+      },
+      "countsByOpponent": {
+        "crustle": 8,
+        "dragapult": 8,
+        "grimmsnarl": 9,
+        "mega-lucario": 7,
+        "raging-bolt": 2
+      },
+      "countsByStage": {
+        "late": 12,
+        "midgame": 11,
+        "opening": 11
+      },
+      "completeCandidates": 854
+    },
+    {
+      "policyFamily": "typescript-heuristic",
+      "split": "heldout",
+      "sourceGames": 9,
+      "sourceGameIds": [
+        "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+        "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+        "fresh-v2-typescript-crustle-vs-raging-bolt-coverage-2026-09d-1",
+        "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-0",
+        "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-2",
+        "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+        "fresh-v2-typescript-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-3",
+        "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+        "fresh-v2-typescript-raging-bolt-vs-mega-lucario-coverage-2026-09d-3"
+      ],
+      "positionHashes": [
+        "10b1c2d411681edcd452b57ab90eddd3fdc99f6c4dd49b1911e0c274219594d2",
+        "1715060b61187ac02f5affe12ab8c751bbdeff68aaf52b4adf94e0209cdad93c",
+        "2d191f6a9c084315236f70735414e598d8d5e7ac306f7c035dadfb55c1814bdc",
+        "30c9e629f86b67a6a467ff69aaaf039d2ba69b41360638a4130b9fba0b912f39",
+        "363493e851b7d2a10d1913850e94739b534a93ba932a8e51d13fa6ffef5b3dff",
+        "37b32412f3e5941bf0d0ecb0471b4a3cca22aa8bb436f29ee650348612926202",
+        "52ecc2368d1baaac798223e6e231c0f5756d4baa4506f8237599fd8b29041c75",
+        "5a1aed634ace847ba3b1e33658fa0b6a9a68c9565db29895d597115fc043bddb",
+        "5cfa819912ac140e1fd16e306d61a8a015f075eba6ea87bc3a14848a3e48a3b5",
+        "614a8774cd5c5b85262f7717a491b02bff44471e12288c1fc1ae67cbecd2ed34",
+        "671a3940d6c680c7f8962f658aa0219943a9fdac7176d67206ecf602cbdfbfb0",
+        "69efc53a9e83353acdbb1bb7a14e0ae5e9454ac586e7c0a8696b51656fb6c0b2",
+        "730ebb666592c2198bd40b56a5b7b490bc2ccf537b6ab33d7e942eeb9f553ef5",
+        "7ac05be895968a1c716a423427b6d57a190ef85d1c3d27664abf986a721522c4",
+        "7d7483bbe5ec4a3b8c0566b33451d176fcfdc69dbf0f4b6511da2ef27910afa1",
+        "7fa8d1b5ecb75768c2a6d706657d968a673b53290c19032179b55f01e89b8b5c",
+        "7fc502192d2309b4d98ff66966deb937aa3502398af2516c5ef81012fb8d271d",
+        "8e646b185c427463118c3ec95a34f03bf5ece9a3cd70bda7921aa796686b6fcc",
+        "9286ca0e4cf73ac6760026aea4019a41334172c91cfb4dc22798b670bdcc0d57",
+        "971710f0ddaccb8607d67b648ae961cbf5280c94904b9e4b7dbc119bf250ced1",
+        "9fe502a43f4853e0aa33e3e27b7b959bc7f662f1e23f92d41fc1e837869518c8",
+        "a99d76cb5c51e4bb3bd3757d46c715776051103f7ceb18c468782131b1d22d09",
+        "abd0a6217b7f0c5ee7fc9e5105c6e4e28d0efc41439aa284fd160c0b5db47dd0",
+        "b3ce8298bd810eaf89867a66b0f4f9de45ccad036ab6731148ebec4157171304",
+        "b9ab2348c89806e170759f9da5b4df71f91cea33e8299ba0b93cc39b2fca958e",
+        "c46fd0dc037f5243aa3098b94e283dc9ef3470830ba91593b2875254ea0d9030",
+        "c6aa88d945ab6d96dce7b97987f14b3d5ed67beb606c4bda042bd0648f014f69",
+        "cae09f2e9c1e853f3ca9350546b8592e5f719a0b7ce99635048135b5ae16a8a6",
+        "d81a8ec06d8a5917dcdaf6bca91de3351ab657807d28b863e09d0b0fb3403745",
+        "d9c87a351f7e6da32813f4d4165072be6ec7b61efcc2568aaedfc2a5759cf872",
+        "e74eecff40ebb22ffbc60d35fb15a50fa43b550175dae65abf633095e4b48479",
+        "ef08a6567ac816cce9ccba9b85fd8fe4cecca290b748fd49880fdbac1336d848",
+        "f0a1a1a0a0b1fa7f6fd54cfc1b0dd020d25040c758c8df077f3040d95f094bba",
+        "f51dc0fbc3cb6f0a1f827c748a75c97da961f97912376c2c6de88fe294517d5a",
+        "f5a4a384e98684f826b5db27b5252e84a29eb34a59e319e75efcb454a2a3bf7d",
+        "f9738d74d8aa5906fa59852720ae691e13be7bb00e7431c66b1827e663886af8"
+      ],
+      "positions": [
+        {
+          "positionHash": "10b1c2d411681edcd452b57ab90eddd3fdc99f6c4dd49b1911e0c274219594d2",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "1715060b61187ac02f5affe12ab8c751bbdeff68aaf52b4adf94e0209cdad93c",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "2d191f6a9c084315236f70735414e598d8d5e7ac306f7c035dadfb55c1814bdc",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "30c9e629f86b67a6a467ff69aaaf039d2ba69b41360638a4130b9fba0b912f39",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-2",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "363493e851b7d2a10d1913850e94739b534a93ba932a8e51d13fa6ffef5b3dff",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "37b32412f3e5941bf0d0ecb0471b4a3cca22aa8bb436f29ee650348612926202",
+          "sourceGameId": "fresh-v2-typescript-raging-bolt-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "52ecc2368d1baaac798223e6e231c0f5756d4baa4506f8237599fd8b29041c75",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "5a1aed634ace847ba3b1e33658fa0b6a9a68c9565db29895d597115fc043bddb",
+          "sourceGameId": "fresh-v2-typescript-raging-bolt-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "5cfa819912ac140e1fd16e306d61a8a015f075eba6ea87bc3a14848a3e48a3b5",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "614a8774cd5c5b85262f7717a491b02bff44471e12288c1fc1ae67cbecd2ed34",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "671a3940d6c680c7f8962f658aa0219943a9fdac7176d67206ecf602cbdfbfb0",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "69efc53a9e83353acdbb1bb7a14e0ae5e9454ac586e7c0a8696b51656fb6c0b2",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "730ebb666592c2198bd40b56a5b7b490bc2ccf537b6ab33d7e942eeb9f553ef5",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "7ac05be895968a1c716a423427b6d57a190ef85d1c3d27664abf986a721522c4",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "7d7483bbe5ec4a3b8c0566b33451d176fcfdc69dbf0f4b6511da2ef27910afa1",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "dragapult",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "7fa8d1b5ecb75768c2a6d706657d968a673b53290c19032179b55f01e89b8b5c",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "7fc502192d2309b4d98ff66966deb937aa3502398af2516c5ef81012fb8d271d",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "8e646b185c427463118c3ec95a34f03bf5ece9a3cd70bda7921aa796686b6fcc",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "dragapult",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "9286ca0e4cf73ac6760026aea4019a41334172c91cfb4dc22798b670bdcc0d57",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "971710f0ddaccb8607d67b648ae961cbf5280c94904b9e4b7dbc119bf250ced1",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "9fe502a43f4853e0aa33e3e27b7b959bc7f662f1e23f92d41fc1e837869518c8",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "a99d76cb5c51e4bb3bd3757d46c715776051103f7ceb18c468782131b1d22d09",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "crustle",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "abd0a6217b7f0c5ee7fc9e5105c6e4e28d0efc41439aa284fd160c0b5db47dd0",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "b3ce8298bd810eaf89867a66b0f4f9de45ccad036ab6731148ebec4157171304",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "b9ab2348c89806e170759f9da5b4df71f91cea33e8299ba0b93cc39b2fca958e",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "c46fd0dc037f5243aa3098b94e283dc9ef3470830ba91593b2875254ea0d9030",
+          "sourceGameId": "fresh-v2-typescript-raging-bolt-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "raging-bolt",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "c6aa88d945ab6d96dce7b97987f14b3d5ed67beb606c4bda042bd0648f014f69",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-3",
+          "targetDeck": "mega-lucario",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "cae09f2e9c1e853f3ca9350546b8592e5f719a0b7ce99635048135b5ae16a8a6",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-grimmsnarl-coverage-2026-09d-1",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "d81a8ec06d8a5917dcdaf6bca91de3351ab657807d28b863e09d0b0fb3403745",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-grimmsnarl-coverage-2026-09d-3",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "grimmsnarl",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "d9c87a351f7e6da32813f4d4165072be6ec7b61efcc2568aaedfc2a5759cf872",
+          "sourceGameId": "fresh-v2-typescript-grimmsnarl-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "grimmsnarl",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "e74eecff40ebb22ffbc60d35fb15a50fa43b550175dae65abf633095e4b48479",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-2",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "dragapult",
+          "positionStage": "late"
+        },
+        {
+          "positionHash": "ef08a6567ac816cce9ccba9b85fd8fe4cecca290b748fd49880fdbac1336d848",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-0",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "dragapult",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "f0a1a1a0a0b1fa7f6fd54cfc1b0dd020d25040c758c8df077f3040d95f094bba",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-2",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "dragapult",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "f51dc0fbc3cb6f0a1f827c748a75c97da961f97912376c2c6de88fe294517d5a",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-raging-bolt-coverage-2026-09d-1",
+          "targetDeck": "raging-bolt",
+          "opponentArchetype": "crustle",
+          "positionStage": "opening"
+        },
+        {
+          "positionHash": "f5a4a384e98684f826b5db27b5252e84a29eb34a59e319e75efcb454a2a3bf7d",
+          "sourceGameId": "fresh-v2-typescript-dragapult-vs-dragapult-coverage-2026-09d-0",
+          "targetDeck": "dragapult",
+          "opponentArchetype": "dragapult",
+          "positionStage": "midgame"
+        },
+        {
+          "positionHash": "f9738d74d8aa5906fa59852720ae691e13be7bb00e7431c66b1827e663886af8",
+          "sourceGameId": "fresh-v2-typescript-crustle-vs-mega-lucario-coverage-2026-09d-2",
+          "targetDeck": "crustle",
+          "opponentArchetype": "mega-lucario",
+          "positionStage": "opening"
+        }
+      ],
+      "countsByTargetDeck": {
+        "crustle": 6,
+        "dragapult": 7,
+        "grimmsnarl": 9,
+        "mega-lucario": 9,
+        "raging-bolt": 5
+      },
+      "countsByOpponent": {
+        "crustle": 9,
+        "dragapult": 8,
+        "grimmsnarl": 7,
+        "mega-lucario": 11,
+        "raging-bolt": 1
+      },
+      "countsByStage": {
+        "late": 11,
+        "midgame": 12,
+        "opening": 13
+      },
+      "completeCandidates": 1167
+    }
+  ],
+  "trainingEligible": false,
+  "interpretation": "heldout evaluator selection only; no rollouts, labels, ranker fitting, or policy updates",
+  "selectionHash": "b265bb6d2d24b9577bc48dedc68a1fc779b99fb72648e8c279edd1b1a3b01a49"
+}
