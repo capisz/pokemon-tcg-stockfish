@@ -4,7 +4,8 @@ from dataclasses import asdict
 
 import pytest
 
-from ptcg_lab.learning_mind.aggregation import combine_macro_label_runs
+from ptcg_lab.learning_mind.aggregation import (SHARED_ROLLOUT_SETTINGS,
+    combine_macro_label_runs, combine_macro_label_training_repair_runs)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.schema import identity_hash
@@ -25,7 +26,8 @@ def _write_selection(path, identity, positions=None):
     return path
 
 
-def _write_run(root, family, identity, *, splits=SPLITS):
+def _write_run(root, family, identity, *, splits=SPLITS,
+               collector_version="fixture-collector-v1", collector_sha="c" * 64):
     root.mkdir()
     files, hashes = [], []
     for split in splits:
@@ -40,7 +42,7 @@ def _write_run(root, family, identity, *, splits=SPLITS):
         hashes.append(position_hash)
     manifest = {"identity": identity, "datasetManifestHash": f"dataset-{family}",
         "rolloutIdentity": f"rollout-{family}", "candidateGeneratorIdentity": {"version": "fixture-v1"},
-        "labelCollectorVersion": "fixture-collector-v1", "labelCollectorSha256": "collector-hash",
+        "labelCollectorVersion": collector_version, "labelCollectorSha256": collector_sha,
         "positions": len(files), "selectedPositionHashes": hashes, "files": files}
     manifest["manifestHash"] = identity_hash(manifest)
     (root / "manifest.json").write_text(json.dumps(manifest))
@@ -59,6 +61,122 @@ def test_combiner_verifies_and_merges_frozen_positions(tmp_path):
     assert all(file_sha256(output / item["path"]) == item["sha256"] for item in result["files"])
     recorded = result.pop("manifestHash")
     assert identity_hash(result) == recorded
+
+
+def test_lineage_repair_combiner_keeps_parent_immutable_and_binds_each_shard(tmp_path):
+    from ptcg_lab.learning_mind.experiment import _load_ranker_input
+    from ptcg_lab.learning_mind.selection import freeze_macro_label_training_repair
+
+    identity = {"identityHash": "repair-merge-identity"}
+    families = ["python-heuristic", "typescript-heuristic"]
+    datasets, supports, parent_splits = {}, {}, []
+    rows_by_family = {}
+    generator = {"version": "repair-fixture-generator-v1"}
+    for family in families:
+        folder = tmp_path / f"{family}-dataset"
+        folder.mkdir()
+        rows = [
+            {"positionHash": f"{family}-old", "sourceGameId": f"{family}-game-train",
+             "split": "train", "targetDeck": "crustle", "opponentArchetype": "dragapult",
+             "opponentPolicyFamily": family, "positionStage": "midgame"},
+            {"positionHash": f"{family}-new", "sourceGameId": f"{family}-game-train",
+             "split": "train", "targetDeck": "crustle", "opponentArchetype": "dragapult",
+             "opponentPolicyFamily": family, "positionStage": "late"},
+            {"positionHash": f"{family}-dev", "sourceGameId": f"{family}-game-dev",
+             "split": "development", "targetDeck": "dragapult", "opponentArchetype": "raging-bolt",
+             "opponentPolicyFamily": family, "positionStage": "opening"},
+        ]
+        rows_by_family[family] = rows
+        rows_path = folder / "rows.jsonl"
+        rows_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        dataset_manifest = {"id": "learning-mind-macro-position-pool-v1", "identity": identity,
+            "rows": len(rows), "rowsSha256": file_sha256(rows_path)}
+        dataset_manifest["manifestHash"] = identity_hash(dataset_manifest)
+        (folder / "manifest.json").write_text(json.dumps(dataset_manifest))
+        support = {"schemaVersion": 1, "audit": "actor-visible-macro-candidate-support-only",
+            "status": "no-rollouts-no-labels", "identity": identity,
+            "datasetManifestHash": dataset_manifest["manifestHash"],
+            "datasetRowsSha256": file_sha256(rows_path), "candidateGeneratorIdentity": generator,
+            "positions": [
+                {"positionHash": f"{family}-old", "status": "supported", "completeCandidateCount": 1},
+                {"positionHash": f"{family}-new", "status": "supported", "completeCandidateCount": 3},
+                {"positionHash": f"{family}-dev", "status": "supported", "completeCandidateCount": 2},
+            ]}
+        support["reportHash"] = identity_hash(support)
+        support_path = tmp_path / f"{family}-support.json"
+        support_path.write_text(json.dumps(support))
+        datasets[family], supports[family] = folder, support_path
+        for split, row in (("train", rows[0]), ("development", rows[2])):
+            metadata = {key: row[key] for key in (
+                "positionHash", "sourceGameId", "targetDeck", "opponentArchetype", "positionStage")}
+            parent_splits.append({"policyFamily": family, "split": split, "sourceGames": 1,
+                "positionHashes": [row["positionHash"]], "positions": [metadata]})
+
+    parent = {"schemaVersion": 1, "selection": "repair-parent-fixture-v1",
+        "identity": identity, "splits": parent_splits}
+    parent["selectionHash"] = identity_hash(parent)
+    parent_path = tmp_path / "parent-selection.json"
+    parent_path.write_text(json.dumps(parent))
+    selection_path = tmp_path / "repair-selection.json"
+    repair_selection = freeze_macro_label_training_repair(datasets=datasets,
+        support_reports=supports, parent_selection_path=parent_path,
+        output=selection_path, identity=identity)
+
+    settings = {
+        "initialRollouts": 16, "maximumRollouts": 64, "extensionBatchSize": 8,
+        "horizon": 500, "rolloutBudgetMs": 60000, "rolloutWorkers": 8,
+        "rolloutSeedVersion": "configuration-bound-v1",
+        "adaptiveAllocationVersion": "staged-monotone-simultaneous-hoeffding-v3",
+        "selectionMethod": "position-hash-list", "splitFilter": None,
+    }
+    def write_run(path, family, role, selected_rows):
+        path.mkdir()
+        run_id = f"{family}-{role}-rollout"
+        files = []
+        for row in selected_rows:
+            record = {"positionHash": row["positionHash"], "split": row["split"],
+                "identity": identity, "datasetManifestHash": json.loads(
+                    (datasets[family] / "manifest.json").read_text())["manifestHash"],
+                "rolloutIdentity": run_id, "opponentPolicyFamily": family,
+                "status": "collected", "highConfidencePolicyEligible": False}
+            record_path = path / f"{row['positionHash']}.json"
+            record_path.write_text(json.dumps(record))
+            files.append({"path": record_path.name, "sha256": file_sha256(record_path)})
+        manifest = {"identity": identity, "datasetManifestHash": json.loads(
+            (datasets[family] / "manifest.json").read_text())["manifestHash"],
+            "rolloutIdentity": run_id, "candidateGeneratorVersion": generator["version"],
+            "candidateGeneratorIdentity": generator,
+            "labelCollectorVersion": "fixture-collector-v1", "labelCollectorSha256": "c" * 64,
+            **settings, "positions": len(files),
+            "selectedPositionHashes": [item["path"][:-5] for item in files], "files": files}
+        manifest["manifestHash"] = identity_hash(manifest)
+        (path / "manifest.json").write_text(json.dumps(manifest))
+        return path
+
+    base_runs, repair_runs = {}, {}
+    for family in families:
+        rows = rows_by_family[family]
+        base_runs[family] = write_run(tmp_path / f"{family}-base-run", family,
+            "parent", [rows[0], rows[2]])
+        repair_runs[family] = write_run(tmp_path / f"{family}-repair-run", family,
+            "supplement", [rows[1]])
+    output = tmp_path / "combined-repair"
+    combined = combine_macro_label_training_repair_runs(base_runs=base_runs,
+        repair_runs=repair_runs, datasets=datasets, support_reports=supports,
+        output=output, identity=identity, selection_path=selection_path,
+        parent_selection_path=parent_path)
+    loaded_manifest, records = _load_ranker_input(output, selection_path)
+    assert combined["positions"] == 4
+    assert combined["positionsBySplit"] == {"development": 2, "train": 2}
+    assert loaded_manifest["manifestHash"] == combined["manifestHash"]
+    assert {record["positionHash"] for record in records} == {
+        f"{family}-{split}" for family in families for split in ("new", "dev")}
+    assert len(combined["sourceRuns"]) == 4
+    assert all(run["positions"] == 1 for run in combined["sourceRuns"])
+    assert all(run["sourceRunPositions"] == 2 for run in combined["sourceRuns"]
+               if run["sourceRole"] == "parent-retained")
+    assert repair_selection["lineage"]["parentSelectionHash"] == parent["selectionHash"]
+    assert all((run / "manifest.json").is_file() for run in [*base_runs.values(), *repair_runs.values()])
 
 
 def test_combiner_rejects_incomplete_frozen_position_set(tmp_path):
@@ -121,6 +239,21 @@ def test_combiner_rejects_wrong_frozen_identity(tmp_path):
     with pytest.raises(ValueError, match="experiment identity mismatch"):
         combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=tmp_path / "combined",
             identity=identity, selection_path=_write_selection(tmp_path / "selection.json", identity))
+
+
+def test_combiner_rejects_unapproved_collector_source_mixture(tmp_path):
+    identity = {"identityHash": "frozen-identity"}
+    python_dir = _write_run(tmp_path / "python", FAMILIES[0], identity,
+        collector_version="macro-rollout-labeler-v6",
+        collector_sha="1b7e8df4a69cba6dcbb74d23ba310a9ed18c8ca5859ae5b9c6efbf2f8e4e646a")
+    typescript_dir = _write_run(tmp_path / "typescript", FAMILIES[1], identity,
+        collector_version="macro-rollout-labeler-v6", collector_sha="f" * 64)
+    selection = _write_selection(tmp_path / "selection.json", identity)
+    output = tmp_path / "combined"
+    with pytest.raises(ValueError, match="unaudited collector source hashes"):
+        combine_macro_label_runs(inputs=[python_dir, typescript_dir], output=output,
+            identity=identity, selection_path=selection)
+    assert not output.exists()
 
 
 def test_finalizer_combines_and_recomputes_confidence_without_training(tmp_path, monkeypatch):
@@ -213,9 +346,18 @@ def test_finalizer_end_to_end_on_frozen_offline_fixture(tmp_path):
             record_path = run_dir / f"{position_hash}.json"
             record_path.write_text(json.dumps(record))
             records.append({"path": record_path.name, "sha256": file_sha256(record_path)})
+        collector_hash = ("1b7e8df4a69cba6dcbb74d23ba310a9ed18c8ca5859ae5b9c6efbf2f8e4e646a"
+                          if family == "python-heuristic" else
+                          "822500b4113aea6c69abeb7fe069ce2647d561d742977f5453097c0bae6882a4")
         manifest = {"identity": identity, "datasetManifestHash": f"dataset-{family}",
-            "rolloutIdentity": f"rollout-{family}", "candidateGeneratorIdentity": {"version": "fixture-v1"},
-            "labelCollectorVersion": "fixture-collector-v1", "labelCollectorSha256": "fixture-sha",
+            "rolloutIdentity": f"rollout-{family}", "candidateGeneratorVersion": "fixture-v1",
+            "candidateGeneratorIdentity": {"version": "fixture-v1"},
+            "labelCollectorVersion": "macro-rollout-labeler-v6", "labelCollectorSha256": collector_hash,
+            "initialRollouts": 16, "maximumRollouts": 64, "extensionBatchSize": 8,
+            "horizon": 500, "rolloutBudgetMs": 60000, "rolloutWorkers": 8,
+            "rolloutSeedVersion": "configuration-bound-v1",
+            "adaptiveAllocationVersion": "staged-monotone-simultaneous-hoeffding-v3",
+            "selectionMethod": "position-hash-list", "splitFilter": None,
             "positions": len(records), "selectedPositionHashes": [positions[family][split][0] for split in SPLITS],
             "files": records}
         manifest["manifestHash"] = identity_hash(manifest)
@@ -231,3 +373,7 @@ def test_finalizer_end_to_end_on_frozen_offline_fixture(tmp_path):
     assert verified["summaryByFamilyAndSplit"]["python-heuristic/train"]["positions"] == 1
     assert verified["summaryByFamilyAndSplit"]["typescript-heuristic/development"]["positions"] == 1
     assert result["confidenceReportHash"] == verified["reportHash"]
+    assert verified["collectorIdentity"]["labelCollectorCompatibility"]["kind"] == "audited-same-collection-surface"
+    assert verified["collectorIdentity"]["labelCollectorSourceSha256s"] == sorted({
+        "1b7e8df4a69cba6dcbb74d23ba310a9ed18c8ca5859ae5b9c6efbf2f8e4e646a",
+        "822500b4113aea6c69abeb7fe069ce2647d561d742977f5453097c0bae6882a4"})

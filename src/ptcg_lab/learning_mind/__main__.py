@@ -6,7 +6,8 @@ from pathlib import Path
 
 from .candidate_safety import audit_candidate_safety
 from .audit import audit_manifest
-from .aggregation import combine_macro_label_runs, finalize_macro_label_runs
+from .aggregation import (combine_macro_label_runs,
+    combine_macro_label_training_repair_runs, finalize_macro_label_runs)
 from .candidate_support import audit_macro_candidate_support
 from .dataset_v1 import (build_dataset, build_macro_position_pool,
                          build_strategy_probe_dataset, load_dataset, training_records)
@@ -18,10 +19,17 @@ from .policy_evaluation import evaluate_candidate
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
 from .progress import macro_label_progress
+from .heldout_progress import heldout_macro_label_progress
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .ranker_v2 import fit_macro_ranker_v2, verify_macro_ranker_v2_artifact
+from .heldout_evaluation import (evaluate_macro_ranker_v2_heldout,
+    verify_macro_ranker_v2_heldout_report)
+from .heldout_collection import (collect_heldout_macro_labels,
+                                 preflight_heldout_macro_labels)
+from .repair_preflight import preflight_training_repair_collection
 from .ranker_distillation import build_macro_ranker_distillation
-from .selection import freeze_macro_label_selection
+from .selection import (freeze_macro_heldout_selection, freeze_macro_label_selection,
+                        freeze_macro_label_training_repair)
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
 from .stage_evidence import verify_ppo_stage_evidence
@@ -105,11 +113,48 @@ def main(argv=None) -> int:
     selection.add_argument("--output", type=Path, required=True)
     selection.add_argument("--pinned-train-hash", action="append", default=[], metavar="FAMILY:HASH",
                            help="retain a prior train label position without recollecting it")
+    repair_selection = sub.add_parser("freeze-macro-label-training-repair",
+        help="draft same-source-game replacements for unsupported train roots; no labels are collected")
+    repair_selection.add_argument("--python-dataset", type=Path, required=True)
+    repair_selection.add_argument("--typescript-dataset", type=Path, required=True)
+    repair_selection.add_argument("--python-support", type=Path, required=True)
+    repair_selection.add_argument("--typescript-support", type=Path, required=True)
+    repair_selection.add_argument("--parent-selection", type=Path, required=True)
+    repair_selection.add_argument("--output", type=Path, required=True)
+    repair_preflight = sub.add_parser("preflight-macro-label-training-repair",
+        help="validate one frozen v19 repair shard without starting the engine or writing files")
+    repair_preflight.add_argument("--root", type=Path, required=True)
+    repair_preflight.add_argument("--family", choices=("python-heuristic", "typescript-heuristic"),
+                                  required=True)
+    repair_preflight.add_argument("--dataset", type=Path, required=True)
+    repair_preflight.add_argument("--support", type=Path, required=True)
+    repair_preflight.add_argument("--selection", type=Path, required=True)
+    repair_preflight.add_argument("--parent-selection", type=Path, required=True)
+    repair_preflight.add_argument("--output", type=Path, required=True)
+    repair_preflight.add_argument("--initial", type=int, default=16)
+    repair_preflight.add_argument("--maximum", type=int, default=64)
+    repair_preflight.add_argument("--extension-batch-size", type=int, default=8)
+    repair_preflight.add_argument("--horizon", type=int, default=500)
+    repair_preflight.add_argument("--rollout-budget-ms", type=int, default=60_000)
+    repair_preflight.add_argument("--rollout-workers", type=int, default=8)
+    heldout_selection = sub.add_parser("freeze-macro-heldout-selection",
+        help="freeze a separate heldout-only evaluator selection; never use it for training")
+    heldout_selection.add_argument("--python-dataset", type=Path, required=True)
+    heldout_selection.add_argument("--typescript-dataset", type=Path, required=True)
+    heldout_selection.add_argument("--python-support", type=Path, required=True)
+    heldout_selection.add_argument("--typescript-support", type=Path, required=True)
+    heldout_selection.add_argument("--output", type=Path, required=True)
     progress = sub.add_parser("progress-macro-labels",
         help="report frozen macro-label result and checkpoint coverage without changing artifacts")
     progress.add_argument("--selection", type=Path, required=True)
     progress.add_argument("--python-run", type=Path, required=True)
     progress.add_argument("--typescript-run", type=Path, required=True)
+    heldout_progress = sub.add_parser("progress-heldout-macro-labels",
+        help="read heldout collection checkpoints without writing or polling a collector")
+    heldout_progress.add_argument("--family", choices=("python-heuristic", "typescript-heuristic"),
+                                  required=True)
+    heldout_progress.add_argument("--selection", type=Path, required=True)
+    heldout_progress.add_argument("--run", type=Path, required=True)
     combine = sub.add_parser("combine-macro-label-runs",
                              help="verify and combine separate frozen macro-label runs for ranker evaluation")
     combine.add_argument("--input-dir", type=Path, action="append", required=True,
@@ -117,6 +162,12 @@ def main(argv=None) -> int:
     combine.add_argument("--selection", type=Path, required=True,
                          help="frozen train/development selection manifest that every run must cover exactly")
     combine.add_argument("--output", type=Path, required=True)
+    combine_repair = sub.add_parser("combine-macro-label-training-repair-runs",
+        help="lineage-verify immutable parent runs plus exact same-game training repair shards")
+    for option in ("python-base-run", "typescript-base-run", "python-repair-run",
+                   "typescript-repair-run", "python-dataset", "typescript-dataset",
+                   "python-support", "typescript-support", "selection", "parent-selection", "output"):
+        combine_repair.add_argument(f"--{option}", type=Path, required=True)
     finalize_labels = sub.add_parser("finalize-macro-label-runs",
         help="combine finalized family runs and independently verify their 95%% confidence audit")
     finalize_labels.add_argument("--input-dir", type=Path, action="append", required=True,
@@ -178,6 +229,46 @@ def main(argv=None) -> int:
     rank_v2.add_argument("--teacher-hash", required=True)
     rank_v2.add_argument("--opponent-policy-hash", required=True)
     rank_v2.add_argument("--iteration", type=int, default=1)
+    heldout_eval = sub.add_parser("evaluate-macro-ranker-heldout",
+        help="score a verified ranker on frozen heldout labels without fitting or promotion")
+    for option in ("selection", "ranker-selection", "model", "ranker-report",
+                   "python-dataset", "typescript-dataset", "python-support", "typescript-support",
+                   "python-labels", "typescript-labels", "output"):
+        heldout_eval.add_argument(f"--{option}", type=Path, required=True)
+    heldout_report_audit = sub.add_parser("verify-macro-ranker-heldout-evaluation",
+        help="recompute and verify a heldout report from its frozen inputs; never runs engine rollouts")
+    for option in ("report", "selection", "ranker-selection", "model", "ranker-report",
+                   "python-dataset", "typescript-dataset", "python-support", "typescript-support",
+                   "python-labels", "typescript-labels"):
+        heldout_report_audit.add_argument(f"--{option}", type=Path, required=True)
+    heldout_preflight = sub.add_parser("preflight-heldout-macro-labels",
+        help="verify frozen heldout inputs and estimate rollout work without starting the engine")
+    heldout_preflight.add_argument("--root", type=Path, required=True)
+    heldout_preflight.add_argument("--family", choices=("python-heuristic", "typescript-heuristic"), required=True)
+    heldout_preflight.add_argument("--dataset", type=Path, required=True)
+    heldout_preflight.add_argument("--support", type=Path, required=True)
+    heldout_preflight.add_argument("--selection", type=Path, required=True)
+    heldout_preflight.add_argument("--output", type=Path, required=True)
+    heldout_preflight.add_argument("--initial", type=int, default=16)
+    heldout_preflight.add_argument("--maximum", type=int, default=64)
+    heldout_preflight.add_argument("--extension-batch-size", type=int, default=8)
+    heldout_preflight.add_argument("--horizon", type=int, default=500)
+    heldout_preflight.add_argument("--rollout-budget-ms", type=int, default=60_000)
+    heldout_preflight.add_argument("--rollout-workers", type=int, default=8)
+    heldout_collect = sub.add_parser("collect-heldout-macro-labels",
+        help="collect resumable heldout-only macro labels; performs rollouts when invoked")
+    heldout_collect.add_argument("--root", type=Path, required=True)
+    heldout_collect.add_argument("--family", choices=("python-heuristic", "typescript-heuristic"), required=True)
+    heldout_collect.add_argument("--dataset", type=Path, required=True)
+    heldout_collect.add_argument("--support", type=Path, required=True)
+    heldout_collect.add_argument("--selection", type=Path, required=True)
+    heldout_collect.add_argument("--output", type=Path, required=True)
+    heldout_collect.add_argument("--initial", type=int, default=16)
+    heldout_collect.add_argument("--maximum", type=int, default=64)
+    heldout_collect.add_argument("--extension-batch-size", type=int, default=8)
+    heldout_collect.add_argument("--horizon", type=int, default=500)
+    heldout_collect.add_argument("--rollout-budget-ms", type=int, default=60_000)
+    heldout_collect.add_argument("--rollout-workers", type=int, default=8)
     verify_ranker_v2 = sub.add_parser("verify-macro-ranker-v2",
         help="verify v2 report/schema and model checksum without loading native XGBoost code")
     verify_ranker_v2.add_argument("--model", type=Path, required=True)
@@ -323,10 +414,43 @@ def main(argv=None) -> int:
             datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
             support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
             output=args.output, identity=identity, pinned_train_hashes=pinned)
+    elif args.command == "freeze-macro-heldout-selection":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        result = freeze_macro_heldout_selection(
+            datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
+            output=args.output, identity=identity)
+    elif args.command == "freeze-macro-label-training-repair":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        result = freeze_macro_label_training_repair(
+            datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
+            parent_selection_path=args.parent_selection, output=args.output, identity=identity)
+    elif args.command == "preflight-macro-label-training-repair":
+        result = preflight_training_repair_collection(root=args.root,
+            family=args.family, dataset_dir=args.dataset, support_path=args.support,
+            selection_path=args.selection, parent_selection_path=args.parent_selection,
+            output=args.output, initial=args.initial,
+            maximum=args.maximum, extension_batch_size=args.extension_batch_size,
+            horizon=args.horizon, rollout_budget_ms=args.rollout_budget_ms,
+            rollout_workers=args.rollout_workers)
     elif args.command == "combine-macro-label-runs":
         root = Path.cwd().resolve(); identity = runtime_identity(root).record()
         result = combine_macro_label_runs(inputs=args.input_dir, output=args.output, identity=identity,
                                           selection_path=args.selection.resolve())
+    elif args.command == "combine-macro-label-training-repair-runs":
+        root = Path.cwd().resolve(); identity = runtime_identity(root).record()
+        result = combine_macro_label_training_repair_runs(
+            base_runs={"python-heuristic": args.python_base_run,
+                       "typescript-heuristic": args.typescript_base_run},
+            repair_runs={"python-heuristic": args.python_repair_run,
+                         "typescript-heuristic": args.typescript_repair_run},
+            datasets={"python-heuristic": args.python_dataset,
+                      "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support,
+                             "typescript-heuristic": args.typescript_support},
+            output=args.output, identity=identity, selection_path=args.selection.resolve(),
+            parent_selection_path=args.parent_selection.resolve())
     elif args.command == "finalize-macro-label-runs":
         root = Path.cwd().resolve(); identity = runtime_identity(root).record()
         result = finalize_macro_label_runs(inputs=args.input_dir, combined_output=args.combined_output,
@@ -337,6 +461,9 @@ def main(argv=None) -> int:
             "python-heuristic": args.python_run.resolve(),
             "typescript-heuristic": args.typescript_run.resolve(),
         })
+    elif args.command == "progress-heldout-macro-labels":
+        result = heldout_macro_label_progress(family=args.family,
+            selection_path=args.selection.resolve(), run_dir=args.run)
     elif args.command == "audit-raging-bolt-macro-fidelity":
         result = audit_raging_bolt_macro_fidelity(root=args.root.resolve(),
             selection_path=args.selection.resolve(), python_dataset=args.python_dataset.resolve(),
@@ -351,6 +478,39 @@ def main(argv=None) -> int:
             selection_path=args.selection.resolve(), confidence_audit_path=args.confidence_audit.resolve(),
             teacher_hash=args.teacher_hash,
             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
+    elif args.command == "evaluate-macro-ranker-heldout":
+        result = evaluate_macro_ranker_v2_heldout(
+            selection_path=args.selection.resolve(), ranker_selection_path=args.ranker_selection.resolve(),
+            model_path=args.model.resolve(), ranker_report_path=args.ranker_report.resolve(),
+            datasets={"python-heuristic": args.python_dataset, "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support, "typescript-heuristic": args.typescript_support},
+            label_runs={"python-heuristic": args.python_labels, "typescript-heuristic": args.typescript_labels},
+            output=args.output.resolve())
+    elif args.command == "verify-macro-ranker-heldout-evaluation":
+        result = verify_macro_ranker_v2_heldout_report(
+            report_path=args.report.resolve(), selection_path=args.selection.resolve(),
+            ranker_selection_path=args.ranker_selection.resolve(), model_path=args.model.resolve(),
+            ranker_report_path=args.ranker_report.resolve(),
+            datasets={"python-heuristic": args.python_dataset,
+                      "typescript-heuristic": args.typescript_dataset},
+            support_reports={"python-heuristic": args.python_support,
+                             "typescript-heuristic": args.typescript_support},
+            label_runs={"python-heuristic": args.python_labels,
+                        "typescript-heuristic": args.typescript_labels})
+    elif args.command == "preflight-heldout-macro-labels":
+        result = preflight_heldout_macro_labels(root=args.root.resolve(), family=args.family,
+            dataset_dir=args.dataset.resolve(), support_path=args.support.resolve(),
+            selection_path=args.selection.resolve(), output=args.output,
+            initial=args.initial, maximum=args.maximum,
+            extension_batch_size=args.extension_batch_size, horizon=args.horizon,
+            rollout_budget_ms=args.rollout_budget_ms, rollout_workers=args.rollout_workers)
+    elif args.command == "collect-heldout-macro-labels":
+        result = collect_heldout_macro_labels(root=args.root.resolve(), family=args.family,
+            dataset_dir=args.dataset.resolve(), support_path=args.support.resolve(),
+            selection_path=args.selection.resolve(), output=args.output,
+            initial=args.initial, maximum=args.maximum,
+            extension_batch_size=args.extension_batch_size, horizon=args.horizon,
+            rollout_budget_ms=args.rollout_budget_ms, rollout_workers=args.rollout_workers)
     elif args.command == "verify-macro-ranker-v2":
         verified = verify_macro_ranker_v2_artifact(args.model, args.report)
         report = verified["report"]

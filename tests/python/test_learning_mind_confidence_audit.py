@@ -96,8 +96,12 @@ def test_custom_confidence_level_is_not_mislabeled_as_95_percent():
 def test_confidence_audit_is_immutable_and_cannot_change_learning_gates(tmp_path, monkeypatch):
     labels_dir = tmp_path / "labels"
     labels_dir.mkdir()
+    collector_hash = "c" * 64
     manifest = {"manifestHash": "verified-manifest", "selectionHash": "frozen-selection",
-        "labelCollectorVersion": "collector-v1", "labelCollectorSha256": "collector-sha",
+        "labelCollectorVersion": "collector-v1", "labelCollectorSha256": collector_hash,
+        "labelCollectorSourceSha256s": [collector_hash],
+        "labelCollectorCompatibility": {"kind": "exact-source"},
+        "sharedRolloutSettings": {},
         "candidateGeneratorIdentity": {"version": "planner-v1"}, "sourceRuns": [],
         "files": [{"path": "python-heuristic/position.json", "sha256": "source-sha"}]}
     (labels_dir / "manifest.json").write_text(json.dumps(manifest))

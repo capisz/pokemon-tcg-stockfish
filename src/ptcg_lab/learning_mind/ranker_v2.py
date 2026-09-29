@@ -50,7 +50,7 @@ def _bootstrap_mean(values: list[float], *, seed_material: str, group_ids: list[
             "seed": seed, "independentUnits": len(cluster_keys)}
 
 
-def _validate_source_game_units(selection_path: Path, records: list[dict]) -> None:
+def _validate_source_game_units(selection_path: Path, records: list[dict]) -> dict[str, str]:
     selection = json.loads(selection_path.read_text())
     selected_source_games = {}
     split_rows = selection.get("splits")
@@ -91,11 +91,16 @@ def _validate_source_game_units(selection_path: Path, records: list[dict]) -> No
         if (set(selected_source_games[(family, "train")].values())
                 & set(selected_source_games[(family, "development")].values())):
             raise ValueError("ranker v2 train and development selections reuse a source game")
+    source_game_by_position = {position_hash: source_game
+        for position_games in selected_source_games.values()
+        for position_hash, source_game in position_games.items()}
     for record in records:
         key = (record.get("opponentPolicyFamily"), record.get("split"))
         expected_game = selected_source_games.get(key, {}).get(record.get("positionHash"))
-        if (expected_game is None or record.get("sourceGameId") != expected_game):
+        if (expected_game is None or
+                ("sourceGameId" in record and record.get("sourceGameId") != expected_game)):
             raise ValueError("ranker v2 record source game differs from frozen selection")
+    return source_game_by_position
 
 
 def _validate_ranker_metrics(metrics: dict, *, name: str) -> None:
@@ -268,6 +273,26 @@ def validate_ranker_v2_report(report: dict) -> None:
                     and (not isinstance(row.get("metrics"), dict)
                          or row["metrics"].get("status") != "measured"))):
             raise ValueError("macro ranker v2 holdout status contradicts its metrics")
+        coverage = row.get("trainingCoverage")
+        if not isinstance(coverage, dict):
+            raise ValueError("macro ranker v2 holdout training coverage is missing")
+        requested, covered = coverage.get("requestedPositions"), coverage.get("positions")
+        covered_hashes = coverage.get("trainingPositionHashes")
+        missing = coverage.get("insufficientPositionHashes")
+        fraction = coverage.get("coverageFraction")
+        if (type(requested) is not int or requested < 1 or type(covered) is not int
+                or covered < 0 or covered > requested or not isinstance(missing, list)
+                or len(missing) != requested - covered
+                or not isinstance(covered_hashes, list) or len(covered_hashes) != covered
+                or any(not isinstance(value, str) or not value for value in covered_hashes)
+                or len(set(covered_hashes)) != len(covered_hashes)
+                or any(not isinstance(value, str) or not value for value in missing)
+                or len(set(missing)) != len(missing)
+                or set(covered_hashes).intersection(missing)
+                or type(fraction) not in (int, float) or isinstance(fraction, bool)
+                or not math.isfinite(fraction) or abs(fraction - covered / requested) > 1e-12
+                or (row["status"] == "measured" and covered < 1)):
+            raise ValueError("macro ranker v2 holdout training coverage does not reconcile")
         if isinstance(row.get("metrics"), dict):
             _validate_ranker_metrics(row["metrics"], name="holdout")
     required_holdout_kinds = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
@@ -313,7 +338,8 @@ def verify_macro_ranker_v2_artifact(model_path: Path, report_path: Path) -> dict
     return {"report": report, "artifact": artifact}
 
 
-def _validated_macro_labels(record: dict, *, expected_rollout_identity: str | None = None) -> list[dict]:
+def _validated_macro_labels(record: dict, *,
+        expected_rollout_identity: str | set[str] | None = None) -> list[dict]:
     labels = record.get("labels")
     if (not isinstance(labels, list) or not labels
             or type(record.get("candidateCount")) is not int
@@ -326,8 +352,11 @@ def _validated_macro_labels(record: dict, *, expected_rollout_identity: str | No
     expected_namespace = {"train": "training", "development": "development"}.get(split)
     namespace = record.get("seedNamespace")
     rollout_identity = record.get("rolloutIdentity")
+    rollout_matches = (expected_rollout_identity is None
+        or (rollout_identity in expected_rollout_identity if isinstance(expected_rollout_identity, set)
+            else rollout_identity == expected_rollout_identity))
     if (namespace != expected_namespace or not isinstance(rollout_identity, str) or not rollout_identity
-            or (expected_rollout_identity is not None and rollout_identity != expected_rollout_identity)):
+            or not rollout_matches):
         raise ValueError("ranker v2 record seed namespace or rollout identity mismatch")
     seeds = record.get("rolloutSeeds")
     if (not isinstance(seeds, list) or not seeds
@@ -414,7 +443,12 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     if confidence_audit["familywiseConfidence"] < 0.95:
         raise ValueError("macro ranker v2 requires at least 95% confidence reevaluation")
     labels_manifest, records = _load_ranker_input(labels_dir.resolve(), selection_path.resolve())
-    _validate_source_game_units(selection_path.resolve(), records)
+    source_game_by_position = _validate_source_game_units(selection_path.resolve(), records)
+    # The immutable combined label records omit source-game metadata; enrich
+    # only the in-memory fit rows from the exact frozen selection, which is
+    # the provenance authority for bootstrap clusters and holdout isolation.
+    for record in records:
+        record["sourceGameId"] = source_game_by_position[record["positionHash"]]
     source_runs = labels_manifest.get("sourceRuns")
     expected_rollout_identities = {}
     if not isinstance(source_runs, list):
@@ -422,13 +456,16 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     for source_run in source_runs:
         families = source_run.get("policyFamilies") if isinstance(source_run, dict) else None
         rollout_identity = source_run.get("rolloutIdentity") if isinstance(source_run, dict) else None
+        included = source_run.get("includedPositionHashes") if isinstance(source_run, dict) else None
         if (not isinstance(families, list) or len(families) != 1
                 or families[0] not in {"python-heuristic", "typescript-heuristic"}
                 or not isinstance(rollout_identity, str) or not rollout_identity
-                or families[0] in expected_rollout_identities):
+                or (included is not None and (not isinstance(included, list)
+                    or any(not isinstance(value, str) or not value for value in included)))):
             raise ValueError("ranker v2 source-run family/rollout identity is ambiguous")
-        expected_rollout_identities[families[0]] = rollout_identity
-    if set(expected_rollout_identities) != {"python-heuristic", "typescript-heuristic"}:
+        expected_rollout_identities.setdefault(families[0], set()).add(rollout_identity)
+    if (set(expected_rollout_identities) != {"python-heuristic", "typescript-heuristic"}
+            or any(not values for values in expected_rollout_identities.values())):
         raise ValueError("ranker v2 requires one frozen rollout identity per policy family")
     train_records = [record for record in records if record["split"] == "train"]
     development_records = [record for record in records if record["split"] == "development"]
@@ -538,15 +575,21 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         covered_train_set = set(covered_train_positions)
         insufficient_train = sorted(record["positionHash"] for record in held_train
             if record["positionHash"] not in covered_train_set)
-        if not hg or not held_test or insufficient_train:
+        training_coverage = {
+            "requestedPositions": len(held_train),
+            "positions": len(covered_train_positions),
+            "trainingPositionHashes": sorted(covered_train_positions),
+            "insufficientPositionHashes": insufficient_train,
+            "coverageFraction": len(covered_train_positions) / len(held_train) if held_train else 0.0,
+        }
+        if not covered_train_positions or not held_test:
             holdouts.append({**split, "status": "insufficient",
-                "trainingRequestedPositions": len(held_train),
-                "trainingPositions": len(covered_train_positions),
-                "insufficientTrainingPositionHashes": insufficient_train})
+                "trainingCoverage": training_coverage})
             continue
         held_model = XGBoostMacroRanker().fit(hx, hy, hg, hw)
         held_metrics = metrics(held_model, held_test)
-        holdouts.append({**split, "status": held_metrics["status"], "metrics": held_metrics})
+        holdouts.append({**split, "status": held_metrics["status"],
+            "trainingCoverage": training_coverage, "metrics": held_metrics})
 
     model_artifact = {
         "schemaVersion": 1,

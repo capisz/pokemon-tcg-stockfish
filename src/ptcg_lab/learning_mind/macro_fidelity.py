@@ -12,6 +12,7 @@ from .aggregation import load_frozen_selection
 from .dataset_v1 import file_sha256, load_dataset
 from .macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1, rollout_seed
 from .schema import identity_hash
+from .collector_compatibility import collection_surface_sha256, registered_collection_surface
 
 
 POLICY_FAMILIES = ("python-heuristic", "typescript-heuristic")
@@ -129,8 +130,15 @@ def _load_label_run(*, root: Path, family: str, dataset_path: Path, labels_path:
         raise ValueError("macro-label run manifest hash mismatch")
     if manifest.get("identity") != identity or manifest.get("datasetManifestHash") != dataset_manifest.get("manifestHash"):
         raise ValueError("macro-label run does not match the frozen dataset identity")
-    if (manifest.get("labelCollectorVersion") != "macro-rollout-labeler-v6"
-            or manifest.get("labelCollectorSha256") != file_sha256(root / "src/ptcg_lab/learning_mind/experiment.py")):
+    collector_version = manifest.get("labelCollectorVersion")
+    collector_hash = manifest.get("labelCollectorSha256")
+    current_collector_path = root / "src/ptcg_lab/learning_mind/experiment.py"
+    current_collector_hash = file_sha256(current_collector_path)
+    registered_surface = registered_collection_surface(
+        version=collector_version, source_hash=collector_hash) if isinstance(collector_version, str) else None
+    source_matches = (collector_hash == current_collector_hash or
+        (registered_surface is not None and registered_surface == collection_surface_sha256(current_collector_path)))
+    if collector_version != "macro-rollout-labeler-v6" or not source_matches:
         raise ValueError("macro-label run collector code identity differs from the audited source")
     planner_paths = {
         "plannerSha256": root / "research/learning_mind/transition_macro_planner.ts",

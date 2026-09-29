@@ -14,6 +14,9 @@ from ptcg_lab.learning_mind.macro_fidelity import (
     _validate_rollout_label,
     audit_raging_bolt_macro_fidelity,
 )
+from ptcg_lab.learning_mind.collector_compatibility import (
+    collection_surface_sha256, collector_compatibility, registered_collection_surface,
+)
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import digest as legacy_digest
@@ -22,6 +25,38 @@ from test_learning_mind_representation import observation
 
 ROOT = Path(__file__).parents[2]
 FAMILIES = ("python-heuristic", "typescript-heuristic")
+
+
+def test_current_collector_matches_audited_historical_collection_surface():
+    path = ROOT / "src/ptcg_lab/learning_mind/experiment.py"
+    assert collection_surface_sha256(path) == "a3f0225ffb11a69b87b6ee786dcaaab4e5ebe484b333424fc88bdee61e0811f9"
+    assert registered_collection_surface(version="macro-rollout-labeler-v6",
+        source_hash="1b7e8df4a69cba6dcbb74d23ba310a9ed18c8ca5859ae5b9c6efbf2f8e4e646a") == collection_surface_sha256(path)
+    assert registered_collection_surface(version="macro-rollout-labeler-v6", source_hash="0" * 64) is None
+
+
+def test_current_worktree_collector_can_merge_with_both_frozen_v17_sources_without_fake_commit():
+    path = ROOT / "src/ptcg_lab/learning_mind/experiment.py"
+    current_hash = file_sha256(path)
+    certificate = collector_compatibility(
+        versions=["macro-rollout-labeler-v6"] * 3,
+        source_hashes=[
+            "1b7e8df4a69cba6dcbb74d23ba310a9ed18c8ca5859ae5b9c6efbf2f8e4e646a",
+            "822500b4113aea6c69abeb7fe069ce2647d561d742977f5453097c0bae6882a4",
+            current_hash,
+        ])
+    assert current_hash == "44e205ed8c8f494950019c1fb7d00fbf79f699317cd784575c98162e5f1c121b"
+    assert certificate["kind"] == "audited-same-collection-surface"
+    assert certificate["collectionSurfaceSha256"] == collection_surface_sha256(path)
+    assert set(certificate["sourceCommits"]) == {
+        "cc3802e38c9e8b41e49196309bf03976eac7251b",
+        "45620268a1f085184b58d834c0a547164c507649",
+    }
+    assert certificate["sourceWorktrees"] == [{
+        "sha256": current_hash,
+        "basedOn": "7846ef70aee19c1b0317c1f5e6c11f04b5a5d848",
+        "status": "uncommitted research worktree source; exact file hash pinned",
+    }]
 
 
 def _generator_identity():

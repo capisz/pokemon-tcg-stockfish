@@ -13,6 +13,7 @@ from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.ranker_portable import inference_implementation_sha256
 from ptcg_lab.learning_mind import ranker_v2
 from ptcg_lab.learning_mind.macro import MacroCandidateV1, rollout_seed
+from ptcg_lab.learning_mind.collector_compatibility import collector_compatibility
 from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
 from ptcg_lab.learning_mind.ranker_v2 import (validate_ranker_v2_report,
     _bootstrap_mean, fit_macro_ranker_v2, predict_macro_ranker_v2,
@@ -101,7 +102,11 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
         "confidenceAuditFamilywiseConfidence": 0.95, "confidenceAuditStatus": "analysis-only",
         "confidenceAuditPolicyLabelEligibilityChanged": False,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
-        "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
+        "holdouts": [{"kind": kind, "status": "measured",
+            "trainingCoverage": {"requestedPositions": 8, "positions": 8,
+                "trainingPositionHashes": [f"train-{index}" for index in range(8)],
+                "insufficientPositionHashes": [], "coverageFraction": 1.0},
+            "metrics": _measured_report_metrics()}
             for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
@@ -189,7 +194,11 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "confidenceAuditPolicyLabelEligibilityChanged": False,
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
-        "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
+        "holdouts": [{"kind": kind, "status": "measured",
+            "trainingCoverage": {"requestedPositions": 8, "positions": 8,
+                "trainingPositionHashes": [f"train-{index}" for index in range(8)],
+                "insufficientPositionHashes": [], "coverageFraction": 1.0},
+            "metrics": _measured_report_metrics()}
             for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
@@ -253,6 +262,7 @@ def _write_ranker_v2_fit_fixture(root):
                 records.append({"positionHash": position_hash, "identity": identity,
                     "opponentPolicyFamily": family, "opponentArchetype": archetype,
                     "split": split, "status": "collected", "observation": obs,
+                    "datasetManifestHash": f"synthetic-dataset-{family}",
                     "candidateCount": len(labels), "sourceGameId": source_game_id,
                     "seedNamespace": namespace, "rolloutIdentity": rollout_identities[family],
                     "rolloutSeeds": [rollout_seed(namespace, position_hash, index,
@@ -274,6 +284,22 @@ def _write_ranker_v2_fit_fixture(root):
         destination.parent.mkdir(parents=True, exist_ok=True)
         destination.write_text(json.dumps(row, sort_keys=True, separators=(",", ":")))
         files.append({"path": relative.as_posix(), "sha256": file_sha256(destination)})
+    collector_hash = "c" * 64
+    collector_version = "synthetic-labeler-v1"
+    generator_identity = {"version": "synthetic-planner-v1"}
+    shared_settings = {"initialRollouts": 16, "maximumRollouts": 64, "extensionBatchSize": 8,
+        "horizon": 500, "rolloutBudgetMs": 60000, "rolloutWorkers": 8,
+        "rolloutSeedVersion": "configuration-bound-v1",
+        "adaptiveAllocationVersion": "staged-monotone-simultaneous-hoeffding-v3",
+        "selectionMethod": "position-hash-list", "splitFilter": None}
+    collector_cert = collector_compatibility(
+        versions=[collector_version, collector_version], source_hashes=[collector_hash, collector_hash])
+    source_runs = [{"policyFamilies": [family], "rolloutIdentity": rollout_identities[family],
+        "datasetManifestHash": f"synthetic-dataset-{family}", "labelCollectorVersion": collector_version,
+        "labelCollectorSha256": collector_hash, "candidateGeneratorVersion": generator_identity["version"],
+        "candidateGeneratorIdentity": generator_identity, "sharedRolloutSettings": shared_settings,
+        "manifestHash": "a" * 64, "manifestSha256": "b" * 64,
+        "positions": 4} for family in families]
     manifest = {"schemaVersion": 1, "kind": "combined-macro-label-runs-v1", "identity": identity,
         "selectionHash": selection["selectionHash"],
         "selectionManifestSha256": file_sha256(selection_path),
@@ -281,10 +307,11 @@ def _write_ranker_v2_fit_fixture(root):
         "positionsByFamilySplit": {family: {split: len(archetypes) for split in splits} for family in families},
         "positionsBySplit": {split: sum(row["split"] == split for row in records) for split in splits},
         "policyFamilies": list(families), "positions": len(records), "files": files,
-        "labelCollectorVersion": "synthetic-labeler-v1", "labelCollectorSha256": "collector-sha",
-        "candidateGeneratorIdentity": {"version": "synthetic-planner-v1"},
-        "sourceRuns": [{"policyFamilies": [family], "rolloutIdentity": rollout_identities[family]}
-                       for family in families]}
+        "labelCollectorVersion": collector_version, "labelCollectorSha256": collector_hash,
+        "labelCollectorSourceSha256s": [collector_hash],
+        "labelCollectorCompatibility": collector_cert,
+        "sharedRolloutSettings": shared_settings,
+        "candidateGeneratorIdentity": generator_identity, "sourceRuns": source_runs}
     manifest["manifestHash"] = identity_hash(manifest)
     (labels_dir / "manifest.json").write_text(json.dumps(manifest))
     return labels_dir, selection_path
@@ -310,6 +337,7 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
         report["development"]["meanTop1RelativeRegret"] <= \
         report["development"]["meanTop1RelativeRegretCI95"]["high"]
     assert len(report["holdouts"]) == 4
+    assert all(row["trainingCoverage"]["coverageFraction"] == 1.0 for row in report["holdouts"])
     verified = verify_macro_ranker_v2_artifact(model_path, model_path.with_suffix(".manifest.json"))
     assert verified["report"]["reportHash"] == report["reportHash"]
     assert len(predict_macro_ranker_v2(verified["artifact"], np.zeros((2, 640)))) == 2
@@ -327,6 +355,13 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
                                                     if key != "reportHash"})
     with pytest.raises(ValueError, match="aggregate metrics do not recompute"):
         validate_ranker_v2_report(forged_summary)
+
+    forged_coverage = json.loads(model_path.with_suffix(".manifest.json").read_text())
+    forged_coverage["holdouts"][0]["trainingCoverage"]["trainingPositionHashes"] = ["same"] * 8
+    forged_coverage["reportHash"] = identity_hash({key: value for key, value in forged_coverage.items()
+                                                     if key != "reportHash"})
+    with pytest.raises(ValueError, match="holdout training coverage does not reconcile"):
+        validate_ranker_v2_report(forged_coverage)
 
     forged_confidence = json.loads(model_path.with_suffix(".manifest.json").read_text())
     forged_confidence["confidenceAuditStatus"] = "accepted"
@@ -411,6 +446,9 @@ def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
         assert report["training"]["requestedPositions"] == 4
         assert report["training"]["positions"] == 3
         assert len(report["training"]["insufficientPositionHashes"]) == 1
+        assert any(row["status"] == "measured" for row in report["holdouts"])
+        assert any(row["trainingCoverage"]["insufficientPositionHashes"]
+                   for row in report["holdouts"])
     assert report["acceptance"] == "insufficient"
 
 
@@ -444,6 +482,7 @@ def test_ranker_v2_tied_candidate_outcomes_are_not_measured_evidence(tmp_path, m
     assert report["training"]["insufficientReason"] == "no-nontied-candidate-comparisons"
     assert report["development"]["status"] == "insufficient"
     assert all(row["status"] == "insufficient" for row in report["holdouts"])
+    assert all(row["trainingCoverage"]["coverageFraction"] == 1.0 for row in report["holdouts"])
     assert report["acceptance"] == "insufficient"
 
 
@@ -485,6 +524,18 @@ def test_ranker_v2_bootstrap_units_must_match_frozen_unique_source_games(tmp_pat
     selection_path.write_text(json.dumps(selection))
     with pytest.raises(ValueError, match="reuses or omits a source game"):
         _validate_source_game_units(selection_path, records)
+
+
+def test_ranker_v2_uses_frozen_selection_for_omitted_source_game_metadata(tmp_path):
+    labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
+    records = [json.loads(path.read_text()) for family in ("python-heuristic", "typescript-heuristic")
+               for path in (labels_dir / family).glob("*.json")]
+    expected = {position["positionHash"]: position["sourceGameId"]
+        for split in json.loads(selection_path.read_text())["splits"]
+        for position in split["positions"]}
+    for record in records:
+        record.pop("sourceGameId", None)
+    assert _validate_source_game_units(selection_path, records) == expected
 
 
 def test_ranker_v2_train_and_development_games_must_be_disjoint_across_families(tmp_path):

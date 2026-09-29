@@ -182,8 +182,14 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "trainingPositions": 1, "trainingCandidates": 2,
         "training": coverage_for(record), "development": coverage_for(dev_record),
-        "holdouts": [{**holdout, "status": "measured", "metrics": {
-            **coverage_for([record, dev_record][holdout["test"][0]])}}
+        "holdouts": [{**holdout, "status": "measured",
+            "trainingCoverage": {"requestedPositions": max(1, len(holdout["train"])),
+                "positions": max(1, len(holdout["train"])),
+                "trainingPositionHashes": [f"fixture-training-position-{index}"
+                    for index in range(max(1, len(holdout["train"])))],
+                "insufficientPositionHashes": [],
+                "coverageFraction": 1.0},
+            "metrics": {**coverage_for([record, dev_record][holdout["test"][0]])}}
             for holdout in experiment._ranker_holdout_rows([record, dev_record])],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)

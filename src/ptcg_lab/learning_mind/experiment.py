@@ -19,7 +19,8 @@ from ptcg_lab.features import heuristic_action_score
 from research.strategy_baseline.probes import (PROBES,
                                               registry_hash as strategy_probe_registry_hash)
 
-from .aggregation import load_frozen_selection
+from .aggregation import SHARED_ROLLOUT_SETTINGS, load_frozen_selection
+from .collector_compatibility import collector_compatibility
 from .dataset_v1 import (file_sha256, load_dataset, load_strategy_probe_dataset,
                          training_records)
 from .encoding import encode_decision
@@ -33,6 +34,7 @@ from .schema import IdentityManifest, UnsupportedPosition, identity_hash
 from .training import require_checkpoint_identity, train_supervised
 
 STRATEGY_PROBE_MINIMUM_N = 20
+RANKER_SPLITS = ("train", "development")
 TARGETED_STRATEGY_PROBES = frozenset({
     "crustle-fan-active-kangaskhan",
     "dragapult-large-hand-judge",
@@ -379,6 +381,107 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
     }
     if manifest.get("positionsByFamilySplit") != expected_counts:
         raise ValueError("ranker-input family/split counts differ from frozen selection")
+    source_runs = manifest.get("sourceRuns")
+    source_by_family = {}
+    source_by_position = {}
+    observed_shared_settings = []
+    if isinstance(source_runs, list):
+        for source_run in source_runs:
+            families = source_run.get("policyFamilies") if isinstance(source_run, dict) else None
+            if (not isinstance(families, list) or len(families) != 1
+                    or families[0] not in expected_families):
+                raise ValueError("ranker source-run policy-family provenance is invalid")
+            family = families[0]
+            collector_version = source_run.get("labelCollectorVersion")
+            collector_hash = source_run.get("labelCollectorSha256")
+            rollout_identity = source_run.get("rolloutIdentity")
+            dataset_hash = source_run.get("datasetManifestHash")
+            generator_identity = source_run.get("candidateGeneratorIdentity")
+            shared_settings = source_run.get("sharedRolloutSettings")
+            if (not isinstance(collector_version, str) or not collector_version
+                    or not isinstance(collector_hash, str) or len(collector_hash) != 64
+                    or not isinstance(rollout_identity, str) or not rollout_identity
+                    or not isinstance(dataset_hash, str) or not dataset_hash
+                    or not isinstance(generator_identity, dict)
+                    or generator_identity != manifest.get("candidateGeneratorIdentity")
+                    or source_run.get("candidateGeneratorVersion") != generator_identity.get("version")
+                    or not isinstance(shared_settings, dict)
+                    or set(shared_settings) != set(SHARED_ROLLOUT_SETTINGS)
+                    or type(source_run.get("positions")) is not int
+                    or not isinstance(source_run.get("manifestHash"), str)
+                    or len(source_run["manifestHash"]) != 64
+                    or not isinstance(source_run.get("manifestSha256"), str)
+                    or len(source_run["manifestSha256"]) != 64):
+                raise ValueError("ranker source-run collector or rollout provenance is invalid")
+            source_by_family.setdefault(family, []).append(source_run)
+            included = source_run.get("includedPositionHashes")
+            if included is None:
+                if (len(source_by_family[family]) != 1
+                        or source_run["positions"] != sum(expected_counts[family].values())):
+                    raise ValueError("ranker source-run shard lacks explicit included-position lineage")
+                source_by_position.update({position_hash: source_run
+                    for position_hash in expected_positions[family]["train"] |
+                        expected_positions[family]["development"]})
+            else:
+                included_splits = source_run.get("includedPositionSplits")
+                if (not isinstance(included, list) or not included
+                        or any(not isinstance(value, str) or not value for value in included)
+                        or len(included) != len(set(included))
+                        or source_run["positions"] != len(included)
+                        or type(source_run.get("sourceRunPositions")) is not int
+                        or source_run["sourceRunPositions"] < source_run["positions"]
+                        or not isinstance(included_splits, dict)
+                        or set(included_splits) != set(RANKER_SPLITS)
+                        or any(not isinstance(included_splits[split], list)
+                            or len(included_splits[split]) != len(set(included_splits[split]))
+                            for split in RANKER_SPLITS)
+                        or set(included) != set().union(*(set(included_splits[split])
+                            for split in RANKER_SPLITS))):
+                    raise ValueError("ranker source-run included-position lineage is malformed")
+                if any(position_hash in source_by_position for position_hash in included):
+                    raise ValueError("ranker source-run lineage repeats a position")
+                if not set(included).issubset(expected_positions[family]["train"] |
+                                               expected_positions[family]["development"]):
+                    raise ValueError("ranker source-run lineage includes a position outside the selection")
+                for split in RANKER_SPLITS:
+                    if not set(included_splits[split]).issubset(expected_positions[family][split]):
+                        raise ValueError("ranker source-run lineage assigns a position to the wrong split")
+                source_by_position.update({position_hash: source_run for position_hash in included})
+            observed_shared_settings.append(shared_settings)
+    if source_by_family:
+        if set(source_by_family) != set(expected_families):
+            raise ValueError("ranker input must retain both frozen source-run identities")
+        is_lineage = isinstance(manifest.get("selectionLineage"), dict)
+        if is_lineage:
+            if (manifest.get("selectionLineage") != selection.get("lineage")
+                    or manifest.get("parentSelectionHash") != selection["lineage"].get("parentSelectionHash")
+                    or any(len(rows) < 2 for rows in source_by_family.values())
+                    or any(any(row.get("includedPositionHashes") is None for row in rows)
+                           for rows in source_by_family.values())):
+                raise ValueError("ranker input repair lineage/source shards are inconsistent")
+            for family in expected_families:
+                observed = {split: set() for split in RANKER_SPLITS}
+                for source_run in source_by_family[family]:
+                    included_splits = source_run["includedPositionSplits"]
+                    for split in RANKER_SPLITS:
+                        observed[split].update(included_splits[split])
+                if observed != expected_positions[family]:
+                    raise ValueError("ranker source-run shards do not exactly cover their family selection")
+        elif any(len(rows) != 1 for rows in source_by_family.values()):
+            raise ValueError("multiple source-run shards require an explicit verified selection lineage")
+        if (any(settings != observed_shared_settings[0] for settings in observed_shared_settings[1:])
+                or manifest.get("sharedRolloutSettings") != observed_shared_settings[0]):
+            raise ValueError("ranker input source runs use different shared rollout settings")
+        compatibility = collector_compatibility(
+            versions=[row["labelCollectorVersion"] for rows in source_by_family.values() for row in rows],
+            source_hashes=[row["labelCollectorSha256"] for rows in source_by_family.values() for row in rows])
+        source_hashes = compatibility["sourceModuleSha256s"]
+        expected_collector_sha = source_hashes[0] if len(source_hashes) == 1 else None
+        if (manifest.get("labelCollectorVersion") != compatibility["labelCollectorVersion"]
+                or manifest.get("labelCollectorSha256") != expected_collector_sha
+                or manifest.get("labelCollectorSourceSha256s") != source_hashes
+                or manifest.get("labelCollectorCompatibility") != compatibility):
+            raise ValueError("ranker input collector compatibility evidence is missing or mismatched")
     files = manifest.get("files")
     if not isinstance(files, list) or len(files) != manifest.get("positions"):
         raise ValueError("combined ranker-input file list mismatch")
@@ -425,6 +528,11 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
         family = record.get("opponentPolicyFamily")
         if family not in expected_families:
             raise ValueError(f"ranker input has invalid policy-family provenance: {relative}")
+        source_run = source_by_position.get(position_hash)
+        if source_run and (family not in source_run["policyFamilies"]
+                or record.get("rolloutIdentity") != source_run["rolloutIdentity"]
+                or record.get("datasetManifestHash") != source_run["datasetManifestHash"]):
+            raise ValueError(f"ranker record rollout identity differs from its preserved source run: {relative}")
         seen_positions.add(position_hash)
         observed_families.add(family)
         observed_splits[record["split"]] += 1
@@ -436,6 +544,8 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
         raise ValueError("ranker-input split counts do not match its records")
     if observed_by_family_split != expected_positions:
         raise ValueError("ranker input records do not exactly cover frozen train/development positions")
+    if source_by_family and set(source_by_family) != set(expected_families):
+        raise ValueError("ranker input must retain both frozen source-run identities")
     return manifest, records
 
 

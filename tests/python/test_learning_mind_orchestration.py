@@ -19,7 +19,11 @@ from ptcg_lab.learning_mind.macro import (CANDIDATE_GENERATOR_VERSION, MacroCand
                                           candidates_from_transition_plans, label_candidates, rollout_seed)
 from ptcg_lab.learning_mind.schema import IdentityError, IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.sampling import select_stratified_rows
-from ptcg_lab.learning_mind.selection import select_supported_source_game_positions
+from ptcg_lab.learning_mind.selection import (eligible_multi_candidate_hashes,
+                                              freeze_macro_heldout_selection,
+                                              freeze_macro_label_selection,
+                                              freeze_macro_label_training_repair,
+                                              select_supported_source_game_positions)
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
 from ptcg_lab.storage import Store
 from test_learning_mind_representation import observation
@@ -61,6 +65,179 @@ def test_supported_source_game_selection_is_disjoint_balanced_and_deterministic(
         select_supported_source_game_positions(rows, {"a", "b", "c", "d", "e"}, split="heldout")
     with pytest.raises(ValueError, match="not supported"):
         select_supported_source_game_positions(rows, {"a", "c", "d"}, split="train", pinned_hashes=["b"])
+
+
+def test_new_label_selection_requires_two_distinct_complete_candidates():
+    support = [
+        {"positionHash": "single", "status": "supported", "completeCandidateCount": 1},
+        {"positionHash": "multi", "status": "supported", "completeCandidateCount": 2},
+        {"positionHash": "unsupported", "status": "unsupported", "reason": "fixture"},
+    ]
+    assert eligible_multi_candidate_hashes(support) == {"multi"}
+    with pytest.raises(ValueError, match="invalid complete-candidate count"):
+        eligible_multi_candidate_hashes([{"positionHash": "bad", "status": "supported"}])
+    with pytest.raises(ValueError, match="unique and nonempty"):
+        eligible_multi_candidate_hashes([support[0], support[0]])
+
+
+def test_frozen_selection_excludes_single_candidate_and_heldout_roots(tmp_path):
+    identity = {"identityHash": "selection-fixture"}
+    datasets, support_reports = {}, {}
+    for family in ("python-heuristic", "typescript-heuristic"):
+        dataset_dir = tmp_path / f"{family}-dataset"
+        dataset_dir.mkdir()
+        rows = []
+        supports = []
+        for split, game, candidate_count in (
+                ("train", "train-a", 2), ("train", "train-b", 1),
+                ("development", "dev-a", 3), ("development", "dev-b", 1),
+                ("heldout", "heldout-a", 4)):
+            position_hash = f"{family}-{game}"
+            rows.append({"positionHash": position_hash, "sourceGameId": f"{family}-{game}",
+                "split": split, "targetDeck": "crustle", "opponentArchetype": "dragapult",
+                "opponentPolicyFamily": family, "positionStage": "midgame"})
+            supports.append({"positionHash": position_hash, "status": "supported",
+                "completeCandidateCount": candidate_count})
+        rows_path = dataset_dir / "rows.jsonl"
+        rows_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        dataset_manifest = {"id": "learning-mind-macro-position-pool-v1", "identity": identity,
+            "rows": len(rows), "rowsSha256": file_sha256(rows_path)}
+        dataset_manifest["manifestHash"] = identity_hash(dataset_manifest)
+        (dataset_dir / "manifest.json").write_text(json.dumps(dataset_manifest))
+
+        support = {"schemaVersion": 1, "audit": "actor-visible-macro-candidate-support-only",
+            "status": "no-rollouts-no-labels", "identity": identity,
+            "datasetManifestHash": dataset_manifest["manifestHash"],
+            "datasetRowsSha256": file_sha256(rows_path), "positions": supports}
+        support["reportHash"] = identity_hash(support)
+        support_path = tmp_path / f"{family}-support.json"
+        support_path.write_text(json.dumps(support))
+        datasets[family] = dataset_dir
+        support_reports[family] = support_path
+
+    output = tmp_path / "selection.json"
+    selection = freeze_macro_label_selection(datasets=datasets, support_reports=support_reports,
+        output=output, identity=identity)
+    assert selection["minimumCompleteCandidatesPerPosition"] == 2
+    assert selection["selection"].endswith("-v2")
+    for item in selection["splits"]:
+        assert item["sourceGames"] == 1
+        assert all(not position["sourceGameId"].endswith("train-b")
+                   and not position["sourceGameId"].endswith("dev-b")
+                   and not position["sourceGameId"].endswith("heldout-a")
+                   for position in item["positions"])
+
+
+def test_heldout_selection_is_separate_game_disjoint_and_never_training_eligible(tmp_path):
+    identity = {"identityHash": "heldout-selection-fixture"}
+    datasets, support_reports = {}, {}
+    for family in ("python-heuristic", "typescript-heuristic"):
+        dataset_dir = tmp_path / f"{family}-heldout-dataset"
+        dataset_dir.mkdir()
+        rows, supports = [], []
+        for index, candidate_count in enumerate((3, 2, 1)):
+            position_hash = f"{family}-heldout-{index}"
+            rows.append({
+                "positionHash": position_hash, "sourceGameId": f"{family}-game-{index}",
+                "split": "heldout", "targetDeck": "crustle" if index != 1 else "dragapult",
+                "opponentArchetype": "raging-bolt", "positionStage": "late",
+                "opponentPolicyFamily": family,
+            })
+            supports.append({"positionHash": position_hash,
+                "status": "supported", "completeCandidateCount": candidate_count})
+        rows_path = dataset_dir / "rows.jsonl"
+        rows_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        dataset_manifest = {"id": "learning-mind-macro-position-pool-v1", "identity": identity,
+            "rows": len(rows), "rowsSha256": file_sha256(rows_path)}
+        dataset_manifest["manifestHash"] = identity_hash(dataset_manifest)
+        (dataset_dir / "manifest.json").write_text(json.dumps(dataset_manifest))
+        support = {"schemaVersion": 1, "audit": "actor-visible-macro-candidate-support-only",
+            "status": "no-rollouts-no-labels", "identity": identity,
+            "datasetManifestHash": dataset_manifest["manifestHash"],
+            "datasetRowsSha256": file_sha256(rows_path), "positions": supports}
+        support["reportHash"] = identity_hash(support)
+        support_path = tmp_path / f"{family}-heldout-support.json"
+        support_path.write_text(json.dumps(support))
+        datasets[family] = dataset_dir
+        support_reports[family] = support_path
+
+    output = tmp_path / "heldout-selection.json"
+    selection = freeze_macro_heldout_selection(datasets=datasets, support_reports=support_reports,
+        output=output, identity=identity)
+    assert selection["kind"] == "macro-ranker-heldout-selection-v1"
+    assert selection["trainingEligible"] is False
+    assert selection["interpretation"].startswith("heldout evaluator selection only")
+    assert len(selection["splits"]) == 2
+    for item in selection["splits"]:
+        assert item["split"] == "heldout"
+        assert item["sourceGames"] == 2
+        assert len(item["positions"]) == 2
+        assert len({position["sourceGameId"] for position in item["positions"]}) == 2
+        assert all(not position["positionHash"].endswith("heldout-2")
+                   for position in item["positions"])
+    with pytest.raises(ValueError, match="immutable"):
+        freeze_macro_heldout_selection(datasets=datasets, support_reports=support_reports,
+            output=output, identity=identity)
+
+
+def test_train_coverage_repair_preserves_games_and_development_and_requires_same_game_candidate(tmp_path):
+    identity = {"identityHash": "training-repair-fixture"}
+    datasets, support_reports, parent_splits = {}, {}, []
+    for family in ("python-heuristic", "typescript-heuristic"):
+        dataset_dir = tmp_path / f"{family}-repair-dataset"
+        dataset_dir.mkdir()
+        rows, supports = [], []
+        for position_hash, game, split, candidates in (
+                (f"{family}-train-old", f"{family}-train-game", "train", 1),
+                (f"{family}-train-new", f"{family}-train-game", "train", 4),
+                (f"{family}-dev", f"{family}-dev-game", "development", 3),
+                (f"{family}-heldout", f"{family}-heldout-game", "heldout", 2)):
+            row = {"positionHash": position_hash, "sourceGameId": game, "split": split,
+                "targetDeck": "crustle", "opponentArchetype": "dragapult",
+                "opponentPolicyFamily": family, "positionStage": "midgame"}
+            rows.append(row)
+            supports.append({"positionHash": position_hash, "status": "supported",
+                "completeCandidateCount": candidates})
+        rows_path = dataset_dir / "rows.jsonl"
+        rows_path.write_text("".join(json.dumps(row, sort_keys=True) + "\n" for row in rows))
+        dataset_manifest = {"id": "learning-mind-macro-position-pool-v1", "identity": identity,
+            "rows": len(rows), "rowsSha256": file_sha256(rows_path)}
+        dataset_manifest["manifestHash"] = identity_hash(dataset_manifest)
+        (dataset_dir / "manifest.json").write_text(json.dumps(dataset_manifest))
+        support = {"schemaVersion": 1, "audit": "actor-visible-macro-candidate-support-only",
+            "status": "no-rollouts-no-labels", "identity": identity,
+            "datasetManifestHash": dataset_manifest["manifestHash"],
+            "datasetRowsSha256": file_sha256(rows_path), "positions": supports}
+        support["reportHash"] = identity_hash(support)
+        support_path = tmp_path / f"{family}-repair-support.json"
+        support_path.write_text(json.dumps(support))
+        datasets[family], support_reports[family] = dataset_dir, support_path
+        for split, position in (("train", rows[0]), ("development", rows[2])):
+            parent_splits.append({"policyFamily": family, "split": split, "sourceGames": 1,
+                "positionHashes": [position["positionHash"]],
+                "positions": [{key: position[key] for key in (
+                    "positionHash", "sourceGameId", "targetDeck", "opponentArchetype", "positionStage")} ]})
+
+    parent = {"schemaVersion": 1, "selection": "parent-fixture-v1", "identity": identity,
+        "splits": parent_splits}
+    parent["selectionHash"] = identity_hash(parent)
+    parent_path = tmp_path / "parent-selection.json"
+    parent_path.write_text(json.dumps(parent))
+    output = tmp_path / "repair-selection.json"
+    repaired = freeze_macro_label_training_repair(datasets=datasets,
+        support_reports=support_reports, parent_selection_path=parent_path,
+        output=output, identity=identity)
+    assert repaired["status"] == "draft-unlabeled-lineage-merge-required"
+    assert repaired["lineage"]["parentSelectionHash"] == parent["selectionHash"]
+    assert len(repaired["lineage"]["replacements"]) == 2
+    for family in ("python-heuristic", "typescript-heuristic"):
+        train = next(row for row in repaired["splits"]
+                     if row["policyFamily"] == family and row["split"] == "train")
+        development = next(row for row in repaired["splits"]
+                           if row["policyFamily"] == family and row["split"] == "development")
+        assert train["positionHashes"] == [f"{family}-train-new"]
+        assert development["positionHashes"] == [f"{family}-dev"]
+        assert train["completeCandidates"] == 4
 
 
 def test_macro_rollout_workers_preserve_matched_seeds_and_candidate_order():
