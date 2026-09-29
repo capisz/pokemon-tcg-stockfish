@@ -952,15 +952,20 @@ Notifications are limited to:
 - review-ready candidate;
 - completed milestone.
 
-Do not put email credentials in the repository or chat. Configure a credential
-reference in the local service environment after the notification adapter is
-implemented and tested.
+Do not put email credentials in the repository or chat. The opt-in
+`SmtpEmailNotificationSink` requires STARTTLS and reads its configuration from
+`PTCG_LEARNING_SMTP_HOST`, `PTCG_LEARNING_SMTP_PORT` (default `587`),
+`PTCG_LEARNING_SMTP_SENDER`, `PTCG_LEARNING_SMTP_RECIPIENT`,
+`PTCG_LEARNING_SMTP_USERNAME`, and `PTCG_LEARNING_SMTP_PASSWORD`. Supply secrets
+through the local service environment only after configuring and testing that
+environment; no notification transport is enabled by default.
 
-The research package provides an opt-in `LocalJsonlNotificationSink` for a
-private append-only operator log. It records only allowlisted event metadata,
-uses mode `0600`, and fsyncs each event. Wire it into `NotificationRouter`
-only in a manually supervised run; it does not install a service, send email,
-or satisfy the notification/reboot-service soak gate.
+The research package provides opt-in `LocalJsonlNotificationSink` and
+`SmtpEmailNotificationSink` adapters for allowlisted events only. The local
+append-only log uses mode `0600` and fsyncs each event; email uses verified
+STARTTLS and filters event fields before delivery. Wire an adapter into
+`NotificationRouter` only in a manually supervised run; neither adapter
+installs a service or satisfies the notification/reboot-service soak gate.
 
 ### Reboot behavior
 

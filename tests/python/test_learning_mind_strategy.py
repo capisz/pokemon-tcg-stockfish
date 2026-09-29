@@ -15,7 +15,7 @@ from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
     ppo_legal_action_logits, update_guard, validate_ppo_optimizer)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
 from ptcg_lab.learning_mind.notifications import (AtomicRollbackRegistry, LocalJsonlNotificationSink,
-    NotificationRouter, VerifiedPromotionEvidence)
+    NotificationRouter, SmtpEmailNotificationSink, VerifiedPromotionEvidence)
 from test_learning_mind_representation import observation
 
 
@@ -412,3 +412,52 @@ def test_local_notification_sink_rejects_invalid_fields_and_clock(tmp_path):
     with pytest.raises(ValueError, match="finite timestamp"):
         LocalJsonlNotificationSink(path, clock=lambda: float("nan"))({"kind": "pause"})
     assert not path.exists()
+
+
+def test_smtp_notification_uses_starttls_and_sends_only_allowlisted_events():
+    sent = []
+
+    class FakeSMTP:
+        def __init__(self, host, port, *, timeout):
+            sent.append(("connect", host, port, timeout))
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_args):
+            sent.append(("close",))
+
+        def ehlo(self):
+            sent.append(("ehlo",))
+
+        def starttls(self, *, context):
+            sent.append(("starttls", context))
+
+        def login(self, username, password):
+            sent.append(("login", username, password))
+
+        def send_message(self, message):
+            sent.append(("send", message))
+
+    sink = SmtpEmailNotificationSink(host="smtp.example", port=587, sender="bot@example.com",
+        recipient="operator@example.com", username="user-ref", password="secret-ref",
+        clock=lambda: 1790640000.0, smtp_factory=FakeSMTP,
+        ssl_context_factory=lambda: "verified-tls-context")
+    sink({"kind": "progress", "reason": "ignored"})
+    assert sent == []
+    sink({"kind": "failure", "reason": "replay hash mismatch", "token": "never-email"})
+    assert [item[0] for item in sent] == ["connect", "ehlo", "starttls", "ehlo", "login", "send", "close"]
+    assert sent[2] == ("starttls", "verified-tls-context")
+    assert sent[4] == ("login", "user-ref", "secret-ref")
+    message = sent[5][1]
+    body = message.get_content()
+    assert message["From"] == "bot@example.com" and message["To"] == "operator@example.com"
+    assert "replay hash mismatch" in body and "never-email" not in body
+
+
+def test_smtp_notification_requires_complete_environment_and_rejects_header_injection():
+    with pytest.raises(ValueError, match="not configured"):
+        SmtpEmailNotificationSink.from_environment(environ={})
+    with pytest.raises(ValueError, match="configuration is invalid"):
+        SmtpEmailNotificationSink(host="smtp.example", port=587, sender="bot@example.com\nBcc:x",
+            recipient="operator@example.com", username="user", password="secret")
