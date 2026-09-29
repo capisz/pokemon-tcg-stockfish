@@ -1681,6 +1681,25 @@ strength or autonomous improvement.
   Windows host. These tests do not launch simulations; a successful Windows
   test run and forced-power-loss test remain outstanding.
 
+### Heldout collector EnginePool cleanup correction (2026-09-29)
+
+- After explicit authorization for the two frozen heldout families, the first
+  Python collector invocation exited before entering collection because it
+  treated `EnginePool` as a context manager. The pool exposes `close()` but no
+  `__enter__`/`__exit__`; its constructor only allocates client wrappers, and
+  no worker is started until a lease/request. Inspection found no result or
+  per-position checkpoint files from this attempt (only the empty output
+  directory and collector lock file).
+- Changed the collector to use `contextlib.closing`, matching the established
+  training collector pattern. The fake-engine integration test now supplies
+  only `close()` and verifies cleanup, so it no longer accidentally masks the
+  real pool API. Focused heldout tests pass (6); no rollout completed.
+- Because the collector source hash is part of the run identity, this fix
+  changes the rollout identity. The frozen selection, settings, and seed
+  namespace are unchanged. Both families must pass fresh preflight under the
+  corrected source identity before collection resumes; no previous results or
+  checkpoints may be carried across identities.
+
 ### v17 training-coverage repair feasibility (2026-09-29)
 
 - The v17 ranker has 76/79 comparable training positions because three

@@ -7,7 +7,7 @@ not be changed to add a new seed namespace.
 
 from __future__ import annotations
 
-from contextlib import contextmanager
+from contextlib import closing, contextmanager
 from concurrent.futures import ThreadPoolExecutor
 import copy
 from dataclasses import asdict
@@ -513,7 +513,7 @@ def _collect_heldout_macro_labels(*, root: Path, family: str, dataset_dir: Path,
                 raise ValueError(f"heldout result identity drift: {result_path.name}")
             completed_records[result_path.name] = record
 
-    with EnginePool(root, size=rollout_workers, timeout=300) as engine_pool:
+    with closing(EnginePool(root, size=rollout_workers, timeout=300)) as engine_pool:
         for row in selected_rows:
             key = row["positionHash"]
             result_path, progress_path = output / f"{key}.json", output / f".{key}.progress"

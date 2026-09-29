@@ -159,15 +159,14 @@ def test_heldout_collection_manifest_loads_through_real_evaluator_path(tmp_path,
     monkeypatch.setattr(collector, "generate_transition_candidates",
         lambda *_: (candidates, {"hypothesisId": "public-hypothesis"}))
 
+    pool_closed = []
+
     class FakeEnginePool:
         def __init__(self, *_args, **_kwargs):
             pass
 
-        def __enter__(self):
-            return self
-
-        def __exit__(self, *_args):
-            return False
+        def close(self):
+            pool_closed.append(True)
 
         @contextmanager
         def lease(self):
@@ -200,6 +199,7 @@ def test_heldout_collection_manifest_loads_through_real_evaluator_path(tmp_path,
         rollout_workers=1)
     assert manifest["positions"] == manifest["supportedPositions"] == 1
     assert manifest["rolloutIdentity"] == preflight["rolloutIdentity"]
+    assert pool_closed == [True]
     loaded_manifest, records = evaluator._load_heldout_run(family=family,
         labels_dir=output, selection={**selection,
             "splits": [{"policyFamily": family, "positions": [metadata]}]},
