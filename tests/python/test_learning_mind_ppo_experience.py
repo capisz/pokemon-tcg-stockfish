@@ -131,6 +131,22 @@ def test_experience_store_rechecks_artifact_hash_when_iterating(tmp_path):
         list(store.iter_games())
 
 
+def test_experience_store_public_settings_and_manifest_are_detached_snapshots(tmp_path):
+    root = tmp_path / "run"
+    store = PPOExperienceStore(root, settings=settings())
+    store.save_game(game("4"))
+    observed_manifest = store.manifest
+    observed_settings = store.settings
+    observed_manifest["games"][0]["gameId"] = "../escape"
+    observed_manifest["gameCounts"]["finished"] = 100
+    observed_settings["historicalPolicyHashes"].clear()
+
+    assert len(list(store.iter_games())) == 1
+    assert store.manifest["gameCounts"]["finished"] == 1
+    assert store.settings["historicalPolicyHashes"] == HISTORY
+    assert PPOExperienceStore(root, settings=settings()).manifest == store.manifest
+
+
 def test_actor_game_artifact_compression_is_deterministic(tmp_path):
     artifact_hashes = []
     for name in ("first", "second"):

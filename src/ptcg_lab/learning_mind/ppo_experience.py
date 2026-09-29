@@ -260,17 +260,27 @@ class PPOExperienceStore:
         self.root = Path(root).resolve()
         self.games_dir = self.root / "games"
         self.manifest_path = self.root / "manifest.json"
-        self.settings = json.loads(json.dumps(settings, sort_keys=True, allow_nan=False))
-        self.run_id = identity_hash({"version": EXPERIENCE_STORE_VERSION, "settings": self.settings})
+        self._settings = json.loads(json.dumps(settings, sort_keys=True, allow_nan=False))
+        self.run_id = identity_hash({"version": EXPERIENCE_STORE_VERSION, "settings": self._settings})
         if self.manifest_path.exists():
-            self.manifest = self._load_and_verify()
+            self._manifest = self._load_and_verify()
         else:
             if self.root.exists() and any(self.root.iterdir()):
                 raise ValueError("PPO experience output is nonempty without a verified manifest")
             self.root.mkdir(parents=True, exist_ok=True)
             self.games_dir.mkdir(parents=True, exist_ok=True)
-            self.manifest = self._new_manifest()
+            self._manifest = self._new_manifest()
             self._write_manifest()
+
+    @property
+    def settings(self) -> dict:
+        """Return a detached copy so callers cannot mutate frozen run identity."""
+        return json.loads(json.dumps(self._settings, sort_keys=True, allow_nan=False))
+
+    @property
+    def manifest(self) -> dict:
+        """Return a detached snapshot, never the store's mutable live manifest."""
+        return json.loads(json.dumps(self._manifest, sort_keys=True, allow_nan=False))
 
     def _new_manifest(self) -> dict:
         manifest = {"schemaVersion": 1, "kind": EXPERIENCE_STORE_VERSION,
@@ -292,7 +302,7 @@ class PPOExperienceStore:
                     {key: value for key, value in manifest.items() if key != "manifestHash"})
                 or manifest.get("kind") != EXPERIENCE_STORE_VERSION
                 or manifest.get("runId") != self.run_id
-                or manifest.get("settings") != self.settings):
+                or manifest.get("settings") != self._settings):
             raise ValueError("PPO experience manifest identity/checksum mismatch")
         games = manifest.get("games")
         if not isinstance(games, list):
@@ -328,9 +338,9 @@ class PPOExperienceStore:
             if not path.is_file():
                 raise ValueError(f"PPO experience game artifact checksum mismatch: {game_id}")
             game = self._read_verified_game(path, item)
-            _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                           feature_schema_hash=self.settings["featureSchemaHash"],
-                           schedule_settings=self.settings)
+            _validate_game(game, behavior_policy_hash=self._settings["behaviorPolicyHash"],
+                           feature_schema_hash=self._settings["featureSchemaHash"],
+                           schedule_settings=self._settings)
             if game.get("gameId") != game_id or game.get("status") != item.get("status"):
                 raise ValueError("PPO experience game artifact differs from its manifest entry")
             if item["actorDecisions"] != len(game["actorDecisions"]):
@@ -349,9 +359,9 @@ class PPOExperienceStore:
         return manifest
 
     def _write_manifest(self) -> None:
-        value = {key: item for key, item in self.manifest.items() if key != "manifestHash"}
-        self.manifest["manifestHash"] = identity_hash(value)
-        _atomic_json(self.manifest_path, self.manifest)
+        value = {key: item for key, item in self._manifest.items() if key != "manifestHash"}
+        self._manifest["manifestHash"] = identity_hash(value)
+        _atomic_json(self.manifest_path, self._manifest)
 
     @staticmethod
     def _read_verified_game(path: Path, manifest_entry: dict) -> dict:
@@ -371,13 +381,13 @@ class PPOExperienceStore:
         return value
 
     def save_game(self, game: dict) -> dict:
-        _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                       feature_schema_hash=self.settings["featureSchemaHash"],
-                       schedule_settings=self.settings)
-        if any(item["gameId"] == game["gameId"] for item in self.manifest["games"]):
+        _validate_game(game, behavior_policy_hash=self._settings["behaviorPolicyHash"],
+                       feature_schema_hash=self._settings["featureSchemaHash"],
+                       schedule_settings=self._settings)
+        if any(item["gameId"] == game["gameId"] for item in self._manifest["games"]):
             raise ValueError("PPO experience games are immutable and cannot be replaced")
         if any(item.get("scheduleIndex") == game["schedule"]["scheduleIndex"]
-               for item in self.manifest["games"]):
+               for item in self._manifest["games"]):
             raise ValueError("PPO experience scheduler indices are immutable and cannot be reused")
         path = self.games_dir / f"{game['gameId']}.json.gz"
         if path.exists():
@@ -398,21 +408,21 @@ class PPOExperienceStore:
             "status": game["status"],
             "actorDecisions": len(game["actorDecisions"]), "sha256": file_sha256(path),
             "bytes": path.stat().st_size}
-        self.manifest["games"].append(item)
-        self.manifest["games"].sort(key=lambda entry: entry["gameId"])
-        self.manifest["gameCounts"][game["status"]] += 1
-        self.manifest["actorDecisions"] += item["actorDecisions"]
+        self._manifest["games"].append(item)
+        self._manifest["games"].sort(key=lambda entry: entry["gameId"])
+        self._manifest["gameCounts"][game["status"]] += 1
+        self._manifest["actorDecisions"] += item["actorDecisions"]
         self._write_manifest()
         return item
 
     def completed_game_ids(self) -> frozenset[str]:
-        return frozenset(item["gameId"] for item in self.manifest["games"])
+        return frozenset(item["gameId"] for item in self._manifest["games"])
 
     def iter_games(self) -> Iterator[dict]:
-        for item in sorted(self.manifest["games"], key=lambda entry: entry["gameId"]):
+        for item in sorted(self._manifest["games"], key=lambda entry: entry["gameId"]):
             path = self.games_dir / f"{item['gameId']}.json.gz"
             game = self._read_verified_game(path, item)
-            _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                           feature_schema_hash=self.settings["featureSchemaHash"],
-                           schedule_settings=self.settings)
+            _validate_game(game, behavior_policy_hash=self._settings["behaviorPolicyHash"],
+                           feature_schema_hash=self._settings["featureSchemaHash"],
+                           schedule_settings=self._settings)
             yield game
