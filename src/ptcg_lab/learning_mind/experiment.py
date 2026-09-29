@@ -382,6 +382,15 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
     files = manifest.get("files")
     if not isinstance(files, list) or len(files) != manifest.get("positions"):
         raise ValueError("combined ranker-input file list mismatch")
+    listed_paths = [item.get("path") if isinstance(item, dict) else None for item in files]
+    if (any(not isinstance(name, str) for name in listed_paths)
+            or len(listed_paths) != len(set(listed_paths))):
+        raise ValueError("combined ranker-input file list contains missing or duplicate paths")
+    actual_paths = {path.relative_to(labels_dir).as_posix()
+                    for path in labels_dir.rglob("*.json")
+                    if path != manifest_path}
+    if actual_paths != set(listed_paths):
+        raise ValueError("combined ranker-input directory has missing or unlisted JSON records")
     identity = manifest.get("identity")
     seen_positions: set[str] = set()
     records = []
@@ -395,6 +404,8 @@ def _load_ranker_input(labels_dir: Path, selection_path: Path) -> tuple[dict, li
         if (relative is None or relative.is_absolute() or ".." in relative.parts
                 or not name.endswith(".json") or name == "manifest.json"):
             raise ValueError("unsafe macro-label record path in combined ranker input")
+        if (labels_dir / relative).is_symlink():
+            raise ValueError("macro-label record path must not be a symlink")
         source = (labels_dir / relative).resolve()
         if not source.is_relative_to(labels_dir) or not source.is_file():
             raise ValueError("macro-label record path escapes or is missing from ranker input")

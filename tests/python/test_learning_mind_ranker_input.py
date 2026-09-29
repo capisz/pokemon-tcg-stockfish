@@ -52,6 +52,25 @@ def test_ranker_input_rejects_incomplete_frozen_position_universe(tmp_path):
         _load_ranker_input(root, selection)
 
 
+def test_ranker_input_rejects_unlisted_json_record(tmp_path):
+    root, selection, _ = _write_combined_input(tmp_path / "combined")
+    (root / "python-heuristic" / "unlisted.json").write_text("{}")
+    with pytest.raises(ValueError, match="unlisted JSON records"):
+        _load_ranker_input(root, selection)
+
+
+def test_ranker_input_rejects_manifest_record_symlink(tmp_path):
+    root, selection, files = _write_combined_input(tmp_path / "combined")
+    item = files[0]
+    target = root / item["path"]
+    real = root.parent / "record-source.json"
+    real.write_bytes(target.read_bytes())
+    target.unlink()
+    target.symlink_to(real)
+    with pytest.raises(ValueError, match="must not be a symlink"):
+        _load_ranker_input(root, selection)
+
+
 @pytest.mark.parametrize("existing_output", ["model", "manifest"])
 def test_ranker_fit_never_overwrites_existing_artifacts(tmp_path, existing_output):
     output = tmp_path / "ranker.json"
