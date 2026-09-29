@@ -88,7 +88,9 @@ class MindSupervisor:
             "artifactRoots": [str(path) for path in self.artifact_roots]}
         if self.configuration_path.is_file():
             configured = json.loads(self.configuration_path.read_text())
-            if configured != expected:
+            if (not isinstance(configured, dict)
+                    or type(configured.get("schemaVersion")) is not int
+                    or configured != expected):
                 raise ValueError("supervisor configuration identity drift; use a new state root")
             return
         if self.state_path.exists() or (self.root.exists() and any(self.root.iterdir())):
@@ -115,14 +117,16 @@ class MindSupervisor:
         value = json.loads(self.state_path.read_text())
         expected_keys = {"schemaVersion", "status", "phase", "cursor", "failures", "pause_reason"}
         if (not isinstance(value, dict) or set(value) != expected_keys
-                or value.get("schemaVersion") != 1
+                or type(value.get("schemaVersion")) is not int or value["schemaVersion"] != 1
                 or not isinstance(value.get("status"), str)
                 or value.get("status") not in {"PAUSED", "RUNNING"}
                 or value.get("phase") not in PHASES
                 or not isinstance(value.get("cursor"), dict)
                 or not isinstance(value.get("failures"), list)
                 or (value.get("pause_reason") is not None
-                    and not isinstance(value.get("pause_reason"), str))):
+                    and (not isinstance(value.get("pause_reason"), str)
+                         or not value["pause_reason"].strip()
+                         or len(value["pause_reason"]) > 512))):
             raise ValueError("supervisor state is malformed; refusing to resume")
         try:
             json.dumps(value["cursor"], allow_nan=False)
@@ -228,6 +232,8 @@ class MindSupervisor:
         self.persist()
 
     def pause(self, reason: str, *, notify: bool = True) -> None:
+        if not isinstance(reason, str) or not reason.strip() or len(reason) > 512:
+            raise ValueError("supervisor pause reason must be a nonempty string of at most 512 characters")
         self.state.status = "PAUSED"; self.state.pause_reason = reason; self.persist()
         if notify: self.notifier({"kind": "pause", "reason": reason})
 

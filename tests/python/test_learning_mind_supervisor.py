@@ -211,3 +211,44 @@ def test_cpu_worker_profile():
     assert cpu_worker_count(16) == 12
     assert cpu_worker_count(8) == 6
     assert cpu_worker_count(2) == 1
+
+
+def test_supervisor_rejects_boolean_schema_versions_in_config_and_state(tmp_path):
+    config_root = tmp_path / "boolean-config"
+    configured = MindSupervisor(config_root, reserve_bytes=0, data_cap_bytes=1000)
+    configuration = json.loads(configured.configuration_path.read_text())
+    configuration["schemaVersion"] = True
+    configured.configuration_path.write_text(json.dumps(configuration))
+    with pytest.raises(ValueError, match="configuration identity drift"):
+        MindSupervisor(config_root, reserve_bytes=0, data_cap_bytes=1000)
+
+    state_root = tmp_path / "boolean-state"
+    persisted = MindSupervisor(state_root, reserve_bytes=0, data_cap_bytes=1000)
+    persisted.persist()
+    state = json.loads(persisted.state_path.read_text())
+    state["schemaVersion"] = True
+    persisted.state_path.write_text(json.dumps(state))
+    with pytest.raises(ValueError, match="state is malformed"):
+        MindSupervisor(state_root, reserve_bytes=0, data_cap_bytes=1000)
+
+
+@pytest.mark.parametrize("reason", ["", "   ", None, 7, "x" * 513])
+def test_pause_rejects_invalid_reason_before_persisting(tmp_path, reason):
+    supervisor = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=1000)
+    supervisor.persist()
+    before = supervisor.state_path.read_bytes()
+    with pytest.raises(ValueError, match="pause reason"):
+        supervisor.pause(reason)
+    assert supervisor.state_path.read_bytes() == before
+
+
+@pytest.mark.parametrize("reason", ["", "   ", "x" * 513])
+def test_supervisor_rejects_invalid_persisted_pause_reason(tmp_path, reason):
+    root = tmp_path / "bad-pause-reason"
+    supervisor = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
+    supervisor.persist()
+    state = json.loads(supervisor.state_path.read_text())
+    state["pause_reason"] = reason
+    supervisor.state_path.write_text(json.dumps(state))
+    with pytest.raises(ValueError, match="state is malformed"):
+        MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
