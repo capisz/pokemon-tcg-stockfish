@@ -53,6 +53,7 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         labels.append({"candidate": json.loads(json.dumps(asdict(candidate))), "candidateHash": candidate.key(),
             "attemptedRollouts": 1, "completedRollouts": 1,
             "outcomes": {"finished": 1, "truncated": 0, "error": 0}, "outcomeReasons": {},
+            "decisionCountDistribution": {"10": 1},
             "expectedResult": result, "relativeResult": result - .75,
             "uncertainty": uncertainty, "weight": 1 / (1 + uncertainty)})
     record = {"positionHash": position_hash, "split": "train", "sourceGameId": "game-1",

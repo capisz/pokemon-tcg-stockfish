@@ -237,7 +237,8 @@ def _write_ranker_v2_fit_fixture(root):
                     labels.append({"candidate": candidate, "candidateHash": candidate_value.key(),
                         "attemptedRollouts": 2, "completedRollouts": 2,
                         "outcomes": {"finished": 2, "truncated": 0, "error": 0},
-                        "outcomeReasons": {}, "expectedResult": result,
+                        "outcomeReasons": {}, "decisionCountDistribution": {"10": 2},
+                        "expectedResult": result,
                         "relativeResult": result - 1.0, "uncertainty": uncertainty,
                         "weight": 2 / (1 + uncertainty)})
                 namespace = "training" if split == "train" else "development"

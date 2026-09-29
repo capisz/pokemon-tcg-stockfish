@@ -97,6 +97,15 @@ def _validate_rollout_label(label: dict) -> dict:
         raise ValueError("macro label outcome reasons are malformed")
     if sum(reasons.values()) != counts["error"]:
         raise ValueError("macro label errors are not fully explained by typed reasons")
+    decision_counts = label.get("decisionCountDistribution")
+    if (not isinstance(decision_counts, dict)
+            or any(not isinstance(key, str) or not key.isdecimal() or str(int(key)) != key
+                   or type(value) is not int or value < 0
+                   for key, value in decision_counts.items())):
+        raise ValueError("macro label decision-count distribution is malformed")
+    observed_decisions = sum(decision_counts.values())
+    if not counts["finished"] + counts["truncated"] <= observed_decisions <= attempted:
+        raise ValueError("macro label decision-count distribution does not reconcile with outcomes")
     typed_errors = sum(value for reason, value in reasons.items()
                        if reason.startswith(TYPED_PLAN_FAILURE_PREFIXES))
     successful_plan_samples = counts["finished"] + counts["truncated"]

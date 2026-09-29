@@ -73,7 +73,8 @@ def _fixture(tmp_path, *, successful=True, wrong_root=False):
                 reasons = {"MACRO_PLAN_UNEXECUTABLE:0:fixture": 1}
             label = {"candidate": declared, "candidateHash": candidate.key(),
                 "attemptedRollouts": 1, "completedRollouts": outcomes["finished"],
-                "outcomes": outcomes, "outcomeReasons": reasons}
+                "outcomes": outcomes, "outcomeReasons": reasons,
+                "decisionCountDistribution": {"1": 1} if successful else {}}
             record = {"positionHash": position_hash, "split": split, "identity": identity,
                 "datasetManifestHash": None, "opponentPolicyFamily": family,
                 "observation": obs, "status": "collected", "rolloutIdentity": None,
@@ -194,6 +195,27 @@ def test_macro_fidelity_audit_rejects_seed_identity_drift(tmp_path, tamper):
                                                if key != "manifestHash"})
     labels_manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="seeds differ from frozen position/split identity"):
+        audit_raging_bolt_macro_fidelity(root=ROOT, selection_path=selection,
+            python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
+            python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],
+            output=tmp_path / "fidelity.json")
+
+
+def test_macro_fidelity_audit_rejects_decision_counts_inconsistent_with_rollouts(tmp_path):
+    _identity, selection, inputs = _fixture(tmp_path)
+    labels_dir = inputs[FAMILIES[0]][1]
+    labels_manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(labels_manifest_path.read_text())
+    entry = manifest["files"][0]
+    record_path = labels_dir / entry["path"]
+    record = json.loads(record_path.read_text())
+    record["labels"][0]["decisionCountDistribution"] = {}
+    record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
+    entry["sha256"] = file_sha256(record_path)
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    labels_manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="decision-count distribution does not reconcile"):
         audit_raging_bolt_macro_fidelity(root=ROOT, selection_path=selection,
             python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
             python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],
