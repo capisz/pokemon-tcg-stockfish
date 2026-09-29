@@ -140,6 +140,19 @@ def test_experience_store_rejects_decisions_from_historical_opponent_seat(tmp_pa
         store.save_game(game("5", decisions=[opponent_decision]))
 
 
+def test_ppo_trace_conversion_requires_the_exact_frozen_scheduler_assignment():
+    from ptcg_lab.learning_mind.schema import identity_hash
+
+    altered = game("5")
+    altered["schedule"]["opponentPolicy"] = "current"
+    altered["gameId"] = identity_hash({"schedulerVersion": "ppo-training-scheduler-v1",
+        **{key: value for key, value in altered["schedule"].items() if key != "gameId"}})
+    altered["schedule"]["gameId"] = altered["gameId"]
+    with pytest.raises(ValueError, match="differs from the frozen scheduler identity"):
+        ppo_records_from_game(altered, behavior_policy_hash=BEHAVIOR_HASH,
+            feature_schema_hash=SCHEMA_HASH, scheduler_settings=settings())
+
+
 def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces():
     from ptcg_lab.learning_mind.encoding import encode_decision
     from ptcg_lab.learning_mind.training import eligible_ppo_records
@@ -161,7 +174,7 @@ def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces(
     feature_hash = SCHEMA_HASH
     finished = game("9", decisions=decisions)
     rows = ppo_records_from_game(finished, behavior_policy_hash=BEHAVIOR_HASH,
-                                 feature_schema_hash=feature_hash)
+                                 feature_schema_hash=feature_hash, scheduler_settings=settings())
     assert [row["actor"] for row in rows] == [0, 0, 1]
     assert [row["reward"] for row in rows] == [0, 1, -1]
     assert [rows[1]["return"], rows[2]["return"]] == [1., -1.]
@@ -169,6 +182,6 @@ def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces(
 
     unfinished = {**finished, "status": "truncated", "outcome": None}
     discarded = ppo_records_from_game(unfinished, behavior_policy_hash=BEHAVIOR_HASH,
-                                      feature_schema_hash=feature_hash)
+                                      feature_schema_hash=feature_hash, scheduler_settings=settings())
     assert all(row["reward"] == 0 for row in discarded)
     assert eligible_ppo_records(discarded) == []

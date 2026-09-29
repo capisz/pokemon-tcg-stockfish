@@ -777,7 +777,9 @@ whose assignment differs from the regenerated scheduler entry is rejected;
 only decisions from a scheduled learner seat may enter the PPO trace, and the
 same schedule index cannot be saved twice. The store schema is
 `ppo-actor-experience-v2`; older experience manifests must not be resumed as
-if they had this assignment-integrity check.
+if they had this assignment-integrity check. Direct conversion of a game into
+PPO traces requires the same frozen scheduler settings and repeats the exact
+assignment check rather than trusting a self-consistent game ID.
 
 PPO state checkpoints are immutable CPU artifacts bound to the experiment
 identity, accepted stage-evidence hash, exact experience-manifest hash,

@@ -130,7 +130,7 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
 
 
 def _validate_game(game: dict, *, behavior_policy_hash: str,
-                   feature_schema_hash: str, schedule_settings: dict | None = None) -> None:
+                   feature_schema_hash: str, schedule_settings: dict) -> None:
     if (not isinstance(game, dict) or set(game) != {
             "schemaVersion", "gameId", "status", "outcome", "actorDecisions", "schedule"}
             or game.get("schemaVersion") != 1):
@@ -156,12 +156,11 @@ def _validate_game(game: dict, *, behavior_policy_hash: str,
             or any(type(seat) is not int or seat not in (0, 1) for seat in learner_seats)
             or len(set(learner_seats)) != len(learner_seats)):
         raise ValueError("PPO scheduler assignment has invalid learner seats")
-    if schedule_settings is not None:
-        expected = _ppo_schedule_row(schedule["scheduleIndex"],
-            schedule_settings["historicalPolicyHashes"], schedule_settings["trainingSeedBase"])
-        if (schedule_settings.get("schedulerVersion") != PPO_SCHEDULER_VERSION
-                or schedule != expected):
-            raise ValueError("PPO game assignment differs from the frozen scheduler identity")
+    expected = _ppo_schedule_row(schedule["scheduleIndex"],
+        schedule_settings["historicalPolicyHashes"], schedule_settings["trainingSeedBase"])
+    if (schedule_settings.get("schedulerVersion") != PPO_SCHEDULER_VERSION
+            or schedule != expected):
+        raise ValueError("PPO game assignment differs from the frozen scheduler identity")
     if game.get("status") not in GAME_STATUSES:
         raise ValueError("PPO experience game status must preserve finished/truncated/error")
     outcome = game.get("outcome")
@@ -189,10 +188,11 @@ def _validate_game(game: dict, *, behavior_policy_hash: str,
 
 
 def ppo_records_from_game(game: dict, *, behavior_policy_hash: str,
-                          feature_schema_hash: str) -> list[dict]:
+                          feature_schema_hash: str, scheduler_settings: dict) -> list[dict]:
     """Re-encode actor-view decisions and attach terminal perspective rewards/GAE."""
     _validate_game(game, behavior_policy_hash=behavior_policy_hash,
-                   feature_schema_hash=feature_schema_hash)
+                   feature_schema_hash=feature_schema_hash,
+                   schedule_settings=scheduler_settings)
     from .encoding import encode_decision
     from .training import generalized_advantages
 
