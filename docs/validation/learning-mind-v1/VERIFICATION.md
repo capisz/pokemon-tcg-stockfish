@@ -1676,6 +1676,10 @@ strength or autonomous improvement.
   pass. This is not proof of Windows runtime or power-loss durability: the
   actual Windows process-lock/restart/crash path remains untested and is called
   out in the runbook. No collector was run.
+- Added copy/paste native PowerShell steps to run the focused checkpoint,
+  subprocess-lock, resume, and fake-engine tests before moving collection to a
+  Windows host. These tests do not launch simulations; a successful Windows
+  test run and forced-power-loss test remain outstanding.
 
 ### v17 training-coverage repair feasibility (2026-09-29)
 

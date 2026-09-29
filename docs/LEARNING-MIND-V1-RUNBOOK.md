@@ -240,6 +240,29 @@ through this directory-open path. The Windows lock path is implemented, but a
 real Windows process-restart and crash-durability check is still required
 before treating the collector as 24/7-ready; none has been run here.
 
+Before moving a heldout run to a native Windows machine, validate the checkout
+there from PowerShell. These commands run the focused checkpoint, lock,
+resume, and fake-engine collector tests only; they do not start real rollouts:
+
+```powershell
+git status --short --branch
+git switch codex/learning-mind-v1
+git pull --ff-only origin codex/learning-mind-v1
+py -3.11 -m venv .venv
+.\.venv\Scripts\python.exe -m pip install --upgrade pip
+.\.venv\Scripts\python.exe -m pip install -e ".[test]"
+$env:PYTHONPATH = ".;src"
+.\.venv\Scripts\python.exe -m pytest -q tests/python/test_learning_mind_heldout_collection.py
+```
+
+Require every focused test to pass on Windows, including the subprocess lock
+exclusion test and fake-engine checkpoint/resume coverage. This verifies normal
+Windows process behavior but not recovery from forced power loss; retain the
+frozen run identity and never copy a partial checkpoint between machines. Only
+after native tests pass should the separately authorized collector be
+preflighted on Windows. Preflight alone does not authorize collection or
+establish 24/7 reliability.
+
 Cross-family historical label bundles must continue to preserve source
 identities and may be combined only under the audited exact collection-surface rules in
 `src/ptcg_lab/learning_mind/collector_compatibility.py` and
