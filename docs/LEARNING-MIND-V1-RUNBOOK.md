@@ -63,6 +63,29 @@ The following is not complete:
 The authoritative gate record is
 `docs/validation/learning-mind-v1/stage-gates.json`.
 
+### Current frozen gate and label-selection record
+
+The committed gate record currently says representation parity, the supervised
+manifest, and the supervised checkpoint are complete. Held-out-label evidence
+and blind opponent-family evidence are still `insufficient`; targeted-probe
+improvement is false; PPO, continuous operation, and trusted promotion remain
+disabled. These are the authoritative readiness values—do not infer readiness
+from a successful smoke, a populated directory, or a collector still running.
+
+The frozen selection record is
+`docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json`
+with selection hash
+`c1fcb21d10ad38a799490fce3714fe18f72f0dc7e08dadf4431ca6ad1551ae4d`. It
+selects 40 Python-family and 39 TypeScript-family training positions, plus
+nine development positions per family. The 79 training positions contain
+2,022 candidates and the 18 development positions contain 560. All five decks,
+three stages, and five opponents are represented; ten train pilot positions
+are pinned and held-out positions are not selected. This is a frozen plan, not
+proof that the final label artifacts or confidence reevaluation have passed.
+After the selected collections finalize, verify their exact identities,
+manifests, record hashes, outcome reconciliation, and independent holdouts
+before fitting or accepting a ranker. Do not use promotion data for this gate.
+
 ### Latest actor-visible coverage boundary (2026-09-23)
 
 The v5-v7 matched coverage report is
@@ -275,11 +298,13 @@ representationParity: True
 Any mismatch is a stop condition. Do not rebuild a missing replay by silently
 substituting another game.
 
-## 5. Build and freeze the supervised dataset
+## 5. Frozen supervised dataset contract
 
-This is the next engineering milestone. Implement a dataset builder before
-attempting training. It should write immutable JSONL or Parquet rows plus a
-manifest containing the source hashes and split assignments.
+The dataset builder and immutable manifest are implemented. The following
+contract is retained here for audits and future dataset epochs; do not rebuild
+or relabel an existing frozen dataset to make a failing evaluation pass. The
+current milestone is completing and verifying the selected macro labels in
+Section 6, then evaluating ranker evidence under the frozen holdouts.
 
 ### 5.1 Permitted policy labels
 
