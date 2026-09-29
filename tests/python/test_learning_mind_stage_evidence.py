@@ -130,6 +130,14 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
         **authorized_paths, human_enable_ppo=True)
     assert report["ppoEnabled"] is True
     assert ppo_enablement(capability)["enabled"] is True
+    report["macroRankerMeasuredHoldoutKinds"].clear()
+    next(iter(report["sourceArtifacts"].values()))["sha256"] = "tampered"
+    assert ppo_enablement(capability)["enabled"] is True
+    with pytest.raises(TypeError):
+        capability._values["macroRankerMeasuredHoldoutKinds"][0] = "tampered"
+    source_artifact = next(iter(capability._values["sourceArtifacts"].values()))
+    with pytest.raises(TypeError):
+        source_artifact["sha256"] = "tampered"
 
     torch = pytest.importorskip("torch")
     from ptcg_lab.learning_mind.encoding import collate

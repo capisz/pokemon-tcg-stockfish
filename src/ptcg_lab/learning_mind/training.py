@@ -7,6 +7,7 @@ import json
 import math
 import os
 import platform
+from collections.abc import Mapping
 from dataclasses import asdict, dataclass
 from pathlib import Path
 from types import MappingProxyType
@@ -370,6 +371,22 @@ def _verify_ppo_behavior_policy(model: StrategyTransformerV1, records: list[dict
         model.train(previous_mode)
 
 
+def _freeze_evidence(value):
+    if isinstance(value, dict):
+        return MappingProxyType({key: _freeze_evidence(item) for key, item in value.items()})
+    if isinstance(value, list):
+        return tuple(_freeze_evidence(item) for item in value)
+    return value
+
+
+def _thaw_evidence(value):
+    if isinstance(value, Mapping):
+        return {key: _thaw_evidence(item) for key, item in value.items()}
+    if isinstance(value, tuple):
+        return [_thaw_evidence(item) for item in value]
+    return value
+
+
 class VerifiedPPOStageRecord:
     """In-process capability issued only by the stage-evidence verifier.
 
@@ -382,7 +399,7 @@ class VerifiedPPOStageRecord:
     def __init__(self, values: dict, *, _verification_token: object):
         if _verification_token is not _VERIFIED_PPO_STAGE_TOKEN:
             raise TypeError("VerifiedPPOStageRecord must be issued by the stage-evidence verifier")
-        object.__setattr__(self, "_values", MappingProxyType(dict(values)))
+        object.__setattr__(self, "_values", _freeze_evidence(values))
 
     def __setattr__(self, _name, _value):
         raise AttributeError("verified stage evidence is immutable")
@@ -408,7 +425,7 @@ def ppo_enablement(stage_record: VerifiedPPOStageRecord | None) -> dict:
               and stage_record.get("ragingBoltMacroPlanFidelity") == "passed"
               and stage_record.get("macroRankerAcceptance") == "review-required"
               and stage_record.get("macroRankerDevelopmentStatus") == "measured"
-              and isinstance(measured_holdouts, list)
+              and isinstance(measured_holdouts, (list, tuple, set, frozenset))
               and required_holdouts.issubset(measured_holdouts)
               and stage_record.get("macroRankerDistillationBound") is True
               and stage_record.get("severityThreeProbeCoverage") == "sufficient"
@@ -447,7 +464,7 @@ def save_ppo_checkpoint(path: Path, model: StrategyTransformerV1, optimizer, *,
     validate_ppo_optimizer(optimizer)
     if any(parameter.device.type != "cpu" for parameter in model.parameters()):
         raise ValueError("PPO v1 checkpoint profile is CPU-only")
-    stage_hash = identity_hash(dict(stage_record._values))
+    stage_hash = identity_hash(_thaw_evidence(stage_record._values))
     metadata = {"schemaVersion": 1, "kind": "learning-mind-ppo-checkpoint-v1",
         "updateIndex": update_index, "experimentIdentity": experiment_identity,
         "experimentIdentityHash": identity_hash(experiment_identity),
@@ -495,7 +512,7 @@ def load_ppo_checkpoint(path: Path, model: StrategyTransformerV1, optimizer, *,
             or payload.get("implementationIdentity") != supervised_implementation_identity()
             or payload.get("ppoConfig") != asdict(PPOConfig())
             or payload.get("experienceManifestSha256") != experience_manifest_sha256
-            or payload.get("stageEvidenceHash") != identity_hash(dict(stage_record._values))
+            or payload.get("stageEvidenceHash") != identity_hash(_thaw_evidence(stage_record._values))
             or payload.get("device") != "cpu"
             or type(payload.get("updateIndex")) is not int
             or payload["updateIndex"] < 0 or payload["updateIndex"] % 10):
