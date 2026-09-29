@@ -57,7 +57,8 @@ def _position_confidence(record: dict, *, familywise_alpha: float = 0.05) -> dic
             "errors": outcomes["error"],
             "completionRate": n / attempted,
             "expectedResultAmongFinished": mean,
-            "interval95": {"low": lower, "high": upper},
+            "simultaneousInterval": {"low": lower, "high": upper},
+            "confidenceLevel": 1.0 - familywise_alpha,
             "sampleStatus": "insufficient" if n < 20 else "measured",
         })
 
@@ -66,9 +67,9 @@ def _position_confidence(record: dict, *, familywise_alpha: float = 0.05) -> dic
         plausible_best = []
         status = "no-completed-rollouts"
     else:
-        highest_lower = max(item["interval95"]["low"] for item in candidates)
+        highest_lower = max(item["simultaneousInterval"]["low"] for item in candidates)
         plausible_best = sorted(item["candidateHash"] for item in candidates
-                                if item["interval95"]["high"] >= highest_lower)
+                                if item["simultaneousInterval"]["high"] >= highest_lower)
         status = "uniquely-separated" if len(plausible_best) == 1 else "ambiguous"
     return {
         "positionHash": record["positionHash"],
@@ -137,10 +138,10 @@ def _build_report(*, labels_dir: Path, selection_path: Path, manifest: dict,
                 "errors": sum(item["errors"] for item in selected),
             }
     return {
-        "schemaVersion": 1,
-        "kind": "macro-label-confidence-audit-v1",
+        "schemaVersion": 2,
+        "kind": "macro-label-confidence-audit-v2",
         "status": "analysis-only",
-        "intervalMethod": "bonferroni-simultaneous-hoeffding-bounded-finished-outcomes-v1",
+        "intervalMethod": "bonferroni-simultaneous-hoeffding-bounded-finished-outcomes-v2",
         "familywiseAlpha": familywise_alpha,
         "familywiseConfidence": 1.0 - familywise_alpha,
         "confidenceScope": "candidate set within each position; not simultaneous across positions",
@@ -171,7 +172,7 @@ def verify_macro_label_confidence_audit(*, labels_dir: Path, selection_path: Pat
     if (not isinstance(claimed, dict) or claimed.get("reportHash") != identity_hash(
             {key: value for key, value in claimed.items() if key != "reportHash"})):
         raise ValueError("confidence audit report hash mismatch")
-    if claimed.get("kind") != "macro-label-confidence-audit-v1":
+    if claimed.get("kind") != "macro-label-confidence-audit-v2":
         raise ValueError("unsupported confidence audit report")
     manifest, records = _load_ranker_input(labels_dir, selection_path)
     alpha = claimed.get("familywiseAlpha")

@@ -58,8 +58,8 @@ def test_position_confidence_uses_simultaneous_bounded_intervals_and_can_separat
     assert report["confidenceStatus"] == "uniquely-separated"
     assert report["plausibleBestCandidateHashes"] == [report["candidates"][0]["candidateHash"]]
     for candidate in report["candidates"]:
-        assert 0 <= candidate["interval95"]["low"] <= candidate["expectedResultAmongFinished"]
-        assert candidate["expectedResultAmongFinished"] <= candidate["interval95"]["high"] <= 1
+        assert 0 <= candidate["simultaneousInterval"]["low"] <= candidate["expectedResultAmongFinished"]
+        assert candidate["expectedResultAmongFinished"] <= candidate["simultaneousInterval"]["high"] <= 1
 
 
 def test_position_confidence_keeps_low_samples_and_unfinished_outcomes_explicit():
@@ -71,7 +71,7 @@ def test_position_confidence_keeps_low_samples_and_unfinished_outcomes_explicit(
     assert report["errors"] == 2
     assert report["candidates"][0]["sampleStatus"] == "insufficient"
     assert report["candidates"][0]["completionRate"] == 16 / 21
-    assert report["candidates"][1]["interval95"] == {"low": 0.0, "high": 1.0}
+    assert report["candidates"][1]["simultaneousInterval"] == {"low": 0.0, "high": 1.0}
 
 
 def test_position_confidence_rejects_invalid_alpha_and_duplicate_candidates():
@@ -81,6 +81,13 @@ def test_position_confidence_rejects_invalid_alpha_and_duplicate_candidates():
     duplicated = {**record, "labels": record["labels"] * 2, "candidateCount": 2}
     with pytest.raises(ValueError, match="duplicate candidate hashes"):
         confidence_audit._position_confidence(duplicated)
+
+
+def test_custom_confidence_level_is_not_mislabeled_as_95_percent():
+    report = confidence_audit._position_confidence(_record([1.0, 0.0]), familywise_alpha=0.10)
+    assert report["candidates"][0]["confidenceLevel"] == pytest.approx(0.90)
+    assert "simultaneousInterval" in report["candidates"][0]
+    assert "interval95" not in report["candidates"][0]
 
 
 def test_confidence_audit_is_immutable_and_cannot_change_learning_gates(tmp_path, monkeypatch):
