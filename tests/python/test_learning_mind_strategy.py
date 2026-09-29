@@ -5,7 +5,7 @@ import json
 import pytest
 
 from ptcg_lab.learning_mind.evaluation import (PROMOTION_MATCHUPS, matched_sequential_decision,
-    promotion_gate, sequential_decision)
+    promotion_gate, promotion_seed, sequential_decision)
 from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
@@ -376,10 +376,14 @@ def test_sequential_evaluation_validates_non_regression_margin():
 
 def test_matched_sequential_evaluation_checks_schedule_and_keeps_unfinished_separate():
     def record(pair, policy, score, *, status="finished", seed=None):
+        own, opponent = "crustle", "dragapult"
+        seat, first = pair % 2, (pair + 1) % 2
+        seed_position = f"promotion-matrix-v1|{own}|{opponent}|seat-{seat}|first-{first}"
         value = {"pairId": f"pair-{pair}", "gameId": f"{policy}-game-{pair}",
-            "status": status, "ownArchetype": "crustle", "opponentArchetype": "dragapult",
-            "seed": pair if seed is None else seed, "learnerSeat": pair % 2,
-            "firstPlayer": (pair + 1) % 2, "opponentPolicyFamily": "blind-family",
+            "status": status, "ownArchetype": own, "opponentArchetype": opponent,
+            "seed": promotion_seed(seed_position, pair) if seed is None else seed,
+            "seedNamespace": "promotion", "scheduleIndex": pair,
+            "learnerSeat": seat, "firstPlayer": first, "opponentPolicyFamily": "blind-family",
             "schedulerIdentity": "scheduler-v1"}
         if score is not None:
             value["score"] = score
@@ -397,11 +401,19 @@ def test_matched_sequential_evaluation_checks_schedule_and_keeps_unfinished_sepa
     assert result["candidateOutcomes"] == {"finished": 100, "truncated": 1, "error": 0}
     assert result["controlOutcomes"] == {"finished": 100, "truncated": 0, "error": 1}
 
-    mismatched = [dict(control[0], seed=999), *control[1:]]
+    mismatched = [dict(control[0], schedulerIdentity="scheduler-v2"), *control[1:]]
     with pytest.raises(ValueError, match="mismatched frozen assignments"):
         matched_sequential_decision(candidate, mismatched)
     with pytest.raises(ValueError, match="same scheduled game pairs"):
         matched_sequential_decision(candidate, control[:-1])
+    invalid_seed = [dict(control[0], seed=999), *control[1:]]
+    with pytest.raises(ValueError, match="deterministic promotion namespace"):
+        matched_sequential_decision(candidate, invalid_seed)
+    collided = [dict(row) for row in candidate]
+    collided[2]["scheduleIndex"] = 0
+    collided[2]["seed"] = collided[0]["seed"]
+    with pytest.raises(ValueError, match="duplicate seed"):
+        matched_sequential_decision(collided, control)
 
 
 def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():

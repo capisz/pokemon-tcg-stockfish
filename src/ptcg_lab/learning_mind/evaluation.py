@@ -83,20 +83,24 @@ def sequential_decision(records: list[dict], *, non_regression_margin: float = .
 def matched_sequential_decision(candidate_records: list[dict], control_records: list[dict], *,
                                 non_regression_margin: float = .05) -> dict:
     """Compare a candidate with its control only on exactly matched scheduled game pairs."""
-    metadata_fields = ("seed", "ownArchetype", "opponentArchetype", "learnerSeat",
-                       "firstPlayer", "opponentPolicyFamily", "schedulerIdentity")
+    metadata_fields = ("seed", "seedNamespace", "scheduleIndex", "ownArchetype",
+                       "opponentArchetype", "learnerSeat", "firstPlayer",
+                       "opponentPolicyFamily", "schedulerIdentity")
 
     def index(records: list[dict], label: str) -> dict[str, dict]:
         if not isinstance(records, list):
             raise ValueError(f"{label} promotion records must be a list")
         sequential_decision(records, non_regression_margin=non_regression_margin)
         indexed: dict[str, dict] = {}
+        seen_seeds = set()
         for row in records:
             pair_id, game_id = row.get("pairId"), row.get("gameId")
             if (not isinstance(pair_id, str) or not pair_id or pair_id in indexed
                     or not isinstance(game_id, str) or not game_id):
                 raise ValueError(f"{label} promotion records require unique pair and game IDs")
             if (type(row.get("seed")) is not int
+                    or row.get("seedNamespace") != "promotion"
+                    or type(row.get("scheduleIndex")) is not int or row["scheduleIndex"] < 0
                     or row.get("ownArchetype") not in ARCHETYPES
                     or row.get("opponentArchetype") not in ARCHETYPES
                     or type(row.get("learnerSeat")) is not int or row["learnerSeat"] not in (0, 1)
@@ -106,6 +110,13 @@ def matched_sequential_decision(candidate_records: list[dict], control_records: 
                     or not isinstance(row.get("schedulerIdentity"), str)
                     or not row["schedulerIdentity"]):
                 raise ValueError(f"{label} promotion record lacks valid frozen matchup assignments")
+            seed_position = (f"promotion-matrix-v1|{row['ownArchetype']}|{row['opponentArchetype']}|"
+                             f"seat-{row['learnerSeat']}|first-{row['firstPlayer']}")
+            if row["seed"] != promotion_seed(seed_position, row["scheduleIndex"]):
+                raise ValueError(f"{label} promotion record seed is outside its deterministic promotion namespace")
+            if row["seed"] in seen_seeds:
+                raise ValueError(f"{label} promotion schedule contains a duplicate seed")
+            seen_seeds.add(row["seed"])
             indexed[pair_id] = row
         return indexed
 

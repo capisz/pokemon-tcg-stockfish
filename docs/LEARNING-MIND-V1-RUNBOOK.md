@@ -897,8 +897,9 @@ For each ordered matchup:
 
 The research evaluator's `matched_sequential_decision` accepts separate
 candidate and control game records and refuses comparisons unless the pair IDs,
-seed, matchup, learner seat, first player, opponent-policy family, and scheduler
-identity match exactly. A pair contributes a win/draw/loss only when both games
+promotion seed namespace, deterministic schedule index, matchup, learner seat,
+first player, opponent-policy family, and scheduler identity match exactly. A
+pair contributes a win/draw/loss only when both games
 finish; if either side truncates or errors, the pair remains unfinished and is
 reported separately. This analysis does not issue a promotion receipt or
 authorize a checkpoint change.
