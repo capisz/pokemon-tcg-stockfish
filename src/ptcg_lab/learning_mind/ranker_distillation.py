@@ -209,21 +209,36 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
             or manifest.get("manifestHash") != identity_hash({key: value for key, value in manifest.items()
                                                                 if key != "manifestHash"})):
         raise ValueError("ranker distillation manifest identity or checksum mismatch")
+    required_source_kinds = {"macro-position-pool-manifest", "combined-label-manifest",
+        "frozen-selection", "ranker-model", "ranker-report"}
+    sources = manifest.get("sources")
+    if (not isinstance(sources, list) or len(sources) != len(required_source_kinds)
+            or any(not isinstance(source, dict) or set(source) != {"kind", "path", "sha256"}
+                   or not isinstance(source.get("kind"), str)
+                   or not isinstance(source.get("path"), str)
+                   or not Path(source["path"]).is_absolute()
+                   or not isinstance(source.get("sha256"), str)
+                   for source in sources)
+            or {source["kind"] for source in sources} != required_source_kinds
+            or len({source["kind"] for source in sources}) != len(sources)):
+        raise ValueError("ranker distillation source artifact list is incomplete or ambiguous")
+    temperature = manifest.get("temperature")
+    if (type(temperature) not in {int, float} or not math.isfinite(temperature) or temperature <= 0
+            or type(manifest.get("rows")) is not int or manifest["rows"] < 1
+            or manifest.get("skipped") != []):
+        raise ValueError("ranker distillation temperature, row count, or coverage record is invalid")
     rows_path = path / "rows.jsonl"
     if file_sha256(rows_path) != manifest.get("rowsSha256"):
         raise ValueError("ranker distillation rows checksum mismatch")
     rows = [json.loads(line) for line in rows_path.read_text().splitlines()]
     if len(rows) != manifest.get("rows"):
         raise ValueError("ranker distillation row count mismatch")
-    for source in manifest.get("sources", []):
+    for source in sources:
         source_path = Path(source.get("path", ""))
         if not source_path.is_file() or file_sha256(source_path) != source.get("sha256"):
             raise ValueError("ranker distillation source artifact changed or is unavailable")
     sources_by_kind = {source.get("kind"): Path(source["path"])
                        for source in manifest.get("sources", []) if isinstance(source, dict)}
-    if set(sources_by_kind) != {"macro-position-pool-manifest", "combined-label-manifest",
-                                "frozen-selection", "ranker-model", "ranker-report"}:
-        raise ValueError("ranker distillation source manifest is incomplete")
     verified = verify_macro_ranker_v2_artifact(sources_by_kind["ranker-model"],
                                                sources_by_kind["ranker-report"])
     from .experiment import _load_ranker_input
@@ -233,6 +248,8 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     _validate_source_game_units(sources_by_kind["frozen-selection"], records)
     if (verified["report"].get("reportHash") != manifest.get("rankerReportHash")
             or verified["report"].get("modelSha256") != manifest.get("rankerModelSha256")
+            or verified["report"].get("acceptance") != manifest.get("teacherAcceptance")
+            or verified["report"].get("automaticPromotion") is not False
             or verified["report"].get("identity") != identity
             or verified["report"].get("inputManifestSha256") != file_sha256(
                 sources_by_kind["combined-label-manifest"])

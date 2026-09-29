@@ -172,12 +172,21 @@ def test_ranker_distillation_is_verified_train_only_and_integrates_into_dataset(
     assert combined["policyLabelSources"] == ["macro-ranker-distillation"]
     assert rows[0]["rankerDistillation"]["reportHash"] == distill_manifest["rankerReportHash"]
 
+    distill_manifest_path = distillation_dir / "manifest.json"
+    ambiguous_manifest = json.loads(distill_manifest_path.read_text())
+    ambiguous_manifest["sources"].append(ambiguous_manifest["sources"][0])
+    ambiguous_manifest["manifestHash"] = identity_hash({key: value for key, value in ambiguous_manifest.items()
+                                                           if key != "manifestHash"})
+    distill_manifest_path.write_text(json.dumps(ambiguous_manifest))
+    with pytest.raises(ValueError, match="source artifact list is incomplete or ambiguous"):
+        ranker_distillation.load_macro_ranker_distillation(distillation_dir, identity=identity)
+    distill_manifest_path.write_text(json.dumps(distill_manifest))
+
     distill_rows_path = distillation_dir / "rows.jsonl"
     tampered = json.loads(distill_rows_path.read_text().splitlines()[0])
     tampered["policyDistribution"] = [1.0 / len(tampered["policyDistribution"])] * \
         len(tampered["policyDistribution"])
     distill_rows_path.write_text(json.dumps(tampered, sort_keys=True, separators=(",", ":")) + "\n")
-    distill_manifest_path = distillation_dir / "manifest.json"
     changed_manifest = json.loads(distill_manifest_path.read_text())
     changed_manifest["rowsSha256"] = file_sha256(distill_rows_path)
     changed_manifest["manifestHash"] = identity_hash({key: value for key, value in changed_manifest.items()
