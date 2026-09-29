@@ -695,6 +695,11 @@ The trainer must persist:
 - loss history;
 - parent/teacher hashes.
 
+For macro-ranker distillation, teacher provenance includes the portable model,
+ranker report, and the exact verified confidence-audit report. Those hashes are
+carried from distillation rows through the frozen supervised manifest into the
+training checkpoint; do not strip the audit hash during dataset conversion.
+
 Use a small deterministic smoke run first. Interrupt after a batch, resume it,
 and compare every model tensor with an uninterrupted run on the same device.
 

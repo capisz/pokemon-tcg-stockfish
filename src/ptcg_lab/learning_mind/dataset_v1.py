@@ -345,7 +345,8 @@ def build_dataset(*, root: Path, output: Path, review_root: Path,
             dimensions[field] = dict(sorted(Counter(str(row.get(field)) for row in rows).items()))
         search_configurations = sorted({identity_hash(row["searchTarget"]) for row in rows if row.get("searchTarget")})
         teacher_hashes = sorted({value for row in rows if row.get("rankerDistillation")
-            for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"])})
+            for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"],
+                row["rankerDistillation"]["confidenceAuditReportHash"])})
         manifest = {"schemaVersion": 1, "id": "learning-mind-supervised-v1", "identity": identity.record(),
                     "rows": len(rows), "rowsSha256": file_sha256(rows_path),
                     "counts": [{"split": split, "source": source, "count": count}
@@ -616,10 +617,12 @@ def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
             if (not isinstance(provenance, dict)
                     or set(provenance) != {"modelSha256", "reportHash", "inputManifestSha256",
                                           "selectionManifestSha256", "candidateSetHash",
+                                          "confidenceAuditReportHash", "confidenceAuditSha256",
                                           "candidateCount", "temperature"}
                     or any(not isinstance(provenance.get(key), str) or len(provenance[key]) != 64
                            for key in ("modelSha256", "reportHash", "inputManifestSha256",
-                                       "selectionManifestSha256", "candidateSetHash"))
+                                       "selectionManifestSha256", "candidateSetHash",
+                                       "confidenceAuditReportHash", "confidenceAuditSha256"))
                     or type(provenance.get("candidateCount")) is not int or provenance["candidateCount"] < 2
                     or type(provenance.get("temperature")) not in {int, float}
                     or not math.isfinite(provenance["temperature"]) or provenance["temperature"] <= 0):
@@ -655,7 +658,8 @@ def _validate_supervised_rows(manifest: dict, rows: list[dict]) -> None:
     if manifest.get("ordinarySelfPlayPolicyLabels") != 0:
         raise ValueError("ordinary self-play actions cannot be supervised policy labels")
     expected_teachers = sorted({value for row in rows if row.get("rankerDistillation")
-        for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"])})
+        for value in (row["rankerDistillation"]["modelSha256"], row["rankerDistillation"]["reportHash"],
+            row["rankerDistillation"]["confidenceAuditReportHash"])})
     if manifest.get("teacherHashes", []) != expected_teachers:
         raise ValueError("supervised dataset teacher hashes do not match its distilled rows")
 
@@ -670,7 +674,8 @@ def training_records(rows: list[dict], split: str = "train") -> list[dict]:
                        "acceptableActionIndices": row.get("acceptableActionIndices"),
                        "policyDistribution": row.get("policyDistribution"),
                        "teacherHashes": ([row["rankerDistillation"]["modelSha256"],
-                                          row["rankerDistillation"]["reportHash"]]
+                                          row["rankerDistillation"]["reportHash"],
+                                          row["rankerDistillation"]["confidenceAuditReportHash"]]
                                          if row.get("rankerDistillation") else [])})
     return result
 

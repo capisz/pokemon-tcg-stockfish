@@ -226,6 +226,10 @@ def test_ranker_distillation_is_verified_train_only_and_integrates_into_dataset(
     _loaded_manifest, rows = load_dataset(supervised, identity=identity)
     assert combined["policyLabelSources"] == ["macro-ranker-distillation"]
     assert rows[0]["rankerDistillation"]["reportHash"] == distill_manifest["rankerReportHash"]
+    assert rows[0]["rankerDistillation"]["confidenceAuditReportHash"] == manifest["confidenceAuditReportHash"]
+    assert json.loads(confidence.read_text())["reportHash"] in combined["teacherHashes"]
+    learned_records = dataset_v1.training_records(rows)
+    assert json.loads(confidence.read_text())["reportHash"] in learned_records[0]["teacherHashes"]
 
     distill_manifest_path = distillation_dir / "manifest.json"
     unreviewed_manifest = json.loads(distill_manifest_path.read_text())

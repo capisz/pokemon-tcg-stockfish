@@ -253,6 +253,8 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
             raise ValueError("ranker position disagrees with its frozen source game")
         provenance = {"modelSha256": report["modelSha256"],
             "reportHash": report["reportHash"],
+            "confidenceAuditReportHash": confidence_audit["reportHash"],
+            "confidenceAuditSha256": report["confidenceAuditSha256"],
             "inputManifestSha256": report["inputManifestSha256"],
             "selectionManifestSha256": report["selectionManifestSha256"],
             "candidateSetHash": identity_hash(sorted(label["candidateHash"] for label in labels)),
@@ -441,6 +443,8 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
             raise ValueError("ranker distillation action distribution does not reproduce from its frozen teacher")
         expected_provenance = {"modelSha256": verified["report"]["modelSha256"],
             "reportHash": verified["report"]["reportHash"],
+            "confidenceAuditReportHash": verified["report"]["confidenceAuditReportHash"],
+            "confidenceAuditSha256": verified["report"]["confidenceAuditSha256"],
             "inputManifestSha256": verified["report"]["inputManifestSha256"],
             "selectionManifestSha256": verified["report"]["selectionManifestSha256"],
             "candidateSetHash": identity_hash(sorted(label["candidateHash"] for label in labels)),
@@ -464,7 +468,8 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
         "families": sorted({row.get("familyId") for row in rows}),
         "teacherHashes": sorted({value for row in rows
             for value in (row["rankerDistillation"]["modelSha256"],
-                          row["rankerDistillation"]["reportHash"])}),
+                          row["rankerDistillation"]["reportHash"],
+                          row["rankerDistillation"]["confidenceAuditReportHash"])}),
         "ordinarySelfPlayPolicyLabels": 0}
     _validate_supervised_rows(validation_manifest, rows)
     return manifest, rows
