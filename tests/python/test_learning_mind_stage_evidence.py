@@ -101,7 +101,8 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     from ptcg_lab.learning_mind.encoding import collate
     from ptcg_lab.learning_mind.model import StrategyTransformerV1
     from ptcg_lab.learning_mind.training import (load_ppo_checkpoint, ppo_policy_fingerprint,
-        ppo_update, save_ppo_checkpoint)
+        ppo_update, save_ppo_checkpoint, supervised_ppo_update)
+    from ptcg_lab.learning_mind.supervisor import MindSupervisor
     from test_learning_mind_representation import encoded
 
     torch.manual_seed(4)
@@ -168,15 +169,38 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
     nonfinite_model.load_state_dict(behavior_weights)
     nonfinite_optimizer = torch.optim.AdamW(nonfinite_model.parameters(), lr=1e-4, weight_decay=1e-4)
     before_nonfinite = {key: value.clone() for key, value in nonfinite_model.state_dict().items()}
+    supervisor = MindSupervisor(tmp_path / "nonfinite-supervisor", reserve_bytes=0,
+                                data_cap_bytes=10_000_000)
+    supervisor.state.status = "RUNNING"
     gradient_hook = nonfinite_model.policy_query[-1].weight.register_hook(
         lambda gradient: torch.full_like(gradient, float("nan")))
-    rejected = ppo_update(nonfinite_model, nonfinite_optimizer, [row], stage_record=capability)
+    rejected = supervised_ppo_update(nonfinite_model, nonfinite_optimizer, [row],
+        supervisor=supervisor, stage_record=capability)
     gradient_hook.remove()
     assert rejected["pauseRequired"] is True
     assert rejected["rejectionReasons"] == {"non-finite-gradient": 1}
     assert rejected["acceptedMinibatches"] == 0
+    assert supervisor.state.status == "PAUSED"
+    assert supervisor.state.pause_reason == "non-finite"
     assert all(torch.equal(before_nonfinite[key], nonfinite_model.state_dict()[key])
                for key in before_nonfinite)
+
+    from ptcg_lab.learning_mind import training as training_module
+    monkeypatch.setattr(training_module, "ppo_update", lambda *_args, **_kwargs: {
+        "acceptedMinibatches": 0, "rejectedMinibatches": 1, "rejectionReasons": {"approximate-kl-exceeded": 1},
+        "pauseRequired": False})
+    rejected_supervisor = MindSupervisor(tmp_path / "rejected-supervisor", reserve_bytes=0,
+                                         data_cap_bytes=10_000_000)
+    rejected_supervisor.state.status = "RUNNING"
+    for _ in range(2):
+        training_module.supervised_ppo_update(None, None, [], supervisor=rejected_supervisor,
+                                              stage_record=capability)
+        assert rejected_supervisor.state.status == "RUNNING"
+    training_module.supervised_ppo_update(None, None, [], supervisor=rejected_supervisor,
+                                          stage_record=capability)
+    assert rejected_supervisor.state.status == "PAUSED"
+    assert rejected_supervisor.state.pause_reason == \
+        "three rejected updates or worker restarts within one hour"
 
 
 def test_stage_evidence_rejects_tampered_recomputed_safety_receipt(tmp_path, monkeypatch):

@@ -792,8 +792,10 @@ minibatch is rejected if approximate KL exceeds `0.05` or value loss exceeds
 `0.5`. Non-finite losses, gradients, gradient norms, parameters, or optimizer
 state are an immediate pause; they must not be checkpointed or carried into a
 later minibatch. A non-finite optimizer step is rolled back before signaling
-the pause. Three rejected updates or worker restarts in one hour pause the
-supervisor.
+the pause. A supervised update must use `supervised_ppo_update`, which routes
+non-finite and rejected-update outcomes into the running supervisor; calling
+the low-level optimizer routine alone does not provide lifecycle handling.
+Three rejected updates or worker restarts in one hour pause the supervisor.
 
 Begin with one manually launched update. Inspect its replay and metrics before
 authorizing a longer batch.

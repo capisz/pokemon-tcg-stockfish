@@ -629,6 +629,32 @@ def ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
             "pauseRequired": immediate_pause or rejected >= 3}
 
 
+def supervised_ppo_update(model: StrategyTransformerV1, optimizer, records: list[dict], *,
+        supervisor, stage_record: VerifiedPPOStageRecord, config: PPOConfig = PPOConfig(),
+        seed: int = 7543298) -> dict:
+    """Run one PPO update and immediately route its safety outcome to the supervisor."""
+    if getattr(getattr(supervisor, "state", None), "status", None) != "RUNNING":
+        raise PermissionError("supervised PPO updates require a running supervisor")
+    try:
+        result = ppo_update(model, optimizer, records, config=config, seed=seed,
+                            stage_record=stage_record)
+    except FloatingPointError:
+        supervisor.record_failure("non-finite")
+        raise
+    except Exception as error:
+        supervisor.pause(f"PPO update failed: {type(error).__name__}")
+        raise
+    nonfinite = {"non-finite-tensor", "non-finite-gradient", "non-finite-gradient-norm",
+                 "non-finite-post-update-state"}.intersection(result.get("rejectionReasons", {}))
+    if nonfinite:
+        supervisor.record_failure("non-finite")
+    elif result.get("pauseRequired"):
+        supervisor.pause("three rejected minibatches in one PPO update")
+    elif result.get("rejectedMinibatches", 0) > 0 and result.get("acceptedMinibatches", 0) == 0:
+        supervisor.record_failure("rejected-update")
+    return result
+
+
 def manifest_digest(value: dict) -> str:
     return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
 
