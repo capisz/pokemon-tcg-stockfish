@@ -13,7 +13,7 @@ from .curriculum import assignment, promotion_seed_namespace_disjoint
 from .schema import identity_hash
 
 
-EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v1"
+EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v2"
 PPO_SCHEDULER_VERSION = "ppo-training-scheduler-v1"
 GAME_STATUSES = frozenset({"finished", "truncated", "error"})
 FORBIDDEN_VIEW_KEYS = frozenset({"observations", "oppositeObservation", "otherObservation",
@@ -39,26 +39,31 @@ def ppo_training_schedule(*, game_count: int, historical_policy_hashes: list[str
         raise ValueError("PPO training seed base must be a uint32")
     result, used_seeds = [], set()
     for index in range(game_count):
-        assignment_record = assignment(index, historical_policy_hashes)
-        seed = promotion_seed_namespace_disjoint(seed_base, "training", index)
-        if seed in used_seeds:
+        record = _ppo_schedule_row(index, historical_policy_hashes, seed_base)
+        if record["seed"] in used_seeds:
             raise ValueError("deterministic PPO scheduler produced a seed collision")
-        used_seeds.add(seed)
-        first_player = (index // 2) % 2
-        if assignment_record["policyFamily"] == "historical":
-            learner_seat = index % 2
-            seats = [learner_seat]
-            decks = ([assignment_record["ownArchetype"], assignment_record["opponentArchetype"]]
-                     if learner_seat == 0 else
-                     [assignment_record["opponentArchetype"], assignment_record["ownArchetype"]])
-        else:
-            seats = [0, 1]
-            decks = [assignment_record["ownArchetype"], assignment_record["opponentArchetype"]]
-        record = {"scheduleIndex": index, "seed": seed, "firstPlayer": first_player,
-            "decks": decks, "learnerSeats": seats, **assignment_record}
-        record["gameId"] = identity_hash({"schedulerVersion": PPO_SCHEDULER_VERSION, **record})
+        used_seeds.add(record["seed"])
         result.append(record)
     return result
+
+
+def _ppo_schedule_row(index: int, historical_policy_hashes: list[str], seed_base: int) -> dict:
+    assignment_record = assignment(index, historical_policy_hashes)
+    seed = promotion_seed_namespace_disjoint(seed_base, "training", index)
+    first_player = (index // 2) % 2
+    if assignment_record["policyFamily"] == "historical":
+        learner_seat = index % 2
+        seats = [learner_seat]
+        decks = ([assignment_record["ownArchetype"], assignment_record["opponentArchetype"]]
+                 if learner_seat == 0 else
+                 [assignment_record["opponentArchetype"], assignment_record["ownArchetype"]])
+    else:
+        seats = [0, 1]
+        decks = [assignment_record["ownArchetype"], assignment_record["opponentArchetype"]]
+    record = {"scheduleIndex": index, "seed": seed, "firstPlayer": first_player,
+        "decks": decks, "learnerSeats": seats, **assignment_record}
+    record["gameId"] = identity_hash({"schedulerVersion": PPO_SCHEDULER_VERSION, **record})
+    return record
 
 
 def _has_forbidden_view_key(value: object) -> bool:
@@ -125,18 +130,33 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
 
 
 def _validate_game(game: dict, *, behavior_policy_hash: str,
-                   feature_schema_hash: str) -> None:
+                   feature_schema_hash: str, schedule_settings: dict | None = None) -> None:
     if (not isinstance(game, dict) or set(game) != {
             "schemaVersion", "gameId", "status", "outcome", "actorDecisions", "schedule"}
             or game.get("schemaVersion") != 1):
         raise ValueError("invalid PPO experience game schema")
     if _has_forbidden_view_key(game):
         raise ValueError("PPO experience game contains a full replay or hidden/private view")
-    if not isinstance(game.get("schedule"), dict):
+    schedule = game.get("schedule")
+    if not isinstance(schedule, dict):
         raise ValueError("PPO experience game requires its frozen public schedule assignment")
     game_id = game.get("gameId")
     if not isinstance(game_id, str) or len(game_id) != 64 or any(c not in "0123456789abcdef" for c in game_id):
         raise ValueError("PPO experience gameId must be a SHA-256 identity")
+    required_schedule_keys = {"scheduleIndex", "seed", "firstPlayer", "decks", "learnerSeats",
+        "ownArchetype", "opponentArchetype", "mirror", "opponentPolicy", "policyFamily", "gameId"}
+    if (set(schedule) != required_schedule_keys or type(schedule.get("scheduleIndex")) is not int
+            or schedule["scheduleIndex"] < 0
+            or schedule.get("gameId") != game_id
+            or identity_hash({"schedulerVersion": PPO_SCHEDULER_VERSION,
+                              **{key: value for key, value in schedule.items() if key != "gameId"}}) != game_id):
+        raise ValueError("PPO game ID does not bind its frozen scheduler assignment")
+    if schedule_settings is not None:
+        expected = _ppo_schedule_row(schedule["scheduleIndex"],
+            schedule_settings["historicalPolicyHashes"], schedule_settings["trainingSeedBase"])
+        if (schedule_settings.get("schedulerVersion") != PPO_SCHEDULER_VERSION
+                or schedule != expected):
+            raise ValueError("PPO game assignment differs from the frozen scheduler identity")
     if game.get("status") not in GAME_STATUSES:
         raise ValueError("PPO experience game status must preserve finished/truncated/error")
     outcome = game.get("outcome")
@@ -220,6 +240,14 @@ class PPOExperienceStore:
             raise ValueError("PPO experience settings require a behaviorPolicyHash")
         if not _is_sha256(settings.get("featureSchemaHash")):
             raise ValueError("PPO experience settings require a featureSchemaHash")
+        historical = settings.get("historicalPolicyHashes")
+        if (settings.get("schedulerVersion") != PPO_SCHEDULER_VERSION
+                or not isinstance(historical, list) or not historical
+                or any(not _is_sha256(value) for value in historical)
+                or len(set(historical)) != len(historical)
+                or type(settings.get("trainingSeedBase")) is not int
+                or not 0 <= settings["trainingSeedBase"] < 2**32):
+            raise ValueError("PPO experience settings require the exact scheduler, historical policies, and seed base")
         self.root = Path(root).resolve()
         self.games_dir = self.root / "games"
         self.manifest_path = self.root / "manifest.json"
@@ -261,6 +289,7 @@ class PPOExperienceStore:
         counts = {status: 0 for status in GAME_STATUSES}
         actor_decisions = 0
         seen_ids = set()
+        seen_schedule_indices = set()
         for item in games:
             if not isinstance(item, dict):
                 raise ValueError("PPO experience manifest contains an invalid game entry")
@@ -276,9 +305,14 @@ class PPOExperienceStore:
                 raise ValueError(f"PPO experience game artifact checksum mismatch: {game_id}")
             game = self._read_game(path)
             _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                           feature_schema_hash=self.settings["featureSchemaHash"])
+                           feature_schema_hash=self.settings["featureSchemaHash"],
+                           schedule_settings=self.settings)
             if game.get("gameId") != game_id or game.get("status") != item.get("status"):
                 raise ValueError("PPO experience game artifact differs from its manifest entry")
+            schedule_index = game["schedule"]["scheduleIndex"]
+            if (schedule_index in seen_schedule_indices or item.get("scheduleIndex") != schedule_index):
+                raise ValueError("PPO experience manifest repeats or misstates a scheduler index")
+            seen_schedule_indices.add(schedule_index)
             counts[game["status"]] += 1
             actor_decisions += len(game["actorDecisions"])
         actual_names = {path.name for path in self.games_dir.glob("*.json.gz")}
@@ -303,9 +337,13 @@ class PPOExperienceStore:
 
     def save_game(self, game: dict) -> dict:
         _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                       feature_schema_hash=self.settings["featureSchemaHash"])
+                       feature_schema_hash=self.settings["featureSchemaHash"],
+                       schedule_settings=self.settings)
         if any(item["gameId"] == game["gameId"] for item in self.manifest["games"]):
             raise ValueError("PPO experience games are immutable and cannot be replaced")
+        if any(item.get("scheduleIndex") == game["schedule"]["scheduleIndex"]
+               for item in self.manifest["games"]):
+            raise ValueError("PPO experience scheduler indices are immutable and cannot be reused")
         path = self.games_dir / f"{game['gameId']}.json.gz"
         if path.exists():
             raise ValueError("unpublished PPO game artifact exists; preserve it for manual reconciliation")
@@ -321,7 +359,8 @@ class PPOExperienceStore:
             os.link(temporary_path, path)
         finally:
             temporary_path.unlink(missing_ok=True)
-        item = {"gameId": game["gameId"], "status": game["status"],
+        item = {"gameId": game["gameId"], "scheduleIndex": game["schedule"]["scheduleIndex"],
+            "status": game["status"],
             "actorDecisions": len(game["actorDecisions"]), "sha256": file_sha256(path),
             "bytes": path.stat().st_size}
         self.manifest["games"].append(item)
@@ -339,5 +378,6 @@ class PPOExperienceStore:
             path = self.games_dir / f"{item['gameId']}.json.gz"
             game = self._read_game(path)
             _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
-                           feature_schema_hash=self.settings["featureSchemaHash"])
+                           feature_schema_hash=self.settings["featureSchemaHash"],
+                           schedule_settings=self.settings)
             yield game

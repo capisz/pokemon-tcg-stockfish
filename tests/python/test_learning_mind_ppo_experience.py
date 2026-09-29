@@ -9,11 +9,13 @@ from ptcg_lab.learning_mind.ppo_experience import (PPOExperienceStore,
 BEHAVIOR_HASH = "a" * 64
 FEATURE_HASH = "b" * 64
 SCHEMA_HASH = "d" * 64
+HISTORY = ["e" * 64, "f" * 64]
 
 
 def settings():
     return {"behaviorPolicyHash": BEHAVIOR_HASH, "featureSchemaHash": SCHEMA_HASH,
-        "engineBuildHash": "c" * 64, "schedulerVersion": "ppo-training-schedule-v1"}
+        "engineBuildHash": "c" * 64, "schedulerVersion": "ppo-training-scheduler-v1",
+        "historicalPolicyHashes": HISTORY, "trainingSeedBase": 7543298}
 
 
 def decision(actor=0):
@@ -29,8 +31,10 @@ def decision(actor=0):
 def game(game_id, status="finished", *, outcome=None, decisions=None):
     if status == "finished" and outcome is None:
         outcome = {"winner": 0, "reason": "rules-terminal"}
-    return {"schemaVersion": 1, "gameId": game_id * 64, "status": status,
-        "outcome": outcome, "schedule": {"seed": 42, "decks": ["a", "b"]},
+    index = int(game_id, 16)
+    schedule = ppo_training_schedule(game_count=index + 1, historical_policy_hashes=HISTORY)[index]
+    return {"schemaVersion": 1, "gameId": schedule["gameId"], "status": status,
+        "outcome": outcome, "schedule": schedule,
         "actorDecisions": decisions if decisions is not None else [decision()]}
 
 
@@ -41,12 +45,13 @@ def test_experience_store_resumes_with_checksums_and_separate_outcomes(tmp_path)
     store.save_game(game("3", "error", outcome=None, decisions=[]))
     assert store.manifest["gameCounts"] == {"finished": 1, "truncated": 1, "error": 1}
     assert store.manifest["actorDecisions"] == 2
-    assert [item["status"] for item in store.iter_games()] == ["finished", "truncated", "error"]
+    assert [item["status"] for item in sorted(store.iter_games(),
+            key=lambda value: value["schedule"]["scheduleIndex"])] == ["finished", "truncated", "error"]
     with pytest.raises(ValueError, match="cannot be replaced"):
         store.save_game(game("1"))
 
     resumed = PPOExperienceStore(tmp_path / "run", settings=settings())
-    assert resumed.completed_game_ids() == frozenset({"1" * 64, "2" * 64, "3" * 64})
+    assert resumed.completed_game_ids() == frozenset(game(str(index))["gameId"] for index in (1, 2, 3))
     assert resumed.manifest == store.manifest
 
 
@@ -110,6 +115,19 @@ def test_experience_store_rejects_full_replay_and_unknown_game_fields(tmp_path):
         store.save_game(full_replay)
     with pytest.raises(ValueError, match="finished PPO games"):
         store.save_game(game("7", outcome={"winner": True, "reason": "not a winner seat"}))
+
+
+def test_experience_store_rejects_self_consistent_but_wrong_scheduler_assignment(tmp_path):
+    from ptcg_lab.learning_mind.schema import identity_hash
+
+    store = PPOExperienceStore(tmp_path / "run", settings=settings())
+    altered = game("5")
+    altered["schedule"]["ownArchetype"] = "mega-lucario"
+    altered["gameId"] = identity_hash({"schedulerVersion": "ppo-training-scheduler-v1",
+        **{key: value for key, value in altered["schedule"].items() if key != "gameId"}})
+    altered["schedule"]["gameId"] = altered["gameId"]
+    with pytest.raises(ValueError, match="differs from the frozen scheduler identity"):
+        store.save_game(altered)
 
 
 def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces():

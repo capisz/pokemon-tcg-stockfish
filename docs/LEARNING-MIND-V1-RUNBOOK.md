@@ -769,6 +769,15 @@ mutation, the trainer hashes its current model and recomputes every stored
 `oldLogProb`. Mixed-policy batches and stale/mismatched probabilities fail
 closed before changing parameters.
 
+The resumable experience store binds each game ID to the exact scheduler row,
+including its schedule index, seed, decks, learner seats, mirror assignment,
+policy family, and opponent-policy hash. Store identity also freezes the
+scheduler version, historical-policy hash list, and training seed base. A row
+whose assignment differs from the regenerated scheduler entry is rejected;
+the same schedule index cannot be saved twice. The store schema is
+`ppo-actor-experience-v2`; older experience manifests must not be resumed as
+if they had this assignment-integrity check.
+
 PPO state checkpoints are immutable CPU artifacts bound to the experiment
 identity, accepted stage-evidence hash, exact experience-manifest hash,
 implementation identity, optimizer state, model fingerprint, and PyTorch RNG
