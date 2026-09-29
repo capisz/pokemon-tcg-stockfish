@@ -17,6 +17,7 @@ from .experiment import (collect_macro_labels, fit_ranker,
 from .policy_evaluation import evaluate_candidate
 from .fresh_collection import collect_fresh_positions
 from .model import StrategyTransformerV1
+from .progress import macro_label_progress
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .ranker_v2 import fit_macro_ranker_v2, verify_macro_ranker_v2_artifact
 from .ranker_distillation import build_macro_ranker_distillation
@@ -104,6 +105,11 @@ def main(argv=None) -> int:
     selection.add_argument("--output", type=Path, required=True)
     selection.add_argument("--pinned-train-hash", action="append", default=[], metavar="FAMILY:HASH",
                            help="retain a prior train label position without recollecting it")
+    progress = sub.add_parser("progress-macro-labels",
+        help="report frozen macro-label result and checkpoint coverage without changing artifacts")
+    progress.add_argument("--selection", type=Path, required=True)
+    progress.add_argument("--python-run", type=Path, required=True)
+    progress.add_argument("--typescript-run", type=Path, required=True)
     combine = sub.add_parser("combine-macro-label-runs",
                              help="verify and combine separate frozen macro-label runs for ranker evaluation")
     combine.add_argument("--input-dir", type=Path, action="append", required=True,
@@ -326,6 +332,11 @@ def main(argv=None) -> int:
         result = finalize_macro_label_runs(inputs=args.input_dir, combined_output=args.combined_output,
             confidence_output=args.confidence_output, identity=identity,
             selection_path=args.selection.resolve())
+    elif args.command == "progress-macro-labels":
+        result = macro_label_progress(selection_path=args.selection.resolve(), runs={
+            "python-heuristic": args.python_run.resolve(),
+            "typescript-heuristic": args.typescript_run.resolve(),
+        })
     elif args.command == "audit-raging-bolt-macro-fidelity":
         result = audit_raging_bolt_macro_fidelity(root=args.root.resolve(),
             selection_path=args.selection.resolve(), python_dataset=args.python_dataset.resolve(),

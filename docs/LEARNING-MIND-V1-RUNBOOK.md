@@ -86,6 +86,25 @@ After the selected collections finalize, verify their exact identities,
 manifests, record hashes, outcome reconciliation, and independent holdouts
 before fitting or accepting a ranker. Do not use promotion data for this gate.
 
+To inspect saved collection coverage without launching games or writing an
+artifact, use the read-only progress command. Its position percentage means
+only that a selected position has a finalized result record; it is not a
+percentage toward learner readiness. Checkpoint presence also does not prove
+that a worker is running, so the report deliberately returns process status as
+`unknown`.
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind progress-macro-labels \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --python-run artifacts/learning-mind-v1/macro-labels-v17-generalist-balanced-2026-09-23/python \
+  --typescript-run artifacts/learning-mind-v1/macro-labels-v17-generalist-balanced-2026-09-23/typescript
+```
+
+The command verifies the frozen selection, any completed manifests, record
+hashes, and active checkpoint identities, then prints JSON to stdout. It does
+not modify the run directories, resume or stop a collector, or change any
+evidence gate.
+
 ### Latest actor-visible coverage boundary (2026-09-23)
 
 The v5-v7 matched coverage report is
