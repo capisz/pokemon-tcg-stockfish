@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict
+import hashlib
 import copy
 import json
 from pathlib import Path
@@ -8,7 +9,7 @@ from pathlib import Path
 import pytest
 
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
-from ptcg_lab.learning_mind.macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1
+from ptcg_lab.learning_mind.macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1, rollout_seed
 from ptcg_lab.learning_mind.macro_fidelity import audit_raging_bolt_macro_fidelity
 from ptcg_lab.learning_mind.schema import IdentityManifest, identity_hash
 from ptcg_lab.learning_mind.tracker import ObservableHistoryTracker
@@ -76,6 +77,9 @@ def _fixture(tmp_path, *, successful=True, wrong_root=False):
             record = {"positionHash": position_hash, "split": split, "identity": identity,
                 "datasetManifestHash": None, "opponentPolicyFamily": family,
                 "observation": obs, "status": "collected", "rolloutIdentity": None,
+                "seedNamespace": "training" if split == "train" else "development",
+                "generatorSeed": int.from_bytes(hashlib.sha256(
+                    f"learning-mind-v1|macro-generator|{position_hash}".encode()).digest()[:4], "big"),
                 "candidateCount": 1, "labels": [label], "highConfidencePolicyEligible": False}
             files.append((position_hash, record))
 
@@ -101,6 +105,9 @@ def _fixture(tmp_path, *, successful=True, wrong_root=False):
         for position_hash, record in files:
             record["datasetManifestHash"] = dataset_manifest["manifestHash"]
             record["rolloutIdentity"] = rollout_identity
+            record["rolloutSeeds"] = [rollout_seed(record["seedNamespace"], position_hash, index,
+                                                    rollout_identity)
+                                      for index in range(settings["maximumRollouts"])]
             path = labels_dir / f"{position_hash}.json"
             path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
             manifest_files.append({"path": path.name, "sha256": file_sha256(path)})
@@ -162,6 +169,31 @@ def test_macro_fidelity_audit_rejects_duplicate_manifest_file_entry(tmp_path):
                                                if key != "manifestHash"})
     manifest_path.write_text(json.dumps(manifest))
     with pytest.raises(ValueError, match="every frozen position exactly once"):
+        audit_raging_bolt_macro_fidelity(root=ROOT, selection_path=selection,
+            python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
+            python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],
+            output=tmp_path / "fidelity.json")
+
+
+@pytest.mark.parametrize("tamper", ("rollout-seed", "generator-seed"))
+def test_macro_fidelity_audit_rejects_seed_identity_drift(tmp_path, tamper):
+    _identity, selection, inputs = _fixture(tmp_path)
+    labels_dir = inputs[FAMILIES[0]][1]
+    labels_manifest_path = labels_dir / "manifest.json"
+    manifest = json.loads(labels_manifest_path.read_text())
+    entry = manifest["files"][0]
+    record_path = labels_dir / entry["path"]
+    record = json.loads(record_path.read_text())
+    if tamper == "rollout-seed":
+        record["rolloutSeeds"][0] += 1
+    else:
+        record["generatorSeed"] += 1
+    record_path.write_text(json.dumps(record, sort_keys=True, separators=(",", ":")))
+    entry["sha256"] = file_sha256(record_path)
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    labels_manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="seeds differ from frozen position/split identity"):
         audit_raging_bolt_macro_fidelity(root=ROOT, selection_path=selection,
             python_dataset=inputs[FAMILIES[0]][0], typescript_dataset=inputs[FAMILIES[1]][0],
             python_labels=inputs[FAMILIES[0]][1], typescript_labels=inputs[FAMILIES[1]][1],

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import hashlib
 import os
 from pathlib import Path
 import tempfile
@@ -9,7 +10,7 @@ from ptcg_lab.storage import digest as observation_digest
 
 from .aggregation import load_frozen_selection
 from .dataset_v1 import file_sha256, load_dataset
-from .macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1
+from .macro import CANDIDATE_GENERATOR_VERSION, MacroCandidateV1, rollout_seed
 from .schema import identity_hash
 
 
@@ -151,6 +152,12 @@ def _load_label_run(*, root: Path, family: str, dataset_path: Path, labels_path:
         "labelCollectorVersion", "labelCollectorSha256"}
     if not required_settings.issubset(manifest):
         raise ValueError("macro-label run manifest omits rollout identity settings")
+    maximum_rollouts = manifest.get("maximumRollouts")
+    initial_rollouts = manifest.get("initialRollouts")
+    if (type(maximum_rollouts) is not int or not 1 <= maximum_rollouts <= 64
+            or type(initial_rollouts) is not int or not 1 <= initial_rollouts <= maximum_rollouts
+            or manifest.get("rolloutSeedVersion") != "configuration-bound-v1"):
+        raise ValueError("macro-label run rollout seed configuration is invalid")
     files = manifest.get("files")
     if not isinstance(files, list) or len(files) != len(expected) or manifest.get("positions") != len(expected):
         raise ValueError("macro-label run file list differs from frozen position selection")
@@ -196,6 +203,15 @@ def _load_label_run(*, root: Path, family: str, dataset_path: Path, labels_path:
             raise ValueError(f"macro-label record provenance/status mismatch: {name}")
         if record.get("split") not in expected_by_split or position_hash not in expected_by_split[record["split"]]:
             raise ValueError(f"macro-label record is outside frozen family/split selection: {name}")
+        namespace = "training" if record["split"] == "train" else "development"
+        expected_seeds = [rollout_seed(namespace, position_hash, index, manifest["rolloutIdentity"])
+                          for index in range(maximum_rollouts)]
+        generator_seed = int.from_bytes(hashlib.sha256(
+            f"learning-mind-v1|macro-generator|{position_hash}".encode()).digest()[:4], "big")
+        if (record.get("seedNamespace") != namespace
+                or record.get("rolloutSeeds") != expected_seeds
+                or record.get("generatorSeed") != generator_seed):
+            raise ValueError(f"macro-label record seeds differ from frozen position/split identity: {name}")
         if observation_digest(record.get("observation")) != position_hash:
             raise ValueError(f"macro-label record actor observation hash mismatch: {name}")
         if record.get("observation") != row.get("observation"):
@@ -206,6 +222,8 @@ def _load_label_run(*, root: Path, family: str, dataset_path: Path, labels_path:
         candidate_hashes = set()
         for label in labels:
             evidence = _validate_rollout_label(label)
+            if evidence["attemptedRollouts"] > maximum_rollouts:
+                raise ValueError(f"macro candidate exceeds frozen rollout seed allocation: {name}")
             candidate = evidence["candidate"]
             if candidate.key() in candidate_hashes:
                 raise ValueError(f"macro-label position repeats a candidate: {name}")
