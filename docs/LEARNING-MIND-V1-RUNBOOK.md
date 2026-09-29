@@ -622,7 +622,9 @@ policy-family holdout results, its distribution may be used as a research-only
 supervised teacher. Distillation is train-split-only, maps complete candidate
 plans back to their exact actor-visible legal root actions, merges probabilities
 only across the encoder's semantic action classes, and records the verified
-model/report/selection/input hashes. `review-required` remains a research
+model/report/selection/input/confidence-audit hashes. The confidence-audit file
+is a required distillation source and is recomputed against the frozen labels
+when the distillation set is loaded. `review-required` remains a research
 status—not policy acceptance, promotion, or proof of playing-strength gain.
 
 ```bash
@@ -633,6 +635,7 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind build-macro-ranker-dis
   --selection artifacts/learning-mind-v1/FROZEN_SELECTION.json \
   --model artifacts/learning-mind-v1/ranker-v2-iteration-1.json \
   --report artifacts/learning-mind-v1/ranker-v2-iteration-1.manifest.json \
+  --confidence-audit artifacts/learning-mind-v1/macro-label-confidence-v1.json \
   --output artifacts/learning-mind-v1/ranker-distillation-iteration-1
 ```
 

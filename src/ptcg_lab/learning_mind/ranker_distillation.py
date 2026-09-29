@@ -124,6 +124,7 @@ def _distribution(scores: np.ndarray, candidates: list[dict], observation: dict,
 
 def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
         labels_dir: Path, selection_path: Path, model_path: Path, report_path: Path,
+        confidence_audit_path: Path,
         identity: dict, temperature: float = 1.0) -> dict:
     """Freeze train-only ranker-to-legal-action distributions as an immutable dataset."""
     output = output.resolve()
@@ -134,9 +135,25 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
         raise ValueError("ranker distillation identity or temperature is invalid")
 
     from .experiment import _load_ranker_input
+    from .confidence_audit import verify_macro_label_confidence_audit
 
+    labels_dir = labels_dir.resolve()
+    selection_path = selection_path.resolve()
+    confidence_audit_path = confidence_audit_path.resolve()
     verified = verify_macro_ranker_v2_artifact(model_path, report_path)
     report, artifact = verified["report"], verified["artifact"]
+    confidence_audit = verify_macro_label_confidence_audit(labels_dir=labels_dir,
+        selection_path=selection_path, report_path=confidence_audit_path)
+    if (report.get("confidenceAuditReportHash") != confidence_audit.get("reportHash")
+            or report.get("confidenceAuditSha256") != file_sha256(confidence_audit_path)
+            or report.get("confidenceAuditImplementationSha256") !=
+                confidence_audit.get("confidenceAuditImplementationSha256")
+            or report.get("confidenceAuditFamilywiseConfidence") !=
+                confidence_audit.get("familywiseConfidence")
+            or report.get("confidenceAuditStatus") != confidence_audit.get("status")
+            or report.get("confidenceAuditPolicyLabelEligibilityChanged") is not
+                confidence_audit.get("policyLabelEligibilityChanged")):
+        raise ValueError("ranker confidence-audit provenance differs from the verified source report")
     if (report.get("identity") != identity or report.get("acceptance") != "review-required"
             or report.get("automaticPromotion") is not False
             or report.get("development", {}).get("status") != "measured"):
@@ -151,8 +168,6 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
     pool_manifest, pool_rows = load_dataset(macro_position_pool, identity=identity)
     if pool_manifest.get("id") != "learning-mind-macro-position-pool-v1":
         raise ValueError("ranker distillation requires the frozen macro position pool")
-    labels_dir = labels_dir.resolve()
-    selection_path = selection_path.resolve()
     labels_manifest, records = _load_ranker_input(labels_dir, selection_path)
     if (report.get("inputManifestSha256") != file_sha256(labels_dir / "manifest.json")
             or report.get("selectionManifestSha256") != file_sha256(selection_path)
@@ -260,12 +275,13 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
         source_files = [("macro-position-pool-manifest", macro_position_pool / "manifest.json"),
             ("combined-label-manifest", labels_dir / "manifest.json"),
             ("frozen-selection", selection_path), ("ranker-model", model_path.resolve()),
-            ("ranker-report", report_path.resolve())]
+            ("ranker-report", report_path.resolve()), ("confidence-audit", confidence_audit_path)]
         sources = [{"kind": kind, "path": str(path.resolve()), "sha256": file_sha256(path)}
                    for kind, path in source_files]
         manifest = {"schemaVersion": 1, "kind": "macro-ranker-distillation-v1",
             "identity": identity, "teacherAcceptance": report["acceptance"],
             "rankerReportHash": report["reportHash"], "rankerModelSha256": report["modelSha256"],
+            "confidenceAuditReportHash": confidence_audit["reportHash"],
             "temperature": temperature, "rows": len(output_rows), "rowsSha256": file_sha256(rows_path),
             "skipped": skipped, "sources": sources, "policySplit": "train-only"}
         manifest["manifestHash"] = identity_hash(manifest)
@@ -289,7 +305,7 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     if manifest.get("teacherAcceptance") != "review-required":
         raise ValueError("ranker distillation teacher is not marked review-required")
     required_source_kinds = {"macro-position-pool-manifest", "combined-label-manifest",
-        "frozen-selection", "ranker-model", "ranker-report"}
+        "frozen-selection", "ranker-model", "ranker-report", "confidence-audit"}
     sources = manifest.get("sources")
     if (not isinstance(sources, list) or len(sources) != len(required_source_kinds)
             or any(not isinstance(source, dict) or set(source) != {"kind", "path", "sha256"}
@@ -321,6 +337,23 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     verified = verify_macro_ranker_v2_artifact(sources_by_kind["ranker-model"],
                                                sources_by_kind["ranker-report"])
     from .experiment import _load_ranker_input
+    from .confidence_audit import verify_macro_label_confidence_audit
+    confidence_audit = verify_macro_label_confidence_audit(
+        labels_dir=sources_by_kind["combined-label-manifest"].parent,
+        selection_path=sources_by_kind["frozen-selection"],
+        report_path=sources_by_kind["confidence-audit"])
+    if (confidence_audit.get("reportHash") != manifest.get("confidenceAuditReportHash")
+            or verified["report"].get("confidenceAuditReportHash") != confidence_audit.get("reportHash")
+            or verified["report"].get("confidenceAuditSha256") !=
+                file_sha256(sources_by_kind["confidence-audit"])
+            or verified["report"].get("confidenceAuditImplementationSha256") !=
+                confidence_audit.get("confidenceAuditImplementationSha256")
+            or verified["report"].get("confidenceAuditFamilywiseConfidence") !=
+                confidence_audit.get("familywiseConfidence")
+            or verified["report"].get("confidenceAuditStatus") != confidence_audit.get("status")
+            or verified["report"].get("confidenceAuditPolicyLabelEligibilityChanged") is not
+                confidence_audit.get("policyLabelEligibilityChanged")):
+        raise ValueError("ranker distillation confidence audit provenance mismatch")
     labels_manifest, records = _load_ranker_input(
         sources_by_kind["combined-label-manifest"].parent,
         sources_by_kind["frozen-selection"])

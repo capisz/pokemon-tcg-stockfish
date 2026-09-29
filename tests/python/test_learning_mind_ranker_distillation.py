@@ -84,6 +84,8 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
     labels_dir = tmp_path / "labels"
     labels_dir.mkdir()
     labels_manifest = {"identity": identity, "selectionHash": "frozen-selection-hash",
+        "labelCollectorVersion": "synthetic-labeler-v1", "labelCollectorSha256": "collector-sha",
+        "candidateGeneratorIdentity": {"version": "synthetic-planner-v1"}, "files": [],
         "sourceRuns": [{"policyFamilies": [family], "rolloutIdentity": f"rollout-{family}"}
                        for family in ("python-heuristic", "typescript-heuristic")]}
     labels_manifest["manifestHash"] = identity_hash(labels_manifest)
@@ -91,7 +93,14 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
     selection_path = tmp_path / "selection.json"
     selection_path.write_text(json.dumps({"selectionHash": "frozen-selection-hash"}))
     monkeypatch.setattr(experiment, "_load_ranker_input", lambda *_args: (labels_manifest, [record, dev_record]))
+    from ptcg_lab.learning_mind import confidence_audit
+    monkeypatch.setattr(confidence_audit, "_load_ranker_input",
+        lambda *_args: (labels_manifest, [record, dev_record]))
     monkeypatch.setattr(ranker_distillation, "_validate_source_game_units", lambda *_args: None)
+
+    confidence_path = tmp_path / "confidence.json"
+    confidence_report = confidence_audit.audit_macro_label_confidence(
+        labels_dir=labels_dir, selection_path=selection_path, output=confidence_path)
 
     model_path = tmp_path / "ranker.json"
     artifact = {"schemaVersion": 1, "kind": "xgboost-macro-ranker-v2-portable",
@@ -164,10 +173,12 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "identity": identity, "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path),
-        "confidenceAuditReportHash": "c" * 64, "confidenceAuditSha256": "d" * 64,
-        "confidenceAuditImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("confidence_audit.py")),
-        "confidenceAuditFamilywiseConfidence": 0.95, "confidenceAuditStatus": "analysis-only",
-        "confidenceAuditPolicyLabelEligibilityChanged": False,
+        "confidenceAuditReportHash": confidence_report["reportHash"],
+        "confidenceAuditSha256": file_sha256(confidence_path),
+        "confidenceAuditImplementationSha256": confidence_report["confidenceAuditImplementationSha256"],
+        "confidenceAuditFamilywiseConfidence": confidence_report["familywiseConfidence"],
+        "confidenceAuditStatus": confidence_report["status"],
+        "confidenceAuditPolicyLabelEligibilityChanged": confidence_report["policyLabelEligibilityChanged"],
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "trainingPositions": 1, "trainingCandidates": 2,
         "training": coverage_for(record), "development": coverage_for(dev_record),
@@ -178,17 +189,21 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
     report["reportHash"] = identity_hash(report)
     report_path = tmp_path / "ranker.manifest.json"
     report_path.write_text(json.dumps(report))
-    return identity_manifest, identity, pool_dir, labels_dir, selection_path, model_path, report_path
+    return (identity_manifest, identity, pool_dir, labels_dir, selection_path, model_path,
+            report_path, confidence_path)
 
 
 def test_ranker_distillation_is_verified_train_only_and_integrates_into_dataset(tmp_path, monkeypatch):
     monkeypatch.setattr(dataset_v1, "EXACT_REVIEWS", ())
-    identity_manifest, identity, pool, labels, selection, model, report = _ranker_distillation_fixture(tmp_path, monkeypatch)
+    identity_manifest, identity, pool, labels, selection, model, report, confidence = \
+        _ranker_distillation_fixture(tmp_path, monkeypatch)
     distillation_dir = tmp_path / "distillation"
     manifest = ranker_distillation.build_macro_ranker_distillation(output=distillation_dir,
         macro_position_pool=pool, labels_dir=labels, selection_path=selection,
-        model_path=model, report_path=report, identity=identity)
+        model_path=model, report_path=report, confidence_audit_path=confidence, identity=identity)
     assert manifest["rows"] == 1 and manifest["policySplit"] == "train-only"
+    assert manifest["confidenceAuditReportHash"] == json.loads(confidence.read_text())["reportHash"]
+    assert {source["kind"] for source in manifest["sources"]} >= {"confidence-audit"}
     distill_manifest, distill_rows = ranker_distillation.load_macro_ranker_distillation(
         distillation_dir, identity=identity)
     assert len(distill_rows) == 1
@@ -246,7 +261,8 @@ def test_ranker_distillation_is_verified_train_only_and_integrates_into_dataset(
 
 
 def test_ranker_distillation_rejects_teacher_report_with_unmeasured_holdout(tmp_path, monkeypatch):
-    _identity_manifest, identity, pool, labels, selection, model, report_path = _ranker_distillation_fixture(tmp_path, monkeypatch)
+    _identity_manifest, identity, pool, labels, selection, model, report_path, confidence = \
+        _ranker_distillation_fixture(tmp_path, monkeypatch)
     report = json.loads(report_path.read_text())
     report["holdouts"][0]["status"] = "insufficient"
     report["holdouts"][0]["metrics"]["status"] = "insufficient"
@@ -257,11 +273,11 @@ def test_ranker_distillation_rejects_teacher_report_with_unmeasured_holdout(tmp_
     with pytest.raises(ValueError, match="not a measured, non-promoting research teacher"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
-            model_path=model, report_path=report_path, identity=identity)
+            model_path=model, report_path=report_path, confidence_audit_path=confidence, identity=identity)
 
 
 def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkeypatch):
-    _identity_manifest, identity, pool, labels, selection, model, report_path = \
+    _identity_manifest, identity, pool, labels, selection, model, report_path, confidence = \
         _ranker_distillation_fixture(tmp_path, monkeypatch)
     report = json.loads(report_path.read_text())
     report["training"]["positions"] = 0
@@ -271,11 +287,11 @@ def test_ranker_distillation_rejects_incomplete_report_coverage(tmp_path, monkey
     with pytest.raises(ValueError, match="empty coverage does not reconcile"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
-            model_path=model, report_path=report_path, identity=identity)
+            model_path=model, report_path=report_path, confidence_audit_path=confidence, identity=identity)
 
 
 def test_ranker_distillation_rejects_teacher_fit_to_another_label_manifest(tmp_path, monkeypatch):
-    _identity_manifest, identity, pool, labels, selection, model, report_path = \
+    _identity_manifest, identity, pool, labels, selection, model, report_path, confidence = \
         _ranker_distillation_fixture(tmp_path, monkeypatch)
     report = json.loads(report_path.read_text())
     report["inputManifestHash"] = "other-label-manifest"
@@ -286,7 +302,22 @@ def test_ranker_distillation_rejects_teacher_fit_to_another_label_manifest(tmp_p
     with pytest.raises(ValueError, match="iteration does not match the frozen label manifest"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
-            model_path=model, report_path=report_path, identity=identity)
+            model_path=model, report_path=report_path, confidence_audit_path=confidence, identity=identity)
+
+
+def test_ranker_distillation_rejects_confidence_audit_not_bound_by_teacher(tmp_path, monkeypatch):
+    _identity_manifest, identity, pool, labels, selection, model, report_path, confidence = \
+        _ranker_distillation_fixture(tmp_path, monkeypatch)
+    report = json.loads(report_path.read_text())
+    report["confidenceAuditReportHash"] = "f" * 64
+    report["reportHash"] = identity_hash({key: value for key, value in report.items()
+                                          if key != "reportHash"})
+    report_path.write_text(json.dumps(report))
+    with pytest.raises(ValueError, match="confidence-audit provenance differs"):
+        ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
+            macro_position_pool=pool, labels_dir=labels, selection_path=selection,
+            model_path=model, report_path=report_path, confidence_audit_path=confidence,
+            identity=identity)
 
 
 def test_ranker_metric_rows_must_match_exact_frozen_positions_and_candidate_counts():

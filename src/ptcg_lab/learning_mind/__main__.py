@@ -66,6 +66,7 @@ def main(argv=None) -> int:
     distill.add_argument("--selection", type=Path, required=True)
     distill.add_argument("--model", type=Path, required=True)
     distill.add_argument("--report", type=Path, required=True)
+    distill.add_argument("--confidence-audit", type=Path, required=True)
     distill.add_argument("--output", type=Path, required=True)
     distill.add_argument("--temperature", type=float, default=1.0)
     pool = sub.add_parser("build-macro-position-pool")
@@ -256,7 +257,8 @@ def main(argv=None) -> int:
         result = build_macro_ranker_distillation(output=args.output.resolve(),
             macro_position_pool=args.macro_position_pool.resolve(), labels_dir=args.labels.resolve(),
             selection_path=args.selection.resolve(), model_path=args.model.resolve(),
-            report_path=args.report.resolve(), identity=identity, temperature=args.temperature)
+            report_path=args.report.resolve(), confidence_audit_path=args.confidence_audit.resolve(),
+            identity=identity, temperature=args.temperature)
     elif args.command == "collect-macro-labels":
         root = args.root.resolve(); identity = runtime_identity(root).record()
         result = collect_macro_labels(root=root, dataset_dir=args.dataset.resolve(), output=args.output.resolve(),
