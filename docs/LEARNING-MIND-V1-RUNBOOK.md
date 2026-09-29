@@ -479,6 +479,29 @@ Adaptive allocation compares conservative 95% Hoeffding intervals over the
 bounded [0, 1] outcomes, not just raw means, so a candidate with few completed
 rollouts is not prematurely excluded after many truncations.
 
+After both family runs have finalized and the verified runs have been combined,
+produce the independent final confidence reevaluation before fitting the
+ranker:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind.confidence_audit \
+  --labels artifacts/learning-mind-v1/COMBINED_FINAL_LABELS \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --output artifacts/learning-mind-v1/macro-label-confidence-v1.json
+
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind.confidence_audit \
+  --labels artifacts/learning-mind-v1/COMBINED_FINAL_LABELS \
+  --selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --verify-report artifacts/learning-mind-v1/macro-label-confidence-v1.json
+```
+
+This read-only report uses Bonferroni-adjusted Hoeffding intervals to form a
+95% simultaneous plausible-best set within each position. Intervals are
+conditional on completed outcomes; truncations and errors stay separately
+reported and are never imputed. This descriptive report cannot upgrade policy
+label eligibility, ranker acceptance, PPO, or promotion. It requires the full
+verified position universe and rejects partial or mixed-identity label bundles.
+
 Start with a small smoke set covering:
 
 - Raging Bolt plan fidelity;
