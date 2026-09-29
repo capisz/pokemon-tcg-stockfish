@@ -1009,6 +1009,30 @@ required failure drills. It must also retain a separate human enablement for
 each run and declare automatic promotion false. A persisted report or editable
 boolean record alone never authorizes the supervisor.
 
+The research-only `continuous_evidence` API is the issuer for this capability;
+the supervisor does not accept a persisted JSON report as authorization. First,
+`audit_supervised_soak(root=..., manifest_path=..., output=...,
+human_reviewed=True)` checks an immutable soak manifest and issues an in-process
+soak receipt. The manifest must bind the exact PPO-stage report hash, promotion
+report hash, specialist-curriculum report hash, and promoted checkpoint SHA-256.
+It must contain timezone-qualified start/end timestamps spanning at least 24
+hours, at least 25 supervisor-state snapshots covering the whole interval with
+no gap over one hour, and checksummed JSON pass receipts for pause, disk
+exhaustion, corrupted replay, worker restart, rejected update, notification,
+and rollback. Every snapshot must show the supervisor running with a valid
+phase/cursor. The audit verifies files and hashes; it does not perform the soak
+or failure drills. `human_reviewed=True` is a separate operator attestation,
+not a substitute for reviewing the underlying artifacts.
+
+In the same runtime, call `issue_continuous_operation_evidence(...)` with the
+freshly verified PPO-stage, human-approved promotion, exact-deck specialist,
+and soak capabilities plus `human_enable=True`. It rechecks cross-artifact
+hash bindings and writes an immutable report; only its returned in-process
+capability can pass `MindSupervisor.start`. The source verifiers must be freshly
+run together before each separately enabled supervisor run. This API is not a
+service installer, and no continuous-operation capability can issue while an
+earlier milestone gate remains unmet.
+
 Use four independently resumable phases:
 
 1. collection;
