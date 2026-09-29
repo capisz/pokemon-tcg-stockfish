@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+
 import pytest
 
 from ptcg_lab.learning_mind.ppo_experience import (PPOExperienceStore,
@@ -64,6 +66,40 @@ def test_experience_store_rejects_identity_drift_and_artifact_corruption(tmp_pat
     path = store.games_dir / f"{item['gameId']}.json.gz"
     path.write_bytes(path.read_bytes() + b"corrupt")
     with pytest.raises(ValueError, match="artifact checksum mismatch"):
+        PPOExperienceStore(root, settings=settings())
+
+
+def test_experience_store_rejects_self_consistent_false_per_game_decision_count(tmp_path):
+    from ptcg_lab.learning_mind.schema import identity_hash
+
+    root = tmp_path / "run"
+    store = PPOExperienceStore(root, settings=settings())
+    store.save_game(game("4"))
+    manifest_path = store.manifest_path
+    manifest = json.loads(manifest_path.read_text())
+    manifest["games"][0]["actorDecisions"] += 1
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                                if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+    with pytest.raises(ValueError, match="per-game decision count differs"):
+        PPOExperienceStore(root, settings=settings())
+
+
+def test_experience_store_rejects_boolean_aggregate_counts(tmp_path):
+    from ptcg_lab.learning_mind.schema import identity_hash
+
+    root = tmp_path / "run"
+    store = PPOExperienceStore(root, settings=settings())
+    store.save_game(game("4"))
+    manifest_path = store.manifest_path
+    manifest = json.loads(manifest_path.read_text())
+    manifest["gameCounts"]["finished"] = True
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                                if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+    with pytest.raises(ValueError, match="aggregate schema is invalid"):
         PPOExperienceStore(root, settings=settings())
 
 

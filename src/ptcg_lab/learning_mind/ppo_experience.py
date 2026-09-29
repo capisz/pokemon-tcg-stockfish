@@ -283,6 +283,9 @@ class PPOExperienceStore:
             raise ValueError("PPO experience game-artifact directory is missing")
         manifest = json.loads(self.manifest_path.read_text())
         if (not isinstance(manifest, dict)
+                or set(manifest) != {"schemaVersion", "kind", "runId", "settings", "games",
+                                     "gameCounts", "actorDecisions", "manifestHash"}
+                or manifest.get("schemaVersion") != 1
                 or manifest.get("manifestHash") != identity_hash(
                     {key: value for key, value in manifest.items() if key != "manifestHash"})
                 or manifest.get("kind") != EXPERIENCE_STORE_VERSION
@@ -292,13 +295,24 @@ class PPOExperienceStore:
         games = manifest.get("games")
         if not isinstance(games, list):
             raise ValueError("PPO experience manifest has no game list")
+        game_counts = manifest.get("gameCounts")
+        if (not isinstance(game_counts, dict) or set(game_counts) != GAME_STATUSES
+                or any(type(count) is not int or count < 0 for count in game_counts.values())
+                or type(manifest.get("actorDecisions")) is not int
+                or manifest["actorDecisions"] < 0):
+            raise ValueError("PPO experience manifest aggregate schema is invalid")
         expected_names = set()
         counts = {status: 0 for status in GAME_STATUSES}
         actor_decisions = 0
         seen_ids = set()
         seen_schedule_indices = set()
         for item in games:
-            if not isinstance(item, dict):
+            if (not isinstance(item, dict)
+                    or set(item) != {"gameId", "scheduleIndex", "status", "actorDecisions", "sha256", "bytes"}
+                    or type(item.get("scheduleIndex")) is not int or item["scheduleIndex"] < 0
+                    or item.get("status") not in GAME_STATUSES
+                    or type(item.get("actorDecisions")) is not int or item["actorDecisions"] < 0
+                    or type(item.get("bytes")) is not int or item["bytes"] < 1):
                 raise ValueError("PPO experience manifest contains an invalid game entry")
             game_id = item.get("gameId")
             if game_id in seen_ids or not isinstance(game_id, str):
@@ -316,6 +330,8 @@ class PPOExperienceStore:
                            schedule_settings=self.settings)
             if game.get("gameId") != game_id or game.get("status") != item.get("status"):
                 raise ValueError("PPO experience game artifact differs from its manifest entry")
+            if item["actorDecisions"] != len(game["actorDecisions"]):
+                raise ValueError("PPO experience per-game decision count differs from its artifact")
             schedule_index = game["schedule"]["scheduleIndex"]
             if (schedule_index in seen_schedule_indices or item.get("scheduleIndex") != schedule_index):
                 raise ValueError("PPO experience manifest repeats or misstates a scheduler index")
@@ -325,7 +341,7 @@ class PPOExperienceStore:
         actual_names = {path.name for path in self.games_dir.glob("*.json.gz")}
         if actual_names != expected_names:
             raise ValueError("PPO experience files do not exactly match the manifest")
-        if manifest.get("gameCounts") != counts or manifest.get("actorDecisions") != actor_decisions:
+        if game_counts != counts or manifest["actorDecisions"] != actor_decisions:
             raise ValueError("PPO experience manifest aggregate counts do not match verified games")
         return manifest
 
