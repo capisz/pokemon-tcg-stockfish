@@ -104,6 +104,23 @@ def test_supervisor_pauses_at_checkpoint_when_disk_limit_is_reached(tmp_path, mo
     assert events == [{"kind": "pause", "reason": "learning data cap reached"}]
 
 
+def test_supervisor_reserves_space_for_the_projected_cursor_before_commit(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from ptcg_lab.learning_mind import supervisor as supervisor_module
+
+    root = tmp_path / "run"
+    root.mkdir()
+    (root / "artifact.bin").write_bytes(b"x" * 900)
+    supervisor = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
+    supervisor.state.status = "RUNNING"
+    monkeypatch.setattr(supervisor_module.shutil, "disk_usage",
+                        lambda _path: SimpleNamespace(free=100_000))
+    with pytest.raises(RuntimeError, match="learning data cap reached"):
+        supervisor.record_progress({"sample": "x" * 500})
+    assert supervisor.state.status == "PAUSED"
+    assert supervisor.state.cursor == {}
+
+
 def test_cpu_worker_profile():
     assert cpu_worker_count(16) == 12
     assert cpu_worker_count(8) == 6

@@ -120,7 +120,8 @@ class MindSupervisor:
         if not human_enabled: raise PermissionError("a human must explicitly enable each run")
         if not continuous_operation_enablement(stage_record)["enabled"]:
             raise PermissionError("continuous operation is not enabled by the accepted stage record")
-        self.check_disk(); self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
+        self._check_capacity_or_pause(status="RUNNING", clear_pause_reason=True)
+        self.state.status = "RUNNING"; self.state.pause_reason = None; self.persist()
 
     def record_progress(self, cursor: dict) -> None:
         if self.state.status != "RUNNING":
@@ -131,7 +132,7 @@ class MindSupervisor:
             frozen = json.loads(json.dumps(cursor, allow_nan=False))
         except (TypeError, ValueError) as error:
             raise ValueError("phase cursor must contain finite JSON values only") from error
-        self._check_capacity_or_pause()
+        self._check_capacity_or_pause(cursor=frozen)
         self.state.cursor = frozen
         self.persist()
 
@@ -149,7 +150,7 @@ class MindSupervisor:
             frozen = json.loads(json.dumps(next_cursor or {}, allow_nan=False))
         except (TypeError, ValueError) as error:
             raise ValueError("next phase cursor must contain finite JSON values only") from error
-        self._check_capacity_or_pause()
+        self._check_capacity_or_pause(phase=next_phase, cursor=frozen)
         self.state.phase = next_phase
         self.state.cursor = frozen
         self.persist()
@@ -174,15 +175,30 @@ class MindSupervisor:
         else:
             self.persist()
 
-    def check_disk(self) -> None:
+    def check_disk(self, *, projected_state_bytes: int | None = None) -> None:
         usage = shutil.disk_usage(self.root.parent if self.root.parent.exists() else Path.cwd())
         artifact_bytes = sum(path.stat().st_size for path in self.root.rglob("*") if path.is_file()) if self.root.exists() else 0
+        if projected_state_bytes is not None:
+            current_state_bytes = self.state_path.stat().st_size if self.state_path.is_file() else 0
+            artifact_bytes = artifact_bytes - current_state_bytes + projected_state_bytes
         if usage.free < self.reserve_bytes: raise RuntimeError("free-space reserve reached")
         if artifact_bytes >= self.data_cap_bytes: raise RuntimeError("learning data cap reached")
 
-    def _check_capacity_or_pause(self) -> None:
+    def _check_capacity_or_pause(self, *, phase: str | None = None, cursor: dict | None = None,
+                                 status: str | None = None,
+                                 clear_pause_reason: bool = False) -> None:
         try:
-            self.check_disk()
+            projected = {"schemaVersion": 1, **self.state.__dict__}
+            if phase is not None:
+                projected["phase"] = phase
+            if cursor is not None:
+                projected["cursor"] = cursor
+            if status is not None:
+                projected["status"] = status
+            if clear_pause_reason:
+                projected["pause_reason"] = None
+            serialized = json.dumps(projected, sort_keys=True, indent=2, allow_nan=False) + "\n"
+            self.check_disk(projected_state_bytes=len(serialized.encode("utf-8")))
         except RuntimeError as error:
             self.pause(str(error))
             raise
