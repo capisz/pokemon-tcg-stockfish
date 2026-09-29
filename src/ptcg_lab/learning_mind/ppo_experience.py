@@ -15,7 +15,7 @@ from .curriculum import assignment, promotion_seed_namespace_disjoint
 from .schema import identity_hash
 
 
-EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v3"
+EXPERIENCE_STORE_VERSION = "ppo-actor-experience-v4"
 PPO_SCHEDULER_VERSION = "ppo-training-scheduler-v1"
 GAME_STATUSES = frozenset({"finished", "truncated", "error"})
 LEARNING_IDENTITY_FIELDS = frozenset({"engine_build_hash", "deck_manifest_hash",
@@ -107,6 +107,19 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
             or observation.get("playerId") != actor or observation.get("decisionPlayer") != actor
             or not isinstance(tracker, dict)):
         raise ValueError("PPO experience observation/tracker must belong to its decision actor")
+    players = observation.get("players")
+    if not isinstance(players, list) or len(players) != 2:
+        raise ValueError("PPO experience must preserve exactly the two redacted actor-view player summaries")
+    by_id = {player.get("id"): player for player in players if isinstance(player, dict)}
+    if set(by_id) != {0, 1}:
+        raise ValueError("PPO experience actor-view players must have unique seat identities")
+    own_view, opponent_view = by_id[actor], by_id[1 - actor]
+    own_hand, opponent_hand = own_view.get("hand"), opponent_view.get("hand")
+    if not isinstance(own_hand, list) or own_view.get("handCount") != len(own_hand):
+        raise ValueError("PPO experience actor hand must match its actor-visible hand count")
+    if (not isinstance(opponent_hand, list) or opponent_hand
+            or type(opponent_view.get("handCount")) is not int or opponent_view["handCount"] < 0):
+        raise ValueError("PPO experience opponent hand contents must remain redacted; only handCount is public")
     actions = observation.get("legalActions")
     if not isinstance(actions, list) or not actions:
         raise ValueError("PPO experience decision must preserve all actor-visible legal actions")

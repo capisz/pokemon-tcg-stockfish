@@ -28,8 +28,11 @@ def settings():
 
 
 def decision(actor=0):
+    players = [{"id": seat, "hand": [], "handCount": 1} for seat in (0, 1)]
+    players[actor]["hand"] = [{"id": f"visible-{actor}"}]
     return {"actor": actor,
         "observation": {"schemaVersion": 1, "playerId": actor, "decisionPlayer": actor,
+            "players": players,
             "legalActions": [{"id": "action-0", "type": "attack"}]},
         "tracker": {"version": "observable-history-v1"},
         "decisionIndex": 0, "selectedAction": 0, "actionClassCount": 1, "oldLogProb": -0.2,
@@ -202,6 +205,8 @@ def test_ppo_schedule_freezes_uniform_archetypes_policy_mix_mirrors_and_seeds():
     (lambda row: row.update(behaviorPolicyHash="f" * 64), "mixes behavior-policy"),
     (lambda row: row.update(selectedAction=2), "within the frozen 128-class cap"),
     (lambda row: row["observation"].update(legalActions=[]), "preserve all actor-visible legal actions"),
+    (lambda row: row["observation"]["players"][1 - row["actor"]]["hand"].append({"id": "hidden"}),
+     "opponent hand contents must remain redacted"),
 ])
 def test_experience_store_rejects_leakage_or_invalid_decision(mutate, match, tmp_path):
     store = PPOExperienceStore(tmp_path / "run", settings=settings())
@@ -267,6 +272,17 @@ def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces(
     for actor, decision_index, old_value in ((0, 0, .1), (1, 1, .3), (0, 2, .2)):
         view = observation()
         view["playerId"] = view["decisionPlayer"] = actor
+        # Keep the synthetic view consistent with engine redaction: only the
+        # acting seat has hand contents, and its visible count matches them.
+        for player in view["players"]:
+            if player["id"] == actor:
+                if actor == 1:
+                    player["hand"] = []
+                player["handCount"] = len(player["hand"])
+            else:
+                player["hand"] = []
+        if actor == 1:
+            view["players"][0]["handCount"] = 2
         snapshot = ObservableHistoryTracker(actor).update(view)
         encoded = encode_decision(view, snapshot)
         decisions.append({"actor": actor, "decisionIndex": decision_index,
