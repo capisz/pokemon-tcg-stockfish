@@ -48,6 +48,16 @@ def test_continuous_operation_requires_every_exact_gate(field, value):
     assert continuous_operation_enablement(record)["enabled"] is False
 
 
+def test_verified_continuous_capability_can_pass_immutable_gate():
+    from ptcg_lab.learning_mind.supervisor import _VERIFIED_CONTINUOUS_TOKEN
+
+    record = VerifiedContinuousOperationRecord({"ppoEnabled": True,
+        "specialistCurriculumPassed": True, "continuousOperationEnabled": True,
+        "humanEnableContinuousOperation": True},
+        _verification_token=_VERIFIED_CONTINUOUS_TOKEN)
+    assert continuous_operation_enablement(record)["enabled"] is True
+
+
 def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp_path):
     supervisor = MindSupervisor(tmp_path, reserve_bytes=0, data_cap_bytes=10_000_000)
     supervisor.state.status = "RUNNING"  # Start remains impossible without verified evidence.

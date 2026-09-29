@@ -39,8 +39,7 @@ def continuous_operation_enablement(stage_record: VerifiedContinuousOperationRec
         return {"enabled": False,
                 "reason": "continuous operation requires a verified evidence capability, not editable gate booleans"}
     stage_record = stage_record._values
-    prerequisites = (isinstance(stage_record, dict)
-        and stage_record.get("ppoEnabled") is True
+    prerequisites = (stage_record.get("ppoEnabled") is True
         and stage_record.get("specialistCurriculumPassed") is True
         and stage_record.get("continuousOperationEnabled") is True
         and stage_record.get("humanEnableContinuousOperation") is True)

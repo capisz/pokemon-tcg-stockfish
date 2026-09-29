@@ -1273,3 +1273,15 @@ strength or autonomous improvement.
   older subset of fields still enabled PPO. Stage, ranker-v2, and PPO
   experience tests pass (39); CLI help and `git diff --check` pass. No
   collector, training, PPO, promotion, or service operation was started.
+
+### Continuous-operation capability mapping check (2026-09-28)
+
+- `VerifiedContinuousOperationRecord` freezes its values as a `MappingProxyType`,
+  but the enablement predicate incorrectly required the unwrapped values to be
+  a mutable `dict`. Thus a legitimate verified capability could never pass,
+  even with every prerequisite and explicit human authorization true.
+- The predicate now reads the immutable mapping directly. Regression coverage
+  proves plain editable dictionaries still fail, every required field remains
+  exact-boolean gated, and a valid immutable capability can satisfy the check.
+  All 16 supervisor tests and `git diff --check` pass. No continuous operation
+  capability was issued by a verifier, and no supervisor was started.
