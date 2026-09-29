@@ -103,6 +103,34 @@ def test_experience_store_rejects_boolean_aggregate_counts(tmp_path):
         PPOExperienceStore(root, settings=settings())
 
 
+def test_experience_store_rejects_path_traversal_game_ids(tmp_path):
+    from ptcg_lab.learning_mind.schema import identity_hash
+
+    root = tmp_path / "run"
+    store = PPOExperienceStore(root, settings=settings())
+    store.save_game(game("4"))
+    manifest_path = store.manifest_path
+    manifest = json.loads(manifest_path.read_text())
+    manifest["games"][0]["gameId"] = "../escape"
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                                if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+
+    with pytest.raises(ValueError, match="game ID must be a SHA-256"):
+        PPOExperienceStore(root, settings=settings())
+
+
+def test_experience_store_rechecks_artifact_hash_when_iterating(tmp_path):
+    root = tmp_path / "run"
+    store = PPOExperienceStore(root, settings=settings())
+    item = store.save_game(game("4"))
+    path = store.games_dir / f"{item['gameId']}.json.gz"
+    path.write_bytes(path.read_bytes() + b"changed-after-store-open")
+
+    with pytest.raises(ValueError, match="artifact checksum mismatch"):
+        list(store.iter_games())
+
+
 def test_actor_game_artifact_compression_is_deterministic(tmp_path):
     artifact_hashes = []
     for name in ("first", "second"):

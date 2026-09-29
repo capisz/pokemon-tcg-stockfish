@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import gzip
+import hashlib
 import json
 import math
 import os
 from pathlib import Path
 import tempfile
 from typing import Iterator
+import zlib
 
 from .dataset_v1 import file_sha256
 from .curriculum import assignment, promotion_seed_namespace_disjoint
@@ -315,16 +317,17 @@ class PPOExperienceStore:
                     or type(item.get("bytes")) is not int or item["bytes"] < 1):
                 raise ValueError("PPO experience manifest contains an invalid game entry")
             game_id = item.get("gameId")
-            if game_id in seen_ids or not isinstance(game_id, str):
+            if not _is_sha256(game_id):
+                raise ValueError("PPO experience manifest game ID must be a SHA-256 value")
+            if game_id in seen_ids:
                 raise ValueError("PPO experience manifest repeats or omits a game ID")
             seen_ids.add(game_id)
             name = f"{game_id}.json.gz"
             expected_names.add(name)
             path = self.games_dir / name
-            if (not path.is_file() or file_sha256(path) != item.get("sha256")
-                    or path.stat().st_size != item.get("bytes")):
+            if not path.is_file():
                 raise ValueError(f"PPO experience game artifact checksum mismatch: {game_id}")
-            game = self._read_game(path)
+            game = self._read_verified_game(path, item)
             _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
                            feature_schema_hash=self.settings["featureSchemaHash"],
                            schedule_settings=self.settings)
@@ -351,9 +354,18 @@ class PPOExperienceStore:
         _atomic_json(self.manifest_path, self.manifest)
 
     @staticmethod
-    def _read_game(path: Path) -> dict:
-        with gzip.open(path, "rt", encoding="utf-8") as source:
-            value = json.load(source)
+    def _read_verified_game(path: Path, manifest_entry: dict) -> dict:
+        try:
+            payload = path.read_bytes()
+        except OSError as error:
+            raise ValueError("PPO experience game artifact cannot be read") from error
+        if (len(payload) != manifest_entry["bytes"]
+                or hashlib.sha256(payload).hexdigest() != manifest_entry.get("sha256")):
+            raise ValueError(f"PPO experience game artifact checksum mismatch: {manifest_entry['gameId']}")
+        try:
+            value = json.loads(gzip.decompress(payload))
+        except (OSError, EOFError, zlib.error, json.JSONDecodeError) as error:
+            raise ValueError("PPO experience artifact is not valid gzip JSON") from error
         if not isinstance(value, dict):
             raise ValueError("PPO experience artifact must contain a JSON object")
         return value
@@ -399,7 +411,7 @@ class PPOExperienceStore:
     def iter_games(self) -> Iterator[dict]:
         for item in sorted(self.manifest["games"], key=lambda entry: entry["gameId"]):
             path = self.games_dir / f"{item['gameId']}.json.gz"
-            game = self._read_game(path)
+            game = self._read_verified_game(path, item)
             _validate_game(game, behavior_policy_hash=self.settings["behaviorPolicyHash"],
                            feature_schema_hash=self.settings["featureSchemaHash"],
                            schedule_settings=self.settings)
