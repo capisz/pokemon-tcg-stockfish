@@ -127,6 +127,8 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "featureImplementationSha256": artifact["featureImplementationSha256"],
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
+        "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
+        "trainingLibrary": ranker_v2._training_library_identity(),
         "identity": identity, "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path),

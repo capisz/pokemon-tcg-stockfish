@@ -91,6 +91,8 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
+        "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
+        "trainingLibrary": ranker_v2._training_library_identity(),
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
             for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
@@ -115,6 +117,16 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
                                                        if key != "reportHash"})
     with pytest.raises(ValueError, match="evaluation implementation"):
         validate_ranker_v2_report(changed_evaluation)
+    changed_training = {**report, "trainingImplementationSha256": "different"}
+    changed_training["reportHash"] = identity_hash({key: value for key, value in changed_training.items()
+                                                      if key != "reportHash"})
+    with pytest.raises(ValueError, match="training implementation"):
+        validate_ranker_v2_report(changed_training)
+    changed_library = {**report, "trainingLibrary": {"name": "xgboost", "version": ""}}
+    changed_library["reportHash"] = identity_hash({key: value for key, value in changed_library.items()
+                                                    if key != "reportHash"})
+    with pytest.raises(ValueError, match="training library identity"):
+        validate_ranker_v2_report(changed_library)
 
 
 def test_ranker_v2_position_bootstrap_is_reproducible_and_reports_empty_samples():
@@ -159,6 +171,8 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "featureImplementationSha256": file_sha256(Path(ranker_features.__file__)),
         "inferenceImplementationSha256": inference_implementation_sha256(),
         "evaluationImplementationSha256": file_sha256(Path(ranker_v2.__file__)),
+        "trainingImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("ranker.py")),
+        "trainingLibrary": ranker_v2._training_library_identity(),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}

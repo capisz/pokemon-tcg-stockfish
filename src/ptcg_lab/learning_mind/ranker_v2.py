@@ -11,7 +11,7 @@ import numpy as np
 
 from .dataset_v1 import file_sha256
 from .experiment import _load_ranker_input, _ranker_evidence_status, _ranker_holdout_rows
-from .ranker import FrozenIteration, XGBoostMacroRanker
+from .ranker import FrozenIteration, XGBoostMacroRanker, _xgboost
 from .ranker_features import (MACRO_FEATURE_SCHEMA, MACRO_FEATURE_SCHEMA_HASH,
                               candidate_features_v2)
 from .ranker_portable import inference_implementation_sha256, predict_macro_ranker_v2
@@ -181,6 +181,11 @@ def _validate_ranker_metrics(metrics: dict, *, name: str) -> None:
                 raise ValueError(f"macro ranker v2 {name} {field} aggregate does not recompute")
 
 
+def _training_library_identity() -> dict:
+    xgboost = _xgboost()
+    return {"name": "xgboost", "version": str(xgboost.__version__)}
+
+
 def validate_ranker_v2_report(report: dict) -> None:
     if not isinstance(report, dict) or report.get("kind") != "xgboost-macro-ranker-v2":
         raise ValueError("not a macro ranker v2 report")
@@ -194,6 +199,12 @@ def validate_ranker_v2_report(report: dict) -> None:
         raise ValueError("macro ranker v2 inference implementation mismatch")
     if report.get("evaluationImplementationSha256") != file_sha256(Path(__file__)):
         raise ValueError("macro ranker v2 evaluation implementation mismatch")
+    if report.get("trainingImplementationSha256") != file_sha256(Path(__file__).with_name("ranker.py")):
+        raise ValueError("macro ranker v2 training implementation mismatch")
+    training_library = report.get("trainingLibrary")
+    if (not isinstance(training_library, dict) or training_library.get("name") != "xgboost"
+            or not isinstance(training_library.get("version"), str) or not training_library["version"]):
+        raise ValueError("macro ranker v2 training library identity is missing")
     training = report.get("training")
     development = report.get("development")
     for name, metrics in (("training", training), ("development", development)):
@@ -474,6 +485,8 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
     source_hash = file_sha256(Path(__file__).with_name("ranker_features.py"))
     inference_hash = inference_implementation_sha256()
     evaluation_hash = file_sha256(Path(__file__))
+    training_hash = file_sha256(Path(__file__).with_name("ranker.py"))
+    training_library = _training_library_identity()
     frozen = FrozenIteration(iteration, teacher_hash, opponent_policy_hash, input_hash, tuple(positions))
     ranker = XGBoostMacroRanker().fit(features, labels, groups, weights)
     training_metrics = metrics(ranker, train_records)
@@ -534,6 +547,8 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "featureImplementationSha256": source_hash,
         "inferenceImplementationSha256": inference_hash,
         "evaluationImplementationSha256": evaluation_hash,
+        "trainingImplementationSha256": training_hash,
+        "trainingLibrary": training_library,
         "identity": labels_manifest["identity"],
         "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir.resolve() / "manifest.json"),
