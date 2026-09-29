@@ -918,9 +918,18 @@ Keep the previous trusted checkpoint available through
 `AtomicRollbackRegistry`. Its preview gate summary and caller-supplied booleans
 are not sufficient authority: trusted-checkpoint changes require a
 source-artifact verifier-issued immutable promotion receipt plus explicit human
-approval. The current repository has no promotion receipt issuer, so the
-registry remains fail-closed. A candidate is not trusted merely because it was
-queued or won one local matrix.
+approval. The research verifier now checks matched rows against checksummed raw
+replays and their public terminal outcomes, and derives the claimed training
+opponent families from hash-bound JSON artifacts, and reproduces each recorded
+action from the exact candidate or control checkpoint using actor-visible
+observations. This is still not sufficient for a real promotion: the frozen
+engine and scheduler must independently reproduce each complete game and
+terminal result, and the policy-family assignment must be verified from the
+frozen runner configuration. The verifier deliberately does not issue a
+promotion capability until engine-level replay reproduction is implemented and
+audited. PPO, continuous operation, and trusted promotion remain disabled.
+A candidate is not trusted merely because it was queued or won one local
+matrix.
 
 ## 12. Specialists
 

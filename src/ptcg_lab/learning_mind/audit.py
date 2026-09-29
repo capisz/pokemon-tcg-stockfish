@@ -29,6 +29,18 @@ def audit_replay(path: Path, expected: dict | None = None) -> dict:
     if expected and decoded_hash.hexdigest() != expected["decodedSha256"]:
         raise ValueError(f"decoded replay hash mismatch: {path}")
     replay = json.loads(b"".join(chunks))
+    status = replay.get("status")
+    outcome = replay.get("outcome")
+    if status == "finished":
+        winner = outcome.get("winner") if isinstance(outcome, dict) else object()
+        if ((type(winner) is not int and winner is not None) or winner not in (0, 1, None)
+                or not isinstance(outcome.get("reason"), str) or not outcome["reason"]):
+            raise ValueError("finished replay does not contain a public terminal W/D/L outcome")
+    elif status in {"truncated", "error"}:
+        if outcome is not None:
+            raise ValueError("unfinished replay may not contain a fabricated terminal outcome")
+    else:
+        raise ValueError("replay has an unknown terminal status")
     trackers = {0: ObservableHistoryTracker(0), 1: ObservableHistoryTracker(1)}
     decisions = unsupported = 0
     identities = []
@@ -52,8 +64,12 @@ def audit_replay(path: Path, expected: dict | None = None) -> dict:
             if len(matches) != 1:
                 raise ValueError("selected legal action is omitted or represented more than once")
         identities.append(encoded.identity); decisions += 1
-    return {"replayId": replay.get("id"), "status": replay.get("status"), "decisions": decisions,
-            "unsupportedPositions": unsupported, "decisionIdentityHash": hashlib.sha256("".join(identities).encode()).hexdigest()}
+    return {"replayId": replay.get("id"), "status": status, "outcome": outcome,
+            "seed": replay.get("seed"), "firstPlayer": replay.get("firstPlayer"),
+            "decks": replay.get("decks"), "engineBuildHash": replay.get("engineBuildHash"),
+            "policies": replay.get("policies"), "decisions": decisions,
+            "unsupportedPositions": unsupported,
+            "decisionIdentityHash": hashlib.sha256("".join(identities).encode()).hexdigest()}
 
 
 def audit_manifest(manifest_path: Path, *, limit: int | None = None) -> dict:
