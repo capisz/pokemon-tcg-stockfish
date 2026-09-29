@@ -40,6 +40,8 @@ def main(argv=None) -> int:
     sub.add_parser("model-info")
     initialize = sub.add_parser("initialize-supervisor")
     initialize.add_argument("--state-root", type=Path, required=True)
+    initialize.add_argument("--artifact-root", type=Path, action="append", default=[],
+                            help="additional local directory included in the frozen data-cap accounting")
     initialize.add_argument("--reserve-gb", type=int, default=25)
     initialize.add_argument("--data-cap-gb", type=int, default=100)
     freeze = sub.add_parser("build-supervised-dataset")
@@ -232,7 +234,8 @@ def main(argv=None) -> int:
                   "policyInterface": "policy_forward", "evaluationInterface": "evaluation_forward"}
     elif args.command == "initialize-supervisor":
         supervisor = MindSupervisor(args.state_root, reserve_bytes=args.reserve_gb * 1024**3,
-                                    data_cap_bytes=args.data_cap_gb * 1024**3)
+                                    data_cap_bytes=args.data_cap_gb * 1024**3,
+                                    artifact_roots=args.artifact_root)
         supervisor.persist(); result = supervisor.state.__dict__
     elif args.command == "build-supervised-dataset":
         root = args.root.resolve(); identity = runtime_identity(root)

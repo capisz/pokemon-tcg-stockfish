@@ -59,16 +59,51 @@ class MindState:
 
 class MindSupervisor:
     def __init__(self, root: Path, *, reserve_bytes: int, data_cap_bytes: int,
-                 notifier=None, clock=time.time):
+                 artifact_roots: list[Path] | None = None, notifier=None, clock=time.time):
         if (type(reserve_bytes) is not int or reserve_bytes < 0
                 or type(data_cap_bytes) is not int or data_cap_bytes < 1):
             raise ValueError("supervisor disk reserve and data cap must be nonnegative/positive byte counts")
-        self.root = Path(root); self.reserve_bytes = reserve_bytes; self.data_cap_bytes = data_cap_bytes
+        self.root = Path(root).resolve()
+        supplied_roots = artifact_roots or []
+        if not isinstance(supplied_roots, list) or any(not isinstance(path, Path) for path in supplied_roots):
+            raise ValueError("supervisor artifact roots must be a list of paths")
+        self.artifact_roots = tuple(dict.fromkeys((self.root, *(path.resolve() for path in supplied_roots))))
+        self.reserve_bytes = reserve_bytes; self.data_cap_bytes = data_cap_bytes
         self.notifier = notifier or (lambda event: None); self.clock = clock
         self.state_path = self.root / "state.json"
+        self.configuration_path = self.root / "configuration.json"
         self.lock_path = self.root / ".supervisor.lock"
         self._lock_fd: int | None = None
+        self._freeze_configuration()
         self.state = self._load()
+
+    def _freeze_configuration(self) -> None:
+        expected = {"schemaVersion": 1, "reserveBytes": self.reserve_bytes,
+            "dataCapBytes": self.data_cap_bytes,
+            "artifactRoots": [str(path) for path in self.artifact_roots]}
+        if self.configuration_path.is_file():
+            configured = json.loads(self.configuration_path.read_text())
+            if configured != expected:
+                raise ValueError("supervisor configuration identity drift; use a new state root")
+            return
+        if self.state_path.exists() or (self.root.exists() and any(self.root.iterdir())):
+            raise ValueError("supervisor state root has data but no frozen configuration")
+        self.root.mkdir(parents=True, exist_ok=True)
+        with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=self.root,
+                prefix=".configuration.", suffix=".tmp", delete=False) as temporary:
+            temporary.write(json.dumps(expected, sort_keys=True, indent=2) + "\n")
+            temporary.flush()
+            os.fsync(temporary.fileno())
+            temporary_path = Path(temporary.name)
+        try:
+            try:
+                os.link(temporary_path, self.configuration_path)
+            except FileExistsError:
+                pass
+        finally:
+            temporary_path.unlink(missing_ok=True)
+        if json.loads(self.configuration_path.read_text()) != expected:
+            raise ValueError("supervisor configuration changed during initialization")
 
     def _load(self) -> MindState:
         if not self.state_path.exists(): return MindState()
@@ -209,7 +244,9 @@ class MindSupervisor:
 
     def check_disk(self, *, projected_state_bytes: int | None = None) -> None:
         usage = shutil.disk_usage(self.root.parent if self.root.parent.exists() else Path.cwd())
-        artifact_bytes = sum(path.stat().st_size for path in self.root.rglob("*") if path.is_file()) if self.root.exists() else 0
+        files = {path.resolve(): path for directory in self.artifact_roots if directory.exists()
+                 for path in directory.rglob("*") if path.is_file()}
+        artifact_bytes = sum(path.stat().st_size for path in files.values())
         if projected_state_bytes is not None:
             current_state_bytes = self.state_path.stat().st_size if self.state_path.is_file() else 0
             artifact_bytes = artifact_bytes - current_state_bytes + projected_state_bytes

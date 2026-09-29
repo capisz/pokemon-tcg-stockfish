@@ -72,7 +72,8 @@ def test_phase_cursor_survives_pause_and_restart_and_transitions_are_ordered(tmp
 
 def test_supervisor_rejects_malformed_persisted_state_and_unknown_failure_kind(tmp_path):
     root = tmp_path / "corrupt"
-    root.mkdir()
+    original = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
+    original.persist()
     (root / "state.json").write_text(json.dumps({"schemaVersion": 1, "status": "RUNNING",
         "phase": "untrusted-phase", "cursor": {}, "failures": [], "pause_reason": None}))
     with pytest.raises(ValueError, match="state is malformed; refusing to resume"):
@@ -89,8 +90,8 @@ def test_supervisor_pauses_at_checkpoint_when_disk_limit_is_reached(tmp_path, mo
 
     root = tmp_path / "run"
     root.mkdir()
-    (root / "artifact.bin").write_bytes(b"x" * 16)
     supervisor = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=16)
+    (root / "artifact.bin").write_bytes(b"x" * 16)
     supervisor.state.status = "RUNNING"
     events = []
     supervisor.notifier = events.append
@@ -122,8 +123,9 @@ def test_supervisor_reserves_space_for_the_projected_cursor_before_commit(tmp_pa
 
     root = tmp_path / "run"
     root.mkdir()
-    (root / "artifact.bin").write_bytes(b"x" * 900)
     supervisor = MindSupervisor(root, reserve_bytes=0, data_cap_bytes=1000)
+    configuration_size = (root / "configuration.json").stat().st_size
+    (root / "artifact.bin").write_bytes(b"x" * (1000 - configuration_size - 10))
     supervisor.state.status = "RUNNING"
     monkeypatch.setattr(supervisor_module.shutil, "disk_usage",
                         lambda _path: SimpleNamespace(free=100_000))
@@ -131,6 +133,21 @@ def test_supervisor_reserves_space_for_the_projected_cursor_before_commit(tmp_pa
         supervisor.record_progress({"sample": "x" * 500})
     assert supervisor.state.status == "PAUSED"
     assert supervisor.state.cursor == {}
+
+
+def test_supervisor_data_cap_includes_configured_artifact_roots_and_freezes_them(tmp_path):
+    state_root = tmp_path / "state"
+    artifact_root = tmp_path / "artifacts"
+    artifact_root.mkdir()
+    supervisor = MindSupervisor(state_root, reserve_bytes=0, data_cap_bytes=1000,
+                                artifact_roots=[artifact_root])
+    artifact = artifact_root / "replay.gz"
+    artifact.write_bytes(b"x" * 1001)
+    with pytest.raises(RuntimeError, match="learning data cap reached"):
+        supervisor.check_disk()
+    with pytest.raises(ValueError, match="configuration identity drift"):
+        MindSupervisor(state_root, reserve_bytes=0, data_cap_bytes=1000,
+                       artifact_roots=[tmp_path / "different-artifacts"])
 
 
 def test_cpu_worker_profile():

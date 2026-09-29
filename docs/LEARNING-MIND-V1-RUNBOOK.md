@@ -909,10 +909,15 @@ cursors, or failure history prevent resume instead of being silently trusted.
 An exclusive process lock allows only one supervisor instance to own a state
 root; release it only when that process is permanently exiting.
 State writes use a unique same-directory temporary file, fsync, and atomic
-replacement. Free-space reserve and data-cap checks run at start and each
+replacement. Reserve, cap, and all configured artifact roots are frozen in a
+local configuration record. Include every directory that holds learning
+artifacts with `initialize-supervisor --artifact-root PATH`; disk accounting
+includes the state root and each configured root, deduplicating overlapping
+paths. Changing this configuration requires a new state root and an explicit
+migration plan. Free-space reserve and data-cap checks run at start and each
 durable progress/phase boundary; crossing either pauses before the next cursor
-is committed. This improves local crash safety but is not itself evidence
-that the 24-hour soak or reboot-service gate has passed.
+is committed. This improves local crash safety but is not itself evidence that
+the 24-hour soak or reboot-service gate has passed.
 
 Before installation, complete a manually supervised 24-hour soak. Verify pause,
 disk exhaustion, corrupted replay, worker restart, rejected update,
