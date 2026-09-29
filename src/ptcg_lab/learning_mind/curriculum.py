@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from collections.abc import Mapping
 from dataclasses import dataclass
 
 ARCHETYPES = ("crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario")
@@ -18,9 +19,13 @@ def assignment(index: int, historical_policies: list[str]) -> dict:
             "policyFamily": "historical" if historical else "current"}
 
 
-def specialist_for_deck(deck_hash: str, registry: dict, generalist: str) -> str:
-    record = registry.get(deck_hash)
-    return record["checkpoint"] if isinstance(record, dict) and record.get("approved") is True else generalist
+def specialist_for_deck(deck_hash: str, registry, generalist: str) -> str:
+    """Route only from a verifier-issued registry; all other inputs fall back."""
+    from .specialist_evidence import VerifiedSpecialistCurriculumEvidence
+    if not isinstance(registry, VerifiedSpecialistCurriculumEvidence):
+        return generalist
+    record = registry._values["specialistCheckpointsByDeckHash"].get(deck_hash)
+    return record["checkpoint"] if isinstance(record, Mapping) else generalist
 
 
 def promotion_seed_namespace_disjoint(seed: int, purpose: str, ordinal: int) -> int:

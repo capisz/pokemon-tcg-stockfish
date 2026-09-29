@@ -964,6 +964,16 @@ archetype guess, or partial card match.
 Each specialist must independently pass the same information, legality,
 strategy, matchup, blind-policy, and human-review requirements.
 
+The executable routing registry must be produced by the source-artifact
+verifier, not edited by hand. It must cover exactly the five approved main-deck
+hashes; bind each specialist checkpoint to its exact deck hash and frozen
+generalist parent checkpoint; and include individually reverified,
+human-approved passing promotion evidence. The verifier publishes an immutable
+report and issues an in-process routing capability. A plain JSON registry,
+editable `approved` field, stale receipt, unknown deck, or modified deck never
+routes to a specialist: it falls back to the generalist. The verifier is an
+evidence gate only and does not train or promote checkpoints.
+
 ## 13. Supervised continuous operation
 
 Do not begin here until all earlier sections pass.

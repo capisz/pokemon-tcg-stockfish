@@ -467,7 +467,7 @@ def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():
     assert sum(row["mirror"] for row in rows) == 5
     assert sum(row["policyFamily"] == "historical" for row in rows) == 20
     assert {row["ownArchetype"] for row in rows} == {"crustle", "dragapult", "raging-bolt", "grimmsnarl", "mega-lucario"}
-    assert specialist_for_deck("exact", {"exact": {"checkpoint": "special", "approved": True}}, "general") == "special"
+    assert specialist_for_deck("exact", {"exact": {"checkpoint": "special", "approved": True}}, "general") == "general"
     assert specialist_for_deck("modified", {}, "general") == "general"
     seeds = {promotion_seed_namespace_disjoint(1, kind, 0) for kind in ("training", "development", "promotion")}
     assert len(seeds) == 3
