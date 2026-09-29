@@ -1665,6 +1665,18 @@ strength or autonomous improvement.
   `git diff --check` passes. Existing frozen v17 artifacts and identities are
   unaffected; no label collection was started.
 
+### Windows checkpoint durability compatibility (2026-09-29)
+
+- The atomic checkpoint writer previously opened the parent directory with
+  `os.open` and fsynced it unconditionally. That POSIX pattern can fail on
+  Windows after a checkpoint file has already been replaced. It now retains
+  the file flush and atomic replacement on every platform, and only performs
+  parent-directory fsync on platforms that support that operation.
+- Added a platform-branch regression test; all six heldout collector tests
+  pass. This is not proof of Windows runtime or power-loss durability: the
+  actual Windows process-lock/restart/crash path remains untested and is called
+  out in the runbook. No collector was run.
+
 ### v17 training-coverage repair feasibility (2026-09-29)
 
 - The v17 ranker has 76/79 comparable training positions because three

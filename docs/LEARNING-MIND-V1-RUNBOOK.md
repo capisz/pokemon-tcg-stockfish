@@ -234,6 +234,12 @@ they remain unfinished and never become draws. Completed runs are immutable.
 This runner has only been exercised with deterministic fake rollouts; no
 heldout engine rollout has been started.
 
+On Windows the collector flushes each checkpoint file before atomic replacement
+but skips POSIX-style parent-directory `fsync`, which Windows does not support
+through this directory-open path. The Windows lock path is implemented, but a
+real Windows process-restart and crash-durability check is still required
+before treating the collector as 24/7-ready; none has been run here.
+
 Cross-family historical label bundles must continue to preserve source
 identities and may be combined only under the audited exact collection-surface rules in
 `src/ptcg_lab/learning_mind/collector_compatibility.py` and

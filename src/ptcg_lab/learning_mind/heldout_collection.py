@@ -35,6 +35,17 @@ LABEL_COLLECTOR_VERSION = "heldout-macro-rollout-labeler-v1"
 MAX_ROLLOUTS = 64
 
 
+def _fsync_parent_directory(path: Path, *, platform_name: str | None = None) -> None:
+    """Durably flush a directory entry on POSIX; Windows does not open dirs this way."""
+    if (platform_name or os.name) == "nt":
+        return
+    directory_fd = os.open(path.parent, os.O_RDONLY)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
 def _atomic_json(path: Path, value: dict, *, immutable: bool = False) -> None:
     path = path.resolve()
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -50,11 +61,7 @@ def _atomic_json(path: Path, value: dict, *, immutable: bool = False) -> None:
             os.link(temporary_path, path)
         else:
             temporary_path.replace(path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
-        try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+        _fsync_parent_directory(path)
     finally:
         temporary_path.unlink(missing_ok=True)
 

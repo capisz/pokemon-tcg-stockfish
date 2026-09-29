@@ -27,6 +27,14 @@ def _candidates():
         for action_id in ("pass-a", "pass-b")]
 
 
+def test_checkpoint_directory_flush_skips_posix_directory_open_on_windows(monkeypatch, tmp_path):
+    def unexpected_directory_open(*_args, **_kwargs):
+        raise AssertionError("Windows directory flush must not use POSIX os.open")
+
+    monkeypatch.setattr(collector.os, "open", unexpected_directory_open)
+    collector._fsync_parent_directory(tmp_path / "checkpoint.json", platform_name="nt")
+
+
 def test_heldout_collector_lock_rejects_a_concurrent_writer(tmp_path):
     output = tmp_path / "python-run"
     with collector._heldout_output_lock(output):
