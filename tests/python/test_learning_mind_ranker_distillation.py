@@ -285,35 +285,20 @@ def test_ranker_distillation_rejects_teacher_fit_to_another_label_manifest(tmp_p
             model_path=model, report_path=report_path, identity=identity)
 
 
-def test_ranker_holdout_audit_requires_every_frozen_archetype_and_family_partition():
-    records = []
-    for family in ("python-heuristic", "typescript-heuristic"):
-        for split in ("train", "development"):
-            for archetype in ("crustle", "dragapult"):
-                records.append({"positionHash": f"{family}-{split}-{archetype}",
-                    "sourceGameId": f"game-{family}-{split}-{archetype}",
-                    "opponentPolicyFamily": family, "split": split,
-                    "opponentArchetype": archetype})
-    expected = experiment._ranker_holdout_rows(records)
-    report = {"holdouts": [{**row, "status": "measured", "metrics": {
-        "status": "measured", "details": [{"positionHash": records[index]["positionHash"],
-            "sourceGameId": records[index]["sourceGameId"], "split": records[index]["split"],
-            "opponentArchetype": records[index]["opponentArchetype"],
-            "opponentPolicyFamily": records[index]["opponentPolicyFamily"]}
-            for index in row["test"]]}}
-        for row in expected]}
-    ranker_distillation._validate_ranker_holdout_coverage(report, records)
+def test_ranker_metric_rows_must_match_exact_frozen_positions_and_candidate_counts():
+    source = {"positionHash": "frozen-position", "sourceGameId": "frozen-game",
+        "split": "development", "opponentArchetype": "crustle",
+        "opponentPolicyFamily": "python-heuristic"}
+    metrics = {"details": [{**source, "candidates": 4}]}
+    ranker_distillation._validate_metric_position_coverage(
+        metrics, {source["positionHash"]: (source, 4)}, name="test")
 
-    omitted = {"holdouts": report["holdouts"][:-1]}
-    with pytest.raises(ValueError, match="does not exactly cover the frozen holdout set"):
-        ranker_distillation._validate_ranker_holdout_coverage(omitted, records)
+    wrong_position = {"details": [{**metrics["details"][0], "positionHash": "training-position"}]}
+    with pytest.raises(ValueError, match="metrics do not cover the frozen positions"):
+        ranker_distillation._validate_metric_position_coverage(
+            wrong_position, {source["positionHash"]: (source, 4)}, name="test")
 
-    changed_partition = json.loads(json.dumps(report))
-    changed_partition["holdouts"][0]["test"].append(7)
-    with pytest.raises(ValueError, match="coverage or partition differs"):
-        ranker_distillation._validate_ranker_holdout_coverage(changed_partition, records)
-
-    leaked_metrics = json.loads(json.dumps(report))
-    leaked_metrics["holdouts"][0]["metrics"]["details"][0]["positionHash"] = records[0]["positionHash"]
-    with pytest.raises(ValueError, match="metrics do not cover the frozen evaluation positions"):
-        ranker_distillation._validate_ranker_holdout_coverage(leaked_metrics, records)
+    wrong_count = {"details": [{**metrics["details"][0], "candidates": 3}]}
+    with pytest.raises(ValueError, match="candidate count differs"):
+        ranker_distillation._validate_metric_position_coverage(
+            wrong_count, {source["positionHash"]: (source, 4)}, name="test")

@@ -21,7 +21,24 @@ from .ranker_v2 import (_validate_source_game_units, _validated_macro_labels,
 from .schema import identity_hash
 
 
-def _validate_ranker_holdout_coverage(report: dict, records: list[dict]) -> None:
+def _validate_metric_position_coverage(metrics: dict, expected: dict[str, tuple[dict, int]], *,
+                                      name: str) -> None:
+    details = metrics.get("details") if isinstance(metrics, dict) else None
+    detail_hashes = ([detail.get("positionHash") for detail in details]
+                     if isinstance(details, list) and all(isinstance(detail, dict)
+                                                          for detail in details) else [])
+    if len(detail_hashes) != len(expected) or set(detail_hashes) != set(expected):
+        raise ValueError(f"ranker {name} metrics do not cover the frozen positions")
+    for detail in details:
+        source, candidate_count = expected[detail["positionHash"]]
+        if (type(detail.get("candidates")) is not int or detail["candidates"] != candidate_count
+                or any(detail.get(field) != source.get(field) for field in (
+                    "sourceGameId", "split", "opponentArchetype", "opponentPolicyFamily"))):
+            raise ValueError(f"ranker {name} metric provenance or candidate count differs from its frozen position")
+
+
+def _validate_ranker_holdout_coverage(report: dict, records: list[dict],
+                                      rollout_ids: dict[str, str]) -> None:
     from .experiment import _ranker_holdout_rows
 
     expected = _ranker_holdout_rows(records)
@@ -40,24 +57,33 @@ def _validate_ranker_holdout_coverage(report: dict, records: list[dict]) -> None
                 or not isinstance(row.get("metrics"), dict)
                 or row["metrics"].get("status") != "measured"):
             raise ValueError("ranker report holdout coverage or partition differs from frozen records")
-        expected_test_hashes = [records[index]["positionHash"] for index in baseline["test"]]
-        details = row["metrics"].get("details")
-        detail_hashes = ([detail.get("positionHash") for detail in details]
-                         if isinstance(details, list) and all(isinstance(detail, dict)
-                                                              for detail in details) else [])
-        if (len(expected_test_hashes) != len(detail_hashes)
-                or set(expected_test_hashes) != set(detail_hashes)):
-            raise ValueError("ranker holdout metrics do not cover the frozen evaluation positions")
-        records_by_hash = {records[index]["positionHash"]: records[index]
-                           for index in baseline["test"]}
-        for detail in details:
-            source = records_by_hash[detail["positionHash"]]
-            if any(detail.get(field) != source.get(field) for field in (
-                    "sourceGameId", "split", "opponentArchetype", "opponentPolicyFamily")):
-                raise ValueError("ranker holdout metric provenance differs from its frozen position")
+        expected = {}
+        for index in baseline["test"]:
+            source = records[index]
+            labels = _validated_macro_labels(source,
+                expected_rollout_identity=rollout_ids[source["opponentPolicyFamily"]])
+            if len(labels) >= 2:
+                expected[source["positionHash"]] = (source, len(labels))
+        _validate_metric_position_coverage(row["metrics"], expected,
+                                           name="holdout evaluation")
         seen.add(key)
     if seen != set(expected_by_key):
         raise ValueError("ranker report does not exactly cover the frozen holdout set")
+
+
+def _validate_ranker_metric_coverage(report: dict, records: list[dict],
+                                     rollout_ids: dict[str, str]) -> None:
+    expected_by_split = {split: {} for split in ("train", "development")}
+    for record in records:
+        labels = _validated_macro_labels(record,
+            expected_rollout_identity=rollout_ids[record["opponentPolicyFamily"]])
+        if len(labels) >= 2:
+            expected_by_split[record["split"]][record["positionHash"]] = (record, len(labels))
+    _validate_metric_position_coverage(report.get("training", {}), expected_by_split["train"],
+                                       name="training")
+    _validate_metric_position_coverage(report.get("development", {}), expected_by_split["development"],
+                                       name="development")
+    _validate_ranker_holdout_coverage(report, records, rollout_ids)
 
 
 def _distribution(scores: np.ndarray, candidates: list[dict], observation: dict,
@@ -128,7 +154,6 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
     labels_dir = labels_dir.resolve()
     selection_path = selection_path.resolve()
     labels_manifest, records = _load_ranker_input(labels_dir, selection_path)
-    _validate_ranker_holdout_coverage(report, records)
     if (report.get("inputManifestSha256") != file_sha256(labels_dir / "manifest.json")
             or report.get("selectionManifestSha256") != file_sha256(selection_path)
             or report.get("selectionHash") != labels_manifest.get("selectionHash")
@@ -146,6 +171,8 @@ def build_macro_ranker_distillation(*, output: Path, macro_position_pool: Path,
             rollout_ids[families[0]] = rollout_id
     if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
         raise ValueError("ranker distillation source families are incomplete")
+
+    _validate_ranker_metric_coverage(report, records, rollout_ids)
 
     expected_training_positions = {record["positionHash"] for record in records
         if record.get("split") == "train" and len(_validated_macro_labels(record,
@@ -297,7 +324,6 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
     labels_manifest, records = _load_ranker_input(
         sources_by_kind["combined-label-manifest"].parent,
         sources_by_kind["frozen-selection"])
-    _validate_ranker_holdout_coverage(verified["report"], records)
     _validate_source_game_units(sources_by_kind["frozen-selection"], records)
     if (verified["report"].get("reportHash") != manifest.get("rankerReportHash")
             or verified["report"].get("modelSha256") != manifest.get("rankerModelSha256")
@@ -330,6 +356,7 @@ def load_macro_ranker_distillation(path: Path, *, identity: dict) -> tuple[dict,
         rollout_ids[families[0]] = rollout_id
     if set(rollout_ids) != {"python-heuristic", "typescript-heuristic"}:
         raise ValueError("ranker distillation source-run families are incomplete")
+    _validate_ranker_metric_coverage(verified["report"], records, rollout_ids)
 
     expected_training_positions = {record["positionHash"] for record in records
         if record.get("split") == "train" and len(_validated_macro_labels(record,
