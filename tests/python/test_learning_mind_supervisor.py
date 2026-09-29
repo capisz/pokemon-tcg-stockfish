@@ -48,12 +48,35 @@ def test_continuous_operation_requires_every_exact_gate(field, value):
     assert continuous_operation_enablement(record)["enabled"] is False
 
 
+@pytest.mark.parametrize("field,value", [
+    ("ppoEnabled", False), ("promotionCriteriaPassed", False),
+    ("specialistCurriculumPassed", False), ("supervised24HourSoakPassed", False),
+    ("failureDrillsPassed", False), ("humanReviewedSoak", False),
+    ("continuousOperationEnabled", False), ("humanEnableContinuousOperation", False),
+    ("humanEnableContinuousOperation", 1), ("automaticPromotion", True),
+])
+def test_verified_continuous_capability_requires_every_prior_gate(field, value):
+    from ptcg_lab.learning_mind.supervisor import _VERIFIED_CONTINUOUS_TOKEN
+
+    values = {"ppoEnabled": True, "promotionCriteriaPassed": True,
+        "specialistCurriculumPassed": True, "supervised24HourSoakPassed": True,
+        "failureDrillsPassed": True, "humanReviewedSoak": True,
+        "continuousOperationEnabled": True, "humanEnableContinuousOperation": True,
+        "automaticPromotion": False}
+    values[field] = value
+    record = VerifiedContinuousOperationRecord(values,
+        _verification_token=_VERIFIED_CONTINUOUS_TOKEN)
+    assert continuous_operation_enablement(record)["enabled"] is False
+
+
 def test_verified_continuous_capability_can_pass_immutable_gate():
     from ptcg_lab.learning_mind.supervisor import _VERIFIED_CONTINUOUS_TOKEN
 
     record = VerifiedContinuousOperationRecord({"ppoEnabled": True,
-        "specialistCurriculumPassed": True, "continuousOperationEnabled": True,
-        "humanEnableContinuousOperation": True},
+        "promotionCriteriaPassed": True, "specialistCurriculumPassed": True,
+        "supervised24HourSoakPassed": True, "failureDrillsPassed": True,
+        "humanReviewedSoak": True, "continuousOperationEnabled": True,
+        "humanEnableContinuousOperation": True, "automaticPromotion": False},
         _verification_token=_VERIFIED_CONTINUOUS_TOKEN)
     assert continuous_operation_enablement(record)["enabled"] is True
 

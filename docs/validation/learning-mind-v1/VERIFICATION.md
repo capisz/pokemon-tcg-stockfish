@@ -1281,7 +1281,11 @@ strength or autonomous improvement.
   a mutable `dict`. Thus a legitimate verified capability could never pass,
   even with every prerequisite and explicit human authorization true.
 - The predicate now reads the immutable mapping directly. Regression coverage
-  proves plain editable dictionaries still fail, every required field remains
-  exact-boolean gated, and a valid immutable capability can satisfy the check.
-  All 16 supervisor tests and `git diff --check` pass. No continuous operation
-  capability was issued by a verifier, and no supervisor was started.
+  proves plain editable dictionaries still fail, and a valid immutable
+  capability can satisfy the check. The capability now also requires passed
+  PPO and promotion evidence, exact-deck specialist acceptance, a human-
+  reviewed 24-hour soak, every required failure drill, separate human run
+  approval, and automatic promotion explicitly false. Each of these conditions
+  has a fail-closed regression case. All 26 supervisor tests and
+  `git diff --check` pass. No continuous-operation capability issuer exists
+  yet; no supervisor was started.

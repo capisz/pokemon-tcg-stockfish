@@ -968,6 +968,13 @@ strategy, matchup, blind-policy, and human-review requirements.
 
 Do not begin here until all earlier sections pass.
 
+The supervisor's verifier-issued continuous-operation capability must bind a
+passed PPO stage, human-approved promotion evidence, the complete exact-deck
+specialist curriculum, a human-reviewed 24-hour supervised soak, and all
+required failure drills. It must also retain a separate human enablement for
+each run and declare automatic promotion false. A persisted report or editable
+boolean record alone never authorizes the supervisor.
+
 Use four independently resumable phases:
 
 1. collection;

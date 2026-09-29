@@ -40,11 +40,17 @@ def continuous_operation_enablement(stage_record: VerifiedContinuousOperationRec
                 "reason": "continuous operation requires a verified evidence capability, not editable gate booleans"}
     stage_record = stage_record._values
     prerequisites = (stage_record.get("ppoEnabled") is True
+        and stage_record.get("promotionCriteriaPassed") is True
         and stage_record.get("specialistCurriculumPassed") is True
+        and stage_record.get("supervised24HourSoakPassed") is True
+        and stage_record.get("failureDrillsPassed") is True
+        and stage_record.get("humanReviewedSoak") is True
         and stage_record.get("continuousOperationEnabled") is True
-        and stage_record.get("humanEnableContinuousOperation") is True)
+        and stage_record.get("humanEnableContinuousOperation") is True
+        and stage_record.get("automaticPromotion") is False)
     return {"enabled": bool(prerequisites),
-            "reason": None if prerequisites else "PPO, specialization, continuous-operation gate, and human approval are all required"}
+            "reason": None if prerequisites else
+                "PPO, promotion, specialists, supervised soak/drills, continuous-operation gate, and human approval are required"}
 
 
 @dataclass
