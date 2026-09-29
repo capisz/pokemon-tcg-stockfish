@@ -836,8 +836,12 @@ five percentage points, no severity-three probe regression, the blind policy
 family, exact identities, and explicit human approval.
 
 Keep the previous trusted checkpoint available through
-`AtomicRollbackRegistry`. A candidate checkpoint is not trusted merely because
-it was queued or won one local matrix.
+`AtomicRollbackRegistry`. Its preview gate summary and caller-supplied booleans
+are not sufficient authority: trusted-checkpoint changes require a
+source-artifact verifier-issued immutable promotion receipt plus explicit human
+approval. The current repository has no promotion receipt issuer, so the
+registry remains fail-closed. A candidate is not trusted merely because it was
+queued or won one local matrix.
 
 ## 12. Specialists
 

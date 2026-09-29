@@ -14,7 +14,8 @@ from ptcg_lab.learning_mind.training import (PPOConfig, VerifiedPPOStageRecord,
     eligible_ppo_records, generalized_advantages, ppo_enablement, supervised_policy_rows,
     ppo_legal_action_logits, update_guard, validate_ppo_optimizer)
 from ptcg_lab.learning_mind.curriculum import assignment, promotion_seed_namespace_disjoint, specialist_for_deck
-from ptcg_lab.learning_mind.notifications import AtomicRollbackRegistry, NotificationRouter
+from ptcg_lab.learning_mind.notifications import (AtomicRollbackRegistry, NotificationRouter,
+    VerifiedPromotionEvidence)
 from test_learning_mind_representation import observation
 
 
@@ -368,7 +369,15 @@ def test_notification_scope_and_atomic_rollback():
     router({"kind": "progress"}); router({"kind": "review-ready"})
     assert events == [{"kind": "review-ready"}]
     registry = AtomicRollbackRegistry("trusted"); registry.queue("candidate")
-    with pytest.raises(PermissionError): registry.promote(human_approved=False, evidence_passed=True)
-    prior = registry.promote(human_approved=True, evidence_passed=True)
-    assert prior == "trusted" and registry.trusted_checkpoint == "candidate"
-    registry.rollback(prior); assert registry.trusted_checkpoint == "trusted"
+    with pytest.raises(PermissionError, match="verifier-issued evidence"):
+        registry.promote(human_approved=False, evidence=None)
+    with pytest.raises(PermissionError, match="verifier-issued evidence"):
+        registry.promote(human_approved=True)
+    with pytest.raises(TypeError, match="source-artifact verifier"):
+        VerifiedPromotionEvidence({"candidateCheckpoint": "candidate",
+            "promotionCriteriaPassed": True, "automaticPromotion": False},
+            _verification_token=object())
+    with pytest.raises(PermissionError, match="exact checkpoint retained"):
+        registry.rollback("candidate")
+    assert registry.trusted_checkpoint == "trusted"
+    assert registry.candidate_checkpoint == "candidate"
