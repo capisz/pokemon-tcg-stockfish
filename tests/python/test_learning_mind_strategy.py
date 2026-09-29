@@ -4,7 +4,8 @@ import json
 
 import pytest
 
-from ptcg_lab.learning_mind.evaluation import PROMOTION_MATCHUPS, promotion_gate, sequential_decision
+from ptcg_lab.learning_mind.evaluation import (PROMOTION_MATCHUPS, matched_sequential_decision,
+    promotion_gate, sequential_decision)
 from ptcg_lab.learning_mind.macro import (MacroExecutionFailure, UnsupportedPosition,
     candidates_from_transition_plans,
     execute_candidate, generate_candidates, label_candidates, rollout_seed)
@@ -371,6 +372,36 @@ def test_sequential_evaluation_validates_non_regression_margin():
     for value in (True, -0.1, 1.1, float("nan")):
         with pytest.raises(ValueError, match="margin"):
             sequential_decision([], non_regression_margin=value)
+
+
+def test_matched_sequential_evaluation_checks_schedule_and_keeps_unfinished_separate():
+    def record(pair, policy, score, *, status="finished", seed=None):
+        value = {"pairId": f"pair-{pair}", "gameId": f"{policy}-game-{pair}",
+            "status": status, "ownArchetype": "crustle", "opponentArchetype": "dragapult",
+            "seed": pair if seed is None else seed, "learnerSeat": pair % 2,
+            "firstPlayer": (pair + 1) % 2, "opponentPolicyFamily": "blind-family",
+            "schedulerIdentity": "scheduler-v1"}
+        if score is not None:
+            value["score"] = score
+        return value
+
+    candidate = [record(index, "candidate", 1) for index in range(100)]
+    control = [record(index, "control", 0) for index in range(100)]
+    candidate.append(record(100, "candidate", None, status="truncated"))
+    control.append(record(100, "control", None, status="error"))
+    result = matched_sequential_decision(candidate, control)
+    assert result["status"] == "supported-improvement"
+    assert (result["matchedPairs"], result["completed"], result["wins"], result["draws"],
+            result["losses"]) == (101, 100, 100, 0, 0)
+    assert result["unfinished"] == {"truncated": 0, "error": 1}
+    assert result["candidateOutcomes"] == {"finished": 100, "truncated": 1, "error": 0}
+    assert result["controlOutcomes"] == {"finished": 100, "truncated": 0, "error": 1}
+
+    mismatched = [dict(control[0], seed=999), *control[1:]]
+    with pytest.raises(ValueError, match="mismatched frozen assignments"):
+        matched_sequential_decision(candidate, mismatched)
+    with pytest.raises(ValueError, match="same scheduled game pairs"):
+        matched_sequential_decision(candidate, control[:-1])
 
 
 def test_curriculum_ratios_specialist_hash_routing_and_seed_namespaces():

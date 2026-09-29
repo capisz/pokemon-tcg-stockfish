@@ -80,6 +80,62 @@ def sequential_decision(records: list[dict], *, non_regression_margin: float = .
             "unfinished": {key: counts[key] for key in ("truncated", "error")}, "wilson95DecisiveWinRate": interval}
 
 
+def matched_sequential_decision(candidate_records: list[dict], control_records: list[dict], *,
+                                non_regression_margin: float = .05) -> dict:
+    """Compare a candidate with its control only on exactly matched scheduled game pairs."""
+    metadata_fields = ("seed", "ownArchetype", "opponentArchetype", "learnerSeat",
+                       "firstPlayer", "opponentPolicyFamily", "schedulerIdentity")
+
+    def index(records: list[dict], label: str) -> dict[str, dict]:
+        if not isinstance(records, list):
+            raise ValueError(f"{label} promotion records must be a list")
+        sequential_decision(records, non_regression_margin=non_regression_margin)
+        indexed: dict[str, dict] = {}
+        for row in records:
+            pair_id, game_id = row.get("pairId"), row.get("gameId")
+            if (not isinstance(pair_id, str) or not pair_id or pair_id in indexed
+                    or not isinstance(game_id, str) or not game_id):
+                raise ValueError(f"{label} promotion records require unique pair and game IDs")
+            if (type(row.get("seed")) is not int
+                    or row.get("ownArchetype") not in ARCHETYPES
+                    or row.get("opponentArchetype") not in ARCHETYPES
+                    or type(row.get("learnerSeat")) is not int or row["learnerSeat"] not in (0, 1)
+                    or type(row.get("firstPlayer")) is not int or row["firstPlayer"] not in (0, 1)
+                    or not isinstance(row.get("opponentPolicyFamily"), str)
+                    or not row["opponentPolicyFamily"]
+                    or not isinstance(row.get("schedulerIdentity"), str)
+                    or not row["schedulerIdentity"]):
+                raise ValueError(f"{label} promotion record lacks valid frozen matchup assignments")
+            indexed[pair_id] = row
+        return indexed
+
+    candidates = index(candidate_records, "candidate")
+    controls = index(control_records, "control")
+    if not candidates or candidates.keys() != controls.keys():
+        raise ValueError("candidate and control records do not cover the same scheduled game pairs")
+    paired_records = []
+    candidate_statuses = Counter()
+    control_statuses = Counter()
+    for pair_id in sorted(candidates):
+        candidate, control = candidates[pair_id], controls[pair_id]
+        if any(candidate[field] != control[field] for field in metadata_fields):
+            raise ValueError("candidate and control game pair has mismatched frozen assignments")
+        candidate_statuses[candidate["status"]] += 1
+        control_statuses[control["status"]] += 1
+        if candidate["status"] == control["status"] == "finished":
+            delta = candidate["score"] - control["score"]
+            paired_records.append({"gameId": pair_id, "status": "finished",
+                                   "score": 1 if delta > 0 else 0 if delta < 0 else .5})
+        else:
+            status = ("error" if "error" in {candidate["status"], control["status"]}
+                      else "truncated")
+            paired_records.append({"gameId": pair_id, "status": status})
+    result = sequential_decision(paired_records, non_regression_margin=non_regression_margin)
+    return {**result, "matchedPairs": len(paired_records),
+            "candidateOutcomes": {key: candidate_statuses[key] for key in ("finished", "truncated", "error")},
+            "controlOutcomes": {key: control_statuses[key] for key in ("finished", "truncated", "error")}}
+
+
 def promotion_gate(*, aggregate: dict, matchups: list[dict], strategy: dict,
                    blind_family_passed: bool, identities_match: bool, human_approved: bool) -> dict:
     reasons = []
