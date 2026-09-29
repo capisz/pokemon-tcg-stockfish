@@ -243,14 +243,22 @@ class MindSupervisor:
             self.persist()
 
     def check_disk(self, *, projected_state_bytes: int | None = None) -> None:
-        usage = shutil.disk_usage(self.root.parent if self.root.parent.exists() else Path.cwd())
+        for directory in self.artifact_roots:
+            probe = directory
+            while not probe.exists() and probe != probe.parent:
+                probe = probe.parent
+            try:
+                usage = shutil.disk_usage(probe)
+            except OSError as error:
+                raise RuntimeError("unable to verify free-space reserve for an artifact root") from error
+            if usage.free < self.reserve_bytes:
+                raise RuntimeError("free-space reserve reached")
         files = {path.resolve(): path for directory in self.artifact_roots if directory.exists()
                  for path in directory.rglob("*") if path.is_file()}
         artifact_bytes = sum(path.stat().st_size for path in files.values())
         if projected_state_bytes is not None:
             current_state_bytes = self.state_path.stat().st_size if self.state_path.is_file() else 0
             artifact_bytes = artifact_bytes - current_state_bytes + projected_state_bytes
-        if usage.free < self.reserve_bytes: raise RuntimeError("free-space reserve reached")
         if artifact_bytes >= self.data_cap_bytes: raise RuntimeError("learning data cap reached")
 
     def _check_capacity_or_pause(self, *, phase: str | None = None, cursor: dict | None = None,

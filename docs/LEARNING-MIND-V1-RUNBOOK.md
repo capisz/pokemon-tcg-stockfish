@@ -914,10 +914,11 @@ local configuration record. Include every directory that holds learning
 artifacts with `initialize-supervisor --artifact-root PATH`; disk accounting
 includes the state root and each configured root, deduplicating overlapping
 paths. Changing this configuration requires a new state root and an explicit
-migration plan. Free-space reserve and data-cap checks run at start and each
-durable progress/phase boundary; crossing either pauses before the next cursor
-is committed. This improves local crash safety but is not itself evidence that
-the 24-hour soak or reboot-service gate has passed.
+migration plan. The free-space reserve is checked on every configured root's
+filesystem, while the data cap sums files across all roots. Both checks run at
+start and each durable progress/phase boundary; crossing either pauses before
+the next cursor is committed. This improves local crash safety but is not itself
+evidence that the 24-hour soak or reboot-service gate has passed.
 
 Before installation, complete a manually supervised 24-hour soak. Verify pause,
 disk exhaustion, corrupted replay, worker restart, rejected update,

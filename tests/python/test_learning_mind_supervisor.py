@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from pathlib import Path
 
 import pytest
 
@@ -148,6 +149,29 @@ def test_supervisor_data_cap_includes_configured_artifact_roots_and_freezes_them
     with pytest.raises(ValueError, match="configuration identity drift"):
         MindSupervisor(state_root, reserve_bytes=0, data_cap_bytes=1000,
                        artifact_roots=[tmp_path / "different-artifacts"])
+
+
+def test_supervisor_checks_free_space_for_every_configured_artifact_root(tmp_path, monkeypatch):
+    from types import SimpleNamespace
+    from ptcg_lab.learning_mind import supervisor as supervisor_module
+
+    state_root = tmp_path / "state"
+    artifact_root = tmp_path / "external-artifacts"
+    artifact_root.mkdir()
+    supervisor = MindSupervisor(state_root, reserve_bytes=10, data_cap_bytes=10_000,
+                                artifact_roots=[artifact_root])
+    checked = []
+
+    def disk_usage(path):
+        checked.append(Path(path))
+        free = 0 if Path(path) == artifact_root else 100
+        return SimpleNamespace(free=free)
+
+    monkeypatch.setattr(supervisor_module.shutil, "disk_usage", disk_usage)
+    with pytest.raises(RuntimeError, match="free-space reserve reached"):
+        supervisor.check_disk()
+    assert state_root in checked
+    assert artifact_root in checked
 
 
 def test_cpu_worker_profile():
