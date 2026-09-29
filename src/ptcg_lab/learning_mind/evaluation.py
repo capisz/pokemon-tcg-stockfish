@@ -173,7 +173,7 @@ def matched_promotion_matrix_decision(candidate_records: list[dict], control_rec
         if not candidate_cell and not control_cell:
             matchups.append({"ownArchetype": own, "opponentArchetype": opponent,
                 "completed": 0, "decisive": 0, "status": "insufficient",
-                "regressionPoints": math.inf})
+                "regressionPoints": None})
             continue
         result = matched_sequential_decision(candidate_cell, control_cell,
             non_regression_margin=non_regression_margin)
@@ -181,7 +181,7 @@ def matched_promotion_matrix_decision(candidate_records: list[dict], control_rec
         matchups.append({"ownArchetype": own, "opponentArchetype": opponent,
             "completed": result["completed"], "decisive": result["decisive"],
             "status": result["status"],
-            "regressionPoints": max(0.0, (.5 - rate) * 100) if rate is not None else math.inf,
+            "regressionPoints": max(0.0, (.5 - rate) * 100) if rate is not None else None,
             "pairedResult": result})
 
     training = set(training_policy_families)

@@ -456,6 +456,7 @@ def test_matched_promotion_matrix_requires_all_ordered_cells_and_blind_family():
     incomplete = matched_promotion_matrix_decision(missing_candidate, missing_control,
         training_policy_families=["training-family"],
         strategy={"severityThreeRegressions": []}, identities_match=True, human_approved=True)
+    json.dumps(incomplete, allow_nan=False)
     assert incomplete["promotionGate"]["promotable"] is False
     assert any("all 25 ordered matchups" in reason
                for reason in incomplete["promotionGate"]["reasons"])
