@@ -1256,8 +1256,13 @@ strength or autonomous improvement.
   research status, not ranker acceptance; this check only closes the documented
   stage-order prerequisite. PPO still requires every existing stage condition
   and the separate explicit human authorization.
+- The gate also revalidates the exact combined train/development label bundle
+  and its independent confidence report, then compares their manifest, frozen
+  selection, report, implementation, and file hashes against the ranker. A
+  stale report from another valid run can no longer satisfy the gate.
 - The immutable stage receipt hashes the ranker model/report and records the
-  measured holdout axes. Regression tests reject missing/insufficient ranker
-  evidence and mismatched identities. Focused stage, ranker-v2, and promotion
-  evidence tests pass (24); CLI help and `git diff --check` pass. No collector,
-  training, PPO, promotion, or service operation was started.
+  label and confidence inputs plus measured holdout axes. Regression tests
+  reject missing/insufficient evidence, mismatched identities, and stale
+  confidence provenance. Stage and ranker-v2 tests pass (21); CLI help and
+  `git diff --check` pass. No collector, training, PPO, promotion, or service
+  operation was started.

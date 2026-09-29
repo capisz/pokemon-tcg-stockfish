@@ -7,8 +7,10 @@ import tempfile
 
 from .audit import audit_manifest
 from .candidate_safety import audit_candidate_safety
+from .confidence_audit import verify_macro_label_confidence_audit
 from .dataset_v1 import file_sha256, load_dataset
 from .disagreement_review import audit_disagreement_review
+from .experiment import _load_ranker_input
 from .macro_fidelity import audit_raging_bolt_macro_fidelity
 from .policy_evaluation import evaluate_candidate
 from .ranker_v2 import verify_macro_ranker_v2_artifact
@@ -72,6 +74,7 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         evaluation_path: Path, supervised_audit_path: Path, safety_report_path: Path,
         macro_selection_path: Path, python_dataset: Path, typescript_dataset: Path,
         python_labels: Path, typescript_labels: Path, macro_fidelity_path: Path,
+        ranker_labels_dir: Path, confidence_audit_path: Path,
         ranker_model_path: Path, ranker_report_path: Path,
         disagreement_packet_path: Path, disagreement_review_path: Path,
         disagreement_receipt_path: Path, output: Path,
@@ -86,13 +89,15 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         root, baseline_manifest, dataset_dir, probe_dataset_dir, checkpoint,
         evaluation_path, supervised_audit_path, safety_report_path,
         macro_selection_path, python_dataset, typescript_dataset, python_labels,
-        typescript_labels, macro_fidelity_path, ranker_model_path, ranker_report_path,
+        typescript_labels, macro_fidelity_path, ranker_labels_dir, confidence_audit_path,
+        ranker_model_path, ranker_report_path,
         disagreement_packet_path,
         disagreement_review_path, disagreement_receipt_path)]
     (root, baseline_manifest, dataset_dir, probe_dataset_dir, checkpoint,
      evaluation_path, supervised_audit_path, safety_report_path,
      macro_selection_path, python_dataset, typescript_dataset, python_labels,
-     typescript_labels, macro_fidelity_path, ranker_model_path, ranker_report_path,
+     typescript_labels, macro_fidelity_path, ranker_labels_dir, confidence_audit_path,
+     ranker_model_path, ranker_report_path,
      disagreement_packet_path,
      disagreement_review_path, disagreement_receipt_path) = paths
     if type(human_enable_ppo) is not bool:
@@ -128,9 +133,21 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
     if fidelity.get("identity") != manifest.get("identity"):
         raise ValueError("macro-fidelity and supervised evidence have different frozen identities")
 
+    ranker_manifest, _ranker_records = _load_ranker_input(ranker_labels_dir, macro_selection_path)
+    confidence = verify_macro_label_confidence_audit(labels_dir=ranker_labels_dir,
+        selection_path=macro_selection_path, report_path=confidence_audit_path)
     ranker = verify_macro_ranker_v2_artifact(ranker_model_path, ranker_report_path)["report"]
     if ranker.get("identity") != manifest.get("identity"):
         raise ValueError("macro-ranker and supervised evidence have different frozen identities")
+    if (ranker.get("inputManifestHash") != ranker_manifest.get("manifestHash")
+            or ranker.get("inputManifestSha256") != file_sha256(ranker_labels_dir / "manifest.json")
+            or ranker.get("selectionHash") != ranker_manifest.get("selectionHash")
+            or ranker.get("selectionManifestSha256") != file_sha256(macro_selection_path)
+            or ranker.get("confidenceAuditReportHash") != confidence.get("reportHash")
+            or ranker.get("confidenceAuditSha256") != file_sha256(confidence_audit_path)
+            or ranker.get("confidenceAuditImplementationSha256") !=
+                confidence.get("confidenceAuditImplementationSha256")):
+        raise ValueError("macro-ranker is not bound to the exact labels, selection, and confidence audit")
     holdouts = ranker.get("holdouts")
     required_holdouts = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
     measured_holdouts = {row.get("kind") for row in holdouts if row.get("status") == "measured"}
@@ -163,6 +180,8 @@ def verify_ppo_stage_evidence(*, root: Path, baseline_manifest: Path,
         "pythonLabelsManifest": python_labels / "manifest.json",
         "typescriptLabelsManifest": typescript_labels / "manifest.json",
         "macroFidelity": macro_fidelity_path, "disagreementPacket": disagreement_packet_path,
+        "rankerLabelsManifest": ranker_labels_dir / "manifest.json",
+        "confidenceAudit": confidence_audit_path,
         "macroRankerModel": ranker_model_path, "macroRankerReport": ranker_report_path,
         "disagreementReview": disagreement_review_path, "disagreementReceipt": disagreement_receipt_path,
     }

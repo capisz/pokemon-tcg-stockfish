@@ -221,7 +221,8 @@ def main(argv=None) -> int:
     for option in ("root", "baseline-manifest", "dataset", "probe-dataset", "checkpoint",
                    "evaluation", "supervised-audit", "safety-report", "macro-selection",
                    "python-dataset", "typescript-dataset", "python-labels", "typescript-labels",
-                   "macro-fidelity", "ranker-model", "ranker-report",
+                   "macro-fidelity", "ranker-labels", "confidence-audit",
+                   "ranker-model", "ranker-report",
                    "disagreement-packet", "disagreement-review",
                    "disagreement-receipt", "output"):
         stage.add_argument(f"--{option}", type=Path, required=True)
@@ -372,6 +373,7 @@ def main(argv=None) -> int:
             python_dataset=args.python_dataset, typescript_dataset=args.typescript_dataset,
             python_labels=args.python_labels, typescript_labels=args.typescript_labels,
             macro_fidelity_path=args.macro_fidelity,
+            ranker_labels_dir=args.ranker_labels, confidence_audit_path=args.confidence_audit,
             ranker_model_path=args.ranker_model, ranker_report_path=args.ranker_report,
             disagreement_packet_path=args.disagreement_packet,
             disagreement_review_path=args.disagreement_review,

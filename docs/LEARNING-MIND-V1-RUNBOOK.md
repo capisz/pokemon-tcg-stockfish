@@ -765,14 +765,16 @@ promotion.
 After all supervised, macro-fidelity, safety, probe, review, and macro-ranker
 artifacts exist, assemble the PPO-stage record by recomputing them from their
 source inputs. The ranker must be checksum-verified, share the supervised
-model's frozen identity, have measured development results, and have measured
-leave-one-archetype-out plus frozen-policy-family holdouts. Its status remains
-`review-required`; this is an evidence prerequisite, not an automatic ranker or
-policy acceptance. Do not copy booleans into `stage-gates.json`; the generated
-report is immutable and contains hashes for every source artifact. The verifier
-also reruns the complete 192-replay baseline parity audit. Omit
-`--human-enable-ppo` for an evidence-only result; that flag is a separate
-explicit authorization and cannot make failed prerequisites pass.
+model's frozen identity, and bind to the exact combined label bundle, selection,
+and independently verified confidence audit supplied to this command. It must
+have measured development results and measured leave-one-archetype-out plus
+frozen-policy-family holdouts. Its status remains `review-required`; this is an
+evidence prerequisite, not an automatic ranker or policy acceptance. Do not
+copy booleans into `stage-gates.json`; the generated report is immutable and
+contains hashes for every source artifact. The verifier also reruns the
+complete 192-replay baseline parity audit. Omit `--human-enable-ppo` for an
+evidence-only result; that flag is a separate explicit authorization and cannot
+make failed prerequisites pass.
 
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
@@ -784,6 +786,8 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
   --python-dataset PYTHON_DATASET --typescript-dataset TYPESCRIPT_DATASET \
   --python-labels PYTHON_LABELS --typescript-labels TYPESCRIPT_LABELS \
   --macro-fidelity MACRO_FIDELITY.json \
+  --ranker-labels COMBINED_FINAL_LABELS \
+  --confidence-audit MACRO_LABEL_CONFIDENCE.json \
   --ranker-model RANKER_V2.json --ranker-report RANKER_V2.manifest.json \
   --disagreement-packet REVIEW_PACKET.json --disagreement-review HUMAN_REVIEW.json \
   --disagreement-receipt REVIEW_RECEIPT.json --output PPO_STAGE_EVIDENCE.json

@@ -6,6 +6,7 @@ from pathlib import Path
 import pytest
 
 from ptcg_lab.learning_mind import stage_evidence
+from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.schema import identity_hash
 from ptcg_lab.learning_mind.training import ppo_enablement
 
@@ -26,6 +27,8 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
         "python_labels": tmp_path / "python-labels",
         "typescript_labels": tmp_path / "typescript-labels",
         "macro_fidelity_path": tmp_path / "fidelity.json",
+        "ranker_labels_dir": tmp_path / "ranker-labels",
+        "confidence_audit_path": tmp_path / "confidence-audit.json",
         "ranker_model_path": tmp_path / "ranker-model.json",
         "ranker_report_path": tmp_path / "ranker-report.json",
         "disagreement_packet_path": tmp_path / "packet.json",
@@ -48,6 +51,7 @@ def _inputs(tmp_path: Path) -> dict[str, Path]:
                 (path / "manifest.json").write_text("{}\n")
         else:
             path.write_text("{}\n")
+    paths["macro_selection_path"].write_text(json.dumps({"selectionHash": "selection-hash"}))
     return paths
 
 
@@ -63,7 +67,18 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
     fidelity = {"ragingBoltMacroPlanFidelity": "passed", "reportHash": "fidelity-hash",
                 "identity": {"frozen": "same"}}
     review = {"representativeDisagreementsReviewed": True, "receiptHash": "review-hash"}
+    label_manifest = {"manifestHash": "ranker-label-manifest", "selectionHash": "selection-hash",
+        "identity": {"frozen": "same"}}
+    confidence_report = {"reportHash": "confidence-report-hash",
+        "confidenceAuditImplementationSha256": "c" * 64}
     ranker_report = {"identity": {"frozen": "same"}, "acceptance": "review-required",
+        "inputManifestHash": label_manifest["manifestHash"],
+        "inputManifestSha256": file_sha256(paths["ranker_labels_dir"] / "manifest.json"),
+        "selectionHash": label_manifest["selectionHash"],
+        "selectionManifestSha256": file_sha256(paths["macro_selection_path"]),
+        "confidenceAuditReportHash": confidence_report["reportHash"],
+        "confidenceAuditSha256": file_sha256(paths["confidence_audit_path"]),
+        "confidenceAuditImplementationSha256": confidence_report["confidenceAuditImplementationSha256"],
         "development": {"status": "measured"}, "holdouts": [
             {"kind": "leave-one-opponent-archetype-out", "status": "measured"},
             {"kind": "frozen-policy-family", "status": "measured"}]}
@@ -79,10 +94,14 @@ def _patch_verifiers(monkeypatch, paths, *, safety=None):
     monkeypatch.setattr(stage_evidence, "audit_disagreement_review", lambda **_kwargs: review)
     monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
         "report": ranker_report, "artifact": {}})
+    monkeypatch.setattr(stage_evidence, "_load_ranker_input", lambda *_args: (label_manifest, []))
+    monkeypatch.setattr(stage_evidence, "verify_macro_label_confidence_audit",
+        lambda **_kwargs: confidence_report)
     (paths["evaluation_path"]).write_text(json.dumps(evaluation))
     (paths["safety_report_path"]).write_text(json.dumps(safety))
     (paths["macro_fidelity_path"]).write_text(json.dumps(fidelity))
     (paths["disagreement_receipt_path"]).write_text(json.dumps(review))
+    return ranker_report
 
 
 def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authorization(tmp_path, monkeypatch):
@@ -225,9 +244,34 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
 def test_stage_evidence_rejects_missing_or_identity_mismatched_ranker(tmp_path, monkeypatch, ranker_report):
     paths = _inputs(tmp_path)
     _patch_verifiers(monkeypatch, paths)
+    base = {"identity": {"frozen": "same"}, "acceptance": "review-required",
+        "development": {"status": "measured"}, "holdouts": [
+            {"kind": "leave-one-opponent-archetype-out", "status": "measured"},
+            {"kind": "frozen-policy-family", "status": "measured"}]}
+    label_manifest = {"manifestHash": "ranker-label-manifest", "selectionHash": "selection-hash"}
+    confidence_report = {"reportHash": "confidence-report-hash",
+        "confidenceAuditImplementationSha256": "c" * 64}
+    ranker_report = {**base, **ranker_report,
+        "inputManifestHash": label_manifest["manifestHash"],
+        "inputManifestSha256": file_sha256(paths["ranker_labels_dir"] / "manifest.json"),
+        "selectionHash": label_manifest["selectionHash"],
+        "selectionManifestSha256": file_sha256(paths["macro_selection_path"]),
+        "confidenceAuditReportHash": confidence_report["reportHash"],
+        "confidenceAuditSha256": file_sha256(paths["confidence_audit_path"]),
+        "confidenceAuditImplementationSha256": confidence_report["confidenceAuditImplementationSha256"]}
     monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
         "report": ranker_report, "artifact": {}})
     with pytest.raises(ValueError, match="macro-ranker"):
+        stage_evidence.verify_ppo_stage_evidence(**paths)
+
+
+def test_stage_evidence_rejects_ranker_from_stale_confidence_audit(tmp_path, monkeypatch):
+    paths = _inputs(tmp_path)
+    ranker_report = _patch_verifiers(monkeypatch, paths)
+    stale_report = {**ranker_report, "confidenceAuditSha256": "d" * 64}
+    monkeypatch.setattr(stage_evidence, "verify_macro_ranker_v2_artifact", lambda *_args: {
+        "report": stale_report, "artifact": {}})
+    with pytest.raises(ValueError, match="exact labels, selection, and confidence audit"):
         stage_evidence.verify_ppo_stage_evidence(**paths)
 
 
