@@ -974,6 +974,22 @@ editable `approved` field, stale receipt, unknown deck, or modified deck never
 routes to a specialist: it falls back to the generalist. The verifier is an
 evidence gate only and does not train or promote checkpoints.
 
+Once the five specialists independently have passing, human-approved
+promotion receipts, verify the frozen registry with:
+
+```bash
+PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-specialist-curriculum \
+  --root . \
+  --registry artifacts/learning-mind-v1/specialist-registry.json \
+  --output artifacts/learning-mind-v1/verified-specialist-curriculum.json
+```
+
+This command replays and rechecks the source receipts and writes a new immutable
+report. Its JSON output is diagnostic evidence only; a runtime must call the
+source verifier itself to receive the in-process routing capability. The
+command is not a substitute for those promotion gates and should not be run
+until real specialist evidence exists.
+
 ## 13. Supervised continuous operation
 
 Do not begin here until all earlier sections pass.

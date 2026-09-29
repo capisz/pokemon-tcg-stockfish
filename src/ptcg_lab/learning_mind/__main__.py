@@ -24,6 +24,7 @@ from .selection import freeze_macro_label_selection
 from .supervisor import MindSupervisor
 from .supervised_evidence import audit_supervised_evaluation
 from .stage_evidence import verify_ppo_stage_evidence
+from .specialist_evidence import verify_specialist_curriculum
 from .value_targets import (build_value_target_dataset, load_value_target_dataset,
                             training_records as value_training_records)
 from .training import train_supervised
@@ -228,6 +229,14 @@ def main(argv=None) -> int:
         stage.add_argument(f"--{option}", type=Path, required=True)
     stage.add_argument("--human-enable-ppo", action="store_true",
                        help="explicit one-time authorization; prerequisites must still pass")
+    specialists = sub.add_parser("verify-specialist-curriculum",
+        help="reverify exact-deck specialist promotion evidence and write an immutable report")
+    specialists.add_argument("--root", type=Path, required=True,
+        help="repository root containing the five approved deck manifests")
+    specialists.add_argument("--registry", type=Path, required=True,
+        help="frozen specialist registry with checkpoint hashes and promotion receipts")
+    specialists.add_argument("--output", type=Path, required=True,
+        help="new immutable verification-report path")
     args = parser.parse_args(argv)
     if args.command == "audit-baseline":
         result = audit_manifest(args.manifest, limit=args.limit)
@@ -379,6 +388,13 @@ def main(argv=None) -> int:
             disagreement_review_path=args.disagreement_review,
             disagreement_receipt_path=args.disagreement_receipt, output=args.output,
             human_enable_ppo=args.human_enable_ppo)
+    elif args.command == "verify-specialist-curriculum":
+        report, _capability = verify_specialist_curriculum(root=args.root.resolve(),
+            registry_path=args.registry.resolve(), output=args.output.resolve())
+        result = {"verified": report["status"] == "passed",
+            "reportPath": str(args.output.resolve()), "reportHash": report["reportHash"],
+            "specialistCount": report["specialistCount"], "automaticPromotion": False,
+            "runtimeNote": "A saved report is not a routing capability; runtime must reverify sources."}
     print(json.dumps(result, indent=2))
     return 0
 
