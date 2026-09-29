@@ -40,6 +40,21 @@ def _validate_ranker_holdout_coverage(report: dict, records: list[dict]) -> None
                 or not isinstance(row.get("metrics"), dict)
                 or row["metrics"].get("status") != "measured"):
             raise ValueError("ranker report holdout coverage or partition differs from frozen records")
+        expected_test_hashes = [records[index]["positionHash"] for index in baseline["test"]]
+        details = row["metrics"].get("details")
+        detail_hashes = ([detail.get("positionHash") for detail in details]
+                         if isinstance(details, list) and all(isinstance(detail, dict)
+                                                              for detail in details) else [])
+        if (len(expected_test_hashes) != len(detail_hashes)
+                or set(expected_test_hashes) != set(detail_hashes)):
+            raise ValueError("ranker holdout metrics do not cover the frozen evaluation positions")
+        records_by_hash = {records[index]["positionHash"]: records[index]
+                           for index in baseline["test"]}
+        for detail in details:
+            source = records_by_hash[detail["positionHash"]]
+            if any(detail.get(field) != source.get(field) for field in (
+                    "sourceGameId", "split", "opponentArchetype", "opponentPolicyFamily")):
+                raise ValueError("ranker holdout metric provenance differs from its frozen position")
         seen.add(key)
     if seen != set(expected_by_key):
         raise ValueError("ranker report does not exactly cover the frozen holdout set")

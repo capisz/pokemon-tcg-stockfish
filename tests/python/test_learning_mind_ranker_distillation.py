@@ -124,6 +124,32 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "top3Recall": 1.0, "pairwiseComparisons": 1, "pairwiseOrderingAccuracy": 1.0,
         "byOpponentArchetype": group_summaries["opponentArchetype"],
         "byOpponentPolicyFamily": group_summaries["opponentPolicyFamily"], "details": [detail]}
+
+    def coverage_for(source):
+        source_detail = {**detail, "positionHash": source["positionHash"],
+            "sourceGameId": source["sourceGameId"], "split": source["split"],
+            "opponentArchetype": source["opponentArchetype"],
+            "opponentPolicyFamily": source["opponentPolicyFamily"]}
+        source_overall = ranker_v2._bootstrap_mean([0.0],
+            seed_material=f"macro-ranker-v2|all|{source['positionHash']}",
+            group_ids=[source["sourceGameId"]])
+        source_groups = {}
+        for field in ("opponentArchetype", "opponentPolicyFamily"):
+            value = source_detail[field]
+            summary = ranker_v2._bootstrap_mean([0.0],
+                seed_material=f"macro-ranker-v2|{field}|{value}|{source['positionHash']}",
+                group_ids=[source["sourceGameId"]])
+            source_groups[field] = {value: {"positions": 1, "meanTop1RelativeRegret": 0.0,
+                "meanTop1RelativeRegretCI95": summary["interval95"], "bootstrapSeed": summary["seed"],
+                "independentSourceGames": summary["independentUnits"]}}
+        return {**complete_coverage, "details": [source_detail],
+            "meanTop1RelativeRegretCI95": source_overall["interval95"],
+            "bootstrap": {"method": source_overall["method"], "replicates": source_overall["replicates"],
+                "seed": source_overall["seed"],
+                "independentSourceGames": source_overall["independentUnits"]},
+            "byOpponentArchetype": source_groups["opponentArchetype"],
+            "byOpponentPolicyFamily": source_groups["opponentPolicyFamily"]}
+
     report = {"kind": "xgboost-macro-ranker-v2", "featureSchema": MACRO_FEATURE_SCHEMA,
         "featureSchemaHash": MACRO_FEATURE_SCHEMA_HASH,
         "featureImplementationSha256": artifact["featureImplementationSha256"],
@@ -140,8 +166,9 @@ def _ranker_distillation_fixture(tmp_path, monkeypatch):
         "selectionManifestSha256": file_sha256(selection_path),
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "trainingPositions": 1, "trainingCandidates": 2,
-        "training": complete_coverage, "development": complete_coverage,
-        "holdouts": [{**holdout, "status": "measured", "metrics": complete_coverage}
+        "training": coverage_for(record), "development": coverage_for(dev_record),
+        "holdouts": [{**holdout, "status": "measured", "metrics": {
+            **coverage_for([record, dev_record][holdout["test"][0]])}}
             for holdout in experiment._ranker_holdout_rows([record, dev_record])],
         "acceptance": "review-required", "automaticPromotion": False}
     report["reportHash"] = identity_hash(report)
@@ -218,10 +245,12 @@ def test_ranker_distillation_rejects_teacher_report_with_unmeasured_holdout(tmp_
     _identity_manifest, identity, pool, labels, selection, model, report_path = _ranker_distillation_fixture(tmp_path, monkeypatch)
     report = json.loads(report_path.read_text())
     report["holdouts"][0]["status"] = "insufficient"
+    report["holdouts"][0]["metrics"]["status"] = "insufficient"
+    report["acceptance"] = "insufficient"
     report["reportHash"] = identity_hash({key: value for key, value in report.items()
                                           if key != "reportHash"})
     report_path.write_text(json.dumps(report))
-    with pytest.raises(ValueError, match="acceptance contradicts measured evidence"):
+    with pytest.raises(ValueError, match="not a measured, non-promoting research teacher"):
         ranker_distillation.build_macro_ranker_distillation(output=tmp_path / "distill",
             macro_position_pool=pool, labels_dir=labels, selection_path=selection,
             model_path=model, report_path=report_path, identity=identity)
@@ -266,8 +295,13 @@ def test_ranker_holdout_audit_requires_every_frozen_archetype_and_family_partiti
                     "opponentPolicyFamily": family, "split": split,
                     "opponentArchetype": archetype})
     expected = experiment._ranker_holdout_rows(records)
-    report = {"holdouts": [{**row, "status": "measured", "metrics": {"status": "measured"}}
-                            for row in expected]}
+    report = {"holdouts": [{**row, "status": "measured", "metrics": {
+        "status": "measured", "details": [{"positionHash": records[index]["positionHash"],
+            "sourceGameId": records[index]["sourceGameId"], "split": records[index]["split"],
+            "opponentArchetype": records[index]["opponentArchetype"],
+            "opponentPolicyFamily": records[index]["opponentPolicyFamily"]}
+            for index in row["test"]]}}
+        for row in expected]}
     ranker_distillation._validate_ranker_holdout_coverage(report, records)
 
     omitted = {"holdouts": report["holdouts"][:-1]}
@@ -278,3 +312,8 @@ def test_ranker_holdout_audit_requires_every_frozen_archetype_and_family_partiti
     changed_partition["holdouts"][0]["test"].append(7)
     with pytest.raises(ValueError, match="coverage or partition differs"):
         ranker_distillation._validate_ranker_holdout_coverage(changed_partition, records)
+
+    leaked_metrics = json.loads(json.dumps(report))
+    leaked_metrics["holdouts"][0]["metrics"]["details"][0]["positionHash"] = records[0]["positionHash"]
+    with pytest.raises(ValueError, match="metrics do not cover the frozen evaluation positions"):
+        ranker_distillation._validate_ranker_holdout_coverage(leaked_metrics, records)
