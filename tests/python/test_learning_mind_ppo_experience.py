@@ -35,7 +35,7 @@ def game(game_id, status="finished", *, outcome=None, decisions=None):
     schedule = ppo_training_schedule(game_count=index + 1, historical_policy_hashes=HISTORY)[index]
     return {"schemaVersion": 1, "gameId": schedule["gameId"], "status": status,
         "outcome": outcome, "schedule": schedule,
-        "actorDecisions": decisions if decisions is not None else [decision()]}
+        "actorDecisions": decisions if decisions is not None else [decision(schedule["learnerSeats"][0])]}
 
 
 def test_experience_store_resumes_with_checksums_and_separate_outcomes(tmp_path):
@@ -128,6 +128,16 @@ def test_experience_store_rejects_self_consistent_but_wrong_scheduler_assignment
     altered["schedule"]["gameId"] = altered["gameId"]
     with pytest.raises(ValueError, match="differs from the frozen scheduler identity"):
         store.save_game(altered)
+
+
+def test_experience_store_rejects_decisions_from_historical_opponent_seat(tmp_path):
+    store = PPOExperienceStore(tmp_path / "run", settings=settings())
+    historical_game = game("5")
+    assert historical_game["schedule"]["policyFamily"] == "historical"
+    assert historical_game["schedule"]["learnerSeats"] == [1]
+    opponent_decision = decision(0)
+    with pytest.raises(ValueError, match="non-learner seat"):
+        store.save_game(game("5", decisions=[opponent_decision]))
 
 
 def test_finished_and_unfinished_games_map_to_seat_relative_terminal_ppo_traces():

@@ -151,6 +151,11 @@ def _validate_game(game: dict, *, behavior_policy_hash: str,
             or identity_hash({"schedulerVersion": PPO_SCHEDULER_VERSION,
                               **{key: value for key, value in schedule.items() if key != "gameId"}}) != game_id):
         raise ValueError("PPO game ID does not bind its frozen scheduler assignment")
+    learner_seats = schedule.get("learnerSeats")
+    if (not isinstance(learner_seats, list) or not learner_seats
+            or any(type(seat) is not int or seat not in (0, 1) for seat in learner_seats)
+            or len(set(learner_seats)) != len(learner_seats)):
+        raise ValueError("PPO scheduler assignment has invalid learner seats")
     if schedule_settings is not None:
         expected = _ppo_schedule_row(schedule["scheduleIndex"],
             schedule_settings["historicalPolicyHashes"], schedule_settings["trainingSeedBase"])
@@ -173,6 +178,8 @@ def _validate_game(game: dict, *, behavior_policy_hash: str,
     for decision in decisions:
         _validate_decision(decision, behavior_policy_hash=behavior_policy_hash,
                            feature_schema_hash=feature_schema_hash)
+        if decision["actor"] not in learner_seats:
+            raise ValueError("PPO experience includes a decision from a non-learner seat")
     previous: dict[int, int] = {}
     for decision in decisions:
         actor, index = decision["actor"], decision["decisionIndex"]
