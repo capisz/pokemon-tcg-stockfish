@@ -397,12 +397,20 @@ def ppo_enablement(stage_record: VerifiedPPOStageRecord | None) -> dict:
                 "reason": "stage record must be issued from verified generated evidence",
                 "humanEnableRequired": True}
     stage_record = stage_record._values
-    passed = (stage_record.get("representationParity") is True
+    measured_holdouts = stage_record.get("macroRankerMeasuredHoldoutKinds")
+    required_holdouts = {"leave-one-opponent-archetype-out", "frozen-policy-family"}
+    passed = (stage_record.get("prerequisitesPassed") is True
+              and stage_record.get("representationParity") is True
               and stage_record.get("heldOutLabelWin") is True
               and stage_record.get("heldOutLabelEvidenceStatus") == "supported-improvement"
               and stage_record.get("blindOpponentPolicyFamilyStatus") == "supported-improvement"
               and stage_record.get("targetProbeWin") is True
               and stage_record.get("ragingBoltMacroPlanFidelity") == "passed"
+              and stage_record.get("macroRankerAcceptance") == "review-required"
+              and stage_record.get("macroRankerDevelopmentStatus") == "measured"
+              and isinstance(measured_holdouts, list)
+              and required_holdouts.issubset(measured_holdouts)
+              and stage_record.get("macroRankerDistillationBound") is True
               and stage_record.get("severityThreeProbeCoverage") == "sufficient"
               and stage_record.get("severityThreeRegression") is False
               and stage_record.get("legalActionOmission") is False

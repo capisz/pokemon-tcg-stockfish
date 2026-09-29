@@ -1267,6 +1267,9 @@ strength or autonomous improvement.
 - The immutable stage receipt hashes the ranker model/report and records the
   label and confidence inputs plus measured holdout axes. Regression tests
   reject missing/insufficient evidence, mismatched identities, and stale
-  confidence/teacher provenance. Stage and ranker-v2 tests pass (22); CLI help and
-  `git diff --check` pass. No collector, training, PPO, promotion, or service
-  operation was started.
+  confidence/teacher provenance. The low-level `ppo_enablement` function now
+  independently rechecks the complete prerequisite and ranker fields, closing
+  a capability-level bypass where the stage report could be false but the
+  older subset of fields still enabled PPO. Stage, ranker-v2, and PPO
+  experience tests pass (39); CLI help and `git diff --check` pass. No
+  collector, training, PPO, promotion, or service operation was started.

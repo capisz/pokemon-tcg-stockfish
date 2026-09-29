@@ -281,6 +281,29 @@ def test_stage_evidence_rejects_ranker_from_stale_confidence_audit(tmp_path, mon
         stage_evidence.verify_ppo_stage_evidence(**paths)
 
 
+@pytest.mark.parametrize("overrides", [
+    {"macroRankerDistillationBound": False},
+    {"macroRankerMeasuredHoldoutKinds": ["leave-one-opponent-archetype-out"]},
+    {"prerequisitesPassed": False},
+])
+def test_ppo_enablement_rechecks_macro_ranker_gates(overrides):
+    from ptcg_lab.learning_mind.training import (VerifiedPPOStageRecord,
+        _VERIFIED_PPO_STAGE_TOKEN)
+    values = {"prerequisitesPassed": True, "representationParity": True,
+        "heldOutLabelWin": True, "heldOutLabelEvidenceStatus": "supported-improvement",
+        "blindOpponentPolicyFamilyStatus": "supported-improvement", "targetProbeWin": True,
+        "ragingBoltMacroPlanFidelity": "passed", "severityThreeProbeCoverage": "sufficient",
+        "severityThreeRegression": False, "legalActionOmission": False,
+        "illegalAutoregressiveSelection": False, "capOverflow": False,
+        "evaluationIdentityStatus": "matched", "representativeDisagreementsReviewed": True,
+        "macroRankerAcceptance": "review-required", "macroRankerDevelopmentStatus": "measured",
+        "macroRankerMeasuredHoldoutKinds": ["leave-one-opponent-archetype-out", "frozen-policy-family"],
+        "macroRankerDistillationBound": True, "humanEnablePPO": True}
+    capability = VerifiedPPOStageRecord({**values, **overrides},
+        _verification_token=_VERIFIED_PPO_STAGE_TOKEN)
+    assert ppo_enablement(capability)["enabled"] is False
+
+
 def test_stage_evidence_rejects_checkpoint_without_exact_ranker_distillation(tmp_path, monkeypatch):
     paths = _inputs(tmp_path)
     _patch_verifiers(monkeypatch, paths)

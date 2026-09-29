@@ -804,8 +804,11 @@ consume this verified capability rather than reload editable gate booleans.
 
 ## 10. Bounded PPO experiment
 
-PPO remains disabled unless the supervised acceptance gate passes and a human
-sets `humanEnablePPO` for that experiment.
+PPO remains disabled unless the complete verified PPO-stage gate passes,
+including the measured macro-ranker holdouts and proof that the supervised
+checkpoint was trained from that exact ranker's distilled distribution. A
+human must separately set `humanEnablePPO` for that experiment; neither a
+stage report nor a human flag can waive the other requirement.
 
 The frozen configuration is:
 
