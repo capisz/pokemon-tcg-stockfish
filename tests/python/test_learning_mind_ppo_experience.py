@@ -216,6 +216,23 @@ def test_experience_store_rejects_leakage_or_invalid_decision(mutate, match, tmp
         store.save_game(game("5", decisions=[row]))
 
 
+@pytest.mark.parametrize("mutate,match", [
+    (lambda row: row["observation"].update(playerId=True), "must belong to its decision actor"),
+    (lambda row: row["observation"].update(decisionPlayer=True), "must belong to its decision actor"),
+    (lambda row: row["observation"]["players"][1].update(id=True), "integer seat identities"),
+    (lambda row: row["observation"]["players"][0].update(handCount=True),
+     "opponent hand contents must remain redacted"),
+    (lambda row: row["observation"]["players"][1].update(handCount=True),
+     "actor hand must match its actor-visible hand count"),
+])
+def test_experience_store_rejects_boolean_seat_ids_and_hand_counts(mutate, match, tmp_path):
+    store = PPOExperienceStore(tmp_path / "run", settings=settings())
+    row = decision(actor=1)
+    mutate(row)
+    with pytest.raises(ValueError, match=match):
+        store.save_game(game("5", decisions=[row]))
+
+
 def test_experience_store_rejects_full_replay_and_unknown_game_fields(tmp_path):
     store = PPOExperienceStore(tmp_path / "run", settings=settings())
     full_replay = game("6")

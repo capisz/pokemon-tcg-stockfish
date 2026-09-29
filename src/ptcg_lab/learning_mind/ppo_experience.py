@@ -104,18 +104,24 @@ def _validate_decision(decision: dict, *, behavior_policy_hash: str,
     observation = decision.get("observation")
     tracker = decision.get("tracker")
     if (type(actor) is not int or actor not in (0, 1) or not isinstance(observation, dict)
-            or observation.get("playerId") != actor or observation.get("decisionPlayer") != actor
+            or type(observation.get("playerId")) is not int or observation["playerId"] != actor
+            or type(observation.get("decisionPlayer")) is not int
+            or observation["decisionPlayer"] != actor
             or not isinstance(tracker, dict)):
         raise ValueError("PPO experience observation/tracker must belong to its decision actor")
     players = observation.get("players")
     if not isinstance(players, list) or len(players) != 2:
         raise ValueError("PPO experience must preserve exactly the two redacted actor-view player summaries")
-    by_id = {player.get("id"): player for player in players if isinstance(player, dict)}
+    if any(not isinstance(player, dict) or type(player.get("id")) is not int
+           for player in players):
+        raise ValueError("PPO experience actor-view player IDs must be integer seat identities")
+    by_id = {player["id"]: player for player in players}
     if set(by_id) != {0, 1}:
         raise ValueError("PPO experience actor-view players must have unique seat identities")
     own_view, opponent_view = by_id[actor], by_id[1 - actor]
     own_hand, opponent_hand = own_view.get("hand"), opponent_view.get("hand")
-    if not isinstance(own_hand, list) or own_view.get("handCount") != len(own_hand):
+    if (not isinstance(own_hand, list) or type(own_view.get("handCount")) is not int
+            or own_view["handCount"] != len(own_hand)):
         raise ValueError("PPO experience actor hand must match its actor-visible hand count")
     if (not isinstance(opponent_hand, list) or opponent_hand
             or type(opponent_view.get("handCount")) is not int or opponent_view["handCount"] < 0):
