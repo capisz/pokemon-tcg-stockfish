@@ -579,6 +579,13 @@ and uncertainty, evidence-derived weight, and relative target centered on the
 best completed candidate in that position. Truncated and error-only candidates
 remain unlabelled; they never receive fabricated targets.
 
+Fitting also requires the fresh 95% confidence audit from the preceding step.
+The fitter recomputes it from the exact same combined label bundle and selection
+before training, rejects stale or weaker reports, and records the audit report,
+file, and implementation hashes in the ranker evidence. This enforces sequence
+and provenance; the descriptive audit still cannot qualify a model for PPO or
+promotion.
+
 It also binds each family to exactly one source-run rollout identity and
 recomputes every recorded seed from `(split namespace, position hash, index,
 rollout identity)`. Train positions must use `training`, development positions
@@ -588,6 +595,7 @@ must use `development`, and `promotion` seeds are rejected before any model fit.
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind fit-macro-ranker-v2 \
   --labels artifacts/learning-mind-v1/COMBINED_LABELS \
   --selection artifacts/learning-mind-v1/FROZEN_SELECTION.json \
+  --confidence-audit artifacts/learning-mind-v1/macro-label-confidence-v1.json \
   --output artifacts/learning-mind-v1/ranker-v2-iteration-1.json \
   --teacher-hash FROZEN_TEACHER_SHA256 \
   --opponent-policy-hash FROZEN_OPPONENT_SET_SHA256

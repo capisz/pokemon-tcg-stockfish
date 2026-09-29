@@ -201,6 +201,21 @@ def validate_ranker_v2_report(report: dict) -> None:
         raise ValueError("macro ranker v2 evaluation implementation mismatch")
     if report.get("trainingImplementationSha256") != file_sha256(Path(__file__).with_name("ranker.py")):
         raise ValueError("macro ranker v2 training implementation mismatch")
+    for field in ("confidenceAuditReportHash", "confidenceAuditSha256",
+                  "confidenceAuditImplementationSha256"):
+        value = report.get(field)
+        if (not isinstance(value, str) or len(value) != 64
+                or any(char not in "0123456789abcdef" for char in value)):
+            raise ValueError("macro ranker v2 confidence audit identity is malformed")
+    if report["confidenceAuditImplementationSha256"] != file_sha256(
+            Path(__file__).with_name("confidence_audit.py")):
+        raise ValueError("macro ranker v2 confidence audit implementation mismatch")
+    audit_confidence = report.get("confidenceAuditFamilywiseConfidence")
+    if (report.get("confidenceAuditStatus") != "analysis-only"
+            or report.get("confidenceAuditPolicyLabelEligibilityChanged") is not False
+            or type(audit_confidence) not in (int, float) or isinstance(audit_confidence, bool)
+            or not math.isfinite(audit_confidence) or audit_confidence < 0.95 or audit_confidence >= 1):
+        raise ValueError("macro ranker v2 requires a verified 95% analysis-only confidence audit")
     training_library = report.get("trainingLibrary")
     if (not isinstance(training_library, dict) or training_library.get("name") != "xgboost"
             or not isinstance(training_library.get("version"), str) or not training_library["version"]):
@@ -386,13 +401,18 @@ def _publish_json(path: Path, value: dict) -> None:
 
 
 def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
-                        teacher_hash: str, opponent_policy_hash: str,
+                        confidence_audit_path: Path, teacher_hash: str, opponent_policy_hash: str,
                         iteration: int = 1) -> dict:
     """Train feature-v2 ranker without changing collector-bound experiment.py."""
     output = output.resolve()
     report_path = output.with_suffix(".manifest.json")
     if output.exists() or report_path.exists():
         raise ValueError("macro ranker v2 outputs are immutable; choose new output paths")
+    from .confidence_audit import verify_macro_label_confidence_audit
+    confidence_audit = verify_macro_label_confidence_audit(labels_dir=labels_dir.resolve(),
+        selection_path=selection_path.resolve(), report_path=confidence_audit_path.resolve())
+    if confidence_audit["familywiseConfidence"] < 0.95:
+        raise ValueError("macro ranker v2 requires at least 95% confidence reevaluation")
     labels_manifest, records = _load_ranker_input(labels_dir.resolve(), selection_path.resolve())
     _validate_source_game_units(selection_path.resolve(), records)
     source_runs = labels_manifest.get("sourceRuns")
@@ -573,6 +593,12 @@ def fit_macro_ranker_v2(labels_dir: Path, output: Path, *, selection_path: Path,
         "selectionHash": labels_manifest["selectionHash"],
         "inputManifestSha256": file_sha256(labels_dir.resolve() / "manifest.json"),
         "selectionManifestSha256": file_sha256(selection_path.resolve()),
+        "confidenceAuditReportHash": confidence_audit["reportHash"],
+        "confidenceAuditSha256": file_sha256(confidence_audit_path.resolve()),
+        "confidenceAuditImplementationSha256": confidence_audit["confidenceAuditImplementationSha256"],
+        "confidenceAuditFamilywiseConfidence": confidence_audit["familywiseConfidence"],
+        "confidenceAuditStatus": confidence_audit["status"],
+        "confidenceAuditPolicyLabelEligibilityChanged": confidence_audit["policyLabelEligibilityChanged"],
         "modelPath": str(output),
         "modelSha256": model_hash,
         "modelFeatureCount": int(ranker.model.num_features()),

@@ -96,6 +96,10 @@ def test_ranker_v2_report_rejects_feature_or_source_identity_drift():
         "iteration": {"iteration": 1, "teacher_hash": "teacher", "opponent_policy_hash": "opponents",
             "input_hash": "fixture-input", "position_hashes": ["fixture-position"]},
         "inputManifestHash": "fixture-input", "trainingPositions": 1, "trainingCandidates": 2,
+        "confidenceAuditReportHash": "a" * 64, "confidenceAuditSha256": "b" * 64,
+        "confidenceAuditImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("confidence_audit.py")),
+        "confidenceAuditFamilywiseConfidence": 0.95, "confidenceAuditStatus": "analysis-only",
+        "confidenceAuditPolicyLabelEligibilityChanged": False,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
             for kind in ("leave-one-opponent-archetype-out", "frozen-policy-family")],
@@ -179,6 +183,10 @@ def test_ranker_v2_portable_dump_matches_xgboost_scores_and_verifies_hash(tmp_pa
         "iteration": {"iteration": 1, "teacher_hash": "teacher", "opponent_policy_hash": "opponents",
             "input_hash": "fixture-input", "position_hashes": ["fixture-position"]},
         "inputManifestHash": "fixture-input", "trainingPositions": 1, "trainingCandidates": 2,
+        "confidenceAuditReportHash": "a" * 64, "confidenceAuditSha256": "b" * 64,
+        "confidenceAuditImplementationSha256": file_sha256(Path(ranker_v2.__file__).with_name("confidence_audit.py")),
+        "confidenceAuditFamilywiseConfidence": 0.95, "confidenceAuditStatus": "analysis-only",
+        "confidenceAuditPolicyLabelEligibilityChanged": False,
         "modelSha256": file_sha256(model_path), "modelFeatureCount": 640,
         "training": _measured_report_metrics(), "development": _measured_report_metrics(),
         "holdouts": [{"kind": kind, "status": "measured", "metrics": _measured_report_metrics()}
@@ -273,6 +281,8 @@ def _write_ranker_v2_fit_fixture(root):
         "positionsByFamilySplit": {family: {split: len(archetypes) for split in splits} for family in families},
         "positionsBySplit": {split: sum(row["split"] == split for row in records) for split in splits},
         "policyFamilies": list(families), "positions": len(records), "files": files,
+        "labelCollectorVersion": "synthetic-labeler-v1", "labelCollectorSha256": "collector-sha",
+        "candidateGeneratorIdentity": {"version": "synthetic-planner-v1"},
         "sourceRuns": [{"policyFamilies": [family], "rolloutIdentity": rollout_identities[family]}
                        for family in families]}
     manifest["manifestHash"] = identity_hash(manifest)
@@ -282,12 +292,16 @@ def _write_ranker_v2_fit_fixture(root):
 
 def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monkeypatch):
     from ptcg_lab.learning_mind import ranker_v2
+    from ptcg_lab.learning_mind.confidence_audit import audit_macro_label_confidence
     from ptcg_lab.learning_mind.ranker import XGBoostMacroRanker
     monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
         lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
     labels, selection = _write_ranker_v2_fit_fixture(tmp_path)
+    confidence_path = tmp_path / "confidence.json"
+    audit_macro_label_confidence(labels_dir=labels, selection_path=selection, output=confidence_path)
     model_path = tmp_path / "ranker.json"
     report = fit_macro_ranker_v2(labels, model_path, selection_path=selection,
+        confidence_audit_path=confidence_path,
         teacher_hash="frozen-teacher", opponent_policy_hash="frozen-opponent-set")
     assert report["kind"] == "xgboost-macro-ranker-v2"
     assert report["acceptance"] == "review-required"
@@ -314,11 +328,44 @@ def test_ranker_v2_end_to_end_fit_holdouts_and_portable_artifact(tmp_path, monke
     with pytest.raises(ValueError, match="aggregate metrics do not recompute"):
         validate_ranker_v2_report(forged_summary)
 
+    forged_confidence = json.loads(model_path.with_suffix(".manifest.json").read_text())
+    forged_confidence["confidenceAuditStatus"] = "accepted"
+    forged_confidence["reportHash"] = identity_hash({key: value for key, value in forged_confidence.items()
+                                                       if key != "reportHash"})
+    with pytest.raises(ValueError, match="verified 95% analysis-only confidence audit"):
+        validate_ranker_v2_report(forged_confidence)
+
+    low_confidence_path = tmp_path / "confidence-90.json"
+    audit_macro_label_confidence(labels_dir=labels, selection_path=selection,
+        output=low_confidence_path, familywise_alpha=0.10)
+    with pytest.raises(ValueError, match="at least 95% confidence reevaluation"):
+        fit_macro_ranker_v2(labels, tmp_path / "ranker-low-confidence.json",
+            selection_path=selection, confidence_audit_path=low_confidence_path,
+            teacher_hash="frozen-teacher", opponent_policy_hash="frozen-opponent-set")
+
+
+def test_ranker_v2_rejects_confidence_audit_stale_for_label_manifest(tmp_path):
+    from ptcg_lab.learning_mind.confidence_audit import audit_macro_label_confidence
+    labels, selection = _write_ranker_v2_fit_fixture(tmp_path)
+    confidence_path = tmp_path / "confidence.json"
+    audit_macro_label_confidence(labels_dir=labels, selection_path=selection, output=confidence_path)
+    manifest_path = labels / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["postAuditMutation"] = True
+    manifest["manifestHash"] = identity_hash({key: value for key, value in manifest.items()
+                                               if key != "manifestHash"})
+    manifest_path.write_text(json.dumps(manifest))
+    with pytest.raises(ValueError, match="differs from fresh input and implementation recomputation"):
+        fit_macro_ranker_v2(labels, tmp_path / "ranker.json", selection_path=selection,
+            confidence_audit_path=confidence_path, teacher_hash="frozen-teacher",
+            opponent_policy_hash="frozen-opponent-set")
+
 
 @pytest.mark.parametrize("incomplete_split", ("train", "development"))
 def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
         tmp_path, monkeypatch, incomplete_split):
     from ptcg_lab.learning_mind import ranker_v2
+    from ptcg_lab.learning_mind.confidence_audit import audit_macro_label_confidence
     monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
         lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
     labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
@@ -345,8 +392,12 @@ def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
                                                if key != "manifestHash"})
     manifest_path.write_text(json.dumps(manifest))
 
+    confidence_path = tmp_path / "confidence.json"
+    audit_macro_label_confidence(labels_dir=labels_dir, selection_path=selection_path,
+        output=confidence_path)
     report = fit_macro_ranker_v2(labels_dir, tmp_path / "ranker.json",
-        selection_path=selection_path, teacher_hash="frozen-teacher",
+        selection_path=selection_path, confidence_audit_path=confidence_path,
+        teacher_hash="frozen-teacher",
         opponent_policy_hash="frozen-opponent-set")
     if incomplete_split == "development":
         assert report["development"]["status"] == "insufficient"
@@ -363,6 +414,7 @@ def test_ranker_v2_does_not_report_partial_label_coverage_as_measured(
 
 
 def test_ranker_v2_tied_candidate_outcomes_are_not_measured_evidence(tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind.confidence_audit import audit_macro_label_confidence
     monkeypatch.setattr(ranker_v2, "XGBoostMacroRanker",
         lambda: XGBoostMacroRanker(n_estimators=4, max_depth=2))
     labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
@@ -380,8 +432,12 @@ def test_ranker_v2_tied_candidate_outcomes_are_not_measured_evidence(tmp_path, m
                                                if key != "manifestHash"})
     manifest_path.write_text(json.dumps(manifest))
 
+    confidence_path = tmp_path / "confidence.json"
+    audit_macro_label_confidence(labels_dir=labels_dir, selection_path=selection_path,
+        output=confidence_path)
     report = fit_macro_ranker_v2(labels_dir, tmp_path / "ranker.json",
-        selection_path=selection_path, teacher_hash="frozen-teacher",
+        selection_path=selection_path, confidence_audit_path=confidence_path,
+        teacher_hash="frozen-teacher",
         opponent_policy_hash="frozen-opponent-set")
     assert report["training"]["status"] == "insufficient"
     assert report["training"]["insufficientReason"] == "no-nontied-candidate-comparisons"

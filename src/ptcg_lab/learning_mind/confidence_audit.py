@@ -141,6 +141,7 @@ def _build_report(*, labels_dir: Path, selection_path: Path, manifest: dict,
         "kind": "macro-label-confidence-audit-v1",
         "status": "analysis-only",
         "intervalMethod": "bonferroni-simultaneous-hoeffding-bounded-finished-outcomes-v1",
+        "familywiseAlpha": familywise_alpha,
         "familywiseConfidence": 1.0 - familywise_alpha,
         "confidenceScope": "candidate set within each position; not simultaneous across positions",
         "interpretation": "Intervals are conditional on finished rollouts; truncations and errors are reported separately, not imputed.",
@@ -173,12 +174,12 @@ def verify_macro_label_confidence_audit(*, labels_dir: Path, selection_path: Pat
     if claimed.get("kind") != "macro-label-confidence-audit-v1":
         raise ValueError("unsupported confidence audit report")
     manifest, records = _load_ranker_input(labels_dir, selection_path)
-    confidence = claimed.get("familywiseConfidence")
-    if (type(confidence) not in (int, float) or isinstance(confidence, bool)
-            or not math.isfinite(confidence) or not 0 < confidence < 1):
-        raise ValueError("confidence audit report has an invalid confidence level")
+    alpha = claimed.get("familywiseAlpha")
+    if (type(alpha) not in (int, float) or isinstance(alpha, bool)
+            or not math.isfinite(alpha) or not 0 < alpha < 1):
+        raise ValueError("confidence audit report has an invalid family-wise alpha")
     fresh = _build_report(labels_dir=labels_dir, selection_path=selection_path,
-        manifest=manifest, records=records, familywise_alpha=1.0 - confidence)
+        manifest=manifest, records=records, familywise_alpha=alpha)
     fresh["reportHash"] = identity_hash(fresh)
     if claimed != fresh:
         raise ValueError("confidence audit differs from fresh input and implementation recomputation")

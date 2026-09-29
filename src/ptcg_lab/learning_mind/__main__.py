@@ -157,6 +157,8 @@ def main(argv=None) -> int:
         help="fit the actor-visible state/plan-feature ranker with a separately versioned model contract")
     rank_v2.add_argument("--labels", type=Path, required=True)
     rank_v2.add_argument("--selection", type=Path, required=True)
+    rank_v2.add_argument("--confidence-audit", type=Path, required=True,
+                         help="verified final-label confidence report for these exact labels and selection")
     rank_v2.add_argument("--output", type=Path, required=True)
     rank_v2.add_argument("--teacher-hash", required=True)
     rank_v2.add_argument("--opponent-policy-hash", required=True)
@@ -310,7 +312,8 @@ def main(argv=None) -> int:
                             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
     elif args.command == "fit-macro-ranker-v2":
         result = fit_macro_ranker_v2(args.labels.resolve(), args.output.resolve(),
-            selection_path=args.selection.resolve(), teacher_hash=args.teacher_hash,
+            selection_path=args.selection.resolve(), confidence_audit_path=args.confidence_audit.resolve(),
+            teacher_hash=args.teacher_hash,
             opponent_policy_hash=args.opponent_policy_hash, iteration=args.iteration)
     elif args.command == "verify-macro-ranker-v2":
         verified = verify_macro_ranker_v2_artifact(args.model, args.report)
