@@ -407,3 +407,24 @@ def test_ranker_v2_bootstrap_units_must_match_frozen_unique_source_games(tmp_pat
     selection_path.write_text(json.dumps(selection))
     with pytest.raises(ValueError, match="reuses or omits a source game"):
         _validate_source_game_units(selection_path, records)
+
+
+def test_ranker_v2_train_and_development_games_must_be_disjoint_across_families(tmp_path):
+    labels_dir, selection_path = _write_ranker_v2_fit_fixture(tmp_path)
+    records = [json.loads(path.read_text()) for family in ("python-heuristic", "typescript-heuristic")
+               for path in (labels_dir / family).glob("*.json")]
+    selection = json.loads(selection_path.read_text())
+    python_train = next(row for row in selection["splits"]
+                        if row["policyFamily"] == "python-heuristic" and row["split"] == "train")
+    typescript_development = next(row for row in selection["splits"]
+                                  if row["policyFamily"] == "typescript-heuristic"
+                                  and row["split"] == "development")
+    shared_game = python_train["positions"][0]["sourceGameId"]
+    leaked_position = typescript_development["positions"][0]["positionHash"]
+    typescript_development["positions"][0]["sourceGameId"] = shared_game
+    next(row for row in records if row["positionHash"] == leaked_position)["sourceGameId"] = shared_game
+    selection["selectionHash"] = identity_hash({key: value for key, value in selection.items()
+                                                  if key != "selectionHash"})
+    selection_path.write_text(json.dumps(selection))
+    with pytest.raises(ValueError, match="across policy families"):
+        _validate_source_game_units(selection_path, records)

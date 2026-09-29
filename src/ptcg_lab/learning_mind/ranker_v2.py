@@ -81,6 +81,12 @@ def _validate_source_game_units(selection_path: Path, records: list[dict]) -> No
                 for split in ("train", "development")}
     if set(selected_source_games) != required:
         raise ValueError("ranker v2 selection source-game metadata has incomplete family/split coverage")
+    all_train_games = set().union(*(set(selected_source_games[(family, "train")].values())
+                                    for family in ("python-heuristic", "typescript-heuristic")))
+    all_development_games = set().union(*(set(selected_source_games[(family, "development")].values())
+                                          for family in ("python-heuristic", "typescript-heuristic")))
+    if all_train_games & all_development_games:
+        raise ValueError("ranker v2 train and development selections reuse a source game across policy families")
     for family in ("python-heuristic", "typescript-heuristic"):
         if (set(selected_source_games[(family, "train")].values())
                 & set(selected_source_games[(family, "development")].values())):
