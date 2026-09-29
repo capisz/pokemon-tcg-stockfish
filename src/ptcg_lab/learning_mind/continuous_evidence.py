@@ -11,8 +11,11 @@ import time
 from types import MappingProxyType
 
 from .notifications import VerifiedPromotionEvidence
+from .promotion_evidence import reissue_promotion_evidence_report
 from .schema import identity_hash
-from .specialist_evidence import VerifiedSpecialistCurriculumEvidence
+from .specialist_evidence import (VerifiedSpecialistCurriculumEvidence,
+    verify_specialist_curriculum)
+from .stage_evidence import verify_ppo_stage_evidence
 from .supervisor import (FAILURE_KINDS, VerifiedContinuousOperationRecord,
     _VERIFIED_CONTINUOUS_TOKEN)
 from .training import (VerifiedPPOStageRecord, _thaw_evidence, ppo_enablement)
@@ -264,3 +267,51 @@ def issue_continuous_operation_evidence(*, stage_record: VerifiedPPOStageRecord,
     capability = VerifiedContinuousOperationRecord(values,
         _verification_token=_VERIFIED_CONTINUOUS_TOKEN)
     return report, capability
+
+
+def verify_continuous_operation_sources(*, ppo_stage_sources: dict,
+        promotion_report_path: Path, specialist_root: Path, specialist_registry_path: Path,
+        soak_root: Path, soak_manifest_path: Path, output_dir: Path,
+        human_enable_ppo: bool, human_reviewed_soak: bool,
+        human_enable_continuous_operation: bool):
+    """Reverify every source in one process and return the only usable start capability.
+
+    This command path does not start the supervisor or perform the soak. Each
+    attempt writes to a fresh output directory because its reports are immutable.
+    """
+    if (type(human_enable_ppo) is not bool or not human_enable_ppo
+            or type(human_reviewed_soak) is not bool or not human_reviewed_soak
+            or type(human_enable_continuous_operation) is not bool
+            or not human_enable_continuous_operation):
+        raise PermissionError("continuous operation requires separate explicit human approvals for PPO, soak, and this run")
+    if not isinstance(ppo_stage_sources, dict) or not ppo_stage_sources:
+        raise ValueError("continuous verification requires all frozen PPO-stage source paths")
+    if {"output", "human_enable_ppo"} & set(ppo_stage_sources):
+        raise ValueError("PPO-stage output and human authorization are controlled by this verifier")
+    output_dir = Path(output_dir).resolve()
+    output_paths = {"ppoStage": output_dir / "ppo-stage-evidence.json",
+        "specialists": output_dir / "specialist-curriculum-evidence.json",
+        "soak": output_dir / "supervised-soak-evidence.json",
+        "continuous": output_dir / "continuous-operation-evidence.json"}
+    if any(path.exists() or path.is_symlink() for path in output_paths.values()):
+        raise ValueError("continuous verification outputs are immutable; choose a fresh output directory")
+    output_dir.mkdir(parents=True, exist_ok=True)
+
+    stage_report, stage_record = verify_ppo_stage_evidence(**ppo_stage_sources,
+        output=output_paths["ppoStage"], human_enable_ppo=True)
+    if not ppo_enablement(stage_record)["enabled"]:
+        raise PermissionError("verified PPO-stage evidence is not eligible for continuous operation")
+    promotion_report, promotion = reissue_promotion_evidence_report(Path(promotion_report_path))
+    if promotion is None:
+        raise PermissionError("promotion source did not reissue human-approved passing evidence")
+    specialist_report, specialists = verify_specialist_curriculum(root=Path(specialist_root),
+        registry_path=Path(specialist_registry_path), output=output_paths["specialists"])
+    soak_report, soak = audit_supervised_soak(root=Path(soak_root),
+        manifest_path=Path(soak_manifest_path), output=output_paths["soak"],
+        human_reviewed=True)
+    continuous_report, capability = issue_continuous_operation_evidence(
+        stage_record=stage_record, promotion=promotion, specialists=specialists,
+        soak=soak, human_enable=True, output=output_paths["continuous"])
+    return {"ppoStage": stage_report, "promotion": promotion_report,
+        "specialists": specialist_report, "soak": soak_report,
+        "continuousOperation": continuous_report}, capability

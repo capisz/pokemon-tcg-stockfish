@@ -1024,13 +1024,16 @@ phase/cursor. The audit verifies files and hashes; it does not perform the soak
 or failure drills. `human_reviewed=True` is a separate operator attestation,
 not a substitute for reviewing the underlying artifacts.
 
-In the same runtime, call `issue_continuous_operation_evidence(...)` with the
-freshly verified PPO-stage, human-approved promotion, exact-deck specialist,
-and soak capabilities plus `human_enable=True`. It rechecks cross-artifact
-hash bindings and writes an immutable report; only its returned in-process
-capability can pass `MindSupervisor.start`. The source verifiers must be freshly
-run together before each separately enabled supervisor run. This API is not a
-service installer, and no continuous-operation capability can issue while an
+The end-to-end `verify_continuous_operation_sources(...)` entry point runs the
+PPO-stage source verifier, reissues promotion evidence, verifies all exact-deck
+specialists, audits the soak package, checks cross-artifact hashes, and returns
+the resulting in-process capability. Pass `ppo_stage_sources` as the frozen
+source-path keyword arguments accepted by `verify_ppo_stage_evidence` (omit its
+`output` and `human_enable_ppo` arguments; the orchestration owns those), along
+with the promotion report, specialist registry/root, soak root/manifest, a
+fresh `output_dir`, and all three explicit human approvals. Keep the returned
+capability in that same runtime and pass it to `MindSupervisor.start` for that
+run. This API is not a service installer, and no capability can issue while an
 earlier milestone gate remains unmet.
 
 Use four independently resumable phases:

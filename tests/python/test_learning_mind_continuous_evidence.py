@@ -3,12 +3,14 @@ from __future__ import annotations
 from datetime import datetime, timezone
 import hashlib
 import json
+from pathlib import Path
 import time
 
 import pytest
 
 from ptcg_lab.learning_mind.continuous_evidence import (
-    _REQUIRED_DRILLS, audit_supervised_soak, issue_continuous_operation_evidence)
+    _REQUIRED_DRILLS, audit_supervised_soak, issue_continuous_operation_evidence,
+    verify_continuous_operation_sources)
 from ptcg_lab.learning_mind.dataset_v1 import file_sha256
 from ptcg_lab.learning_mind.notifications import VerifiedPromotionEvidence, _VERIFIED_PROMOTION_TOKEN
 from ptcg_lab.learning_mind.schema import identity_hash
@@ -180,3 +182,55 @@ def test_continuous_capability_rejects_stale_bindings_and_human_gate(tmp_path):
         issue_continuous_operation_evidence(stage_record=stage, promotion=promotion,
             specialists=specialists, soak=soak, human_enable=False,
             output=tmp_path / "not-enabled.json")
+
+
+def test_continuous_source_orchestrator_reverifies_all_capabilities_in_one_runtime(
+        tmp_path, monkeypatch):
+    from ptcg_lab.learning_mind import continuous_evidence
+
+    stage, promotion, specialists, bindings = _identities()
+    root = tmp_path / "soak"
+    manifest_path, _ended = _write_soak(root, bindings)
+    calls = []
+
+    def verify_stage(**kwargs):
+        calls.append("stage")
+        assert kwargs["human_enable_ppo"] is True
+        kwargs["output"].parent.mkdir(parents=True, exist_ok=True)
+        kwargs["output"].write_text("{}")
+        return {"reportHash": bindings["ppoStageEvidenceHash"]}, stage
+
+    def verify_promotion(path):
+        calls.append("promotion")
+        assert path == Path("promotion-report.json")
+        return {"reportHash": bindings["promotionReportHash"]}, promotion
+
+    def verify_specialists(**kwargs):
+        calls.append("specialists")
+        kwargs["output"].write_text("{}")
+        return {"reportHash": bindings["specialistReportHash"]}, specialists
+
+    monkeypatch.setattr(continuous_evidence, "verify_ppo_stage_evidence", verify_stage)
+    monkeypatch.setattr(continuous_evidence, "reissue_promotion_evidence_report", verify_promotion)
+    monkeypatch.setattr(continuous_evidence, "verify_specialist_curriculum", verify_specialists)
+    reports, capability = verify_continuous_operation_sources(
+        ppo_stage_sources={"root": Path("repository")},
+        promotion_report_path=Path("promotion-report.json"),
+        specialist_root=tmp_path, specialist_registry_path=Path("specialist-registry.json"),
+        soak_root=root, soak_manifest_path=manifest_path, output_dir=tmp_path / "verified",
+        human_enable_ppo=True, human_reviewed_soak=True,
+        human_enable_continuous_operation=True)
+    assert calls == ["stage", "promotion", "specialists"]
+    assert set(reports) == {"ppoStage", "promotion", "specialists", "soak", "continuousOperation"}
+    assert continuous_operation_enablement(capability)["enabled"] is True
+    assert (tmp_path / "verified" / "continuous-operation-evidence.json").is_file()
+
+
+def test_continuous_source_orchestrator_requires_all_three_human_approvals(tmp_path):
+    with pytest.raises(PermissionError, match="separate explicit human approvals"):
+        verify_continuous_operation_sources(ppo_stage_sources={"root": tmp_path},
+            promotion_report_path=tmp_path / "promotion.json", specialist_root=tmp_path,
+            specialist_registry_path=tmp_path / "specialists.json", soak_root=tmp_path,
+            soak_manifest_path=tmp_path / "soak.json", output_dir=tmp_path / "output",
+            human_enable_ppo=True, human_reviewed_soak=True,
+            human_enable_continuous_operation=False)
