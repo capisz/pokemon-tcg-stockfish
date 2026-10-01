@@ -1043,11 +1043,19 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-ppo-stage \
   --disagreement-receipt REVIEW_RECEIPT.json --output PPO_STAGE_EVIDENCE.json
 ```
 
+To refresh the tracked evidence-derived fields in `stage-gates.json` from that
+same freshly recomputed report, add the explicit opt-in
+`--refresh-stage-gates docs/validation/learning-mind-v1/stage-gates.json`.
+This refresh always forces `humanEnablePPO`, `ppoEnabled`,
+`continuousOperationEnabled`, and `trustedPromotion` to `false`; it records the
+hash-bound report location but never grants runtime authorization.
+
 The report only yields an in-process PPO capability after all source evidence
-has been freshly recomputed and matched. The current CLI only audits and writes
-the report; it does not launch PPO, update the trusted checkpoint, alter the
-collector, or enable continuous operation. A later training entry point must
-consume this verified capability rather than reload editable gate booleans.
+has been freshly recomputed and matched. The CLI only audits, writes the report,
+and optionally refreshes evidence metadata; it does not launch PPO, update the
+trusted checkpoint, alter the collector, or enable continuous operation. A
+later training entry point must consume this verified capability rather than
+reload editable gate booleans.
 
 ## 10. Bounded PPO experiment
 

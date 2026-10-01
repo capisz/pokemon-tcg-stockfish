@@ -333,6 +333,8 @@ def main(argv=None) -> int:
         stage.add_argument(f"--{option}", type=Path, required=True)
     stage.add_argument("--human-enable-ppo", action="store_true",
                        help="explicit one-time authorization; prerequisites must still pass")
+    stage.add_argument("--refresh-stage-gates", type=Path,
+                       help="opt in to refresh evidence fields in this stage-gates JSON; all enablement flags stay false")
     specialists = sub.add_parser("verify-specialist-curriculum",
         help="reverify exact-deck specialist promotion evidence and write an immutable report")
     specialists.add_argument("--root", type=Path, required=True,
@@ -571,6 +573,10 @@ def main(argv=None) -> int:
             disagreement_review_path=args.disagreement_review,
             disagreement_receipt_path=args.disagreement_receipt, output=args.output,
             human_enable_ppo=args.human_enable_ppo)
+        if args.refresh_stage_gates is not None:
+            from .stage_evidence import refresh_stage_gate_evidence
+            refresh_stage_gate_evidence(stage_gates_path=args.refresh_stage_gates,
+                verified_report=result, report_path=args.output)
     elif args.command == "verify-specialist-curriculum":
         report, _capability = verify_specialist_curriculum(root=args.root.resolve(),
             registry_path=args.registry.resolve(), output=args.output.resolve())

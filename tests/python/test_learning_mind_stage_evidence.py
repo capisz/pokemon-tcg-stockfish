@@ -245,6 +245,50 @@ def test_stage_evidence_requires_recomputed_reports_and_explicit_human_authoriza
         "three rejected updates or worker restarts within one hour"
 
 
+def test_refresh_stage_gates_copies_verified_evidence_but_never_enables_learning(tmp_path):
+    gates_path = tmp_path / "stage-gates.json"
+    report_path = tmp_path / "ppo-stage.json"
+    source_path = tmp_path / "checkpoint.pt"
+    source_path.write_bytes(b"frozen-checkpoint")
+    gates_path.write_text(json.dumps({"schemaVersion": 1, "nextGate": "keep this context",
+        "ppoEnabled": False, "continuousOperationEnabled": False, "trustedPromotion": False}))
+    report = {
+        "kind": "verified-ppo-stage-evidence-v1",
+        "sourceArtifacts": {"checkpoint": {"path": str(source_path),
+            "sha256": file_sha256(source_path)}},
+        "representationParity": True, "supervisedManifestFrozen": True,
+        "supervisedCheckpointTrained": True, "heldOutLabelWin": False,
+        "heldOutLabelEvidenceStatus": "insufficient",
+        "blindOpponentPolicyFamilyStatus": "insufficient",
+        "legalActionOmission": False, "illegalAutoregressiveSelection": False,
+        "capOverflow": False, "evaluationIdentityStatus": "matched",
+        "representativeDisagreementsReviewed": False, "targetProbeWin": False,
+        "severityThreeRegression": False, "severityThreeProbeCoverage": "insufficient",
+        "ragingBoltMacroPlanFidelity": "passed", "humanEnablePPO": True,
+        "prerequisitesPassed": False, "ppoEnabled": False,
+    }
+    report["reportHash"] = identity_hash(report)
+    report_path.write_text(json.dumps(report))
+
+    refreshed = stage_evidence.refresh_stage_gate_evidence(stage_gates_path=gates_path,
+        verified_report=report, report_path=report_path)
+
+    assert refreshed["heldOutLabelEvidenceStatus"] == "insufficient"
+    assert refreshed["evaluationIdentityStatus"] == "matched"
+    assert refreshed["ragingBoltMacroPlanFidelity"] == "passed"
+    assert refreshed["nextGate"] == "keep this context"
+    assert refreshed["stageEvidenceReport"]["sha256"] == file_sha256(report_path)
+    assert refreshed["humanEnablePPO"] is False
+    assert refreshed["ppoEnabled"] is False
+    assert refreshed["continuousOperationEnabled"] is False
+    assert refreshed["trustedPromotion"] is False
+
+    forged = {**report, "heldOutLabelWin": True}
+    with pytest.raises(ValueError, match="report hash"):
+        stage_evidence.refresh_stage_gate_evidence(stage_gates_path=gates_path,
+            verified_report=forged, report_path=report_path)
+
+
 @pytest.mark.parametrize("ranker_report", [
     {"identity": {"frozen": "same"}, "acceptance": "insufficient",
      "development": {"status": "insufficient"}, "holdouts": []},

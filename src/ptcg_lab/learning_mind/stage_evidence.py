@@ -50,6 +50,76 @@ def _write_immutable(path: Path, value: dict) -> None:
         temporary_path.unlink(missing_ok=True)
 
 
+_STAGE_GATE_EVIDENCE_FIELDS = (
+    "representationParity", "supervisedManifestFrozen", "supervisedCheckpointTrained",
+    "heldOutLabelWin", "heldOutLabelEvidenceStatus", "blindOpponentPolicyFamilyStatus",
+    "legalActionOmission", "illegalAutoregressiveSelection", "capOverflow",
+    "evaluationIdentityStatus", "representativeDisagreementsReviewed", "targetProbeWin",
+    "severityThreeRegression", "severityThreeProbeCoverage", "ragingBoltMacroPlanFidelity",
+)
+
+
+def refresh_stage_gate_evidence(*, stage_gates_path: Path, verified_report: dict,
+        report_path: Path) -> dict:
+    """Refresh evidence-derived gate fields without enabling any learning stage.
+
+    Call only with the report returned by ``verify_ppo_stage_evidence`` in the same
+    process. Authorization fields are always forced off; this is not an enablement
+    operation or a substitute for the verifier's source-artifact recomputation.
+    """
+    gates_path = Path(stage_gates_path).resolve()
+    report_file = Path(report_path).resolve()
+    report = dict(verified_report)
+    report_hash = report.pop("reportHash", None)
+    if not isinstance(report_hash, str) or report_hash != identity_hash(report):
+        raise ValueError("stage report hash is missing or invalid")
+    if report.get("kind") != "verified-ppo-stage-evidence-v1":
+        raise ValueError("stage report is not verified PPO-stage evidence")
+    if not all(field in report for field in _STAGE_GATE_EVIDENCE_FIELDS):
+        raise ValueError("verified stage report is missing gate evidence fields")
+    if not isinstance(report.get("sourceArtifacts"), dict) or not report["sourceArtifacts"]:
+        raise ValueError("verified stage report lacks source-artifact receipts")
+    if not report_file.is_file() or json.loads(report_file.read_text()) != verified_report:
+        raise ValueError("stage report file does not match the verified report object")
+    for name, receipt in report["sourceArtifacts"].items():
+        if (not isinstance(receipt, dict) or not isinstance(receipt.get("path"), str)
+                or not isinstance(receipt.get("sha256"), str)):
+            raise ValueError(f"stage report has an invalid source-artifact receipt: {name}")
+        source = Path(receipt["path"])
+        if not source.is_file() or file_sha256(source) != receipt["sha256"]:
+            raise ValueError(f"stage report source artifact changed since verification: {name}")
+
+    gates = _read_json(gates_path)
+    for field in _STAGE_GATE_EVIDENCE_FIELDS:
+        gates[field] = report[field]
+    gates["stageEvidenceReport"] = {
+        "path": os.path.relpath(report_file, gates_path.parent),
+        "sha256": file_sha256(report_file),
+        "reportHash": report_hash,
+    }
+    # Evidence refresh must never authorize a run, even if the verifier was invoked
+    # with its separate human-authorization flag.
+    gates["humanEnablePPO"] = False
+    gates["ppoEnabled"] = False
+    gates["continuousOperationEnabled"] = False
+    gates["trustedPromotion"] = False
+
+    gates_path.parent.mkdir(parents=True, exist_ok=True)
+    existing_mode = gates_path.stat().st_mode & 0o777 if gates_path.exists() else 0o644
+    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", dir=gates_path.parent,
+                                     prefix=f".{gates_path.name}.", delete=False) as temporary:
+        temporary.write(json.dumps(gates, sort_keys=True, indent=2) + "\n")
+        temporary.flush()
+        os.fsync(temporary.fileno())
+        temporary_path = Path(temporary.name)
+    try:
+        temporary_path.chmod(existing_mode)
+        os.replace(temporary_path, gates_path)
+    finally:
+        temporary_path.unlink(missing_ok=True)
+    return gates
+
+
 def _audit_frozen_baseline(root: Path, manifest_path: Path) -> dict:
     manifest = _read_json(manifest_path)
     replays = manifest.get("replays")
