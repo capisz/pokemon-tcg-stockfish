@@ -1402,25 +1402,24 @@ game count, unfinished-outcome accounting, seed namespaces, and disk reserve.
 
 ## 16. Recommended next evidence task
 
-The orchestration layer below is implemented and smoke-tested. The next task
-should expand its evidence without changing the acceptance rules:
+The current evidence gate is recorded in
+`docs/validation/learning-mind-v1/stage-gates.json` and the dated v17/v19
+audit below. Earlier planner and execution concerns in this section have been
+superseded by later evidence; in particular, macro-plan execution fidelity
+passed for all 300 Raging Bolt candidates. Do not repeat those completed
+diagnostics as the next task.
 
-1. collect approved positions for the Raging Bolt plan, Crustle Fan target, and
-   Dragapult large-hand Judge families;
-2. preserve a real held-out split and a blind opponent-policy family;
-3. improve the transition planner's candidate abstraction without merging
-   board targets or dropping meaningful action bindings: v3 now requires an
-   explicit attack or pass ending. Only complete plans count against the
-   128-candidate cap (intermediate traversal has a separate 4,096-prefix hard
-   bound); the corrected accounting supports 11/18 frozen positions;
-4. first fix action-sequence execution across matched determinization and
-   chance samples. The one-position 80-decision smoke scored 0/81 candidates
-   (25 cutoffs, 56 typed action-resolution errors); do not start broad label
-   collection until a targeted matched-sample test passes;
-5. refit and require measured archetype/policy holdouts;
-6. only after broad, balanced support and label quality are demonstrated, train
-   a new immutable candidate and evaluate held-out labels plus every frozen
-   v1.2 probe.
+The next evidence-producing steps are explicitly approval-gated label
+collections: finish/evaluate the in-progress Python held-out run, collect the
+matching TypeScript held-out labels, and collect the three frozen v19 training
+coverage replacements. The TypeScript held-out run is necessary for the
+game-balanced policy-family evaluation; the three v19 replacements are
+necessary to repair training coverage from 76/79. The v19 no-write preflights
+and merge path are already documented and tested below. Until the needed
+collections are authorized and their results pass the frozen evaluators, do
+not distill the ranker, enable PPO, enable continuous operation, or promote a
+trusted checkpoint. Never treat these collection steps as authorized merely
+because they appear in this runbook.
 
 ### Position-stage support audit (2026-09-22)
 
