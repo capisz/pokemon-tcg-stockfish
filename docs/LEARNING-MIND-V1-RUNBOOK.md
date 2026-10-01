@@ -114,7 +114,22 @@ candidate-seed rollouts and a 129,344 maximum before adaptive pruning. These
 are work-unit bounds, not elapsed-time estimates; no comparable runtime
 benchmark was available when this estimate was recorded on 2026-09-29.
 
-#### Active heldout-label collection snapshot (2026-09-30 9:18 PM EDT)
+#### Active heldout-label collection snapshot (2026-09-30 10:41 PM EDT)
+
+At this read-only checkpoint, 12 of 34 Python positions are finalized, one is
+in progress, and 21 have not started. The active position
+`5c7b094043a823d91ccf99ef3afbc97f4bb105b3a079b80d65fd01c7e62a3e3d` has 106
+active candidates at 41 samples each (extension indices through 40): 4,266
+finished, 80 truncated, and 0 errored candidate-seed rollouts. Confidence was
+reevaluated through index 39. The next gate is completing the extension batch
+through index 47 before confidence reevaluation. The collector process and
+eight engine workers were live when checked. The TypeScript family has not been
+started; this partial Python run is not training-eligible evidence. PPO,
+continuous operation, and trusted promotion remain disabled. These counts are
+a dated snapshot, not a live status source; rerun the read-only progress command
+below to inspect current checkpoints.
+
+#### Initial collection snapshot (2026-09-30 9:18 PM EDT)
 
 The separately authorized Python-family heldout-label collection is now
 running; this is the first real heldout engine rollout run. At this snapshot,
@@ -157,13 +172,15 @@ families, evaluate the already-frozen ranker without fitting or changing it:
 ```bash
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind evaluate-macro-ranker-heldout \
   --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
-  --ranker-selection FROZEN_TRAIN_DEVELOPMENT_SELECTION.json \
-  --model VERIFIED_RANKER_V2.json --ranker-report VERIFIED_RANKER_V2.manifest.json \
+  --ranker-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --model artifacts/learning-mind-v1/ranker-v2-iteration-5.json \
+  --ranker-report artifacts/learning-mind-v1/ranker-v2-iteration-5.manifest.json \
   --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
   --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
   --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
   --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
-  --python-labels HELDOUT_PYTHON_LABEL_RUN --typescript-labels HELDOUT_TYPESCRIPT_LABEL_RUN \
+  --python-labels artifacts/learning-mind-v1/macro-labels-heldout-v1/python \
+  --typescript-labels artifacts/learning-mind-v1/macro-labels-heldout-v1/typescript \
   --output artifacts/learning-mind-v1/macro-ranker-v2-heldout-evaluation.json
 ```
 
@@ -189,13 +206,15 @@ no engine and trains no model:
 PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind verify-macro-ranker-heldout-evaluation \
   --report artifacts/learning-mind-v1/macro-ranker-v2-heldout-evaluation.json \
   --selection docs/validation/learning-mind-v1/macro-ranker-heldout-selection-v2-2026-09-29.json \
-  --ranker-selection FROZEN_TRAIN_DEVELOPMENT_SELECTION.json \
-  --model VERIFIED_RANKER_V2.json --ranker-report VERIFIED_RANKER_V2.manifest.json \
+  --ranker-selection docs/validation/learning-mind-v1/macro-label-selection-v17-generalist-balanced-2026-09-23.json \
+  --model artifacts/learning-mind-v1/ranker-v2-iteration-5.json \
+  --ranker-report artifacts/learning-mind-v1/ranker-v2-iteration-5.manifest.json \
   --python-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/python \
   --typescript-dataset artifacts/learning-mind-v1/macro-pools-v13-generalist/typescript \
   --python-support artifacts/learning-mind-v1/macro-support-v13-python-all/report.json \
   --typescript-support artifacts/learning-mind-v1/macro-support-v13-typescript-all/report.json \
-  --python-labels HELDOUT_PYTHON_LABEL_RUN --typescript-labels HELDOUT_TYPESCRIPT_LABEL_RUN
+  --python-labels artifacts/learning-mind-v1/macro-labels-heldout-v1/python \
+  --typescript-labels artifacts/learning-mind-v1/macro-labels-heldout-v1/typescript
 ```
 
 After separately authorizing the 70-position heldout collection, run one
