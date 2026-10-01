@@ -112,7 +112,22 @@ positions and 1,167 across the 36 TypeScript positions: 2,021 candidate plans
 total. The current 16-to-64 allocation therefore represents 32,336 initial
 candidate-seed rollouts and a 129,344 maximum before adaptive pruning. These
 are work-unit bounds, not elapsed-time estimates; no comparable runtime
-benchmark is available, and no heldout rollouts have been run.
+benchmark was available when this estimate was recorded on 2026-09-29.
+
+#### Active heldout-label collection snapshot (2026-09-30 9:18 PM EDT)
+
+The separately authorized Python-family heldout-label collection is now
+running; this is the first real heldout engine rollout run. At this snapshot,
+the read-only progress command reported 12 of 34 positions finalized, one
+position in progress, and 21 not started. The active position had 106
+candidates at 24 samples each (extension indices through 23), with 2,529
+finished, 15 truncated, and 0 errored candidate-seed rollouts. Confidence was
+reevaluated through index 23. The collector process and eight engine workers
+were live when checked. These counts are a dated snapshot, not a live status
+source; rerun the command below to inspect current checkpoints. The heldout
+selection remains evaluation-only, the TypeScript family has not been started,
+and this partial Python run is not training-eligible evidence. PPO, continuous
+operation, and trusted promotion remain disabled.
 
 The heldout runner also has a read-only progress view. For example, inspect a
 Python-family run without touching its process or checkpoint:
@@ -231,8 +246,10 @@ PYTHONPATH=src .venv/bin/python -m ptcg_lab.learning_mind collect-heldout-macro-
 
 Do not change a run's settings on resume. Preserve truncation/error outcomes;
 they remain unfinished and never become draws. Completed runs are immutable.
-This runner has only been exercised with deterministic fake rollouts; no
-heldout engine rollout has been started.
+The runner's offline resume and integrity tests use deterministic fake
+rollouts. The first real heldout engine rollout run is the Python-family
+collection recorded in the dated snapshot above; do not infer completion or
+readiness from its process being active.
 
 On Windows the collector flushes each checkpoint file before atomic replacement
 but skips POSIX-style parent-directory `fsync`, which Windows does not support
