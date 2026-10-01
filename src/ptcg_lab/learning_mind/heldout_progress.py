@@ -112,12 +112,19 @@ def _inspect_checkpoint(path: Path, *, family: str, position_hash: str,
     highest_completed = max(completed_indices) if completed_indices else -1
     if not active:
         next_gate = "no active candidates remain; finalize as unsupported/unscored for evaluator review"
+    elif active_status == "initial-confidence-check-pending":
+        next_gate = f"finish initial common-seed batch through seed index {initial - 1}, then evaluate confidence"
     elif confidence_watermark < highest_completed:
-        next_gate = f"confidence reevaluation is due through completed seed index {highest_completed}"
+        stage_start = initial + ((highest_completed - initial) // extension_batch_size) * extension_batch_size
+        stage_end = min(maximum, stage_start + extension_batch_size)
+        stage_indices = set(range(stage_start, stage_end))
+        if stage_indices.issubset(completed_extension):
+            next_gate = f"confidence reevaluation is due through completed seed index {highest_completed}"
+        else:
+            next_gate = (f"complete extension batch through seed index {stage_end - 1} "
+                         "before confidence reevaluation")
     elif sample_range[1] >= maximum:
         next_gate = "maximum sampling and final confidence reevaluation complete; position result is next"
-    elif active_status == "initial-confidence-check-pending":
-        next_gate = "finish initial common-seed batch, then evaluate confidence"
     else:
         next_gate = "confidence reevaluation after the next completed extension batch"
     return {

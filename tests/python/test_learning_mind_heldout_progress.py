@@ -139,6 +139,50 @@ def test_heldout_progress_rejects_seed_receipt_checkpoint_corruption(tmp_path):
             selection_path=selection_path, run_dir=run_dir)
 
 
+def test_heldout_progress_waits_for_extension_batch_before_saying_confidence_is_due(tmp_path):
+    selection_path, _ = _selection(tmp_path / "selection.json")
+    run_dir = tmp_path / "run"
+    run_dir.mkdir()
+    position_hash = "position-python"
+    candidates = _candidates()
+    saved = []
+
+    def checkpoint(state):
+        saved.append(copy.deepcopy(state))
+        if len(saved) == 4:
+            raise RuntimeError("stop after first extension seed")
+
+    def rollout(_candidate, _seed):
+        return {"status": "finished", "score": .5, "decisionCount": 4}
+
+    with pytest.raises(RuntimeError, match="first extension seed"):
+        label_heldout_candidates(candidates, position_hash, rollout,
+            rollout_identity="frozen-rollout", initial=2, maximum=5,
+            extension_batch_size=3, checkpoint=checkpoint)
+
+    allocation = {"initial": 2, "maximum": 5,
+        "extensionBatchSize": 3, "closeMargin": .10}
+    progress_identity = {"positionHash": position_hash,
+        "rolloutIdentity": "frozen-rollout",
+        "candidateHashes": [candidate.key() for candidate in candidates],
+        "generatorSeed": 17, "generatorHypothesisId": "public-hypothesis",
+        "candidateGeneratorIdentity": {"version": "generator-v1"},
+        "allocation": allocation}
+    checkpoint_record = {"schemaVersion": 1,
+        "progressIdentity": progress_identity,
+        "progressIdentityHash": identity_hash(progress_identity),
+        "state": saved[-1]}
+    checkpoint_record["progressHash"] = identity_hash(checkpoint_record)
+    _write(run_dir / f".{position_hash}.progress", checkpoint_record)
+
+    report = heldout_macro_label_progress(family=FAMILIES[0],
+        selection_path=selection_path, run_dir=run_dir)
+    status = report["checkpoints"][0]
+    assert status["completedSeedIndices"] == [0, 1, 2]
+    assert status["confidenceEvaluatedThroughIndex"] == 1
+    assert status["nextStoppingGate"] == "complete extension batch through seed index 4 before confidence reevaluation"
+
+
 def test_heldout_progress_verifies_completed_manifest_and_position_counts(tmp_path):
     selection_path, selection = _selection(tmp_path / "selection.json")
     position_hash = "position-python"
