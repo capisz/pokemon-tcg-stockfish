@@ -123,6 +123,16 @@ def _promotion_sources(root, observation, *, complete=True):
         {**family_body, "manifestHash": identity_hash(family_body)})
 
     identity_hash_value = identity_hash(identity)
+    action_by_seat = {}
+    actor_view_by_seat = {}
+    for seat in (0, 1):
+        actor_view = dict(observation, playerId=seat, decisionPlayer=seat)
+        tracker = ObservableHistoryTracker(seat)
+        encoded = encode_decision(actor_view, tracker.update(actor_view))
+        chosen_class, _ = _single_action(model, encoded)
+        action_by_seat[seat] = encoded.action_classes[chosen_class].actions[0]
+        actor_view_by_seat[seat] = actor_view
+
     candidate_rows, control_rows = [], []
     for own, opponent in sorted(PROMOTION_MATCHUPS):
         if not complete and (own, opponent) == ("crustle", "crustle"):
@@ -132,19 +142,13 @@ def _promotion_sources(root, observation, *, complete=True):
             seat, first = index % 2, (index + 1) % 2
             position = f"promotion-matrix-v1|{own}|{opponent}|seat-{seat}|first-{first}"
             seed = promotion_seed(position, index)
-            actor_view = dict(observation, playerId=seat, decisionPlayer=seat)
+            actor_view = actor_view_by_seat[seat]
             decks = [None, None]
             decks[seat], decks[1 - seat] = own, opponent
-            tracker = ObservableHistoryTracker(seat)
-            encoded = encode_decision(actor_view, tracker.update(actor_view))
-            chosen_class, _ = _single_action(model, encoded)
-            chosen_action = encoded.action_classes[chosen_class].actions[0]
+            chosen_action = action_by_seat[seat]
             opponent_seat = 1 - seat
-            opponent_view = dict(observation, playerId=opponent_seat, decisionPlayer=opponent_seat)
-            opponent_tracker = ObservableHistoryTracker(opponent_seat)
-            opponent_encoded = encode_decision(opponent_view, opponent_tracker.update(opponent_view))
-            opponent_class, _ = _single_action(model, opponent_encoded)
-            opponent_action = opponent_encoded.action_classes[opponent_class].actions[0]
+            opponent_view = actor_view_by_seat[opponent_seat]
+            opponent_action = action_by_seat[opponent_seat]
             for checkpoint_hash, score, target in (
                     (candidate_hash, 1, candidate_rows), (control_hash, 0, control_rows)):
                 game_id = f"{checkpoint_hash[:8]}-{pair_id}"
